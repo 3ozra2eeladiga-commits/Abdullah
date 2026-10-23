@@ -38,7 +38,10 @@ IG_API_VERSION = os.getenv("IG_API_VERSION", "v21.0")
 
 # --- Telegram (только для сотрудников) ---
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "")
-TELEGRAM_STAFF_IDS = [int(x) for x in _list("TELEGRAM_STAFF_IDS")]
+# Только числа; если туда по ошибке попал токен или текст — пропускаем, чтобы бот всё равно запустился
+TELEGRAM_STAFF_IDS = [int(x) for x in _list("TELEGRAM_STAFF_IDS") if x.lstrip("-").isdigit()]
+if len(TELEGRAM_STAFF_IDS) != len(_list("TELEGRAM_STAFF_IDS")):
+    print("ВНИМАНИЕ: в TELEGRAM_STAFF_IDS должны быть только числа (ID из /start). Лишнее пропущено.")
 # Куда слать заказы и вопросы: ID группы сотрудников. Если пусто - каждому из STAFF_IDS.
 TELEGRAM_ORDERS_CHAT = os.getenv("TELEGRAM_ORDERS_CHAT", "")
 
