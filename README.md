@@ -34,16 +34,16 @@
 
 ## Установка на сервер (Ubuntu, сервер за пределами РФ — например Timeweb Cloud, Нидерланды)
 
-1. Подключиться к серверу и выполнить:
-   ```bash
-   curl -sO https://raw.githubusercontent.com/3ozra2eeladiga-commits/Abdullah/main/deploy/setup.sh && bash setup.sh
-   ```
-2. Вписать ключи: `nano /opt/flowerbot/.env` (сохранить: Ctrl+O, Enter, выйти: Ctrl+X).
-3. Запустить: `systemctl restart flowerbot`
-4. Проверить: открыть в браузере адрес сервера — должно быть «Бот работает».
-5. Логи: `journalctl -u flowerbot -f`
+Одна команда в консоли сервера:
+```bash
+curl -sSL https://raw.githubusercontent.com/3ozra2eeladiga-commits/Abdullah/main/deploy/setup.sh | sudo bash
+```
+Скрипт сам спросит 4 значения (ключ Яндекса, ID каталога, токен Telegram, ID сотрудников), запустит бота
+и включит автообновление с GitHub каждые 5 минут.
 
-Обновить до новой версии: `bash /opt/flowerbot/deploy/update.sh`
+- Логи: `journalctl -u flowerbot -f`
+- Поменять ключи: `nano /opt/flowerbot/.env`, затем `systemctl restart flowerbot`
+- Обновить вручную: `bash /opt/flowerbot/deploy/update.sh`
 
 ## Проверка на своём компьютере
 
