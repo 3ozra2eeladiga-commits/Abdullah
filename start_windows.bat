@@ -4,7 +4,7 @@ set PYTHONUTF8=1
 cd /d "%~dp0"
 title Bot - cvetochnyj magazin
 
-where py >nul 2>nul && (set PY=py -3) || (set PY=python)
+where py >nul 2>nul && (set PY=py) || (set PY=python)
 
 if not exist .venv (
   echo Pervyj zapusk: ustanavlivayu programmy, 1-3 minuty...
