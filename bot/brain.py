@@ -30,9 +30,17 @@ RULES = """Ты — вежливый онлайн-помощник цветоч�
   и, если клиент настаивает, спроси сотрудника через метку [ВОПРОС].
 - Если спросят, бот ли ты, — честно скажи, что ты онлайн-помощник магазина, и что при желании подключится сотрудник.
 
-ФОТО
-- Чтобы показать товар, добавь в конец ответа метку [ФОТО код], например [ФОТО a1b2c3]. Не больше 3 фото за раз.
-- Код — это то, что в квадратных скобках в начале строки каталога. Самому клиенту коды не называй.
+ФОТО — ОБЯЗАТЕЛЬНО
+- Каждый раз, когда предлагаешь клиенту товары, покажи их фото: в самом конце ответа поставь метки [ФОТО код]
+  для каждого предложенного товара (не больше 3). Пример ответа:
+  «Посмотрите эти варианты 🌸 25 роз — 2799 ₽, букет из красных розочек — 2699 ₽. Какой нравится?
+  [ФОТО 9f1c3b] [ФОТО a3119e]»
+- Код — 6 символов в квадратных скобках в начале строки каталога. В тексте коды не пиши, только в метках [ФОТО].
+
+ТОЛЬКО ЗДЕСЬ, БЕЗ САЙТА
+- Никогда не отправляй клиента на сайт, не давай ссылок и не говори «посмотрите на сайте».
+  Всё показывай сам (фото, цены) и оформляй заказ прямо в этой переписке.
+- Если подходящего нет среди товаров ниже — задай уточняющий вопрос или спроси сотрудника через [ВОПРОС].
 
 ОФОРМЛЕНИЕ ЗАКАЗА — узнай по очереди (не всё сразу):
 1) что именно и сколько; 2) дата и время; 3) доставка или самовывоз (из какого магазина);
@@ -54,7 +62,9 @@ RULES = """Ты — вежливый онлайн-помощник цветоч�
   и добавь метку [ОПЕРАТОР].
 """
 
-PHOTO_RE = re.compile(r"\[ФОТО\s+([0-9a-fA-F]{6})\]")
+# ИИ пишет метку по-разному: [ФОТО 9f1c3b], [Фото: 9f1c3b], (фото 9f1c3b), [9f1c3b] — понимаем все варианты
+PHOTO_RE = re.compile(r"[\[(]\s*(?:фото|photo)?\s*[:#№-]?\s*([0-9a-f]{6})\s*[\])]|(?:фото|photo)\s*[:#№-]?\s*([0-9a-f]{6})\b", re.I)
+LINK_RE = re.compile(r"\S*(?:https?://|www\.)\S+|\S*naromashke\.ru\S*", re.I)
 ORDER_RE = re.compile(r"\[ЗАКАЗ\](.*?)\[/ЗАКАЗ\]", re.S)
 QUESTION_RE = re.compile(r"\[ВОПРОС\](.*?)\[/ВОПРОС\]", re.S)
 HANDOFF_RE = re.compile(r"\[ОПЕРАТОР\]")
@@ -106,10 +116,17 @@ def _merge_roles(messages):
 
 def parse(raw):
     reply = Reply()
-    for code in PHOTO_RE.findall(raw)[:3]:
-        item = catalog.get(code)
-        if item and item["images"]:
+    for m in PHOTO_RE.finditer(raw):
+        item = catalog.get(m.group(1) or m.group(2))
+        if item and item["images"] and item not in reply.photos and len(reply.photos) < 3:
             reply.photos.append(item)
+    if not reply.photos:
+        # ИИ забыл метки — ищем в тексте названия товаров и показываем их фото
+        low = raw.lower()
+        for item in catalog.by_code.values():
+            title = item["title"].lower()
+            if len(title) >= 8 and title in low and item["images"] and len(reply.photos) < 3:
+                reply.photos.append(item)
     m = ORDER_RE.search(raw)
     if m:
         reply.order_raw = m.group(1).strip()
@@ -123,8 +140,15 @@ def parse(raw):
     reply.handoff = bool(HANDOFF_RE.search(raw))
     text = ORDER_RE.sub("", raw)
     text = QUESTION_RE.sub("", text)
-    text = PHOTO_RE.sub("", text)
+    text = PHOTO_RE.sub(lambda m: "" if catalog.get(m.group(1) or m.group(2)) else m.group(0), text)
     text = HANDOFF_RE.sub("", text)
+    text = LINK_RE.sub("", text)
+    # Фразы про сайт убираем: клиент оформляет всё в переписке
+    text = re.sub(r"[^.!?\n]*сайт[^.!?\n]*[.!?]?", "", text, flags=re.I)
+    text = re.sub(r"[ \t]+([,.!?])", r"\1", text)      # пробел перед знаком препинания
+    text = re.sub(r"[,;]\s*$", "", text, flags=re.M)     # висящая запятая в конце строки
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    text = re.sub(r"^[ \t]+", "", text, flags=re.M)
     reply.text = re.sub(r"\n{3,}", "\n\n", text).strip()
     return reply
 

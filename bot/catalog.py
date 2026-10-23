@@ -163,7 +163,7 @@ class Catalog:
                 seen.add(it["code"])
                 picked.setdefault(name, []).append(it)
 
-        lines = ["Разделы каталога (полный каталог — на сайте магазина):", *overview, ""]
+        lines = ["Разделы каталога:", *overview, ""]
         lines.append("Подходящие товары" + (f" (бюджет до {budget} ₽)" if budget else "") + ":")
         for name, items in picked.items():
             lines.append(f"\n## {name}")
