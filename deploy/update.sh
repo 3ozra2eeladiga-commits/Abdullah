@@ -3,6 +3,6 @@
 set -euo pipefail
 cd /opt/flowerbot
 git pull
-.venv/bin/pip install -q -r requirements.txt
+.venv/bin/pip install -q -r requirements.txt -r requirements-extra.txt
 systemctl restart flowerbot
 echo "Обновлено ✅"

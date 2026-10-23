@@ -3,15 +3,21 @@ import io
 from functools import lru_cache
 
 import requests
-from PIL import Image
 
 from . import config
+
+try:
+    from PIL import Image
+except ImportError:  # pillow не установился — фото отдаём как есть (.webp)
+    Image = None
 
 
 @lru_cache(maxsize=200)
 def jpeg_bytes(url):
     r = requests.get(url, timeout=30)
     r.raise_for_status()
+    if Image is None:
+        return r.content
     img = Image.open(io.BytesIO(r.content)).convert("RGB")
     img.thumbnail((1280, 1280))
     out = io.BytesIO()

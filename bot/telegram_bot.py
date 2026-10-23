@@ -39,8 +39,13 @@ def send(chat_id, text, **extra):
 
 def send_photo(chat_id, item):
     try:
-        call("sendPhoto", files={"photo": ("photo.jpg", images.jpeg_bytes(item["images"][0]), "image/jpeg")},
-             chat_id=chat_id, caption=f"{item['title']} — {item['price']} ₽")
+        caption = f"{item['title']} — {item['price']} ₽"
+        if images.Image is None:
+            # Без pillow фото остаётся в .webp — отдаём Telegram ссылку, он скачает сам
+            call("sendPhoto", chat_id=chat_id, photo=item["images"][0], caption=caption)
+        else:
+            data = images.jpeg_bytes(item["images"][0])
+            call("sendPhoto", files={"photo": ("photo.jpg", data, "image/jpeg")}, chat_id=chat_id, caption=caption)
     except Exception as e:
         log.warning("Не удалось отправить фото %s: %s", item["code"], e)
 

@@ -10,6 +10,7 @@ if not exist .venv (
   echo Pervyj zapusk: ustanavlivayu programmy, 1-3 minuty...
   %PY% -m venv .venv || (echo Ne najden Python. Ustanovite ego s python.org i postav galochku "Add python.exe to PATH". & pause & exit /b)
   .venv\Scripts\python -m pip install -q -r requirements.txt
+  .venv\Scripts\python -m pip install -q pillow
 )
 
 if not exist .env (

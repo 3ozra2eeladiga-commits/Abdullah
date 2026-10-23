@@ -19,7 +19,7 @@ echo "=== 2/5 Скачиваю код ==="
 if [ -d "$DIR/.git" ]; then git -C "$DIR" pull; else git clone "$REPO" "$DIR"; fi
 cd "$DIR"
 python3 -m venv .venv
-.venv/bin/pip install -q -r requirements.txt
+.venv/bin/pip install -q -r requirements.txt -r requirements-extra.txt
 
 echo "=== 3/5 Сертификат для GigaChat (нужен только для GigaChat) ==="
 curl -sk -o "$DIR/russian_trusted_root_ca.pem" https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt || true
