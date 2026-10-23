@@ -4,6 +4,7 @@
 """
 import json
 import logging
+import sys
 import threading
 from collections import defaultdict
 
@@ -154,7 +155,24 @@ def health():
     return f"Бот работает. Товаров в каталоге: {len(catalog.by_code)}"
 
 
+def _disable_windows_quick_edit():
+    """В Windows щелчок по чёрному окну ставит программу на паузу (режим «Выделить»). Отключаем это."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.GetStdHandle(-10)  # ввод консоли
+        mode = ctypes.c_uint32()
+        if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+            ENABLE_QUICK_EDIT_MODE, ENABLE_EXTENDED_FLAGS = 0x0040, 0x0080
+            kernel32.SetConsoleMode(handle, (mode.value & ~ENABLE_QUICK_EDIT_MODE) | ENABLE_EXTENDED_FLAGS)
+    except Exception:
+        log.warning("Не удалось отключить паузу от щелчка мышкой — не щёлкайте по окну бота")
+
+
 def main():
+    _disable_windows_quick_edit()
     catalog.refresh()
     telegram_bot.start(deliver)
     log.info("Сервер запущен на порту %s", config.PORT)

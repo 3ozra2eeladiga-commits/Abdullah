@@ -20,7 +20,6 @@ from . import config, db, images, speech
 log = logging.getLogger(__name__)
 
 API = "https://api.telegram.org/bot{token}/{method}"
-_test_chats = set()
 
 
 def call(method, files=None, **params):
@@ -114,11 +113,11 @@ def _handle(msg, deliver):
         send(chat_id, f"Ваш ID: {user_id}, ID этого чата: {chat_id}")
         return
     if text.startswith("/test"):
-        if chat_id in _test_chats:
-            _test_chats.discard(chat_id)
+        if db.is_test_mode(chat_id):
+            db.set_test_mode(chat_id, False)
             send(chat_id, "Режим проверки выключен.")
         else:
-            _test_chats.add(chat_id)
+            db.set_test_mode(chat_id, True)
             send(chat_id, "🧪 Режим проверки включён. Пишите как клиент, например: «Здравствуйте, сколько стоят розы?»\n"
                           "Выключить — снова /test")
         return
@@ -138,7 +137,7 @@ def _handle(msg, deliver):
                 send(chat_id, "✅ Передал клиенту.")
             return
 
-    if chat_id in _test_chats and text:
+    if db.is_test_mode(chat_id) and text:
         deliver(f"tg:{chat_id}", text, from_staff=False)
         return
 

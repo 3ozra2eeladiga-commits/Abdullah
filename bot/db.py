@@ -38,6 +38,9 @@ _conn.executescript(
     CREATE TABLE IF NOT EXISTS sent_ids (
         mid TEXT PRIMARY KEY          -- id сообщений, отправленных ботом (чтобы отличать от сотрудников)
     );
+    CREATE TABLE IF NOT EXISTS test_chats (
+        chat TEXT PRIMARY KEY         -- чаты сотрудников с включённым режимом /test
+    );
     """
 )
 
@@ -97,3 +100,14 @@ def remember_sent(mid):
 
 def was_sent_by_bot(mid):
     return _exec("SELECT 1 FROM sent_ids WHERE mid=?", (mid,)).fetchone() is not None
+
+
+def set_test_mode(chat, on):
+    if on:
+        _exec("INSERT OR IGNORE INTO test_chats VALUES (?)", (str(chat),))
+    else:
+        _exec("DELETE FROM test_chats WHERE chat=?", (str(chat),))
+
+
+def is_test_mode(chat):
+    return _exec("SELECT 1 FROM test_chats WHERE chat=?", (str(chat),)).fetchone() is not None
