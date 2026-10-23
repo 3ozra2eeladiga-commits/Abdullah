@@ -66,11 +66,16 @@ class Catalog:
 
     def refresh(self):
         sections, by_code = [], {}
+        previous = dict(self.sections)
         for name, path, kind in SOURCES:
             try:
                 data = self._fetch(path)
             except Exception as e:
                 log.warning("Каталог: не удалось загрузить %s: %s", name, e)
+                # Сайт не ответил — оставляем этот раздел из прошлой загрузки
+                old = [it for it in previous.get(name, []) if it["code"] not in by_code]
+                by_code.update({it["code"]: it for it in old})
+                sections.append((name, old))
                 continue
             raw_items = data["it"] if kind == IT else data
             items = []
