@@ -15,7 +15,7 @@ import time
 
 import requests
 
-from . import config, db, images
+from . import config, db, images, speech
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +64,26 @@ def notify_staff(client, text):
             db.link_staff_message(chat, msg["message_id"], client)
 
 
+def _voice_to_text(chat_id, voice):
+    """Скачивает голосовое из Telegram и превращает в текст. Пустая строка — не получилось."""
+    if voice.get("duration", 0) > speech.MAX_SECONDS:
+        send(chat_id, f"Голосовое длиннее {speech.MAX_SECONDS} секунд — пока понимаю только короткие. "
+                      "Запишите покороче или напишите текстом 🙏")
+        return ""
+    try:
+        file = call("getFile", file_id=voice["file_id"])
+        url = f"https://api.telegram.org/file/bot{config.TELEGRAM_TOKEN}/{file['file_path']}"
+        audio = requests.get(url, timeout=30).content
+        text = speech.recognize_ogg(audio)
+    except Exception as e:
+        log.warning("Не удалось распознать голосовое: %s", e)
+        send(chat_id, "Не получилось разобрать голосовое 😔 Напишите, пожалуйста, текстом.")
+        return ""
+    if not text:
+        send(chat_id, "Не расслышал 🙈 Повторите, пожалуйста, или напишите текстом.")
+    return text
+
+
 # ---------- Обработка сообщений от сотрудников ----------
 
 def _handle(msg, deliver):
@@ -75,6 +95,12 @@ def _handle(msg, deliver):
         if text.startswith("/start") or text.startswith("/myid"):
             send(chat_id, f"Ваш ID: {user_id}\nДоступ к боту закрыт. Передайте этот номер администратору.")
         return
+
+    if msg.get("voice") and not text:
+        text = _voice_to_text(chat_id, msg["voice"])
+        if not text:
+            return
+        send(chat_id, f"🎤 Распознал: «{text}»")
 
     if text.startswith("/start") or text.startswith("/help"):
         send(chat_id, "Здравствуйте! Сюда будут приходить заказы и вопросы из Инстаграма.\n\n"
