@@ -21,11 +21,11 @@ GB = "gb"  # готовые букеты: список с amount/saleAmount
 IT = "it"  # товары поштучно: {"cat": [...], "it": [...]} c остатком balancePlus
 
 SOURCES = [
-    ("Готовые букеты (уже собраны, в наличии)", "/script/web/gb/gb", GB),
-    ("Букеты: в тренде", "/script/web/rb/rb-tagsP?tags=pop", RB),
-    ("Букеты: яркие «дофамины»", "/script/web/rb/rb-tagsP?tags=dofamin", RB),
-    ("Композиции (в коробках, корзинах)", "/script/web/rb/rb-tagsP?tags=comp", RB),
-    ("Букеты невесты", "/script/web/rb/rb-tagsP?tags=sv", RB),
+    ("ГОТОВЫЕ букеты — уже собраны (только если букет нужен сегодня или завтра)", "/script/web/gb/gb", GB),
+    ("КОЛЛЕКЦИЯ: букеты в тренде", "/script/web/rb/rb-tagsP?tags=pop", RB),
+    ("КОЛЛЕКЦИЯ: яркие букеты «дофамины»", "/script/web/rb/rb-tagsP?tags=dofamin", RB),
+    ("КОЛЛЕКЦИЯ: композиции в коробках и корзинах", "/script/web/rb/rb-tagsP?tags=comp", RB),
+    ("КОЛЛЕКЦИЯ: букеты невесты", "/script/web/rb/rb-tagsP?tags=sv", RB),
     ("Розы и цветы поштучно", "/script/web/it/it?id={c}&catid={c}&path=yes&c=c7f2a256-735b-4612-86f1-cff336e0c118", IT),
     ("К букету: подарки, шары, игрушки", "/script/web/it/it?id={c}&catid={c}&path=yes&c=8c9dd332-96e5-4603-811c-a708e4f14e58", IT),
     ("Растения в горшках", "/script/web/it/it?id={c}&catid={c}&path=yes&c=ed636e4e-6813-47ad-8416-d8d6a5005772", IT),
@@ -137,6 +137,8 @@ class Catalog:
                 continue
             prices = [it["price"] for it in items]
             overview.append(f"- {name}: {len(items)} шт., от {min(prices)} до {max(prices)} ₽")
+            if name in ONLY_IF_ASKED and name not in wanted_sections:
+                continue
             for it in items:
                 title = it["title"].lower()
                 score = sum(1 for s in stems if s in title) * 2
@@ -158,10 +160,14 @@ class Catalog:
         # С бюджетом — сначала то, что ближе к бюджету (дороже), а не самое дешёвое
         scored.sort(key=lambda s: (-s[0], -s[2]["price"] if budget else 0))
         picked, seen = {}, set()
-        for _, name, it in scored:
-            if it["code"] not in seen and len(seen) < limit:
-                seen.add(it["code"])
-                picked.setdefault(name, []).append(it)
+        per_section = max(8, limit // 3)  # чтобы один раздел не занял всё место (готовые vs коллекция)
+        for score, name, it in scored:
+            if it["code"] in seen or len(seen) >= limit:
+                continue
+            if score < 100 and len(picked.get(name, [])) >= per_section:
+                continue
+            seen.add(it["code"])
+            picked.setdefault(name, []).append(it)
 
         lines = ["Разделы каталога:", *overview, ""]
         lines.append("Подходящие товары" + (f" (бюджет до {budget} ₽)" if budget else "") + ":")
@@ -180,11 +186,14 @@ SECTION_HINTS = [
     ("Растения в горшках", r"горш|растен|комнатн|домой растение|фикус|орхиде"),
     ("Для дома: вазы, декор", r"ваз|декор|интерьер|кашпо"),
     ("К букету: подарки, шары, игрушки", r"шар|игрушк|открытк|подар|сладк|конфет"),
-    ("Букеты невесты", r"невест|свадьб"),
-    ("Композиции (в коробках, корзинах)", r"композиц|коробк|корзин|сухоцвет"),
+    ("КОЛЛЕКЦИЯ: букеты невесты", r"невест|свадьб"),
+    ("КОЛЛЕКЦИЯ: композиции в коробках и корзинах", r"композиц|коробк|корзин|сухоцвет"),
     ("Розы и цветы поштучно", r"поштучн|штучн|\d+\s*(роз|шт)|сорт"),
 ]
-DEFAULT_SECTIONS = {"Готовые букеты (уже собраны, в наличии)", "Букеты: в тренде"}
+# Эти разделы показываем, только если клиент сам о них спросил (иначе на «розы» вылезают букеты невесты и вазы)
+ONLY_IF_ASKED = {"КОЛЛЕКЦИЯ: букеты невесты", "Растения в горшках", "Для дома: вазы, декор"}
+# Если клиент не назвал ничего конкретного — показываем коллекцию и готовые (ИИ выберет по дате)
+DEFAULT_SECTIONS = {"ГОТОВЫЕ букеты — уже собраны (только если букет нужен сегодня или завтра)", "КОЛЛЕКЦИЯ: букеты в тренде", "КОЛЛЕКЦИЯ: яркие букеты «дофамины»"}
 
 
 def _stem(word):
