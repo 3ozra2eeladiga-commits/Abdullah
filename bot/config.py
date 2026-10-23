@@ -20,7 +20,7 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "yandex").lower()
 
 YANDEX_API_KEY = os.getenv("YANDEX_API_KEY", "")
 YANDEX_FOLDER_ID = os.getenv("YANDEX_FOLDER_ID", "")
-YANDEX_MODEL = os.getenv("YANDEX_MODEL", "yandexgpt/latest")
+YANDEX_MODEL = os.getenv("YANDEX_MODEL", "yandexgpt-lite/latest")
 
 GIGACHAT_AUTH_KEY = os.getenv("GIGACHAT_AUTH_KEY", "")
 GIGACHAT_SCOPE = os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS")

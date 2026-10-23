@@ -31,7 +31,8 @@ def _yandex(system, messages):
         },
         timeout=60,
     )
-    r.raise_for_status()
+    if r.status_code != 200:
+        raise RuntimeError(f"YandexGPT ответил ошибкой {r.status_code}: {r.text[:500]}")
     return r.json()["result"]["alternatives"][0]["message"]["text"]
 
 
