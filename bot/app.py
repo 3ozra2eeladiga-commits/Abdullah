@@ -76,6 +76,11 @@ def deliver(client, text, from_staff=False):
     with _client_locks[client]:
         if not from_staff and db.is_paused(client):
             db.add_message(client, "user", text)
+            if client.startswith("tg:"):
+                # В режиме проверки «клиент» — сам сотрудник: подсказываем, почему бот молчит
+                telegram_bot.send(client.split(":", 1)[1],
+                                  "⏸ Бот сейчас молчит с этим клиентом: разговор передан сотруднику.\n"
+                                  "/resume — снова включить бота, /reset — начать проверку заново.")
             return
         try:
             reply = brain.respond(client, text, from_staff=from_staff)

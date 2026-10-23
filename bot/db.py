@@ -111,3 +111,7 @@ def set_test_mode(chat, on):
 
 def is_test_mode(chat):
     return _exec("SELECT 1 FROM test_chats WHERE chat=?", (str(chat),)).fetchone() is not None
+
+
+def clear_history(client):
+    _exec("DELETE FROM messages WHERE client=?", (client,))
