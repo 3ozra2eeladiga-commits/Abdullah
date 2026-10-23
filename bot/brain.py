@@ -72,14 +72,22 @@ class Reply:
     handoff: bool = False
 
 
-def system_prompt():
+CODE_RE = re.compile(r"\b([0-9a-f]{6})\b")
+
+
+def system_prompt(history):
     catalog.ensure_fresh()
     shop_info = Path(config.SHOP_INFO_FILE).read_text(encoding="utf-8")
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=3)))
+    # Подбираем товары по последним сообщениям клиента + те, что уже обсуждали
+    query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])
+    discussed = {c for m in history if m["role"] == "assistant" for c in CODE_RE.findall(m["content"])}
     return (
         f"{RULES}\nСейчас: {now:%d.%m.%Y %H:%M} (Москва).\n\n"
         f"# ПРАВИЛА МАГАЗИНА\n{shop_info}\n\n"
-        f"# КАТАЛОГ (код — название — цена)\n{catalog.as_text()}"
+        f"# КАТАЛОГ (код — название — цена)\n"
+        f"Если подходящего товара нет в списке ниже — спроси клиента подробнее (повод, цветы, бюджет).\n"
+        f"{catalog.relevant_text(query, discussed)}"
     )
 
 
@@ -125,6 +133,7 @@ def respond(client, incoming, from_staff=False):
     """Записывает входящее сообщение, спрашивает ИИ и возвращает разобранный ответ."""
     content = f"{STAFF_PREFIX} {incoming}" if from_staff else incoming
     db.add_message(client, "user", content)
-    raw = llm.complete(system_prompt(), _merge_roles(db.history(client)))
+    history = db.history(client)
+    raw = llm.complete(system_prompt(history), _merge_roles(history))
     db.add_message(client, "assistant", raw)
     return parse(raw)

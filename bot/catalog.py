@@ -5,6 +5,7 @@
 """
 import json
 import logging
+import re
 import threading
 import time
 
@@ -101,20 +102,104 @@ class Catalog:
     def get(self, code):
         return self.by_code.get(code.strip().lower())
 
+    @staticmethod
+    def _line(it):
+        line = f"[{it['code']}] {it['title']} — {it['price']} ₽"
+        if it["stock"] is not None:
+            line += f" (в наличии: {it['stock']} шт.)"
+        return line
+
     def as_text(self):
-        """Компактный список для ИИ: одна строка на товар."""
+        """Весь каталог: одна строка на товар."""
         lines = []
         with self._lock:
             for name, items in self.sections:
-                if not items:
-                    continue
-                lines.append(f"\n## {name}")
-                for it in items:
-                    line = f"[{it['code']}] {it['title']} — {it['price']} ₽"
-                    if it["stock"] is not None:
-                        line += f" (в наличии: {it['stock']} шт.)"
-                    lines.append(line)
+                if items:
+                    lines.append(f"\n## {name}")
+                    lines += [self._line(it) for it in items]
         return "\n".join(lines).strip()
+
+    def relevant_text(self, query, keep_codes=(), limit=40):
+        """Только подходящие под разговор товары — чтобы не отправлять ИИ весь каталог (дорого).
+
+        query — последние сообщения клиента, keep_codes — товары, уже упомянутые в разговоре.
+        """
+        q = query.lower()
+        budget = _budget(q)
+        stems = {_stem(w) for w in re.findall(r"[а-яёa-z]+", q) if len(w) >= 3 and w not in STOP_WORDS}
+        wanted_sections = {name for name, pattern in SECTION_HINTS if re.search(pattern, q)}
+
+        with self._lock:
+            sections = list(self.sections)
+        overview, scored = [], []
+        for name, items in sections:
+            if not items:
+                continue
+            prices = [it["price"] for it in items]
+            overview.append(f"- {name}: {len(items)} шт., от {min(prices)} до {max(prices)} ₽")
+            for it in items:
+                title = it["title"].lower()
+                score = sum(1 for s in stems if s in title) * 2
+                if name in wanted_sections:
+                    score += 1
+                if it["code"] in keep_codes:
+                    score += 100
+                if budget and it["price"] > budget and it["code"] not in keep_codes:
+                    continue
+                if score:
+                    scored.append((score, name, it))
+
+        if len([s for s in scored if s[0] < 100]) < 8:
+            # Ничего конкретного не спросили — показываем ходовые букеты
+            for name, items in sections:
+                if name in DEFAULT_SECTIONS:
+                    scored += [(0.5, name, it) for it in items if not budget or it["price"] <= budget]
+
+        # С бюджетом — сначала то, что ближе к бюджету (дороже), а не самое дешёвое
+        scored.sort(key=lambda s: (-s[0], -s[2]["price"] if budget else 0))
+        picked, seen = {}, set()
+        for _, name, it in scored:
+            if it["code"] not in seen and len(seen) < limit:
+                seen.add(it["code"])
+                picked.setdefault(name, []).append(it)
+
+        lines = ["Разделы каталога (полный каталог — на сайте магазина):", *overview, ""]
+        lines.append("Подходящие товары" + (f" (бюджет до {budget} ₽)" if budget else "") + ":")
+        for name, items in picked.items():
+            lines.append(f"\n## {name}")
+            lines += [self._line(it) for it in items]
+        return "\n".join(lines)
+
+
+STOP_WORDS = set("""здравствуйте добрый день вечер утро привет сколько стоит стоят стоимость цена цены есть
+хочу хотим хотела хотел нужен нужна нужно можно какие какой какая букет букеты букетик цветы цветов
+пожалуйста спасибо подскажите скажите будет есть ваш ваши вас нас мне для или это как что где когда
+рублей руб тысяч""".split())
+
+SECTION_HINTS = [
+    ("Растения в горшках", r"горш|растен|комнатн|домой растение|фикус|орхиде"),
+    ("Для дома: вазы, декор", r"ваз|декор|интерьер|кашпо"),
+    ("К букету: подарки, шары, игрушки", r"шар|игрушк|открытк|подар|сладк|конфет"),
+    ("Букеты невесты", r"невест|свадьб"),
+    ("Композиции (в коробках, корзинах)", r"композиц|коробк|корзин|сухоцвет"),
+    ("Розы и цветы поштучно", r"поштучн|штучн|\d+\s*(роз|шт)|сорт"),
+]
+DEFAULT_SECTIONS = {"Готовые букеты (уже собраны, в наличии)", "Букеты: в тренде"}
+
+
+def _stem(word):
+    """Грубое отсечение окончания: «розы» -> «роз», «шарики» -> «шар», «тюльпаны» -> «тюльп»."""
+    return word[:min(6, max(3, len(word) - 3))]
+
+
+def _budget(q):
+    """«до 3000», «3 тыс», «бюджет 5000» -> число рублей."""
+    m = re.search(r"(?:до|бюджет|за|около|не дороже)\s*(\d[\d\s]{2,6})", q) or \
+        re.search(r"(\d[\d\s]{2,6})\s*(?:₽|р\b|руб)", q)
+    if m:
+        return int(re.sub(r"\s", "", m.group(1)))
+    m = re.search(r"(\d+)\s*(?:тыс|к\b)", q)
+    return int(m.group(1)) * 1000 if m else None
 
 
 catalog = Catalog()
