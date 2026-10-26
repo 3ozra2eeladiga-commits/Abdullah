@@ -101,6 +101,14 @@ def _handle(msg, deliver):
             return
         send(chat_id, f"🎤 Распознал: «{text}»")
 
+    # Стикер / фото / гифка и т.п. без текста — в режиме проверки не роняем разговор, а передаём боту пометку
+    if not text and db.is_test_mode(chat_id) and any(msg.get(k) for k in
+            ("sticker", "photo", "animation", "video", "document", "video_note")):
+        kind = next(k for k in ("sticker", "photo", "animation", "video", "document", "video_note") if msg.get(k))
+        names = {"sticker": "стикер", "photo": "фото", "animation": "гифку", "video": "видео",
+                 "document": "файл", "video_note": "видео-кружок"}
+        text = f"[Клиент прислал {names.get(kind, kind)}, без текста]"
+
     if text.startswith("/start") or text.startswith("/help"):
         send(chat_id, "Здравствуйте! Сюда будут приходить заказы и вопросы из Инстаграма.\n\n"
                       "• Ответить клиенту: нажмите «Ответить» на сообщении бота и напишите текст.\n"
