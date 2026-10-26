@@ -34,7 +34,8 @@ SOURCES = [
 
 
 class Catalog:
-    def __init__(self):
+    def __init__(self, base_url):
+        self.base_url = base_url
         self.sections = []  # [(название, [товар, ...])]
         self.by_code = {}
         self.loaded_at = 0
@@ -44,7 +45,7 @@ class Catalog:
         if "{c}" in path:
             path, cat = path.rsplit("&c=", 1)
             path = path.replace("{c}", cat)
-        r = requests.get(config.SHOP_SITE + path, timeout=30)
+        r = requests.get(self.base_url + path, timeout=30)
         r.raise_for_status()
         return json.loads(r.content.decode("utf-8-sig"))
 
@@ -211,4 +212,52 @@ def _budget(q):
     return int(m.group(1)) * 1000 if m else None
 
 
-catalog = Catalog()
+class Catalogs:
+    """Каталоги всех городов. Для каждого города — свой сайт."""
+
+    def __init__(self):
+        self.by_city = {name: Catalog(url) for name, url in config.cities().items()}
+
+    @property
+    def city_names(self):
+        return list(self.by_city)
+
+    def match_city(self, text):
+        """Определяет город по тексту: «минводы», «мин.воды», «пятигорск» и т.п."""
+        t = (text or "").lower()
+        for name in self.by_city:
+            key = name.lower()
+            if key in t:
+                return name
+            if "минерал" in key and ("минвод" in t or "мин вод" in t or "мин.вод" in t or "мв" in t.split()):
+                return name
+            if "пятигорск" in key and "пятигор" in t:
+                return name
+        return None
+
+    def get_city(self, city):
+        return self.by_city.get(city)
+
+    def refresh(self):
+        for c in self.by_city.values():
+            c.refresh()
+
+    def ensure_fresh(self):
+        for c in self.by_city.values():
+            c.ensure_fresh()
+
+    def get(self, code, city=None):
+        if city and city in self.by_city:
+            return self.by_city[city].get(code)
+        for c in self.by_city.values():  # запасной поиск по всем городам
+            it = c.get(code)
+            if it:
+                return it
+        return None
+
+    @property
+    def total_items(self):
+        return sum(len(c.by_code) for c in self.by_city.values())
+
+
+catalog = Catalogs()

@@ -11,9 +11,19 @@ def _list(name):
 
 
 # --- Магазин ---
-SHOP_SITE = os.getenv("SHOP_SITE", "https://naromashke.ru")
+# У каждого города свой сайт-каталог. Формат: Город=адрес, через запятую.
+CITY_SITES = os.getenv("CITY_SITES", "Пятигорск=https://naromashke.ru,Минеральные Воды=https://mw.naromashke.ru")
 SHOP_INFO_FILE = os.getenv("SHOP_INFO_FILE", "shop/shop_info.md")
 CATALOG_REFRESH_MINUTES = int(os.getenv("CATALOG_REFRESH_MINUTES", "60"))
+
+
+def cities():
+    out = {}
+    for part in CITY_SITES.split(","):
+        if "=" in part:
+            name, url = part.split("=", 1)
+            out[name.strip()] = url.strip().rstrip("/")
+    return out
 
 # --- "Мозг": yandex | gigachat | claude ---
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "yandex").lower()

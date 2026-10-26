@@ -52,15 +52,20 @@ def _format_order(order_id, client, reply):
         return f"🌸 НОВЫЙ ЗАКАЗ №{order_id}\n{_label(client)}\n\n{reply.order_raw}"
     lines = [f"🌸 НОВЫЙ ЗАКАЗ №{order_id}", _label(client), ""]
     for it in o.get("товары", []):
-        lines.append(f"• {it.get('название')} × {it.get('кол-во', 1)} — {it.get('цена')} ₽ [{it.get('код', '')}]")
+        qty = it.get("кол-во", 1)
+        each = it.get("цена_за_шт") or it.get("цена")
+        total = it.get("сумма") or (each * qty if isinstance(each, (int, float)) else each)
+        lines.append(f"• {it.get('название')} × {qty} — {total} ₽ [{it.get('код', '')}]")
+    if o.get("упаковка"):
+        lines.append(f"Упаковка: {o['упаковка']}")
     lines += [
         f"Сумма товаров: {o.get('сумма_товаров')} ₽",
         f"Доставка: {o.get('доставка_цена') if o.get('получение') != 'самовывоз' else 'самовывоз'}",
         f"Когда: {o.get('дата')} {o.get('время')}",
         f"Город: {o.get('город') or '—'}",
         f"Получение: {o.get('получение')}  {o.get('адрес') or ''}",
-        f"Получатель: {o.get('получатель')}",
         f"Заказчик: {o.get('заказчик')}",
+        f"Получатель: {o.get('получатель')}",
     ]
     if o.get("открытка"):
         lines.append(f"Открытка: {o['открытка']}")
@@ -157,7 +162,8 @@ def image(code):
 
 @app.get("/")
 def health():
-    return f"Бот работает. Товаров в каталоге: {len(catalog.by_code)}"
+    by_city = ", ".join(f"{name}: {len(c.by_code)}" for name, c in catalog.by_city.items())
+    return f"Бот работает. Товаров в каталоге — {by_city}"
 
 
 def _disable_windows_quick_edit():

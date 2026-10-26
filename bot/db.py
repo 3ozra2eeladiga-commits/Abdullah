@@ -41,6 +41,10 @@ _conn.executescript(
     CREATE TABLE IF NOT EXISTS test_chats (
         chat TEXT PRIMARY KEY         -- чаты сотрудников с включённым режимом /test
     );
+    CREATE TABLE IF NOT EXISTS client_city (
+        client TEXT PRIMARY KEY,      -- выбранный клиентом город (Пятигорск / Минеральные Воды)
+        city TEXT NOT NULL
+    );
     """
 )
 
@@ -115,3 +119,13 @@ def is_test_mode(chat):
 
 def clear_history(client):
     _exec("DELETE FROM messages WHERE client=?", (client,))
+    _exec("DELETE FROM client_city WHERE client=?", (client,))
+
+
+def set_city(client, city):
+    _exec("INSERT OR REPLACE INTO client_city VALUES (?,?)", (client, city))
+
+
+def get_city(client):
+    row = _exec("SELECT city FROM client_city WHERE client=?", (client,)).fetchone()
+    return row["city"] if row else None
