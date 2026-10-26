@@ -181,6 +181,16 @@ class Catalog:
             lines += [self._line(it) for it in items]
         return "\n".join(lines)
 
+    def relevant_items(self, query, keep_codes=(), limit=12):
+        """Плоский список подходящих товаров (с фото) — чтобы код сам добивал показ до нужного числа фото."""
+        text = self.relevant_text(query, keep_codes, limit)
+        out = []
+        for m in re.finditer(r"\[([0-9a-f]{6})\]", text):
+            it = self.by_code.get(m.group(1))
+            if it and it["images"] and it not in out:
+                out.append(it)
+        return out
+
 
 STOP_WORDS = set("""здравствуйте добрый день вечер утро привет сколько стоит стоят стоимость цена цены есть
 хочу хотим хотела хотел нужен нужна нужно можно какие какой какая букет букеты букетик цветы цветов
