@@ -127,6 +127,7 @@ class Catalog:
         """
         q = query.lower()
         budget = _budget(q)
+        need_qty = _quantity(q)  # сколько штук просит клиент (для поштучных цветов)
         stems = {_stem(w) for w in re.findall(r"[а-яёa-z]+", q) if len(w) >= 3 and w not in STOP_WORDS}
         wanted_sections = {name for name, pattern in SECTION_HINTS if re.search(pattern, q)}
 
@@ -148,6 +149,9 @@ class Catalog:
                 if it["code"] in keep_codes:
                     score += 100
                 if budget and it["price"] > budget and it["code"] not in keep_codes:
+                    continue
+                # Поштучные цветы: показываем только те, которых в наличии хватает на нужное количество
+                if need_qty and it["stock"] is not None and it["stock"] < need_qty and it["code"] not in keep_codes:
                     continue
                 if score:
                     scored.append((score, name, it))
@@ -210,6 +214,16 @@ def _budget(q):
         return int(re.sub(r"\s", "", m.group(1)))
     m = re.search(r"(\d+)\s*(?:тыс|к\b)", q)
     return int(m.group(1)) * 1000 if m else None
+
+
+def _quantity(q):
+    """«15 роз», «букет из 51 розы», «101 шт» -> число штук. Игнорирует цены (₽, руб)."""
+    best = None
+    for m in re.finditer(r"(\d{1,4})\s*(шт|штук|роз|тюльпан|цвет|гвоздик|хризантем|гербер|пион|ромаш|альстромер|эустом)", q):
+        n = int(m.group(1))
+        if 1 <= n <= 1001:
+            best = max(best or 0, n)
+    return best
 
 
 class Catalogs:
