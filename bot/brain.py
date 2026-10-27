@@ -482,8 +482,10 @@ def respond(client, incoming, from_staff=False):
         chosen = {it["code"] for it in picked}
         reply.photos = list(picked) + [p for p in reply.photos if p["code"] not in chosen]
 
-    # На этапе оформления заказа (клиент уже выбрал) фото не нужны — убираем, чтобы не спамить.
-    is_order_step = bool(ORDER_STEP_RE.search(reply.text or ""))
+    # Перечисление вариантов с ценами (3+ «₽») — это показ букетов, а НЕ этап оформления,
+    # даже если в тексте есть слово «оформлю» (из подсказки про номер/ссылку). Иначе фото пропадали.
+    is_variant_listing = (reply.text or "").count("₽") >= 3
+    is_order_step = bool(ORDER_STEP_RE.search(reply.text or "")) and not is_variant_listing
     if reply.photos and is_order_step and not picked:
         reply.photos = []
 
@@ -500,6 +502,9 @@ def respond(client, incoming, from_staff=False):
                 shown.add(it["code"])
                 if len(reply.photos) >= MIN_OPTIONS:
                     break
+    # Показ вариантов — максимум 5 фото за раз, чтобы не заваливать клиента.
+    if offering and len(reply.photos) > MIN_OPTIONS:
+        reply.photos = reply.photos[:MIN_OPTIONS]
 
     # Если перехватили «вопрос о подборе» и сами приложили фото — заменяем «уточню…» на нормальный показ.
     if force_options and reply.photos and re.search(r"уточн|секунд|минут|подожд", reply.text or "", re.I):
