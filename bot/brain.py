@@ -524,8 +524,14 @@ def respond(client, incoming, from_staff=False):
     city_cat = catalog.get_city(city)
     if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS:
         query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])
+        # Добираем ТОЛЬКО букеты (не поштучные розы по 250₽, не открытки с котиками), кроме случая,
+        # когда клиент ПРЯМО СЕЙЧАС просит именно поштучно/подарки. Смотрим текущее сообщение, а не всю историю,
+        # чтобы слово «открытка» из этапа сбора данных не превращало показ букетов в показ открыток.
+        bouquets_only = not re.search(
+            r"поштучн|штучн|\bшт\b|\d+\s*(?:роз|тюльпан|гвоздик|хризантем|гербер|пион|ромаш)|"
+            r"шар|игрушк|подар|открытк|ваз|растен|горшк|сухоцвет|невест", incoming or "", re.I)
         shown = {p["code"] for p in reply.photos}
-        for it in city_cat.relevant_items(query, shown, limit=MIN_OPTIONS * 2):
+        for it in city_cat.relevant_items(query, shown, limit=MIN_OPTIONS * 2, bouquets_only=bouquets_only):
             if it["code"] not in shown:
                 reply.photos.append(it)
                 shown.add(it["code"])

@@ -142,10 +142,11 @@ class Catalog:
                     lines += [self._line(it) for it in items]
         return "\n".join(lines).strip()
 
-    def relevant_text(self, query, keep_codes=(), limit=40):
+    def relevant_text(self, query, keep_codes=(), limit=40, bouquets_only=False):
         """Только подходящие под разговор товары — чтобы не отправлять ИИ весь каталог (дорого).
 
         query — последние сообщения клиента, keep_codes — товары, уже упомянутые в разговоре.
+        bouquets_only — только букеты/композиции (без поштучных цветов, открыток, подарков и т.п.).
         """
         q = query.lower()
         budget = _budget(q)
@@ -162,6 +163,9 @@ class Catalog:
             prices = [it["price"] for it in items]
             overview.append(f"- {name}: {len(items)} шт., от {min(prices)} до {max(prices)} ₽")
             if name in ONLY_IF_ASKED and name not in wanted_sections:
+                continue
+            # Нужны только букеты — не подмешиваем поштучные цветы, открытки, подарки, вазы, растения
+            if bouquets_only and name in NON_BOUQUET:
                 continue
             for it in items:
                 title = it["title"].lower()
@@ -203,9 +207,9 @@ class Catalog:
             lines += [self._line(it) for it in items]
         return "\n".join(lines)
 
-    def relevant_items(self, query, keep_codes=(), limit=12):
+    def relevant_items(self, query, keep_codes=(), limit=12, bouquets_only=False):
         """Плоский список подходящих товаров (с фото) — чтобы код сам добивал показ до нужного числа фото."""
-        text = self.relevant_text(query, keep_codes, limit)
+        text = self.relevant_text(query, keep_codes, limit, bouquets_only=bouquets_only)
         out = []
         for m in re.finditer(r"\[([0-9a-f]{6})\]", text):
             it = self.by_code.get(m.group(1))
@@ -235,6 +239,9 @@ NEAR_MINVODY = r"иноземцев|первомайск|анджиевск|зм
 
 # Эти разделы показываем, только если клиент сам о них спросил (иначе на «розы» вылезают букеты невесты и вазы)
 ONLY_IF_ASKED = {"КОЛЛЕКЦИЯ: букеты невесты", "Растения в горшках", "Для дома: вазы, декор"}
+# Не букеты: при показе букетных вариантов код их не подмешивает (поштучные цветы, открытки, подарки, вазы, растения)
+NON_BOUQUET = {"Розы и цветы поштучно", "К букету: подарки, шары, игрушки",
+               "Растения в горшках", "Для дома: вазы, декор"}
 # Если клиент не назвал ничего конкретного — показываем коллекцию и готовые (ИИ выберет по дате)
 DEFAULT_SECTIONS = {"ГОТОВЫЕ букеты — уже собраны (только если букет нужен сегодня или завтра)", "КОЛЛЕКЦИЯ: букеты в тренде", "КОЛЛЕКЦИЯ: яркие букеты «дофамины»"}
 
