@@ -134,6 +134,17 @@ def notify_staff(client, text):
             db.link_staff_message(chat, msg["message_id"], client)
 
 
+def notify_staff_order(client, items, text):
+    """Новый заказ сотрудникам: сначала ФОТО заказанных товаров (что собирать), потом карточка заказа.
+    Отвечают именно на карточку — текст уйдёт клиенту."""
+    for chat in staff_chats():
+        for it in items:
+            send_photo(chat, it)
+        msg = send(chat, text)
+        if msg:
+            db.link_staff_message(chat, msg["message_id"], client)
+
+
 def _recognize_voice(voice):
     """Скачивает голосовое и превращает в текст. Возвращает (текст, сообщение_об_ошибке) — одно пустое."""
     if voice.get("duration", 0) > speech.MAX_SECONDS:

@@ -146,7 +146,14 @@ def deliver(client, text, from_staff=False, quote=""):
         # Флористу заказ уходит ТОЛЬКО если он полностью собран (последняя защита, независимо от brain).
         if reply.order and _order_ready(reply.order):
             order_id = db.save_order(client, reply.order)
-            telegram_bot.notify_staff(client, _format_order(order_id, client, reply))
+            # Фото заказанных товаров — чтобы флорист сразу видел, что собирать.
+            items = []
+            for it in reply.order.get("товары", []):
+                code = (it.get("код") or "").strip().lower()
+                obj = catalog.get(code) if code else None
+                if obj and obj.get("images"):
+                    items.append(obj)
+            telegram_bot.notify_staff_order(client, items, _format_order(order_id, client, reply))
         elif reply.order or reply.order_raw:
             log.warning("Неполный заказ НЕ отправлен флористу (%s): %s", client, reply.order or reply.order_raw)
         if reply.question:
