@@ -45,6 +45,10 @@ _conn.executescript(
         client TEXT PRIMARY KEY,      -- выбранный клиентом город (Пятигорск / Минеральные Воды)
         city TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,         -- разные настройки бота (например, id бизнес-подключения Telegram)
+        value TEXT NOT NULL
+    );
     """
 )
 
@@ -129,3 +133,12 @@ def set_city(client, city):
 def get_city(client):
     row = _exec("SELECT city FROM client_city WHERE client=?", (client,)).fetchone()
     return row["city"] if row else None
+
+
+def set_setting(key, value):
+    _exec("INSERT OR REPLACE INTO settings VALUES (?,?)", (key, str(value)))
+
+
+def get_setting(key, default=None):
+    row = _exec("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    return row["value"] if row else default

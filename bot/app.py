@@ -29,8 +29,8 @@ def _send_text(client, text):
     kind, cid = client.split(":", 1)
     if kind == "ig":
         instagram.send_text(cid, text)
-    else:
-        telegram_bot.send(cid, text)
+    else:  # tgb — бизнес-аккаунт магазина, tg — тестовый режим
+        telegram_bot.send_client(client, text)
 
 
 def _send_photo(client, item):
@@ -38,12 +38,13 @@ def _send_photo(client, item):
     if kind == "ig":
         instagram.send_photo(cid, item)
     else:
-        telegram_bot.send_photo(cid, item)
+        telegram_bot.send_client_photo(client, item)
 
 
 def _label(client):
     kind, cid = client.split(":", 1)
-    return f"Инстаграм-клиент {cid}" if kind == "ig" else f"🧪 тестовый клиент (Telegram {cid})"
+    return {"ig": f"Инстаграм-клиент {cid}", "tgb": f"клиент Telegram {cid}",
+            "tg": f"🧪 тестовый клиент (Telegram {cid})"}.get(kind, cid)
 
 
 def _format_order(order_id, client, reply):
