@@ -30,7 +30,22 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "yandex").lower()
 
 YANDEX_API_KEY = os.getenv("YANDEX_API_KEY", "")
 YANDEX_FOLDER_ID = os.getenv("YANDEX_FOLDER_ID", "")
-YANDEX_MODEL = os.getenv("YANDEX_MODEL", "yandexgpt-lite/latest")
+
+
+def _yandex_model():
+    """Модель можно задать файлом shop/ai_model.txt (приоритет), иначе из .env, иначе Pro.
+
+    Файл в репозитории позволяет менять модель через git-пуш, без входа на сервер."""
+    try:
+        v = open("shop/ai_model.txt", encoding="utf-8").read().strip()
+        if v:
+            return v
+    except OSError:
+        pass
+    return os.getenv("YANDEX_MODEL") or "yandexgpt/latest"
+
+
+YANDEX_MODEL = _yandex_model()
 
 GIGACHAT_AUTH_KEY = os.getenv("GIGACHAT_AUTH_KEY", "")
 GIGACHAT_SCOPE = os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS")
