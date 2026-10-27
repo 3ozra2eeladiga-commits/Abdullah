@@ -417,6 +417,26 @@ def _time_already_passed(date_s, time_s):
     return now.replace(hour=hh, minute=mm, second=0, microsecond=0) < now
 
 
+# Части суток → час, после которого этот период СЕГОДНЯ уже считается прошедшим.
+_PERIOD_PAST = [(r"ноч", 9), (r"утр|с утра", 11), (r"обед|дн[её]м|\bдень\b", 16), (r"вечер", 22)]
+
+
+def _past_time_mention(text):
+    """Клиент прямо назвал СЕГОДНЯШНЕЕ время, которое уже прошло («сегодня утром» вечером, «сегодня к 8» днём)."""
+    t = (text or "").lower()
+    if "сегодн" not in t or re.search(r"как можно скор|срочн|сейчас|поскорее|асап", t):
+        return False
+    now = datetime.datetime.now(_MSK)
+    for m in re.finditer(r"(?:в|к|до|на)\s*(\d{1,2})(?:[:.\s-](\d{2}))?", t):   # конкретный час «сегодня в 8»
+        hh, mm = int(m.group(1)), int(m.group(2) or 0)
+        if hh <= 23 and mm <= 59 and now.replace(hour=hh, minute=mm, second=0, microsecond=0) < now:
+            return True
+    for pat, end_h in _PERIOD_PAST:   # часть суток («утром», «днём»)
+        if re.search(pat, t) and now.hour >= end_h:
+            return True
+    return False
+
+
 def _phone_was_given(order_value, client_text):
     """Телефон из заказа должен реально встречаться в сообщениях клиента (а не быть выдуман ИИ)."""
     digits = _phone_digits(order_value)
@@ -745,4 +765,10 @@ def respond(client, incoming, from_staff=False):
     # Если перехватили «вопрос о подборе» и сами приложили фото — заменяем «уточню…» на нормальный показ.
     if force_options and reply.photos and re.search(r"уточн|секунд|минут|подожд", reply.text or "", re.I):
         reply.text = "Вот что могу предложить 🌹 Какой вариант нравится?"
+
+    # Клиент назвал СЕГОДНЯШНЕЕ время, которое уже прошло («сегодня утром» вечером) — сразу честно уточняем.
+    if not from_staff and _past_time_mention(incoming):
+        reply.text = ("Это время сегодня, к сожалению, уже прошло 🙏 Подскажите, пожалуйста, на какое время "
+                      "сегодня (попозже) или на другую дату — и я всё подберу.")
+        reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
     return reply
