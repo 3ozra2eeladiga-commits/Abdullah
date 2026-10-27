@@ -290,17 +290,18 @@ def _picked_from_site(text, city):
 
 def _picked_from_caption(text, city):
     """Клиент ответил (reply) на фото букета — в тексте есть его подпись (название). Находим товар по названию.
-    Берём самое длинное совпавшее название (оно и есть подпись фото), чтобы не цепляться за короткие обрывки."""
+    Берём самое длинное совпавшее название (оно и есть подпись фото). Ищем в каталоге нужного города, а если
+    город ещё не выбран — во всех городах (название из подписи уникально, город не обязателен)."""
     t = (text or "").lower()
     cc = catalog.get_city(city)
-    if not cc:
-        return []
+    cats = [cc] if cc else list(catalog.by_city.values())
     best = None
-    for it in cc.by_code.values():
-        title = it["title"].lower()
-        if len(title) >= 6 and it["images"] and title in t:
-            if best is None or len(title) > len(best["title"]):
-                best = it
+    for c in cats:
+        for it in c.by_code.values():
+            title = it["title"].lower()
+            if len(title) >= 6 and it["images"] and title in t:
+                if best is None or len(title) > len(best["title"]):
+                    best = it
     return [best] if best else []
 
 
