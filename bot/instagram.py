@@ -69,10 +69,14 @@ def parse_events(payload):
                 if not db.was_sent_by_bot(msg.get("mid")):
                     events.append({"type": "staff_reply", "client": ev["recipient"]["id"]})
                 continue
+            atts = msg.get("attachments", [])
             events.append({
                 "type": "message",
                 "client": ev["sender"]["id"],
                 "text": msg.get("text", ""),
-                "attachments": [a.get("type") for a in msg.get("attachments", [])],
+                "attachments": [a.get("type") for a in atts],
+                # ссылки на присланные фото — чтобы переслать флористу (бот не видит картинок)
+                "image_urls": [a.get("payload", {}).get("url") for a in atts
+                               if a.get("type") == "image" and a.get("payload", {}).get("url")],
             })
     return events

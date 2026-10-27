@@ -129,16 +129,38 @@ def deliver(client, text, from_staff=False):
                                               "или ответом на это сообщение. /resume — включить бота обратно.")
 
 
+def _handle_client_photos(client, image_urls, caption=""):
+    """Клиент прислал фото букета. Бот не видит картинок — пересылаем флористу,
+    а клиенту отвечаем по-человечески, без выдуманных названий и цен."""
+    with _client_locks[client]:
+        if db.is_paused(client):
+            return
+        db.add_message(client, "user", "[клиент прислал фото букета]" + (f": {caption}" if caption else ""))
+        reply = "Секундочку, гляну по этому букету 🌸 Уточню наличие и цену — и всё оформим."
+        _send_text(client, reply)
+        db.add_message(client, "assistant", reply)
+        staff_note = (f"📸 Клиент прислал фото букета ({_label(client)}).\n"
+                      + (f"Подпись клиента: «{caption}»\n" if caption else "")
+                      + "Посмотрите фото и ответьте на это сообщение с ценой/наличием — бот передаст клиенту.")
+        for url in image_urls:
+            telegram_bot.notify_staff_photo(client, url, staff_note)
+
+
 def _handle_instagram(payload):
     for ev in instagram.parse_events(payload):
         client = f"ig:{ev['client']}"
         if ev["type"] == "staff_reply":
             db.pause(client, config.HUMAN_PAUSE_HOURS)
             continue
+        if ev.get("image_urls"):
+            # Фото букета отдаём флористу; остальной текст (если был) идёт отдельным сообщением.
+            _handle_client_photos(client, ev["image_urls"], ev.get("text", ""))
+            continue
         text = ev["text"]
-        if ev["attachments"]:
-            note = {"audio": "голосовое сообщение", "image": "фото", "video": "видео"}
-            kinds = ", ".join(note.get(a, a or "вложение") for a in ev["attachments"])
+        other = [a for a in ev["attachments"] if a != "image"]
+        if other:
+            note = {"audio": "голосовое сообщение", "video": "видео"}
+            kinds = ", ".join(note.get(a, a or "вложение") for a in other)
             text = (text + f"\n[Клиент прислал: {kinds}. Ты пока не можешь их открыть — "
                            f"вежливо попроси описать словами.]").strip()
         if text:

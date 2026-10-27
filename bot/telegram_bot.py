@@ -49,6 +49,31 @@ def send_photo(chat_id, item):
         log.warning("Не удалось отправить фото %s: %s", item["code"], e)
 
 
+def notify_staff_photo(client, photo, caption):
+    """Пересылает фото сотрудникам (photo — ссылка или file_id Telegram).
+    Ответ сотрудника на это фото уйдёт данному клиенту."""
+    for chat in staff_chats():
+        msg = call("sendPhoto", chat_id=chat, photo=photo, caption=caption[:1000])
+        if msg:
+            db.link_staff_message(chat, msg["message_id"], client)
+
+
+def _client_photo_test(chat_id, msg):
+    """Режим проверки: «клиент» прислал фото букета. Бот не видит картинок — пересылаем флористу,
+    а клиенту отвечаем по-человечески, без выдуманных названий и цен."""
+    client = f"tg:{chat_id}"
+    caption = (msg.get("caption") or "").strip()
+    file_id = msg["photo"][-1]["file_id"]  # самое крупное фото
+    db.add_message(client, "user", "[клиент прислал фото букета]" + (f": {caption}" if caption else ""))
+    reply = "Секундочку, гляну по этому букету 🌸 Уточню наличие и цену — и всё оформим."
+    send(chat_id, reply)
+    db.add_message(client, "assistant", reply)
+    staff_note = (f"📸 Клиент прислал фото букета (🧪 тест, Telegram {chat_id}).\n"
+                  + (f"Подпись клиента: «{caption}»\n" if caption else "")
+                  + "Посмотрите фото и ответьте на это сообщение с ценой/наличием — бот передаст клиенту.")
+    notify_staff_photo(client, file_id, staff_note)
+
+
 def staff_chats():
     if config.TELEGRAM_ORDERS_CHAT:
         return [config.TELEGRAM_ORDERS_CHAT]
@@ -100,6 +125,12 @@ def _handle(msg, deliver):
         if not text:
             return
         send(chat_id, f"🎤 Распознал: «{text}»")
+
+    # Клиент прислал фото букета (режим проверки) — бот не видит картинок, отдаём флористу.
+    if (msg.get("photo") and db.is_test_mode(chat_id)
+            and not msg.get("reply_to_message") and not text.startswith("/")):
+        _client_photo_test(chat_id, msg)
+        return
 
     # Стикер / фото / гифка и т.п. без текста — в режиме проверки не роняем разговор, а передаём боту пометку
     if not text and db.is_test_mode(chat_id) and any(msg.get(k) for k in
