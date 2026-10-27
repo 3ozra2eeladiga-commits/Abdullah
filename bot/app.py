@@ -49,29 +49,43 @@ def _label(client):
 def _format_order(order_id, client, reply):
     o = reply.order
     if not o:
-        return f"🌸 НОВЫЙ ЗАКАЗ №{order_id}\n{_label(client)}\n\n{reply.order_raw}"
-    lines = [f"🌸 НОВЫЙ ЗАКАЗ №{order_id}", _label(client), ""]
+        # JSON не распознался — показываем аккуратно, без «сырого кода»
+        return (f"🌸 НОВЫЙ ЗАКАЗ №{order_id}\n{_label(client)}\n\n"
+                "⚠️ Заказ не распознался автоматически. Детали — в переписке с клиентом.\n"
+                "Ответьте на это сообщение, чтобы написать клиенту.")
+
+    def val(x):
+        return str(x).strip() if x not in (None, "", "—") else "—"
+
+    pickup = o.get("получение") == "самовывоз"
+    lines = [f"🌸 НОВЫЙ ЗАКАЗ №{order_id}", _label(client), "━━━━━━━━━━━━━━", "🛍 ТОВАР:"]
     for it in o.get("товары", []):
         qty = it.get("кол-во", 1)
         each = it.get("цена_за_шт") or it.get("цена")
         total = it.get("сумма") or (each * qty if isinstance(each, (int, float)) else each)
-        lines.append(f"• {it.get('название')} × {qty} — {total} ₽ [{it.get('код', '')}]")
+        lines.append(f"   • {val(it.get('название'))} × {qty} = {val(total)} ₽")
     if o.get("упаковка"):
-        lines.append(f"Упаковка: {o['упаковка']}")
+        lines.append(f"   🎀 Упаковка: {val(o['упаковка'])}")
+    lines.append(f"   💰 Сумма товаров: {val(o.get('сумма_товаров'))} ₽")
+    lines.append("")
+    when = f"{val(o.get('дата'))}, {val(o.get('время'))}"
+    lines.append(f"🕒 Когда: {when}")
+    if pickup:
+        lines.append(f"🏪 Самовывоз — {val(o.get('город'))}, {val(o.get('адрес'))}")
+    else:
+        lines.append(f"🚗 Доставка — {val(o.get('город'))}, {val(o.get('адрес'))}")
+        lines.append(f"   стоимость доставки: {val(o.get('доставка_цена'))}")
     lines += [
-        f"Сумма товаров: {o.get('сумма_товаров')} ₽",
-        f"Доставка: {o.get('доставка_цена') if o.get('получение') != 'самовывоз' else 'самовывоз'}",
-        f"Когда: {o.get('дата')} {o.get('время')}",
-        f"Город: {o.get('город') or '—'}",
-        f"Получение: {o.get('получение')}  {o.get('адрес') or ''}",
-        f"Заказчик: {o.get('заказчик')}",
-        f"Получатель: {o.get('получатель')}",
+        "",
+        f"👤 Заказчик: {val(o.get('заказчик'))}",
+        f"🎁 Получатель: {val(o.get('получатель'))}",
     ]
     if o.get("открытка"):
-        lines.append(f"Открытка: {o['открытка']}")
+        lines.append(f"✉️ Открытка: {val(o['открытка'])}")
     if o.get("комментарий"):
-        lines.append(f"Комментарий: {o['комментарий']}")
-    lines += ["", "👉 Отправьте клиенту ссылку на оплату и подтвердите доставку.",
+        lines.append(f"📝 Комментарий: {val(o['комментарий'])}")
+    lines += ["━━━━━━━━━━━━━━",
+              "👉 Отправьте клиенту ссылку на оплату и подтвердите заказ.",
               "Ответьте на это сообщение — текст уйдёт клиенту."]
     return "\n".join(lines)
 

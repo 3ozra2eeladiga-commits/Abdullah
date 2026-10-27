@@ -76,7 +76,9 @@ RULES = """Ты — флорист цветочного магазина и пе
    - Настоящий город доставки (куда везём) запомни и запиши потом в заказ, даже если каталог — другого города.
    - Совсем далёкий город (не КМВ) — уточни у коллег через [ВОПРОС].
    Пока магазин-каталог не выбран — НЕ предлагай конкретные букеты, сначала определись с городом.
-2) ДАТА. Узнай, на какую дату и время нужны цветы.
+2) ДАТА И ТОЧНОЕ ВРЕМЯ. Узнай дату и ТОЧНОЕ время. Если клиент ответил размыто («после обеда», «вечером»,
+   «днём») — вежливо уточни конкретный час или интервал: «А к какому часу удобно? Например, к 14:00 🕒».
+   «Как можно скорее / срочно» — это нормально, уточнять не нужно.
 3) ПОЛУЧЕНИЕ. Спроси: доставка или самовывоз. При самовывозе пришли адреса магазинов города и часы работы.
 4) ПОВОД И ПОЖЕЛАНИЯ. Прежде чем показывать букеты, узнай пожелания клиента (задавай по 1–2 вопроса за раз,
    не всё сразу, по-человечески): повод; бюджет; цветовая гамма; состав — что хочется (просто розы, что-то
@@ -211,6 +213,18 @@ def _phone_digits(s):
     return re.sub(r"\D", "", s or "")
 
 
+def _time_is_vague(t):
+    """True, если время нечёткое («после обеда», «вечером»). ASAP и конкретный час — ок."""
+    t = (t or "").strip().lower()
+    if not t:
+        return True
+    if re.search(r"как можно скор|срочн|сейчас|асап|поскорее", t):
+        return False
+    if re.search(r"\d{1,2}[:.\s-]?\d{0,2}", t):  # есть цифры времени (14:00, к 14, 14-16)
+        return False
+    return True  # «после обеда», «вечером», «днём», «утром», «попозже» и т.п.
+
+
 def _phone_was_given(order_value, client_text):
     """Телефон из заказа должен реально встречаться в сообщениях клиента (а не быть выдуман ИИ)."""
     digits = _phone_digits(order_value)
@@ -227,6 +241,8 @@ def _order_missing(o, client_text):
     client_text — всё, что писал клиент (чтобы ловить выдуманные ИИ телефоны)."""
     if o.get("получение") == "доставка" and len((o.get("адрес") or "").strip()) < 6:
         return "Подскажите, пожалуйста, точный адрес доставки: город, улица, дом, квартира 📍"
+    if _time_is_vague(o.get("время")):
+        return "Подскажите, пожалуйста, точное время — к которому часу нужен букет? (например, к 14:00) 🕒"
     if not (o.get("заказчик") or "").strip():
         return "Как вас зовут (фамилия и имя)? И ваш телефон для связи."
     if not _phone_was_given(o.get("заказчик"), client_text):
@@ -244,6 +260,22 @@ FAKE_TURN_RE = re.compile(
 )
 # Своя подпись в начале строки («Алина:», «А:», «Асси:», «Бот:») — убираем.
 SELF_LABEL_RE = re.compile(r"^\s*(?:алина|асси|ассистент|бот|флорист|оператор|а|менеджер)\s*[:：]\s*", re.I)
+
+
+def _parse_order_json(s):
+    """Разбирает JSON заказа, терпимо к типичным огрехам ИИ (лишние запятые, текст вокруг)."""
+    for candidate in (s, s[s.find("{"): s.rfind("}") + 1] if "{" in s and "}" in s else s):
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+    fixed = re.sub(r",\s*([}\]])", r"\1", s)  # убрать висящие запятые
+    fixed = fixed[fixed.find("{"): fixed.rfind("}") + 1] if "{" in fixed else fixed
+    try:
+        return json.loads(fixed)
+    except json.JSONDecodeError:
+        log.warning("Не удалось разобрать заказ: %s", s[:300])
+        return None
 
 
 def _cut_hallucination(raw):
@@ -317,10 +349,7 @@ def parse(raw, city=None):
     m = ORDER_RE.search(raw)
     if m:
         reply.order_raw = m.group(1).strip()
-        try:
-            reply.order = json.loads(reply.order_raw)
-        except json.JSONDecodeError:
-            log.warning("Не удалось разобрать заказ: %s", reply.order_raw)
+        reply.order = _parse_order_json(reply.order_raw)
     m = QUESTION_RE.search(raw)
     if m:
         reply.question = m.group(1).strip()
