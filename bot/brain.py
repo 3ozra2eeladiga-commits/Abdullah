@@ -398,6 +398,21 @@ def respond(client, incoming, from_staff=False):
         db.set_city(client, reply.city)
         city = reply.city
 
+    # В заказе берём настоящие название и цену товара из каталога по коду (чтобы ИИ не подменил, как «тюльпан»).
+    if reply.order and isinstance(reply.order.get("товары"), list):
+        for it in reply.order["товары"]:
+            code = (it.get("код") or "").strip().lower()
+            real = catalog.get(code, city) if code else None
+            if real:
+                it["название"] = real["title"]
+                it["цена_за_шт"] = real["price"]
+                qty = it.get("кол-во") or 1
+                it["сумма"] = real["price"] * qty if isinstance(qty, (int, float)) else real["price"]
+        try:
+            reply.order["сумма_товаров"] = sum(int(x.get("сумма") or 0) for x in reply.order["товары"])
+        except (TypeError, ValueError):
+            pass
+
     # Не даём оформить заказ без адреса (при доставке), телефонов и имён — вместо заказа просим недостающее.
     if reply.order:
         client_text = " ".join(m["content"] for m in history if m["role"] == "user")

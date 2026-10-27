@@ -100,8 +100,21 @@ def _claude(system, messages):
 PROVIDERS = {"yandex": _yandex, "gigachat": _gigachat, "claude": _claude}
 
 
-def complete(system, messages):
+def complete(system, messages, attempts=3):
+    """Спрашивает ИИ. При временной ошибке (сеть, 429, 5xx, пустой ответ) повторяет попытку,
+    чтобы разговор с клиентом не прерывался из-за случайного сбоя."""
     fn = PROVIDERS.get(config.LLM_PROVIDER)
     if fn is None:
         raise ValueError(f"Неизвестный LLM_PROVIDER: {config.LLM_PROVIDER}")
-    return fn(system, messages)
+    last_error = None
+    for i in range(attempts):
+        try:
+            text = fn(system, messages)
+            if text and text.strip():
+                return text
+            last_error = RuntimeError("пустой ответ ИИ")
+        except Exception as e:
+            last_error = e
+            log.warning("ИИ не ответил (попытка %d/%d): %s", i + 1, attempts, e)
+        time.sleep(1.5 * (i + 1))  # 1.5с, 3с — короткая пауза перед повтором
+    raise last_error
