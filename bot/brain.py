@@ -282,6 +282,22 @@ def _picked_from_site(text, city):
     return out
 
 
+def _picked_from_caption(text, city):
+    """Клиент ответил (reply) на фото букета — в тексте есть его подпись (название). Находим товар по названию.
+    Берём самое длинное совпавшее название (оно и есть подпись фото), чтобы не цепляться за короткие обрывки."""
+    t = (text or "").lower()
+    cc = catalog.get_city(city)
+    if not cc:
+        return []
+    best = None
+    for it in cc.by_code.values():
+        title = it["title"].lower()
+        if len(title) >= 6 and it["images"] and title in t:
+            if best is None or len(title) > len(best["title"]):
+                best = it
+    return [best] if best else []
+
+
 # Цветы: каноничное имя -> регулярка словоформ (для поиска и в сообщении клиента, и в названиях товаров).
 # Осторожно с ложными совпадениями: «роз» не должно ловить «розовый».
 FLOWERS = {
@@ -583,7 +599,8 @@ def respond(client, incoming, from_staff=False):
             db.set_city(client, city)
 
     # Букет, выбранный клиентом: по номеру (№600) или по ссылке с сайта (кнопка «Купить в TELEGRAM»).
-    picked = (_picked_by_number(incoming, city) + _picked_from_site(incoming, city)) if not from_staff else []
+    picked = ((_picked_by_number(incoming, city) + _picked_from_site(incoming, city)
+               + _picked_from_caption(incoming, city)) if not from_staff else [])
     _seen = set()
     picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
     wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
