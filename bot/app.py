@@ -4,6 +4,8 @@
 """
 import json
 import logging
+import os
+import subprocess
 import sys
 import threading
 from collections import defaultdict
@@ -16,6 +18,19 @@ from .catalog import catalog
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("flowerbot")
+
+
+def _version():
+    """Короткий хэш текущего коммита — чтобы видеть, какая версия кода реально запущена на сервере."""
+    try:
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return subprocess.check_output(["git", "-C", root, "log", "-1", "--format=%h %s"],
+                                       text=True, timeout=5).strip()
+    except Exception:
+        return "неизвестно"
+
+
+VERSION = _version()
 
 app = Flask(__name__)
 _client_locks = defaultdict(threading.Lock)
@@ -217,7 +232,7 @@ def image(code):
 @app.get("/")
 def health():
     by_city = ", ".join(f"{name}: {len(c.by_code)}" for name, c in catalog.by_city.items())
-    return f"Бот работает. Товаров в каталоге — {by_city}"
+    return f"Бот работает. Версия: {VERSION}\nТоваров в каталоге — {by_city}"
 
 
 def _disable_windows_quick_edit():
