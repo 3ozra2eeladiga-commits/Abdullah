@@ -47,6 +47,17 @@ def _label(client):
             "tg": f"🧪 тестовый клиент (Telegram {cid})"}.get(kind, cid)
 
 
+def _order_ready(o):
+    """Последняя проверка перед отправкой флористу: все ключевые поля на месте.
+    Независимая страховка — даже если где-то в логике ошибка, неполный заказ флористу не уйдёт."""
+    if not isinstance(o, dict) or not o.get("товары"):
+        return False
+    need = ["заказчик", "получатель", "дата", "время"]
+    if o.get("получение") == "доставка":
+        need.append("адрес")
+    return all(str(o.get(k) or "").strip() not in ("", "—") for k in need)
+
+
 def _format_order(order_id, client, reply):
     o = reply.order
     if not o:
@@ -117,9 +128,12 @@ def deliver(client, text, from_staff=False, quote=""):
         for item in reply.photos:
             _send_photo(client, item)
 
-        if reply.order or reply.order_raw:
-            order_id = db.save_order(client, reply.order or {"raw": reply.order_raw})
+        # Флористу заказ уходит ТОЛЬКО если он полностью собран (последняя защита, независимо от brain).
+        if reply.order and _order_ready(reply.order):
+            order_id = db.save_order(client, reply.order)
             telegram_bot.notify_staff(client, _format_order(order_id, client, reply))
+        elif reply.order or reply.order_raw:
+            log.warning("Неполный заказ НЕ отправлен флористу (%s): %s", client, reply.order or reply.order_raw)
         if reply.question:
             telegram_bot.notify_staff(client, f"❓ ВОПРОС ОТ БОТА\n{_label(client)}\n\n{reply.question}\n\n"
                                               "Ответьте на это сообщение — бот передаст ответ клиенту.")
