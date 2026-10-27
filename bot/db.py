@@ -49,6 +49,10 @@ _conn.executescript(
         key TEXT PRIMARY KEY,         -- разные настройки бота (например, id бизнес-подключения Telegram)
         value TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS pending_orders (
+        client TEXT PRIMARY KEY,      -- собранный заказ, ждёт подтверждения клиента перед отправкой флористу
+        data TEXT NOT NULL
+    );
     """
 )
 
@@ -124,6 +128,7 @@ def is_test_mode(chat):
 def clear_history(client):
     _exec("DELETE FROM messages WHERE client=?", (client,))
     _exec("DELETE FROM client_city WHERE client=?", (client,))
+    _exec("DELETE FROM pending_orders WHERE client=?", (client,))
 
 
 def set_city(client, city):
@@ -142,3 +147,17 @@ def set_setting(key, value):
 def get_setting(key, default=None):
     row = _exec("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
     return row["value"] if row else default
+
+
+def set_pending_order(client, data):
+    """Собранный заказ, который ждёт подтверждения клиента перед отправкой флористу."""
+    _exec("INSERT OR REPLACE INTO pending_orders VALUES (?,?)", (client, json.dumps(data, ensure_ascii=False)))
+
+
+def get_pending_order(client):
+    row = _exec("SELECT data FROM pending_orders WHERE client=?", (client,)).fetchone()
+    return json.loads(row["data"]) if row else None
+
+
+def clear_pending_order(client):
+    _exec("DELETE FROM pending_orders WHERE client=?", (client,))
