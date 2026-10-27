@@ -53,6 +53,12 @@ _conn.executescript(
         client TEXT PRIMARY KEY,      -- собранный заказ, ждёт подтверждения клиента перед отправкой флористу
         data TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS photo_msgs (
+        tg_chat TEXT NOT NULL,        -- какому букету (code) соответствует отправленное фото —
+        tg_message INTEGER NOT NULL,  -- чтобы по ответу (reply) на фото точно знать выбранный букет
+        code TEXT NOT NULL,
+        PRIMARY KEY (tg_chat, tg_message)
+    );
     """
 )
 
@@ -161,3 +167,14 @@ def get_pending_order(client):
 
 def clear_pending_order(client):
     _exec("DELETE FROM pending_orders WHERE client=?", (client,))
+
+
+def link_photo(tg_chat, tg_message, code):
+    """Запоминаем, какому букету (code) соответствует отправленное фото (по id сообщения Telegram)."""
+    _exec("INSERT OR REPLACE INTO photo_msgs VALUES (?,?,?)", (str(tg_chat), tg_message, code))
+
+
+def photo_code(tg_chat, tg_message):
+    row = _exec("SELECT code FROM photo_msgs WHERE tg_chat=? AND tg_message=?",
+                (str(tg_chat), tg_message)).fetchone()
+    return row["code"] if row else None

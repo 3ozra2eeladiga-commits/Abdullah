@@ -16,6 +16,7 @@ import time
 import requests
 
 from . import config, db, images, speech
+from .catalog import catalog
 
 log = logging.getLogger(__name__)
 
@@ -41,10 +42,14 @@ def send_photo(chat_id, item, **extra):
         caption = f"{item['title']} — {item['price']} ₽"
         if images.Image is None:
             # Без pillow фото остаётся в .webp — отдаём Telegram ссылку, он скачает сам
-            return call("sendPhoto", chat_id=chat_id, photo=item["images"][0], caption=caption, **extra)
-        data = images.jpeg_bytes(item["images"][0])
-        return call("sendPhoto", files={"photo": ("photo.jpg", data, "image/jpeg")},
-                    chat_id=chat_id, caption=caption, **extra)
+            msg = call("sendPhoto", chat_id=chat_id, photo=item["images"][0], caption=caption, **extra)
+        else:
+            data = images.jpeg_bytes(item["images"][0])
+            msg = call("sendPhoto", files={"photo": ("photo.jpg", data, "image/jpeg")},
+                       chat_id=chat_id, caption=caption, **extra)
+        if msg:
+            db.link_photo(chat_id, msg["message_id"], item["code"])  # запоминаем: это фото = этот букет
+        return msg
     except Exception as e:
         log.warning("Не удалось отправить фото %s: %s", item["code"], e)
 
@@ -147,11 +152,19 @@ def _recognize_voice(voice):
     return text, ""
 
 
-def _quoted_ref(msg):
-    """Если клиент ответил (reply) на фото/сообщение — возвращает его текст/подпись (напр. «Букет №889 …»),
-    чтобы бот понял, о каком именно букете речь («такой, но побольше»). Передаётся в respond отдельно
-    (как quote), а НЕ подмешивается в текст клиента, чтобы не путать ИИ."""
-    r = msg.get("reply_to_message") or {}
+def _quoted_ref(msg, chat_id=None):
+    """Если клиент ответил (reply) на фото/сообщение — возвращает ссылку на букет (его подпись), чтобы бот понял,
+    о каком именно букете речь. Сначала НАДЁЖНО: по id нашего фото находим точный букет (не зависим от того,
+    отдал ли Telegram подпись). Иначе — берём подпись/текст из ответа. Передаётся в respond отдельно (quote)."""
+    r = msg.get("reply_to_message")
+    if not r:
+        return ""
+    if chat_id is not None:
+        code = db.photo_code(chat_id, r.get("message_id"))
+        if code:
+            it = catalog.get(code)
+            if it:
+                return f"{it['title']} — {it['price']} ₽"
     return (r.get("caption") or r.get("text") or "").strip()
 
 
@@ -237,7 +250,7 @@ def _handle(msg, deliver):
             return
 
     if db.is_test_mode(chat_id) and text:
-        deliver(f"tg:{chat_id}", text, from_staff=False, quote=_quoted_ref(msg))
+        deliver(f"tg:{chat_id}", text, from_staff=False, quote=_quoted_ref(msg, chat_id))
         return
 
     send(chat_id, "Чтобы ответить клиенту, нажмите «Ответить» на сообщении бота. Проверить бота — /test")
@@ -288,7 +301,7 @@ def _handle_business(update, deliver):
         _client_photo(client, msg)
         return
     if text:
-        deliver(client, text, quote=_quoted_ref(msg))
+        deliver(client, text, quote=_quoted_ref(msg, chat_id))
 
 
 def run_polling(deliver):
