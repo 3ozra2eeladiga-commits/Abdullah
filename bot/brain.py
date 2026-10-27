@@ -602,6 +602,12 @@ def respond(client, incoming, from_staff=False):
 
     history = db.history(client)
     raw = llm.complete(system_prompt(history, city, picked, flower_block), _merge_roles(history))
+    # ИИ выдал шаблонный отказ (ложный фильтр YandexGPT на безобидную просьбу) — не пугаем клиента, переспрашиваем.
+    if llm.is_refusal(raw):
+        if re.search(r"больше|крупнее|пышнее|объёмн|дороже|меньше|дешевле|бюджет", incoming or "", re.I):
+            raw = "Конечно 🌸 На какую сумму ориентируетесь? Подберу вариант под неё."
+        else:
+            raw = "Секундочку 🌸 Уточните, пожалуйста, чуть подробнее — и я помогу подобрать."
     db.add_message(client, "assistant", raw)
     reply = parse(raw, city)
     if reply.city and reply.city in catalog.city_names and reply.city != city:

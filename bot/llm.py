@@ -6,6 +6,7 @@
 и возвращают текст ответа.
 """
 import logging
+import re
 import time
 import uuid
 
@@ -99,22 +100,42 @@ def _claude(system, messages):
 
 PROVIDERS = {"yandex": _yandex, "gigachat": _gigachat, "claude": _claude}
 
+# Шаблонные «отказы» ИИ (чаще всего ложное срабатывание фильтра YandexGPT на безобидную просьбу).
+REFUSAL_RE = re.compile(
+    r"не могу обсуждать эту тему|не могу обсуждать данную тему|не могу ответить на (?:этот|ваш) вопрос|"
+    r"давайте (?:сменим тему|поговорим о ч[её]м-?нибудь|обсудим что-?нибудь)|не могу помочь с (?:этим|этой)|"
+    r"эта тема выходит за рамки|не хоч[уе]тся (?:говорить|обсуждать)|не могу поддержать (?:эту|этот)|"
+    r"как языковая модель|я (?:всего лишь )?(?:бот|ии|искусственный интеллект)",
+    re.I,
+)
+
+
+def is_refusal(text):
+    return bool(text) and bool(REFUSAL_RE.search(text))
+
 
 def complete(system, messages, attempts=3):
-    """Спрашивает ИИ. При временной ошибке (сеть, 429, 5xx, пустой ответ) повторяет попытку,
-    чтобы разговор с клиентом не прерывался из-за случайного сбоя."""
+    """Спрашивает ИИ. При временной ошибке (сеть, 429, 5xx, пустой ответ или шаблонный отказ) повторяет
+    попытку, чтобы разговор с клиентом не прерывался из-за случайного сбоя или ложного фильтра."""
     fn = PROVIDERS.get(config.LLM_PROVIDER)
     if fn is None:
         raise ValueError(f"Неизвестный LLM_PROVIDER: {config.LLM_PROVIDER}")
     last_error = None
+    last_refusal = ""
     for i in range(attempts):
         try:
             text = fn(system, messages)
             if text and text.strip():
-                return text
-            last_error = RuntimeError("пустой ответ ИИ")
+                if not is_refusal(text):
+                    return text
+                last_refusal = text  # отказ фильтра — пробуем ещё раз
+                last_error = RuntimeError("ИИ отказался отвечать (фильтр)")
+            else:
+                last_error = RuntimeError("пустой ответ ИИ")
         except Exception as e:
             last_error = e
             log.warning("ИИ не ответил (попытка %d/%d): %s", i + 1, attempts, e)
         time.sleep(1.5 * (i + 1))  # 1.5с, 3с — короткая пауза перед повтором
+    if last_refusal:
+        return last_refusal  # все попытки — отказ; brain заменит его на мягкий переспрос
     raise last_error
