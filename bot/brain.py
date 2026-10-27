@@ -640,7 +640,11 @@ def respond(client, incoming, from_staff=False, quote=""):
     picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
     wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
-    size_change = bool(picked) and bool(SIZE_CHANGE_RE.search(incoming or ""))
+    # Срабатывает и когда выбран букет (picked), и когда клиент пишет «этот/его/такой ... побольше» без reply.
+    # НО не путаем с «покажи побольше ВАРИАНТОВ» — там как раз нужно показать.
+    size_change = (bool(SIZE_CHANGE_RE.search(incoming or ""))
+                   and not re.search(r"вариант|ещё|еще|друг|показ|покаж|выбор", incoming or "", re.I)
+                   and (bool(picked) or bool(re.search(r"\bэтот\b|\bэту\b|\bэто\b|\bтакой\b|\bтакую\b|\bего\b|\bеё\b|\bее\b", incoming or "", re.I))))
     # Клиент назвал конкретный цветок (лилии, каллы...) — ищем его СТРОГО в каталоге, не даём ИИ выдумывать.
     flower_block, flower_photos, flower_absent = "", [], False
     flowers = _flowers_requested(incoming) if (not from_staff and city and not picked) else []
@@ -757,10 +761,12 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     # Если бот перечислил товары с ценами (есть «₽») и это не этап заказа — это показ вариантов.
     # Тогда код сам прикладывает фото (минимум 5), даже если модель забыла метки [ФОТО] или прислала только текст.
-    offering = (("₽" in (reply.text or "")) or force_options or wants_photos) and not is_order_step and not picked
+    offering = (("₽" in (reply.text or "")) or force_options or wants_photos) \
+        and not is_order_step and not picked and not size_change
     city_cat = catalog.get_city(city)
-    # Для режима «конкретный цветок» общий добор не нужен — там фото уже строго из каталога по цветку.
-    if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS and not flowers:
+    # Для режима «конкретный цветок» и «сделать больше/меньше» общий добор фото не нужен.
+    if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS \
+            and not flowers and not size_change:
         query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])
         # Добираем ТОЛЬКО букеты (не поштучные розы по 250₽, не открытки с котиками), кроме случая,
         # когда клиент ПРЯМО СЕЙЧАС просит именно поштучно/подарки. Смотрим текущее сообщение, а не всю историю,
