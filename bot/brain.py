@@ -98,9 +98,12 @@ RULES = """Ты — флорист цветочного магазина и пе
    Подбирай под пожелания (бюджет, гамма, состав). «Недорого/бюджетно» — это примерно до 3000 ₽.
    Если клиенту не подошло или просит ещё — пришли ЕЩЁ 5 ДРУГИХ вариантов с фото. Так можно несколько раз.
 6) ССЫЛКА НА КАТАЛОГ. Каждый раз, когда показываешь варианты, в конце добавляй ссылку на каталог города (дана
-   ниже, «Ссылка на каталог»), например: «А ещё весь каталог можно посмотреть тут: <ссылка> 🌸 Выбирайте, а
-   когда приглянётся — закажем по телефону, или пришлите сюда фото понравившегося букета, и я быстро оформлю.»
+   ниже, «Ссылка на каталог»), например: «А ещё весь каталог можно посмотреть тут: <ссылка> 🌸 Когда приглянётся
+   букет — просто напишите мне его НОМЕР (он указан на сайте под фото, например №600), и я сразу его найду и всё
+   оформлю. Скриншот слать не нужно — достаточно номера.»
    Вставляй ТОЛЬКО ссылку, данную ниже, и только для правильного города. Чужих ссылок не придумывай.
+   Если клиент назвал номер букета (№600 и т.п.) — покажи именно этот букет с ценой и оформляй по нему, не
+   предлагай вместо него другое.
 
 МОЖНО МЕНЯТЬ БУКЕТ
 - Клиент может захотеть уменьшить или увеличить букет (например, букет за 4000, а он хочет дешевле).
@@ -211,6 +214,25 @@ class Reply:
 
 CODE_RE = re.compile(r"\b([0-9a-f]{6})\b")
 MIN_OPTIONS = 5  # сколько минимум букетов показывать, когда бот предлагает варианты
+# Клиент называет букет его номером с сайта: «№600», «номер 600», «букет №740».
+NUM_STRONG_RE = re.compile(r"(?:№|#|\bномер\w*)\s*№?\s*(\d{2,4})", re.I)
+
+
+def _picked_by_number(text, city):
+    """Если клиент назвал номер(а) букета с сайта (№600) — находим эти товары в каталоге."""
+    t = text or ""
+    strong = [m.group(1) for m in NUM_STRONG_RE.finditer(t)]
+    if not strong:
+        return []
+    # Раз клиент явно перечисляет номера — добираем и остальные числа из того же сообщения («№600 и 740»).
+    nums = strong + [m.group(1) for m in re.finditer(r"\b(\d{2,4})\b", t)]
+    out, seen = [], set()
+    for n in nums:
+        it = catalog.find_by_number(n, city)
+        if it and it["code"] not in seen:
+            seen.add(it["code"])
+            out.append(it)
+    return out
 # «Вопрос флористу», который на самом деле про подбор букетов — это работа бота, а не коллег.
 FAKE_QUESTION_RE = re.compile(
     r"предлож|показа|подобра|вариант|какие?\s+(?:роз|букет|цвет|композ|тюльпан|варианты)|под бюджет|что есть",
@@ -302,7 +324,7 @@ def _cut_hallucination(raw):
     return raw.strip()
 
 
-def system_prompt(history, city):
+def system_prompt(history, city, picked=()):
     catalog.ensure_fresh()
     shop_info = Path(config.SHOP_INFO_FILE).read_text(encoding="utf-8")
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=3)))
@@ -320,12 +342,20 @@ def system_prompt(history, city):
     query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])
     discussed = {c for m in history if m["role"] == "assistant" for c in CODE_RE.findall(m["content"])}
     site = config.cities().get(city, "")
+    picked_block = ""
+    if picked:
+        lines = "\n".join(f"- [{it['code']}] {it['title']} — {it['price']} ₽" for it in picked)
+        picked_block = ("\n\n# КЛИЕНТ НАЗВАЛ НОМЕР БУКЕТА С САЙТА — ЭТО ЕГО ВЫБОР\n"
+                        "Подтверди выбор именно по этим товарам и переходи к оформлению. НЕ предлагай вместо них "
+                        "другое и НЕ проси прислать фото/скриншот — номер уже назван. В [ЗАКАЗ] поставь их код:\n"
+                        + lines)
     return (
         head
         + (f"# Ссылка на каталог ({city}): {site}\n\n" if site else "")
         + f"# КАТАЛОГ ГОРОДА: {city} (код — название — цена)\n"
         f"Предлагай только товары этого города. Нет подходящего — спроси подробнее (повод, цветы, бюджет).\n"
         f"{city_cat.relevant_text(query, discussed)}"
+        + picked_block
     )
 
 
@@ -400,8 +430,9 @@ def respond(client, incoming, from_staff=False):
         if city:
             db.set_city(client, city)
 
+    picked = _picked_by_number(incoming, city) if not from_staff else []
     history = db.history(client)
-    raw = llm.complete(system_prompt(history, city), _merge_roles(history))
+    raw = llm.complete(system_prompt(history, city, picked), _merge_roles(history))
     db.add_message(client, "assistant", raw)
     reply = parse(raw, city)
     if reply.city and reply.city in catalog.city_names and reply.city != city:
@@ -439,14 +470,19 @@ def respond(client, incoming, from_staff=False):
         reply.question = ""
         force_options = True
 
+    # Клиент назвал номер букета — показываем именно этот букет (и не добиваем до 5 «других вариантов»).
+    if picked and not reply.order:
+        chosen = {it["code"] for it in picked}
+        reply.photos = list(picked) + [p for p in reply.photos if p["code"] not in chosen]
+
     # На этапе оформления заказа (клиент уже выбрал) фото не нужны — убираем, чтобы не спамить.
     is_order_step = bool(ORDER_STEP_RE.search(reply.text or ""))
-    if reply.photos and is_order_step:
+    if reply.photos and is_order_step and not picked:
         reply.photos = []
 
     # Если бот перечислил товары с ценами (есть «₽») и это не этап заказа — это показ вариантов.
     # Тогда код сам прикладывает фото (минимум 5), даже если модель забыла метки [ФОТО] или прислала только текст.
-    offering = (("₽" in (reply.text or "")) or force_options) and not is_order_step
+    offering = (("₽" in (reply.text or "")) or force_options) and not is_order_step and not picked
     city_cat = catalog.get_city(city)
     if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS:
         query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])

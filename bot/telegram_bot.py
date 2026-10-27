@@ -65,7 +65,9 @@ def _client_photo_test(chat_id, msg):
     caption = (msg.get("caption") or "").strip()
     file_id = msg["photo"][-1]["file_id"]  # самое крупное фото
     db.add_message(client, "user", "[клиент прислал фото букета]" + (f": {caption}" if caption else ""))
-    reply = "Секундочку, гляну по этому букету 🌸 Уточню наличие и цену — и всё оформим."
+    reply = ("Спасибо 🌸 Если этот букет с нашего сайта — напишите, пожалуйста, его НОМЕР (он под фото, "
+             "например №600), и я сразу его найду и оформлю. А фото я на всякий случай уже передала "
+             "флористу — подберём точь-в-точь или похожее.")
     send(chat_id, reply)
     db.add_message(client, "assistant", reply)
     staff_note = (f"📸 Клиент прислал фото букета (🧪 тест, Telegram {chat_id}).\n"

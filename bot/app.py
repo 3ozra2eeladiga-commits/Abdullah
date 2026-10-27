@@ -136,7 +136,9 @@ def _handle_client_photos(client, image_urls, caption=""):
         if db.is_paused(client):
             return
         db.add_message(client, "user", "[клиент прислал фото букета]" + (f": {caption}" if caption else ""))
-        reply = "Секундочку, гляну по этому букету 🌸 Уточню наличие и цену — и всё оформим."
+        reply = ("Спасибо 🌸 Если этот букет с нашего сайта — напишите, пожалуйста, его НОМЕР (он под фото, "
+                 "например №600), и я сразу его найду и оформлю. А фото я на всякий случай уже передала "
+                 "флористу — подберём точь-в-точь или похожее.")
         _send_text(client, reply)
         db.add_message(client, "assistant", reply)
         staff_note = (f"📸 Клиент прислал фото букета ({_label(client)}).\n"

@@ -103,6 +103,18 @@ class Catalog:
     def get(self, code):
         return self.by_code.get(code.strip().lower())
 
+    def find_by_number(self, num):
+        """Товар по номеру с сайта (№600). Возвращает товар или None."""
+        target = str(num).strip().lstrip("№#").strip()
+        if not target.isdigit():
+            return None
+        pat = re.compile(r"№\s*0*" + re.escape(target) + r"\b")
+        with self._lock:
+            for it in self.by_code.values():
+                if pat.search(it["title"]):
+                    return it
+        return None
+
     @staticmethod
     def _line(it):
         line = f"[{it['code']}] {it['title']} — {it['price']} ₽"
@@ -305,6 +317,18 @@ class Catalogs:
             return self.by_city[city].get(code)
         for c in self.by_city.values():  # запасной поиск по всем городам
             it = c.get(code)
+            if it:
+                return it
+        return None
+
+    def find_by_number(self, num, city=None):
+        """Товар по номеру с сайта (№600) — сначала в каталоге нужного города."""
+        if city and city in self.by_city:
+            it = self.by_city[city].find_by_number(num)
+            if it:
+                return it
+        for c in self.by_city.values():
+            it = c.find_by_number(num)
             if it:
                 return it
         return None
