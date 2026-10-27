@@ -113,6 +113,22 @@ class Catalog:
                     return it
             return self.by_code.get(code)
 
+    def find_by_flower(self, pattern, limit=5):
+        """Товары с этим цветком в названии: (поштучные, букеты). Только в наличии и с фото."""
+        pieces, bouquets = [], []
+        with self._lock:
+            for name, items in self.sections:
+                is_piece = name == PIECE_SECTION
+                is_bouquet = name not in NON_BOUQUET
+                if not (is_piece or is_bouquet):
+                    continue
+                for it in items:
+                    if (it["stock"] is not None and it["stock"] <= 0) or not it["images"]:
+                        continue
+                    if pattern.search(it["title"].lower()):
+                        (pieces if is_piece else bouquets).append(it)
+        return pieces[:limit], bouquets[:limit]
+
     def find_by_number(self, num):
         """Товар по номеру с сайта (№600). Возвращает товар или None."""
         target = str(num).strip().lstrip("№#").strip()
@@ -242,6 +258,8 @@ ONLY_IF_ASKED = {"КОЛЛЕКЦИЯ: букеты невесты", "Расте�
 # Не букеты: при показе букетных вариантов код их не подмешивает (поштучные цветы, открытки, подарки, вазы, растения)
 NON_BOUQUET = {"Розы и цветы поштучно", "К букету: подарки, шары, игрушки",
                "Растения в горшках", "Для дома: вазы, декор"}
+# Раздел поштучных цветов (роза по 1 шт и т.п.)
+PIECE_SECTION = "Розы и цветы поштучно"
 # Если клиент не назвал ничего конкретного — показываем коллекцию и готовые (ИИ выберет по дате)
 DEFAULT_SECTIONS = {"ГОТОВЫЕ букеты — уже собраны (только если букет нужен сегодня или завтра)", "КОЛЛЕКЦИЯ: букеты в тренде", "КОЛЛЕКЦИЯ: яркие букеты «дофамины»"}
 
@@ -349,6 +367,18 @@ class Catalogs:
             if it:
                 return it
         return None
+
+    def find_by_flower(self, pattern, city=None, limit=5):
+        """(поштучные, букеты) с этим цветком — в каталоге нужного города."""
+        c = self.by_city.get(city) if city else None
+        if c:
+            return c.find_by_flower(pattern, limit)
+        pieces, bouquets = [], []
+        for c in self.by_city.values():
+            p, b = c.find_by_flower(pattern, limit)
+            pieces += p
+            bouquets += b
+        return pieces[:limit], bouquets[:limit]
 
     def find_by_id(self, item_id, city=None):
         """Товар по id из ссылки сайта (bukid) — сначала в каталоге нужного города."""

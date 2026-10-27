@@ -280,6 +280,54 @@ def _picked_from_site(text, city):
     return out
 
 
+# Цветы: каноничное имя -> регулярка словоформ (для поиска и в сообщении клиента, и в названиях товаров).
+# Осторожно с ложными совпадениями: «роз» не должно ловить «розовый».
+FLOWERS = {
+    "роза": r"\bроз(?:а|ы|у|е|ой)?\b|\bрозочк",
+    "лилия": r"\bлили[ияюейм]",
+    "калла": r"\bкалл[аыуеой]?",
+    "хризантема": r"\bхризантем",
+    "гвоздика": r"\bгвоздик",
+    "тюльпан": r"\bтюльпан",
+    "гербера": r"\bгербер",
+    "пион": r"\bпион(?!овид)",
+    "гортензия": r"\bгортензи",
+    "эустома": r"\bэустом",
+    "ромашка": r"\bромашк",
+    "альстромерия": r"\bальстр[оё]мери",
+    "ирис": r"\bирис",
+    "орхидея": r"\bорхиде",
+    "диантус": r"\bдиантус",
+    "протея": r"\bпроте[яи]",
+    "фрезия": r"\bфрези",
+    "ранункулюс": r"\bранункул",
+    "подсолнух": r"\bподсолн",
+    "мимоза": r"\bмимоз",
+    "маттиола": r"\bмат+иол",
+    "эвкалипт": r"\bэвкалипт",
+    "нарцисс": r"\bнарцисс",
+    "гиацинт": r"\bгиацинт",
+}
+FLOWERS = {k: re.compile(v, re.I) for k, v in FLOWERS.items()}
+
+
+_NEGATION_RE = re.compile(r"не\s+хоч|не\s+над|не\s+нуж|не\s+люб|без\s|кроме|никак|вместо|не\s+предлаг", re.I)
+
+
+def _flowers_requested(text):
+    """Какие цветы клиент назвал в сообщении (без тех, что с отрицанием «не хочу розы»)."""
+    t = (text or "").lower()
+    out = []
+    for name, pat in FLOWERS.items():
+        m = pat.search(t)
+        if not m:
+            continue
+        seg = re.split(r"[,.;!?]", t[:m.start()])[-1]  # часть фразы перед цветком (после последней запятой)
+        if not _NEGATION_RE.search(seg):
+            out.append((name, pat))
+    return out
+
+
 def _city_from_url(text):
     """Город по адресу сайта в сообщении: naromashke.ru → Пятигорск, mw.naromashke.ru → Минводы.
     Выбираем самый длинный совпавший хост (mw.naromashke.ru важнее naromashke.ru)."""
@@ -413,7 +461,7 @@ def _cut_hallucination(raw):
     return raw.strip()
 
 
-def system_prompt(history, city, picked=()):
+def system_prompt(history, city, picked=(), flower_block=""):
     catalog.ensure_fresh()
     shop_info = Path(config.SHOP_INFO_FILE).read_text(encoding="utf-8")
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=3)))
@@ -446,6 +494,7 @@ def system_prompt(history, city, picked=()):
         f"Предлагай только товары этого города. Нет подходящего — спроси подробнее (повод, цветы, бюджет).\n"
         f"{city_cat.relevant_text(query, discussed)}"
         + picked_block
+        + flower_block
     )
 
 
@@ -525,8 +574,34 @@ def respond(client, incoming, from_staff=False):
     _seen = set()
     picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
     wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
+    # Клиент назвал конкретный цветок (лилии, каллы...) — ищем его СТРОГО в каталоге, не даём ИИ выдумывать.
+    flower_block, flower_photos, flower_absent = "", [], False
+    flowers = _flowers_requested(incoming) if (not from_staff and city and not picked) else []
+    if flowers:
+        lines = []
+        for canon, pat in flowers:
+            pieces, bouquets = catalog.find_by_flower(pat, city)
+            if pieces:
+                flower_photos += pieces
+                lines.append(f"{canon.upper()}: ЕСТЬ поштучно — " +
+                             "; ".join(f"[{it['code']}] {it['title']} — {it['price']}₽" for it in pieces) +
+                             ". Предлагай именно их.")
+            elif bouquets:
+                flower_photos += bouquets
+                lines.append(f"{canon.upper()}: поштучно НЕТ, но есть БУКЕТЫ с ним — " +
+                             "; ".join(f"[{it['code']}] {it['title']} — {it['price']}₽" for it in bouquets) +
+                             f". Скажи, что отдельно (поштучно) {canon} нет, и предложи эти букеты с ним.")
+            else:
+                flower_absent = True
+                lines.append(f"{canon.upper()}: сейчас НЕТ в каталоге (ни поштучно, ни в букетах). Честно скажи, "
+                             f"что {canon} сейчас нет, и предложи популярные букеты из каталога или связь с флористом. "
+                             f"НЕ придумывай {canon} и не называй цены на него.")
+        flower_block = ("\n\n# КЛИЕНТ СПРАШИВАЕТ КОНКРЕТНЫЙ ЦВЕТОК — ДАННЫЕ ИЗ КАТАЛОГА (строго по ним!)\n"
+                        "Предлагай ТОЛЬКО то, что указано ниже. Если цветка нет — так и скажи, альтернативы бери "
+                        "из каталога. Ничего не выдумывай.\n" + "\n".join(lines))
+
     history = db.history(client)
-    raw = llm.complete(system_prompt(history, city, picked), _merge_roles(history))
+    raw = llm.complete(system_prompt(history, city, picked, flower_block), _merge_roles(history))
     db.add_message(client, "assistant", raw)
     reply = parse(raw, city)
     if reply.city and reply.city in catalog.city_names and reply.city != city:
@@ -585,6 +660,15 @@ def respond(client, incoming, from_staff=False):
         chosen = {it["code"] for it in picked}
         reply.photos = list(picked) + [p for p in reply.photos if p["code"] not in chosen]
 
+    # Клиент спросил конкретный цветок — показываем СТРОГО найденное в каталоге (а не что выдумал ИИ).
+    if flowers and not reply.order:
+        if flower_photos:
+            seen = set()
+            reply.photos = [x for x in flower_photos if not (x["code"] in seen or seen.add(x["code"]))][:MIN_OPTIONS]
+        elif flower_absent:   # цветка нет — показываем популярные букеты как альтернативу
+            cc = catalog.get_city(city)
+            reply.photos = cc.relevant_items("популярные букеты", limit=3, bouquets_only=True)[:3] if cc else []
+
     # Перечисление вариантов с ценами (3+ «₽») — это показ букетов, а НЕ этап оформления,
     # даже если в тексте есть слово «оформлю» (из подсказки про номер/ссылку). Иначе фото пропадали.
     is_variant_listing = (reply.text or "").count("₽") >= 3
@@ -596,7 +680,8 @@ def respond(client, incoming, from_staff=False):
     # Тогда код сам прикладывает фото (минимум 5), даже если модель забыла метки [ФОТО] или прислала только текст.
     offering = (("₽" in (reply.text or "")) or force_options or wants_photos) and not is_order_step and not picked
     city_cat = catalog.get_city(city)
-    if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS:
+    # Для режима «конкретный цветок» общий добор не нужен — там фото уже строго из каталога по цветку.
+    if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS and not flowers:
         query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])
         # Добираем ТОЛЬКО букеты (не поштучные розы по 250₽, не открытки с котиками), кроме случая,
         # когда клиент ПРЯМО СЕЙЧАС просит именно поштучно/подарки. Смотрим текущее сообщение, а не всю историю,
