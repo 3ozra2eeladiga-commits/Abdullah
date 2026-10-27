@@ -219,6 +219,8 @@ CODE_RE = re.compile(r"\b([0-9a-f]{6})\b")
 MIN_OPTIONS = 5  # сколько минимум букетов показывать, когда бот предлагает варианты
 # Клиент называет букет его номером с сайта: «№600», «номер 600», «букет №740».
 NUM_STRONG_RE = re.compile(r"(?:№|#|\bномер\w*)\s*№?\s*(\d{2,4})", re.I)
+# Кнопка «Купить в TELEGRAM» на сайте присылает «…со страницы https://…/item?bukid=item-<uuid>».
+SITE_ITEM_RE = re.compile(r"bukid=(?:item-)?([0-9a-f]{8}(?:-?[0-9a-f]{4}){3}-?[0-9a-f]{12})", re.I)
 
 
 def _picked_by_number(text, city):
@@ -236,6 +238,29 @@ def _picked_by_number(text, city):
             seen.add(it["code"])
             out.append(it)
     return out
+
+
+def _picked_from_site(text, city):
+    """Клиент пришёл с сайта по кнопке «Купить в TELEGRAM» — в сообщении ссылка на товар. Находим его."""
+    out, seen = [], set()
+    for m in SITE_ITEM_RE.finditer(text or ""):
+        it = catalog.find_by_id(m.group(1), city)
+        if it and it["code"] not in seen:
+            seen.add(it["code"])
+            out.append(it)
+    return out
+
+
+def _city_from_url(text):
+    """Город по адресу сайта в сообщении: naromashke.ru → Пятигорск, mw.naromashke.ru → Минводы.
+    Выбираем самый длинный совпавший хост (mw.naromashke.ru важнее naromashke.ru)."""
+    t = (text or "").lower()
+    best = None
+    for name, url in config.cities().items():
+        host = re.sub(r"^https?://", "", url).rstrip("/").lower()
+        if host and host in t and (best is None or len(host) > len(best[1])):
+            best = (name, host)
+    return best[0] if best else None
 # «Вопрос флористу», который на самом деле про подбор букетов — это работа бота, а не коллег.
 FAKE_QUESTION_RE = re.compile(
     r"предлож|показа|подобра|вариант|какие?\s+(?:роз|букет|цвет|композ|тюльпан|варианты)|под бюджет|что есть",
@@ -351,9 +376,10 @@ def system_prompt(history, city, picked=()):
     picked_block = ""
     if picked:
         lines = "\n".join(f"- [{it['code']}] {it['title']} — {it['price']} ₽" for it in picked)
-        picked_block = ("\n\n# КЛИЕНТ НАЗВАЛ НОМЕР БУКЕТА С САЙТА — ЭТО ЕГО ВЫБОР\n"
-                        "Подтверди выбор именно по этим товарам и переходи к оформлению. НЕ предлагай вместо них "
-                        "другое и НЕ проси прислать фото/скриншот — номер уже назван. В [ЗАКАЗ] поставь их код:\n"
+        picked_block = ("\n\n# КЛИЕНТ ВЫБРАЛ БУКЕТ С САЙТА (по номеру или по кнопке «Купить в TELEGRAM») — ЭТО ЕГО ВЫБОР\n"
+                        "Поздоровайся, подтверди именно эти товары (название и цена) и переходи к оформлению: "
+                        "спроси недостающее (город, дата/время, доставка/самовывоз, открытка). НЕ предлагай вместо "
+                        "них другое и НЕ проси фото/скриншот/номер — букет уже выбран. В [ЗАКАЗ] поставь их код:\n"
                         + lines)
     return (
         head
@@ -431,12 +457,15 @@ def respond(client, incoming, from_staff=False):
     db.add_message(client, "user", content)
 
     city = db.get_city(client)
-    if not city and not from_staff:  # клиент мог сам назвать город в сообщении
-        city = catalog.match_city(incoming)
+    if not city and not from_staff:  # клиент мог сам назвать город или прийти по ссылке с сайта города
+        city = catalog.match_city(incoming) or _city_from_url(incoming)
         if city:
             db.set_city(client, city)
 
-    picked = _picked_by_number(incoming, city) if not from_staff else []
+    # Букет, выбранный клиентом: по номеру (№600) или по ссылке с сайта (кнопка «Купить в TELEGRAM»).
+    picked = (_picked_by_number(incoming, city) + _picked_from_site(incoming, city)) if not from_staff else []
+    _seen = set()
+    picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
     wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
     history = db.history(client)
     raw = llm.complete(system_prompt(history, city, picked), _merge_roles(history))

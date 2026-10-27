@@ -103,6 +103,16 @@ class Catalog:
     def get(self, code):
         return self.by_code.get(code.strip().lower())
 
+    def find_by_id(self, item_id):
+        """Товар по id из ссылки сайта (bukid). Сначала точное совпадение, иначе по первым 6 символам."""
+        item_id = str(item_id).strip().lower().removeprefix("item-")
+        code = item_id.replace("-", "")[:6]
+        with self._lock:
+            for it in self.by_code.values():
+                if it["id"].lower() == item_id:
+                    return it
+            return self.by_code.get(code)
+
     def find_by_number(self, num):
         """Товар по номеру с сайта (№600). Возвращает товар или None."""
         target = str(num).strip().lstrip("№#").strip()
@@ -329,6 +339,18 @@ class Catalogs:
                 return it
         for c in self.by_city.values():
             it = c.find_by_number(num)
+            if it:
+                return it
+        return None
+
+    def find_by_id(self, item_id, city=None):
+        """Товар по id из ссылки сайта (bukid) — сначала в каталоге нужного города."""
+        if city and city in self.by_city:
+            it = self.by_city[city].find_by_id(item_id)
+            if it:
+                return it
+        for c in self.by_city.values():
+            it = c.find_by_id(item_id)
             if it:
                 return it
         return None
