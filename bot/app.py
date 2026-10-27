@@ -91,8 +91,9 @@ def _format_order(order_id, client, reply):
     return "\n".join(lines)
 
 
-def deliver(client, text, from_staff=False):
-    """Главная функция: сообщение (от клиента или от сотрудника) -> ответ клиенту."""
+def deliver(client, text, from_staff=False, quote=""):
+    """Главная функция: сообщение (от клиента или от сотрудника) -> ответ клиенту.
+    quote — текст сообщения, на которое клиент ответил (reply), для распознавания букета."""
     with _client_locks[client]:
         if not from_staff and db.is_paused(client):
             db.add_message(client, "user", text)
@@ -103,7 +104,7 @@ def deliver(client, text, from_staff=False):
                                   "/resume — снова включить бота, /reset — начать проверку заново.")
             return
         try:
-            reply = brain.respond(client, text, from_staff=from_staff)
+            reply = brain.respond(client, text, from_staff=from_staff, quote=quote)
         except Exception:
             log.exception("Ошибка ИИ для %s", client)
             _send_text(client, SORRY)

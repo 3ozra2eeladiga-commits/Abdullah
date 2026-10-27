@@ -607,20 +607,26 @@ def parse(raw, city=None):
     return reply
 
 
-def respond(client, incoming, from_staff=False):
-    """Записывает входящее сообщение, спрашивает ИИ и возвращает разобранный ответ."""
+def respond(client, incoming, from_staff=False, quote=""):
+    """Записывает входящее сообщение, спрашивает ИИ и возвращает разобранный ответ.
+
+    quote — текст сообщения, на которое клиент ответил (reply): подпись фото букета и т.п. Используется
+    ТОЛЬКО для распознавания (какой букет), но НЕ подмешивается в сам текст для ИИ, чтобы его не путать."""
     content = f"{STAFF_PREFIX} {incoming}" if from_staff else incoming
-    db.add_message(client, "user", content)
+    db.add_message(client, "user", content)  # в историю — чистый текст клиента, без служебной цитаты
+
+    # Для распознавания букета/города учитываем и цитату (на что ответил клиент).
+    detect = f"{incoming}\n{quote}" if quote else incoming
 
     city = db.get_city(client)
     if not city and not from_staff:  # клиент мог сам назвать город или прийти по ссылке с сайта города
-        city = catalog.match_city(incoming) or _city_from_url(incoming)
+        city = catalog.match_city(incoming) or _city_from_url(detect)
         if city:
             db.set_city(client, city)
 
-    # Букет, выбранный клиентом: по номеру (№600) или по ссылке с сайта (кнопка «Купить в TELEGRAM»).
-    picked = ((_picked_by_number(incoming, city) + _picked_from_site(incoming, city)
-               + _picked_from_caption(incoming, city)) if not from_staff else [])
+    # Букет, выбранный клиентом: по номеру (№600), ссылке с сайта или ответу (reply) на фото букета.
+    picked = ((_picked_by_number(detect, city) + _picked_from_site(detect, city)
+               + _picked_from_caption(detect, city)) if not from_staff else [])
     _seen = set()
     picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
     wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
