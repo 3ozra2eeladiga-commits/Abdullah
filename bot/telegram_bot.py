@@ -147,6 +147,18 @@ def _recognize_voice(voice):
     return text, ""
 
 
+def _quoted_ref(msg):
+    """Если клиент ответил (reply) на фото/сообщение — возвращает его текст/подпись (напр. «Букет №889 …»),
+    чтобы бот понял, о каком именно букете речь («такой, но побольше»)."""
+    r = msg.get("reply_to_message") or {}
+    return (r.get("caption") or r.get("text") or "").strip()
+
+
+def _with_quote(msg, text):
+    q = _quoted_ref(msg)
+    return f"[клиент отвечает на: {q}]\n{text}" if q else text
+
+
 # ---------- Обработка сообщений от сотрудников ----------
 
 def _handle(msg, deliver):
@@ -229,7 +241,7 @@ def _handle(msg, deliver):
             return
 
     if db.is_test_mode(chat_id) and text:
-        deliver(f"tg:{chat_id}", text, from_staff=False)
+        deliver(f"tg:{chat_id}", _with_quote(msg, text), from_staff=False)
         return
 
     send(chat_id, "Чтобы ответить клиенту, нажмите «Ответить» на сообщении бота. Проверить бота — /test")
@@ -280,7 +292,7 @@ def _handle_business(update, deliver):
         _client_photo(client, msg)
         return
     if text:
-        deliver(client, text)
+        deliver(client, _with_quote(msg, text))
 
 
 def run_polling(deliver):
