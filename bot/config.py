@@ -1,4 +1,5 @@
 """Все настройки берутся из файла .env (см. .env.example)."""
+import json
 import os
 
 from dotenv import load_dotenv
@@ -11,19 +12,49 @@ def _list(name):
 
 
 # --- Магазин ---
-# У каждого города свой сайт-каталог. Формат: Город=адрес, через запятую.
-CITY_SITES = os.getenv("CITY_SITES", "Пятигорск=https://naromashke.ru,Минеральные Воды=https://mw.naromashke.ru")
-SHOP_INFO_FILE = os.getenv("SHOP_INFO_FILE", "shop/shop_info.md")
+# Всё, что относится к конкретному магазину, лежит в одной папке (по умолчанию shop/):
+#   shop.json     — города, сайты, соседние посёлки, правила доставки, имя флориста;
+#   shop_info.md  — адреса, часы, правила обычным текстом (бот читает как «правила магазина»);
+#   ai_model.txt  — какая модель ИИ.
+# Для другого магазина — своя папка и SHOP_DIR=... в .env. Код при этом не меняется.
+SHOP_DIR = os.getenv("SHOP_DIR", "shop")
+
+
+def _load_shop():
+    try:
+        with open(os.path.join(SHOP_DIR, "shop.json"), encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+SHOP = _load_shop()
+SHOP_NAME = SHOP.get("shop_name", "")
+FLORIST_NAME = SHOP.get("florist_name", "")
+REGION = SHOP.get("region", "")
+FREE_DELIVERY_FROM = int((SHOP.get("delivery") or {}).get("free_from", 1500))
+DELIVERY_PRICE = int((SHOP.get("delivery") or {}).get("price", 250))
+SHOP_INFO_FILE = os.getenv("SHOP_INFO_FILE", os.path.join(SHOP_DIR, "shop_info.md"))
 CATALOG_REFRESH_MINUTES = int(os.getenv("CATALOG_REFRESH_MINUTES", "60"))
 
 
+def city_list():
+    """Города магазина (из shop.json): [{name, site, aliases, nearby, nearby_match}, ...]."""
+    return SHOP.get("cities") or []
+
+
 def cities():
-    out = {}
-    for part in CITY_SITES.split(","):
-        if "=" in part:
-            name, url = part.split("=", 1)
-            out[name.strip()] = url.strip().rstrip("/")
-    return out
+    """{город: адрес сайта-каталога}. CITY_SITES в .env (Город=адрес,...) — если задан, важнее shop.json."""
+    env = os.getenv("CITY_SITES", "")
+    if env:
+        out = {}
+        for part in env.split(","):
+            if "=" in part:
+                name, url = part.split("=", 1)
+                out[name.strip()] = url.strip().rstrip("/")
+        return out
+    return {c["name"]: c.get("site", "").rstrip("/") for c in city_list() if c.get("name")}
+
 
 # --- "Мозг": yandex | gigachat | claude ---
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "yandex").lower()
@@ -33,11 +64,11 @@ YANDEX_FOLDER_ID = os.getenv("YANDEX_FOLDER_ID", "")
 
 
 def _yandex_model():
-    """Модель можно задать файлом shop/ai_model.txt (приоритет), иначе из .env, иначе Pro.
+    """Модель можно задать файлом <папка магазина>/ai_model.txt (приоритет), иначе из .env, иначе Pro.
 
     Файл в репозитории позволяет менять модель через git-пуш, без входа на сервер."""
     try:
-        v = open("shop/ai_model.txt", encoding="utf-8").read().strip()
+        v = open(os.path.join(SHOP_DIR, "ai_model.txt"), encoding="utf-8").read().strip()
         if v:
             return v
     except OSError:
