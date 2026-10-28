@@ -382,7 +382,8 @@ def _card_yes(client, incoming, city, last_q=""):
     last = _last_bot_text(client, last_q)
     if not last.startswith(CARD_ONE_Q.split("{")[0]) or not (CONFIRM_YES_RE.search(incoming or "") or re.search(r"бер[её]м|беру|давай", incoming or "", re.I)):
         return []
-    return [c for c in catalog.cards(city, text="") if "запис" in c["title"].lower()][:1]
+    offered = catalog.cards(city, text="")      # то же, что предлагали: простая, а если её нет — что есть
+    return [c for c in offered if "запис" in c["title"].lower()][:1] or offered[:1]
 
 
 def _picked_card_by_name(text, city):
@@ -579,7 +580,7 @@ def _phone_was_given(order_value, client_text):
 
 CARD_ASK_Q = ("Нужна ли открытка к букету? Открытки платные — от {min} ₽. Если нужна — напишите текст для неё, "
               "если нет — так и скажите 🌸")
-CARD_ONE_Q = ("Открытки у нас платные 🌸 Подойдёт простая открытка с полем для записи — {price} ₽, на ней напишем "
+CARD_ONE_Q = ("Открытки у нас платные 🌸 Подойдёт {title} — {price} ₽, на ней напишем "
               "«{text}». Берём её? (Если открытка не нужна — так и скажите.)")
 CARD_PICK_Q = ("Открытки у нас платные 🌸 Выберите, пожалуйста, один из вариантов ниже — нажмите на фото и "
                "ответьте «эту». Текст «{text}» напишем на ней.")
@@ -640,7 +641,7 @@ def _order_missing(o, client_text):
     card = (o.get("открытка") or "").strip()
     if not card:
         return CARD_ASK_Q
-    if card.lower() not in ("нет", "не нужна", "не надо", "-", "—") and not any(
+    if card.lower() not in ("нет", "не нужна", "не надо", "-", "—") and catalog.cards(o.get("город")) and not any(
             CARD_RE.search(str(it.get("название") or "")) for it in o.get("товары") or []):
         return CARD_PICK_Q
     return None
@@ -1197,7 +1198,10 @@ def respond(client, incoming, from_staff=False, quote=""):
             if not from_staff:
                 _remember_cards(client, card_photos)
             if len(card_photos) == 1:
-                miss = CARD_ONE_Q.format(price=card_photos[0]["price"], text=card_text)
+                c0 = card_photos[0]
+                title = ("простая открытка с полем для записи" if "запис" in c0["title"].lower()
+                         else c0["title"])
+                miss = CARD_ONE_Q.format(title=title, price=c0["price"], text=card_text)
             else:
                 miss = CARD_PICK_Q.format(text=card_text)
         reply.order = None

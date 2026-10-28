@@ -33,6 +33,9 @@ CARD_THEMES = [
 ]
 
 log = logging.getLogger(__name__)
+PLACEHOLDER_IMG_RE = re.compile(r"/img/logo\w*\.\w+$", re.I)
+# Открытка дороже этого — ошибка цены на сайте (бывает 6599 ₽ вместо 50 ₽): такую не предлагаем.
+CARD_MAX_PRICE = int((config.SHOP.get("card_max_price") or 1000))
 
 # (название раздела, адрес данных на сайте, тип ответа)
 RB = "rb"  # букеты/композиции: список с maxPrice
@@ -82,7 +85,8 @@ class Catalog:
             "description": " ".join((raw.get("description") or "").split()),
             "price": int(float(price or 0)),
             "stock": int(raw["balancePlus"]) if raw.get("balancePlus") not in (None, "") else None,
-            "images": [i for i in images if i],
+            # «Фото временно отсутствует» на сайте — это логотип-заглушка (img/logoN.webp), а не фото товара.
+            "images": [i for i in images if i and not PLACEHOLDER_IMG_RE.search(i)],
         }
 
     def refresh(self):
@@ -144,7 +148,7 @@ class Catalog:
         """Открытки из каталога (в названии «открытк»), в наличии и с фото — от дешёвых к дорогим."""
         with self._lock:
             out = [it for it in self.by_code.values()
-                   if CARD_RE.search(it["title"]) and it["images"]
+                   if CARD_RE.search(it["title"]) and it["images"] and it["price"] <= CARD_MAX_PRICE
                    and (it["stock"] is None or it["stock"] > 0)]
         # Первой — открытка «с полем для записи»: на ней пишут текст клиента.
         return sorted(out, key=lambda x: ("запис" not in x["title"].lower(), x["price"]))[:limit]
@@ -409,7 +413,7 @@ class Catalogs:
                 if any(re.search(r, title) for r in CARD_RECIPIENTS if r not in whom):
                     return False
                 return any(re.search(w, title) for w in want)
-            out = [x for x in out if fits(x)]
+            out = [x for x in out if fits(x)] or out   # подходящих нет — показываем те, что есть
         seen = set()
         out = [x for x in out if not (x["title"] in seen or seen.add(x["title"]))]
         return sorted(out, key=lambda x: ("запис" not in x["title"].lower(), x["price"]))[:limit]
