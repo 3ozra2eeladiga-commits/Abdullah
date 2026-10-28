@@ -349,6 +349,34 @@ def _remember_cards(client, cards):
     db.set_setting(f"cards_shown:{client}", ",".join(shown))
 
 
+# «Давайте последний вариант», «второй», «первый букет» — номер по порядку среди только что показанных фото.
+ORDINALS = [(r"предпоследн", -2), (r"последн", -1), (r"перв", 0), (r"втор", 1), (r"трет", 2),
+            (r"четв[её]рт", 3), (r"пят", 4), (r"шест", 5)]
+ORDINAL_RE = re.compile(
+    r"\b(предпоследн(?:ий|яя|ее|юю|его)|последн(?:ий|яя|ее|юю|его)|перв(?:ый|ая|ое|ую|ого)|втор(?:ой|ая|ое|ую|ого)|"
+    r"трет(?:ий|ья|ье|ью|ьего)|четв[её]рт(?:ый|ая|ое|ую|ого)|пят(?:ый|ая|ое|ую|ого)|шест(?:ой|ая|ое|ую|ого))\b"
+    r"(?!\s+(?:раз|половин|числ|день|дня|час|мая|неделе|недел))", re.I)
+
+
+def _picked_by_ordinal(client, incoming, city):
+    t = incoming or ""
+    m = ORDINAL_RE.search(t)
+    if not m or not (len(t) < 50 or re.search(r"вариант|букет|фото|композиц|открытк|давай|беру|хочу|нрав", t, re.I)):
+        return []
+    shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
+    word = m.group(1).lower()
+    idx = next(i for pat, i in ORDINALS if re.match(pat, word))
+    if not shown or not (-len(shown) <= idx < len(shown)):
+        return []
+    it = catalog.get(shown[idx], city) or catalog.get(shown[idx])
+    return [it] if it else []
+
+
+# Клиент отказался от открытки коротким «нет» в ответ на вопрос про открытку.
+NO_CARD_RE = re.compile(r"^\W*(нет|не\s*нужн\w*|не\s*надо|не\s*хочу|без\s+открытк\w*|ничего\s+не\s+(?:надо|пиш\w*|нужно))\W*"
+                        r"(?:спасибо)?\W*$", re.I)
+
+
 def _card_yes(client, incoming, city, last_q=""):
     """Бот предложил одну простую открытку («Берём её?»), клиент ответил «да» — это её выбор."""
     last = _last_bot_text(client, last_q)
@@ -459,10 +487,11 @@ FAKE_QUESTION_RE = re.compile(
 SHOW_REQUEST_RE = re.compile(
     r"кидай|скин|покаж|показыв|пришли\s+фото|давай\s+фото|на ваш вкус|хочу посмотрет|что есть|фото сюда", re.I)
 # ИИ переспрашивает, какой букет выбран, хотя выбор уже известен.
+SUMMARY_RE = re.compile(r"вс[её]\s+(?:ли\s+)?верно|проверьте[^.?!]{0,20}заказ|ваш заказ:", re.I)
 ASK_WHICH_RE = re.compile(
     r"(?:номер|назван\w*)\s+(?:понравивш\w+\s+)?букет|какой\s+(?:именно\s+)?букет|"
     r"как(?:ой|ую|ие)[^.?!]{0,30}(?:букет|вариант)[^.?!]{0,30}(?:понрав|выбрал|нрав)|"
-    r"опишите[^.?!]{0,30}подробнее", re.I)
+    r"опишите[^.?!]{0,30}подробнее|уточните[^.?!]{0,30}подробнее", re.I)
 # ИИ иногда пишет заглушку вместо ссылки: «[ссылка на каталог]», «<ссылка>», «[сайт]» — подставим настоящий URL.
 LINK_PLACEHOLDER_RE = re.compile(r"[\[<]\s*(?:ссылк\w*|сайт\w*)[^\]>]*[\]>]", re.I)
 # Клиент хочет этот же букет больше/меньше — спрашиваем СУММУ, а не кидаем другие варианты.
@@ -655,6 +684,8 @@ def _apply_client_state(order, client, city):
     for code in [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]:
         if code not in have and catalog.get(code, city):
             items.append({"код": code, "кол-во": 1})
+    if db.get_setting(f"nocard:{client}") and not str(order.get("открытка") or "").strip():
+        order["открытка"] = "нет"
     up = db.get_setting(f"upsize:{client}") or ""
     if up:
         _code, sign, amount = (up.split("|") + ["", "", ""])[:3]
@@ -669,8 +700,8 @@ def _apply_client_state(order, client, city):
 
 
 def _clear_client_state(client):
-    db.del_setting(f"upsize:{client}")
-    db.del_setting(f"addons:{client}")
+    for k in ("upsize", "addons", "nocard", "shown", "cards_shown"):
+        db.del_setting(f"{k}:{client}")
 
 
 # Формат метки заказа — для отдельного «добора» заказа, если ИИ забыл поставить метку в разговоре.
@@ -992,7 +1023,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     picked = ((_picked_by_number(detect, city) + _picked_from_site(detect, city)
                + _picked_from_caption(detect, city)
                + (_picked_card_by_name(incoming, city) if _card_pick_turn(client, incoming, last_q) else [])
-               + _card_yes(client, incoming, city, last_q))
+               + _card_yes(client, incoming, city, last_q)
+               + _picked_by_ordinal(client, incoming, city))
               if not from_staff else [])
     _seen = set()
     picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
@@ -1010,6 +1042,14 @@ def respond(client, incoming, from_staff=False, quote=""):
         saved = [c for c in saved if _kind(c) not in new_kinds]
         saved += [a["code"] for a in addons if a["code"] not in saved]
         db.set_setting(f"addons:{client}", ",".join(saved))
+    # «Нет» на вопрос про открытку = открытка не нужна (а не «хочу что-то изменить»).
+    no_card = (not from_staff and not addons and bool(NO_CARD_RE.search(incoming or ""))
+               and bool(re.search(r"открытк", _last_bot_text(client, last_q), re.I)))
+    if no_card:
+        db.set_setting(f"nocard:{client}", "1")
+        content = f"{incoming} — открытка не нужна"
+    if addons and any(CARD_RE.search(a["title"]) for a in addons):
+        db.del_setting(f"nocard:{client}")
     # В историю пишем слова клиента; если он ответил (reply) на фото — дописываем, о каком товаре речь,
     # обычной фразой. Иначе ИИ видит только «вот это» и переспрашивает номер, хотя всё уже понятно.
     if ((quote and (picked or addons)) or (addons and not picked)) and not from_staff:
@@ -1173,6 +1213,16 @@ def respond(client, incoming, from_staff=False, quote=""):
                 reply.text = _order_summary(reply.order)
                 reply.photos, reply.order, reply.order_raw = [], None, ""
                 order_text = True
+        elif SUMMARY_RE.search(reply.text or "") and not prev:
+            # ИИ сам написал итог «Всё ли верно?» без метки — собираем заказ и показываем НАШ короткий итог.
+            o = _extract_order(client, city)
+            if o:
+                _apply_client_state(o, client, city)
+                if not _order_missing(o, " ".join(m["content"] for m in history if m["role"] == "user")):
+                    db.set_pending_order(client, o)
+                    reply.text = _order_summary(o)
+                    reply.photos = []
+                    order_text = True
         elif confirmed:
             pend = prev
             # Запасной путь: итог был, но ИИ не поставил метку — соберём заказ из переписки.
@@ -1288,4 +1338,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.text = ("Это время сегодня, к сожалению, уже прошло 🙏 Подскажите, пожалуйста, на какое время "
                       "сегодня (попозже) или на другую дату — и я всё подберу.")
         reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
+    # Запоминаем, что показали (по порядку) — чтобы понять «давайте последний / второй вариант».
+    if not from_staff and len(reply.photos) >= 2:
+        db.set_setting(f"shown:{client}", ",".join(p["code"] for p in reply.photos))
     return reply

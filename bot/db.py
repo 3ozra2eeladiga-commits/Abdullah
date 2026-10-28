@@ -143,7 +143,8 @@ def clear_history(client):
     _exec("DELETE FROM client_city WHERE client=?", (client,))
     _exec("DELETE FROM pending_orders WHERE client=?", (client,))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?)",
-          (f"upsize:{client}", f"addons:{client}", f"lastq:{client}", f"cards_shown:{client}"))
+          tuple(f"{k}:{client}" for k in ("upsize", "addons", "lastq", "cards_shown")))
+    _exec("DELETE FROM settings WHERE key IN (?,?)", (f"nocard:{client}", f"shown:{client}"))
 
 
 def set_city(client, city):
