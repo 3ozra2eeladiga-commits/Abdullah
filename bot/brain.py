@@ -372,6 +372,24 @@ def _picked_by_ordinal(client, incoming, city):
     return [it] if it else []
 
 
+def _picked_by_price(client, incoming, city):
+    """«За 2300» сразу после показа фото — это выбор букета с такой ценой среди показанных (не бюджет и не доплата).
+    Цена может быть округлена: «за 2300» — это букет за 2299 ₽. Выбираем, только если подходит ровно один."""
+    t = (incoming or "").strip()
+    if len(t) > 30 or re.search(r"до\b|покаж|есть|бюджет|предел|около|пример|недорог|дешев|дорож|вариант|добав|плюс|\+|"
+                                r"ещ[её]|больше|меньше|пышн|сумм", t, re.I):
+        return []
+    n = _money(t)
+    if not n:
+        return []
+    shown = [catalog.get(c, city) or catalog.get(c)
+             for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
+    shown = [x for x in shown if x]
+    exact = [x for x in shown if x["price"] == n]
+    near = exact or [x for x in shown if abs(x["price"] - n) <= max(100, n * 0.03)]
+    return near if len(near) == 1 else []
+
+
 # Клиент отказался от открытки коротким «нет» в ответ на вопрос про открытку.
 NO_CARD_RE = re.compile(r"^\W*(нет|не\s*нужн\w*|не\s*надо|не\s*хочу|без\s+открытк\w*|ничего\s+не\s+(?:надо|пиш\w*|нужно))\W*"
                         r"(?:спасибо)?\W*$", re.I)
@@ -1033,7 +1051,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                + _picked_from_caption(detect, city)
                + (_picked_card_by_name(incoming, city) if _card_pick_turn(client, incoming, last_q) else [])
                + _card_yes(client, incoming, city, last_q)
-               + _picked_by_ordinal(client, incoming, city))
+               + _picked_by_ordinal(client, incoming, city)
+               + _picked_by_price(client, incoming, city))
               if not from_staff else [])
     _seen = set()
     picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
