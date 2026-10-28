@@ -371,7 +371,13 @@ class Catalogs:
 
     def get(self, code, city=None):
         if city and city in self.by_city:
-            return self.by_city[city].get(code)
+            it = self.by_city[city].get(code)
+            if not it:   # открытки для всех городов — с сайта cards_city
+                cc = self.by_city.get(config.cards_city())
+                it = cc.get(code) if cc else None
+                if it and not CARD_RE.search(it["title"]):
+                    it = None
+            return it
         for c in self.by_city.values():  # запасной поиск по всем городам
             it = c.get(code)
             if it:
@@ -390,11 +396,15 @@ class Catalogs:
                 return it
         return None
 
+    def cards_catalog(self, city=None):
+        """Каталог, из которого берём открытки: сайт cards_city (одинаковые открытки во всех городах)."""
+        return self.by_city.get(config.cards_city()) or self.by_city.get(city)
+
     def cards(self, city=None, limit=6, text=None):
         """Открытки на выбор. Если известен текст открытки (text) — только подходящие по смыслу
         («С днём рождения» → открытки/конверты про день рождения и «Поздравляю») плюс простая с полем для записи.
         Не к месту («Люблю тебя, папа» на день рождения) — не предлагаем."""
-        c = self.by_city.get(city) if city else None
+        c = self.cards_catalog(city)
         cats = [c] if c else list(self.by_city.values())
         out = []
         for c in cats:

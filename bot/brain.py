@@ -306,10 +306,15 @@ def _picked_from_caption(text, city):
     t = (text or "").lower()
     cc = catalog.get_city(city)
     cats = [cc] if cc else list(catalog.by_city.values())
+    card_cat = catalog.cards_catalog(city)       # открытки — с общего сайта открыток
+    if card_cat and card_cat not in cats:
+        cats.append(card_cat)
     best = None
     for c in cats:
         for it in c.by_code.values():
             title = it["title"].lower()
+            if c is card_cat and c is not cc and not CARD_RE.search(title):
+                continue
             if len(title) >= 6 and it["images"] and title in t:
                 if best is None or len(title) > len(best["title"]):
                     best = it
@@ -376,7 +381,7 @@ def _picked_by_price(client, incoming, city):
     """«За 2300» сразу после показа фото — это выбор букета с такой ценой среди показанных (не бюджет и не доплата).
     Цена может быть округлена: «за 2300» — это букет за 2299 ₽. Выбираем, только если подходит ровно один."""
     t = (incoming or "").strip()
-    if len(t) > 30 or re.search(r"до\b|покаж|есть|бюджет|предел|около|пример|недорог|дешев|дорож|вариант|добав|плюс|\+|"
+    if len(t) > 50 or re.search(r"до\b|покаж|есть|бюджет|предел|около|пример|недорог|дешев|дорож|вариант|добав|плюс|\+|"
                                 r"ещ[её]|больше|меньше|пышн|сумм", t, re.I):
         return []
     n = _money(t)
@@ -417,7 +422,7 @@ def _picked_card_by_name(text, city):
         stem = w[:max(3, len(w) - 2)]
         return any(x.startswith(stem) for x in words)
 
-    cc = catalog.get_city(city)
+    cc = catalog.cards_catalog(city)
     cats = [cc] if cc else list(catalog.by_city.values())
     scored = []
     for c in cats:

@@ -38,6 +38,11 @@ SHOP_INFO_FILE = os.getenv("SHOP_INFO_FILE", os.path.join(SHOP_DIR, "shop_info.m
 CATALOG_REFRESH_MINUTES = int(os.getenv("CATALOG_REFRESH_MINUTES", "60"))
 
 
+def cards_city():
+    """Город, с сайта которого берём открытки для всех городов (shop.json → cards_city), иначе — первый город."""
+    return SHOP.get("cards_city") or ((SHOP.get("cities") or [{}])[0].get("name"))
+
+
 def city_list():
     """Города магазина (из shop.json): [{name, site, aliases, nearby, nearby_match}, ...]."""
     return SHOP.get("cities") or []
