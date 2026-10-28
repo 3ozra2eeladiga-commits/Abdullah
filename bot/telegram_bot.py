@@ -37,9 +37,12 @@ def send(chat_id, text, **extra):
     return call("sendMessage", chat_id=chat_id, text=text[:4000], **extra)
 
 
-def send_photo(chat_id, item, **extra):
+STAFF_PHOTO_MARK = "📦 В заказ:"  # подпись фото в карточке заказа для флориста (это не выбор клиента)
+
+
+def send_photo(chat_id, item, caption=None, link=True, **extra):
     try:
-        caption = f"{item['title']} — {item['price']} ₽"
+        caption = caption or f"{item['title']} — {item['price']} ₽"
         if images.Image is None:
             # Без pillow фото остаётся в .webp — отдаём Telegram ссылку, он скачает сам
             msg = call("sendPhoto", chat_id=chat_id, photo=item["images"][0], caption=caption, **extra)
@@ -47,7 +50,7 @@ def send_photo(chat_id, item, **extra):
             data = images.jpeg_bytes(item["images"][0])
             msg = call("sendPhoto", files={"photo": ("photo.jpg", data, "image/jpeg")},
                        chat_id=chat_id, caption=caption, **extra)
-        if msg:
+        if msg and link:
             db.link_photo(chat_id, msg["message_id"], item["code"])  # запоминаем: это фото = этот букет
         return msg
     except Exception as e:
@@ -139,7 +142,9 @@ def notify_staff_order(client, items, text):
     Отвечают именно на карточку — текст уйдёт клиенту."""
     for chat in staff_chats():
         for it in items:
-            send_photo(chat, it)
+            # Подпись «В заказ:» и без привязки к товару: в режиме /test это фото видно в том же чате,
+            # и ответ на него не должен считаться выбором клиента.
+            send_photo(chat, it, caption=f"{STAFF_PHOTO_MARK} {it['title']} — {it['price']} ₽", link=False)
         msg = send(chat, text)
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
@@ -176,7 +181,8 @@ def _quoted_ref(msg, chat_id=None):
             it = catalog.get(code)
             if it:
                 return f"{it['title']} — {it['price']} ₽"
-    return (r.get("caption") or r.get("text") or "").strip()
+    ref = (r.get("caption") or r.get("text") or "").strip()
+    return "" if ref.startswith(STAFF_PHOTO_MARK) else ref
 
 
 # ---------- Обработка сообщений от сотрудников ----------

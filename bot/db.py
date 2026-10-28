@@ -88,6 +88,13 @@ def save_order(client, data):
     return cur.lastrowid
 
 
+def has_order(client):
+    """Был ли заказ в текущей переписке (после /reset старые заказы не считаются)."""
+    return _exec("SELECT 1 FROM orders o WHERE client=? AND created >= "
+                 "(SELECT MIN(created) FROM messages WHERE client=?) LIMIT 1",
+                 (client, client)).fetchone() is not None
+
+
 def link_staff_message(tg_chat, tg_message, client):
     _exec("INSERT OR REPLACE INTO staff_threads VALUES (?,?,?)", (str(tg_chat), tg_message, client))
 

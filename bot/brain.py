@@ -261,6 +261,8 @@ class Reply:
     city: str | None = None
 
 
+# «Отмените заказ», «передумал»; «отметить это» — так голосовой ввод часто слышит «отменить».
+CANCEL_RE = re.compile(r"\bотмен\w*|\bотмет\w*\s+(?:это|его|заказ)|передумал", re.I)
 CODE_RE = re.compile(r"\b([0-9a-f]{6})\b")
 MIN_OPTIONS = 5  # сколько минимум букетов показывать, когда бот предлагает варианты
 # Клиент называет букет его номером с сайта: «№600», «номер 600», «букет №740».
@@ -959,6 +961,13 @@ def respond(client, incoming, from_staff=False, quote=""):
     picked = [p for p in picked if p not in addons]
     if addons and not from_staff:
         saved = [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]
+        # Новая открытка заменяет прежнюю открытку (конверт — прежний конверт), а не добавляется второй.
+        def _kind(code):
+            it = catalog.get(code)
+            m = CARD_RE.search(it["title"]) if it else None
+            return m.group(0).lower() if m else None
+        new_kinds = {_kind(a["code"]) for a in addons} - {None}
+        saved = [c for c in saved if _kind(c) not in new_kinds]
         saved += [a["code"] for a in addons if a["code"] not in saved]
         db.set_setting(f"addons:{client}", ",".join(saved))
     # В историю пишем слова клиента; если он ответил (reply) на фото — дописываем, о каком товаре речь,
@@ -967,6 +976,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         it0 = (picked or addons)[0]
         content = f"{incoming} — про «{it0['title']}» ({it0['price']} ₽)"
     db.add_message(client, "user", content)
+    # Клиент после оформления просит отменить/изменить заказ — это решает флорист, бот только передаёт.
+    if not from_staff and CANCEL_RE.search(incoming or "") and db.has_order(client):
+        text = "Поняла 🌸 Передала флористу — она свяжется с вами по заказу в ближайшее время."
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, question=f"Клиент просит отменить/изменить заказ: «{incoming}»", city=city)
     wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
     # Срабатывает и когда выбран букет (picked), и когда клиент пишет «этот/его/такой ... побольше» без reply.
