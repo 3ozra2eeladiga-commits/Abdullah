@@ -15,6 +15,22 @@ from . import config
 
 # Открытки: в каталоге они бывают и «открытка», и «конверт», и «карточка»
 CARD_RE = re.compile(r"открытк|конверт|карточк", re.I)
+# Кому адресована открытка (по надписи): маме, папе, бабушке.
+CARD_RECIPIENTS = [r"\bмам", r"\bпап|отц|отец", r"бабуш|бабул"]
+# Повод из текста открытки → какие открытки к нему подходят (по надписи в названии).
+# Третье поле True — «праздник»: если он назван, открытка обязана быть про него (папе на день рождения
+# не «Люблю тебя, папа», а «С днём рождения»/«Поздравляю»).
+CARD_THEMES = [
+    (r"рожден|днюх|\bдр\b", r"рожден|поздравля", True),
+    (r"юбиле", r"юбиле|поздравля", True),
+    (r"свадьб|горько|молодожен|бракосочет", r"горько", True),
+    (r"поздрав|праздн", r"поздравля", True),
+    (r"\bмам|\bмать", r"\bмам", False),
+    (r"\bпап|отц|отец", r"\bпап|отц|отец", False),
+    (r"бабуш|бабул", r"бабуш|бабул", False),
+    (r"любл|любим", r"любл", False),
+    (r"спасиб|благодар", r"спасиб", False),
+]
 
 log = logging.getLogger(__name__)
 
@@ -370,12 +386,32 @@ class Catalogs:
                 return it
         return None
 
-    def cards(self, city=None, limit=6):
+    def cards(self, city=None, limit=6, text=None):
+        """Открытки на выбор. Если известен текст открытки (text) — только подходящие по смыслу
+        («С днём рождения» → открытки/конверты про день рождения и «Поздравляю») плюс простая с полем для записи.
+        Не к месту («Люблю тебя, папа» на день рождения) — не предлагаем."""
         c = self.by_city.get(city) if city else None
         cats = [c] if c else list(self.by_city.values())
         out = []
         for c in cats:
-            out += c.cards(limit)
+            out += c.cards(1000 if text is not None else limit)
+        if text is not None:
+            t = text.lower().replace("ё", "е")
+            hit = [(title_re, holiday) for text_re, title_re, holiday in CARD_THEMES if re.search(text_re, t)]
+            want = [w for w, holiday in hit if holiday] or [w for w, _ in hit]
+            # Открытка, адресованная другому человеку («…папа», когда текст маме), — не к месту.
+            whom = {r for r in CARD_RECIPIENTS if re.search(r, t)}
+
+            def fits(x):
+                title = x["title"].lower().replace("ё", "е")
+                if "запис" in title:
+                    return True
+                if any(re.search(r, title) for r in CARD_RECIPIENTS if r not in whom):
+                    return False
+                return any(re.search(w, title) for w in want)
+            out = [x for x in out if fits(x)]
+        seen = set()
+        out = [x for x in out if not (x["title"] in seen or seen.add(x["title"]))]
         return sorted(out, key=lambda x: ("запис" not in x["title"].lower(), x["price"]))[:limit]
 
     def is_addon(self, item, city=None):

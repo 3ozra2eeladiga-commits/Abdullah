@@ -316,12 +316,25 @@ def _picked_from_caption(text, city):
     return [best] if best else []
 
 
-def _card_pick_turn(client, incoming):
+def _last_bot_text(client, last_q):
+    """Что бот сказал клиенту последним: вопрос, который подставил КОД (его нет в истории — там ответ ИИ), иначе ответ ИИ."""
+    return last_q or next((m["content"] for m in reversed(db.history(client, 4)) if m["role"] == "assistant"), "")
+
+
+def _card_pick_turn(client, incoming, last_q=""):
     """Клиент выбирает открытку словами: бот только что предлагал выбрать открытку, или клиент назвал
     конверт/цену. Иначе «открытка с днём рождения» — это скорее ТЕКСТ для открытки, а не её выбор."""
-    last = next((m["content"] for m in reversed(db.history(client, 4)) if m["role"] == "assistant"), "")
+    last = _last_bot_text(client, last_q)
     return bool(re.search(r"открытки у нас платные|выбер\w*[^.?!]*открытк", last, re.I)
                 or re.search(r"конверт|\d{2,4}\s*(?:₽|р)", incoming or "", re.I))
+
+
+def _card_yes(client, incoming, city, last_q=""):
+    """Бот предложил одну простую открытку («Берём её?»), клиент ответил «да» — это её выбор."""
+    last = _last_bot_text(client, last_q)
+    if not last.startswith(CARD_ONE_Q.split("{")[0]) or not (CONFIRM_YES_RE.search(incoming or "") or re.search(r"бер[её]м|беру|давай", incoming or "", re.I)):
+        return []
+    return [c for c in catalog.cards(city, text="") if "запис" in c["title"].lower()][:1]
 
 
 def _picked_card_by_name(text, city):
@@ -517,7 +530,9 @@ def _phone_was_given(order_value, client_text):
 
 CARD_ASK_Q = ("Нужна ли открытка к букету? Открытки платные — от {min} ₽. Если нужна — напишите текст для неё, "
               "если нет — так и скажите 🌸")
-CARD_PICK_Q = ("Открытки у нас платные 🌸 Выберите, пожалуйста, одну из вариантов ниже — нажмите на фото и "
+CARD_ONE_Q = ("Открытки у нас платные 🌸 Подойдёт простая открытка с полем для записи — {price} ₽, на ней напишем "
+              "«{text}». Берём её? (Если открытка не нужна — так и скажите.)")
+CARD_PICK_Q = ("Открытки у нас платные 🌸 Выберите, пожалуйста, один из вариантов ниже — нажмите на фото и "
                "ответьте «эту». Текст «{text}» напишем на ней.")
 
 
@@ -949,10 +964,15 @@ def respond(client, incoming, from_staff=False, quote=""):
         if city:
             db.set_city(client, city)
 
+    # Вопрос о недостающем (открытка и т.п.), который в прошлый раз задал КОД вместо ответа ИИ.
+    last_q = "" if from_staff else (db.get_setting(f"lastq:{client}") or "")
+    if last_q:
+        db.del_setting(f"lastq:{client}")
     # Букет, выбранный клиентом: по номеру (№600), ссылке с сайта или ответу (reply) на фото букета.
     picked = ((_picked_by_number(detect, city) + _picked_from_site(detect, city)
                + _picked_from_caption(detect, city)
-               + (_picked_card_by_name(incoming, city) if _card_pick_turn(client, incoming) else []))
+               + (_picked_card_by_name(incoming, city) if _card_pick_turn(client, incoming, last_q) else [])
+               + _card_yes(client, incoming, city, last_q))
               if not from_staff else [])
     _seen = set()
     picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
@@ -1088,13 +1108,19 @@ def respond(client, incoming, from_staff=False, quote=""):
             if miss == CARD_ASK_Q:
                 miss = CARD_ASK_Q.format(min=min((c["price"] for c in catalog.cards(city)), default=50))
             elif miss == CARD_PICK_Q:
-                card_photos = catalog.cards(city)
-                miss = CARD_PICK_Q.format(text=str(reply.order.get("открытка") or "").strip())
+                card_text = str(reply.order.get("открытка") or "").strip()
+                card_photos = catalog.cards(city, text=card_text)
+                if len(card_photos) == 1:
+                    miss = CARD_ONE_Q.format(price=card_photos[0]["price"], text=card_text)
+                else:
+                    miss = CARD_PICK_Q.format(text=card_text)
             reply.order = None
             reply.order_raw = ""
             reply.photos = card_photos
             reply.text = miss
             keep_photos = bool(card_photos)
+            if not from_staff:
+                db.set_setting(f"lastq:{client}", miss)
     # Метка [ЗАКАЗ] не разобралась в JSON (ИИ поставил её рано/криво) — флористу неполный заказ НЕ шлём.
     if reply.order_raw and not reply.order:
         reply.order_raw = ""
