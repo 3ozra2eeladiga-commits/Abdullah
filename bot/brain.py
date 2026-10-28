@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import config, db, llm
-from .catalog import catalog
+from .catalog import CARD_RE, catalog
 
 log = logging.getLogger(__name__)
 
@@ -524,7 +524,7 @@ def _order_missing(o, client_text):
     if not card:
         return CARD_ASK_Q
     if card.lower() not in ("нет", "не нужна", "не надо", "-", "—") and not any(
-            "открытк" in str(it.get("название") or "").lower() for it in o.get("товары") or []):
+            CARD_RE.search(str(it.get("название") or "")) for it in o.get("товары") or []):
         return CARD_PICK_Q
     return None
 

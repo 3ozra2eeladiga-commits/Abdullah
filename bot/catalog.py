@@ -13,6 +13,9 @@ import requests
 
 from . import config
 
+# Открытки: в каталоге они бывают и «открытка», и «конверт», и «карточка»
+CARD_RE = re.compile(r"открытк|конверт|карточк", re.I)
+
 log = logging.getLogger(__name__)
 
 # (название раздела, адрес данных на сайте, тип ответа)
@@ -125,7 +128,7 @@ class Catalog:
         """Открытки из каталога (в названии «открытк»), в наличии и с фото — от дешёвых к дорогим."""
         with self._lock:
             out = [it for it in self.by_code.values()
-                   if "открытк" in it["title"].lower() and it["images"]
+                   if CARD_RE.search(it["title"]) and it["images"]
                    and (it["stock"] is None or it["stock"] > 0)]
         # Первой — открытка «с полем для записи»: на ней пишут текст клиента.
         return sorted(out, key=lambda x: ("запис" not in x["title"].lower(), x["price"]))[:limit]
@@ -377,7 +380,7 @@ class Catalogs:
 
     def is_addon(self, item, city=None):
         """Дополнение к букету (открытка, шар, игрушка…), а не сам букет — его добавляют к заказу, а не меняют букет."""
-        if "открытк" in item["title"].lower():
+        if CARD_RE.search(item["title"]):
             return True
         for c in ([self.by_city[city]] if city in self.by_city else list(self.by_city.values())):
             sec = c.section_of(item["code"])
