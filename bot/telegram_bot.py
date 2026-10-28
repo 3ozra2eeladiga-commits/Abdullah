@@ -261,14 +261,7 @@ def _handle(msg, deliver):
             return
 
     if db.is_test_mode(chat_id) and text:
-        q = _quoted_ref(msg, chat_id)
-        r = msg.get("reply_to_message")
-        if r:  # временная диагностика ответа на фото — видна только сотруднику в режиме проверки
-            pcode = db.photo_code(chat_id, r.get("message_id"))
-            cap = (r.get("caption") or r.get("text") or "").strip()
-            send(chat_id, f"🔧 диагностика: ответ на сообщение {r.get('message_id')} | букет по фото: "
-                          f"{pcode or 'НЕТ'} | подпись: {'есть' if cap else 'НЕТ'} | бот понял: {q[:50] or 'НИЧЕГО'}")
-        deliver(f"tg:{chat_id}", text, from_staff=False, quote=q)
+        deliver(f"tg:{chat_id}", text, from_staff=False, quote=_quoted_ref(msg, chat_id))
         return
 
     send(chat_id, "Чтобы ответить клиенту, нажмите «Ответить» на сообщении бота. Проверить бота — /test")
