@@ -577,7 +577,8 @@ FAKE_QUESTION_RE = re.compile(
 )
 # Клиент сам просит показать букеты фотографиями — тогда код точно приложит фото, даже если модель замялась.
 SHOW_REQUEST_RE = re.compile(
-    r"кидай|скин|покаж|показыв|пришли\s+фото|давай\s+фото|на ваш вкус|хочу посмотрет|что есть|фото сюда", re.I)
+    r"кидай|скин|покаж|показыв|пришли\s+фото|давай\s+фото|на ваш вкус|на твой вкус|хочу посмотрет|что есть|фото сюда|"
+    r"не знаю\s*,?\s*(?:что|как(?:ой|ие|ую)|чего)|предлаг|предлож|посовету|подбер\w*\s+сам|сам[аи]?\s+(?:выбер|подбер|предлож)|без разницы|любой|любые", re.I)
 # ИИ переспрашивает, какой букет выбран, хотя выбор уже известен.
 SUMMARY_RE = re.compile(r"вс[её]\s+(?:ли\s+)?верно|провер\w*[^.?!]{0,30}(?:заказ|данн)|ваш заказ:|подвед\w*\s+итог|"
                         r"итог\w*\s+заказ|данные для оформления|давайте\s+подытож", re.I)
@@ -1263,11 +1264,16 @@ def respond(client, incoming, from_staff=False, quote=""):
                        _merge_roles(history))
     # ИИ выдал шаблонный отказ (ложный фильтр YandexGPT на безобидную просьбу) — не пугаем клиента, переспрашиваем.
     refused_in_order = False
+    refused_offer = False
     if llm.is_refusal(raw):
         if not from_staff and (picked or db.get_setting(f"chosen:{client}")):
             # Идёт оформление (букет выбран) — не «уточните подробнее», а дальше по заказу (ниже, кодом).
             refused_in_order = True
             raw = "Спасибо, записала 🌸"
+        elif city and not from_staff and not re.search(r"больше|крупнее|пышнее|объёмн|дороже|меньше|дешевле", incoming or "", re.I):
+            # Букет ещё не выбран, ИИ «застрял» — не «уточните», а сразу показываем варианты (фото приложит код).
+            refused_offer = True
+            raw = "Вот несколько вариантов на мой вкус 🌸 Какой нравится? Можно ответить на фото «этот»."
         elif re.search(r"больше|крупнее|пышнее|объёмн|дороже|меньше|дешевле|бюджет", incoming or "", re.I):
             raw = "Конечно 🌸 На какую сумму ориентируетесь? Подберу вариант под неё."
         else:
@@ -1403,7 +1409,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             order_text = True
 
     # «Вопрос флористу», который на самом деле про подбор букетов — не беспокоим коллег, показываем сами.
-    force_options = False
+    force_options = refused_offer
     if reply.question and FAKE_QUESTION_RE.search(reply.question):
         reply.question = ""
         force_options = True
@@ -1468,6 +1474,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = reply.photos[:MIN_OPTIONS]
 
     # Если перехватили «вопрос о подборе» и сами приложили фото — заменяем «уточню…» на нормальный показ.
+    if wants_photos and not picked and len(reply.photos) >= 2 and "₽" not in (reply.text or "") \
+            and not keep_photos and not order_text:
+        # Клиент просил «предложите / не знаю что выбрать» — текст про показанные фото, а не новые вопросы.
+        reply.text = ("Вот несколько вариантов на мой вкус 🌸 Какой нравится? Можно ответить на фото «этот». "
+                      "Если хочется другого — подскажите цвет или бюджет.")
     if force_options and reply.photos and re.search(r"уточн|секунд|минут|подожд", reply.text or "", re.I):
         reply.text = "Вот что могу предложить 🌹 Какой вариант нравится?"
 
