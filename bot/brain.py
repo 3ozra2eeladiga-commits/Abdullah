@@ -1411,6 +1411,19 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
     # Букет уже выбран — других букетов не показываем, пока клиент сам не попросит («покажите другие»).
     chosen = "" if from_staff else (db.get_setting(f"chosen:{client}") or "")
+    # ИИ переспрашивает то, что клиент УЖЕ сказал (доставка/дата/время) — заменяем на вопрос о недостающем.
+    if chosen and not order_text and not keep_photos and not reply.order and reply.text:
+        user_msgs = [m["content"] for m in history if m["role"] == "user"]
+        t = " ".join(user_msgs).lower()
+        asks_way = re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк|заед\w*[^.?!]{0,40}магазин", reply.text, re.I)
+        asks_when = re.search(r"на\s+как\w+\s+(?:дату|день|число)|во\s+сколько|к\s+какому\s+(?:часу|времени)|"
+                              r"какое\s+время|какая\s+дата", reply.text, re.I)
+        nxt = _next_question(user_msgs, city)
+        known_way = not re.search(r"доставка или самовывоз", nxt)
+        known_when = not re.search(r"дату", nxt)
+        if (asks_way and known_way) or (asks_when and known_when):
+            reply.text = (f"Отличный выбор 🌸 {picked[0]['title']} — {picked[0]['price']} ₽. Оформляем его! {nxt}"
+                          if picked else nxt)
     if chosen and reply.photos and not keep_photos and not re.search(
             r"друг|ещ[её]|вариант|покаж|покаж|скин|кинь|кидай|поменя|замен|не нрав|передумал", incoming or "", re.I):
         reply.photos = [p for p in reply.photos if p["code"] == chosen and p in picked]
