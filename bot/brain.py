@@ -614,6 +614,14 @@ def _order_missing(o, client_text):
     """Проверяет заказ. Возвращает вопрос о первом недостающем/подозрительном, или None если всё есть.
 
     client_text — всё, что писал клиент (чтобы ловить выдуманные ИИ телефоны)."""
+    items = [it for it in (o.get("товары") or []) if isinstance(it, dict)]
+    if not any(not CARD_RE.search(str(it.get("название") or "")) and (it.get("код") or it.get("название"))
+               for it in items):
+        return "Какой букет оформляем? Нажмите на его фото и ответьте «этот» 🌸"
+    if o.get("получение") not in ("доставка", "самовывоз"):
+        return "Доставка или самовывоз? 🚗"
+    if not str(o.get("дата") or "").strip() or str(o.get("дата")).strip() in ("—", "-", "..."):
+        return "На какую дату нужен букет? 📅"
     if o.get("получение") == "доставка" and len((o.get("адрес") or "").strip()) < 6:
         return "Подскажите, пожалуйста, точный адрес доставки: город, улица, дом, квартира 📍"
     if _time_is_vague(o.get("время")):
@@ -1172,29 +1180,37 @@ def respond(client, incoming, from_staff=False, quote=""):
         _apply_client_state(reply.order, client, city)
 
     # Не даём оформить заказ без адреса (при доставке), телефонов, имён и открытки — вместо заказа просим недостающее.
-    if reply.order:
-        client_text = " ".join(m["content"] for m in history if m["role"] == "user")
-        miss = _order_missing(reply.order, client_text)
-        if miss:
-            card_photos = []
-            if miss == CARD_ASK_Q:
-                miss = CARD_ASK_Q.format(min=min((c["price"] for c in catalog.cards(city)), default=50))
-            elif miss == CARD_PICK_Q:
-                card_text = str(reply.order.get("открытка") or "").strip()
-                card_photos = catalog.cards(city, text=card_text)
-                if not from_staff:
-                    _remember_cards(client, card_photos)
-                if len(card_photos) == 1:
-                    miss = CARD_ONE_Q.format(price=card_photos[0]["price"], text=card_text)
-                else:
-                    miss = CARD_PICK_Q.format(text=card_text)
-            reply.order = None
-            reply.order_raw = ""
-            reply.photos = card_photos
-            reply.text = miss
-            keep_photos = bool(card_photos)
+    client_text = " ".join(m["content"] for m in history if m["role"] == "user")
+
+    def ask_missing(order):
+        """Если в заказе чего-то не хватает — вместо заказа задаём вопрос о недостающем. True, если спросили."""
+        nonlocal keep_photos
+        miss = _order_missing(order, client_text)
+        if not miss:
+            return False
+        card_photos = []
+        if miss == CARD_ASK_Q:
+            miss = CARD_ASK_Q.format(min=min((c["price"] for c in catalog.cards(city)), default=50))
+        elif miss == CARD_PICK_Q:
+            card_text = str(order.get("открытка") or "").strip()
+            card_photos = catalog.cards(city, text=card_text)
             if not from_staff:
-                db.set_setting(f"lastq:{client}", miss)
+                _remember_cards(client, card_photos)
+            if len(card_photos) == 1:
+                miss = CARD_ONE_Q.format(price=card_photos[0]["price"], text=card_text)
+            else:
+                miss = CARD_PICK_Q.format(text=card_text)
+        reply.order = None
+        reply.order_raw = ""
+        reply.photos = card_photos
+        reply.text = miss
+        keep_photos = bool(card_photos)
+        if not from_staff:
+            db.set_setting(f"lastq:{client}", miss)
+        return True
+
+    if reply.order:
+        ask_missing(reply.order)
     # Метка [ЗАКАЗ] не разобралась в JSON (ИИ поставил её рано/криво) — флористу неполный заказ НЕ шлём.
     if reply.order_raw and not reply.order:
         reply.order_raw = ""
@@ -1232,7 +1248,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                     _apply_client_state(pend, client, city)
             if pend:
                 reply.order = pend
-        if reply.order:                          # уходит флористу
+        if reply.order and ask_missing(reply.order):
+            pass                                 # чего-то не хватает — спросили, а не «заказ принят»
+        elif reply.order:                        # уходит флористу
             db.clear_pending_order(client)
             _clear_client_state(client)
             reply.text = "Спасибо! Заказ принят 🌸 Скоро с вами свяжутся по оплате."
@@ -1271,7 +1289,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Перечисление вариантов с ценами (3+ «₽») — это показ букетов, а НЕ этап оформления,
     # даже если в тексте есть слово «оформлю» (из подсказки про номер/ссылку). Иначе фото пропадали.
     is_variant_listing = (reply.text or "").count("₽") >= 3
-    is_order_step = bool(ORDER_STEP_RE.search(reply.text or "")) and not is_variant_listing
+    is_order_step = ((bool(ORDER_STEP_RE.search(reply.text or "")) and not is_variant_listing)
+                     or bool(SUMMARY_RE.search(reply.text or "")))
     if reply.photos and is_order_step and not picked and not keep_photos:
         reply.photos = []
 

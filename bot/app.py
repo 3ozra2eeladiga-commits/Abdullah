@@ -151,8 +151,9 @@ def deliver(client, text, from_staff=False, quote=""):
         for item in reply.photos:
             _send_photo(client, item)
 
-        # Флористу заказ уходит ТОЛЬКО если он полностью собран (последняя защита, независимо от brain).
-        if reply.order and _order_ready(reply.order):
+        # Клиенту сказали «заказ принят» — значит, флорист ОБЯЗАН его получить. Если каких-то полей не хватает,
+        # заказ всё равно уходит, но с пометкой — флорист уточнит у клиента. Заказ не должен теряться.
+        if reply.order:
             order_id = db.save_order(client, reply.order)
             # Фото заказанных товаров — чтобы флорист сразу видел, что собирать.
             items = []
@@ -161,9 +162,13 @@ def deliver(client, text, from_staff=False, quote=""):
                 obj = catalog.get(code) if code else None
                 if obj and obj.get("images"):
                     items.append(obj)
-            telegram_bot.notify_staff_order(client, items, _format_order(order_id, client, reply))
-        elif reply.order or reply.order_raw:
-            log.warning("Неполный заказ НЕ отправлен флористу (%s): %s", client, reply.order or reply.order_raw)
+            card = _format_order(order_id, client, reply)
+            if not _order_ready(reply.order):
+                log.warning("Неполный заказ отправлен флористу с пометкой (%s): %s", client, reply.order)
+                card = "⚠️ В ЗАКАЗЕ НЕ ХВАТАЕТ ДАННЫХ — уточните у клиента (см. прочерки «—»)\n\n" + card
+            telegram_bot.notify_staff_order(client, items, card)
+        elif reply.order_raw:
+            log.warning("Заказ не распознан (%s): %s", client, reply.order_raw)
         if reply.question:
             telegram_bot.notify_staff(client, f"❓ ВОПРОС ОТ БОТА\n{_label(client)}\n\n{reply.question}\n\n"
                                               "Ответьте на это сообщение — бот передаст ответ клиенту.")
