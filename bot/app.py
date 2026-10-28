@@ -102,7 +102,8 @@ def _format_order(order_id, client, reply):
         lines.append(f"   🎀 Упаковка: {val(o['упаковка'])}")
     lines.append(f"   💰 Сумма товаров: {val(o.get('сумма_товаров'))} ₽")
     lines.append("")
-    when = f"{val(o.get('дата'))}, {val(o.get('время'))}"
+    win = brain._delivery_window(o.get("дата"), o.get("время")) if not pickup else ""
+    when = f"{val(o.get('дата'))}, {val(o.get('время'))}" + (f" (окно {win})" if win else "")
     lines.append(f"🕒 Когда: {when}")
     if pickup:
         lines.append(f"🏪 Самовывоз — {val(o.get('город'))}, {val(o.get('адрес'))}")

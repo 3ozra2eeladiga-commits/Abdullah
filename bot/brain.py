@@ -16,6 +16,7 @@ from pathlib import Path
 
 from . import config, db, llm
 from .catalog import CARD_RE, catalog
+from .catalog import _budget as catalog_budget
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +24,11 @@ RULES = """Ты — флорист цветочного магазина и пе
 как настоящий сотрудник: тёплым, естественным языком, с лёгкими эмоциями. Не упоминай, что ты бот, программа
 или ИИ, и не представляйся «помощником». Твоё имя и то, как здороваться, — в правилах магазина ниже.
 Твоя задача: помочь выбрать букет или цветы, ответить на вопросы и ОБЯЗАТЕЛЬНО собрать все данные для заказа.
+
+АНКЕТА В НАЧАЛЕ: первым сообщением клиенту уже отправлен список главных вопросов (город, доставка/самовывоз,
+дата и время, адрес, повод и бюджет, имена и телефоны). Когда клиент ответит — НЕ задавай эти вопросы заново.
+Если чего-то из анкеты не хватает — спроси ОДНИМ коротким сообщением только недостающее. Когда главное известно —
+переходи к выбору букета. Открытку — в самом конце, после выбора букета. Итог заказа покажет система.
 
 ГЛАВНОЕ: ВСЕГДА СОБИРАЙ ИНФОРМАЦИЮ
 Твоя цель — довести клиента до оформленного заказа. Для этого в ходе разговора выясни по порядку:
@@ -82,7 +88,7 @@ RULES = """Ты — флорист цветочного магазина и пе
 4) ПОВОД И ПОЖЕЛАНИЯ. Прежде чем показывать букеты, узнай пожелания клиента (задавай по 1–2 вопроса за раз,
    не всё сразу, по-человечески): повод; бюджет; цветовая гамма; состав — что хочется (просто розы, что-то
    экзотическое, микс разных цветов). Если клиент сразу всё написал — не переспрашивай.
-(Открытку и контакты — имена, телефоны — спрашивай ПОЗЖЕ, при оформлении выбранного букета, а не сейчас.)
+(Имена и телефоны могли прийти в анкете — тогда не переспрашивай. Открытку спрашивай ПОЗЖЕ, после выбора букета.)
 
 НЕ ПРЕДЛАГАЙ БУКЕТЫ РАНЬШЕ ВРЕМЕНИ
 - Пока не узнал ГОРОД, ДОСТАВКУ/самовывоз, ДАТУ и ТОЧНОЕ ВРЕМЯ и пожелания (повод, бюджет, гамма) —
@@ -427,10 +433,94 @@ def _known_facts(user_msgs):
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", " ".join(user_msgs))
     if phones:
         out.append(f"телефоны: {', '.join(phones[:2])}")
+    bud = next((catalog_budget(m) for m in reversed(user_msgs) if catalog_budget(m)), None)
+    if bud:
+        out.append(f"бюджет: до {bud} ₽ — предлагай букеты НЕ дороже этого")
     occ = find(r"рожден|юбиле|свадьб|8 марта|годовщ|выписк|извин|любим|маме|папе|просто так")
     if occ:
         out.append(f"повод: «{occ[:80]}»")
     return out
+
+
+def _catalog_query(history):
+    """Запрос для подбора: последние сообщения клиента + его бюджет, даже если он назвал его в самом начале
+    («здравствуйте, нужны цветы в бюджет 2000») — бот помнит бюджет, как живой человек."""
+    msgs = [m["content"] for m in history if m["role"] == "user"]
+    recent = msgs[-4:]
+    if not any(catalog_budget(m) for m in recent):
+        older = next((m for m in reversed(msgs[:-4]) if catalog_budget(m)), "")
+        if older:
+            recent = [older] + recent
+    return " ".join(recent)
+
+
+_MONTHS = ["январ", "феврал", "март", "апрел", "ма[яй]", "июн", "июл", "август", "сентябр", "октябр", "ноябр", "декабр"]
+
+
+def _resolve_date(date_s):
+    """«сегодня/завтра/послезавтра», «08.03», «8 марта» → дата (или None)."""
+    d = (date_s or "").lower()
+    today = datetime.datetime.now(_MSK).date()
+    for word, add in (("послезавтра", 2), ("завтра", 1), ("сегодня", 0)):
+        if word in d:
+            return today + datetime.timedelta(days=add)
+    m = re.search(r"\b(\d{1,2})[./](\d{1,2})", d)
+    if m:
+        day, mon = int(m.group(1)), int(m.group(2))
+    else:
+        m = re.search(r"\b(\d{1,2})\s+(" + "|".join(_MONTHS) + ")", d)
+        if not m:
+            return None
+        day = int(m.group(1))
+        mon = next(i + 1 for i, rx in enumerate(_MONTHS) if re.match(rx, m.group(2)))
+    try:
+        dt = datetime.date(today.year, mon, day)
+        return dt if dt >= today - datetime.timedelta(days=1) else datetime.date(today.year + 1, mon, day)
+    except ValueError:
+        return None
+
+
+def _delivery_window(date_s, time_s):
+    """«к 13:00» → «с 13:00 до 14:00» (в праздники — окно 2 часа). Пусто, если времени нет."""
+    m = re.search(r"\b(\d{1,2})(?:[:.](\d{2}))?\b", str(time_s or ""))
+    if not m or int(m.group(1)) > 23:
+        return ""
+    hh, mm = int(m.group(1)), int(m.group(2) or 0)
+    dt = _resolve_date(date_s)
+    holiday = bool(dt and dt.strftime("%d.%m") in config.HOLIDAYS)
+    hours = config.HOLIDAY_WINDOW_HOURS if holiday else config.WINDOW_HOURS
+    end = (hh + hours) % 24
+    return f"с {hh:02d}:{mm:02d} до {end:02d}:{mm:02d}"
+
+
+def _anketa(incoming, city):
+    """Приветствие + все главные вопросы одним сообщением (то, что клиент уже написал, не спрашиваем)."""
+    t = incoming or ""
+    facts = _known_facts([t])
+    has = lambda key: any(f.startswith(key) for f in facts)
+    qs = []
+    if not city:
+        qs.append(f"Город — {', '.join(catalog.city_names)} или посёлок рядом")
+    if not has("способ"):
+        qs.append("Доставка или самовывоз")
+    if not has("дата"):
+        hours = config.WINDOW_HOURS
+        qs.append(f"Дата и время (привезём в течение {'часа' if hours == 1 else f'{hours} часов'} от названного времени)")
+    qs.append("Адрес, если доставка — улица, дом, подъезд, этаж, квартира")
+    if not has("повод") or not has("бюджет"):
+        qs.append("Повод" + ("" if has("бюджет") else " и бюджет"))
+    qs.append("Ваше имя и телефон, имя и телефон получателя")
+    name = f" Меня зовут {config.FLORIST_NAME}." if config.FLORIST_NAME else ""
+    noted = []
+    bud = catalog_budget(t)
+    if bud:
+        noted.append(f"бюджет до {bud} ₽")
+    if city:
+        noted.append(city)
+    head = f"Здравствуйте! 🌸{name}" + (f" Записала: {', '.join(noted)} 👍" if noted else "")
+    lines = "\n".join(f"{i}) {q}" for i, q in enumerate(qs, 1))
+    return (f"{head}\nЧтобы быстро всё оформить, напишите, пожалуйста, одним сообщением:\n{lines}\n"
+            "Если что-то пока не знаете — не страшно, уточним по ходу 💐")
 
 
 def _next_question(user_msgs, city):
@@ -889,7 +979,9 @@ def _order_summary(o):
     if extra:
         items.append(f"{'собрать пышнее: +' if extra > 0 else 'собрать скромнее: −'}{_rub(abs(extra))}")
     price = str(o.get("доставка_цена") or "")
-    when = " ".join(x for x in (str(o.get("дата") or "").strip(), f"к {o['время']}" if o.get("время") else "") if x)
+    win = _delivery_window(o.get("дата"), o.get("время")) if o.get("получение") != "самовывоз" else ""
+    when = " ".join(x for x in (str(o.get("дата") or "").strip(),
+                                win or (f"к {o['время']}" if o.get("время") else "")) if x)
     if (o.get("получение") or "").lower().startswith("самовывоз"):
         how = f"Самовывоз {when}, {o.get('адрес') or ''}".strip(", ")
     else:
@@ -1007,7 +1099,7 @@ def system_prompt(history, city, picked=(), flower_block="", size_change=False):
                 f"не отказывай: выбери ближайший магазин и поставь его метку [ГОРОД ...], а при сомнении коротко "
                 f"спроси, из какого магазина удобнее везти. Пока магазин не выбран, не предлагай конкретные букеты.")
 
-    query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])
+    query = _catalog_query(history)
     discussed = {c for m in history if m["role"] == "assistant" for c in CODE_RE.findall(m["content"])}
     site = config.cities().get(city, "")
     picked_block = ""
@@ -1165,6 +1257,12 @@ def respond(client, incoming, from_staff=False, quote=""):
         it0 = (picked or addons)[0]
         content = f"{incoming} — про «{it0['title']}» ({it0['price']} ₽)"
     db.add_message(client, "user", content)
+    # Первое сообщение клиента — отвечаем анкетой: сразу все главные вопросы, чтобы потом не переспрашивать.
+    if not from_staff and "?" not in (incoming or "") and not picked and not addons \
+            and not any(m["role"] == "assistant" for m in db.history(client, 6)):
+        text = _anketa(incoming, city)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # Клиент после оформления просит отменить/изменить заказ — это решает флорист, бот только передаёт.
     if not from_staff and CANCEL_RE.search(incoming or "") and db.has_order(client):
         text = "Поняла 🌸 Передала флористу — она свяжется с вами по заказу в ближайшее время."
@@ -1184,6 +1282,13 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.add_message(client, "assistant", text)
         return Reply(text=text, photos=fresh, city=city)
     wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
+    # Клиент ответил на анкету и главное известно (город, доставка/самовывоз, дата+время) — сразу к выбору букета.
+    after_anketa = False
+    if not from_staff and city and not picked and not addons and not db.get_setting(f"chosen:{client}"):
+        prev_bot = next((m["content"] for m in reversed(db.history(client, 4)) if m["role"] == "assistant"), "")
+        if "одним сообщением" in prev_bot:
+            nq = _next_question([m["content"] for m in db.history(client) if m["role"] == "user"], city)
+            after_anketa = not re.search(r"самовывоз|дату|город", nq)
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
     # Срабатывает и когда выбран букет (picked), и когда клиент пишет «этот/его/такой ... побольше» без reply.
     # НО не путаем с «покажи побольше ВАРИАНТОВ» — там как раз нужно показать.
@@ -1447,14 +1552,14 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     # Если бот перечислил товары с ценами (есть «₽») и это не этап заказа — это показ вариантов.
     # Тогда код сам прикладывает фото (минимум 5), даже если модель забыла метки [ФОТО] или прислала только текст.
-    offering = (("₽" in (reply.text or "")) or force_options or wants_photos) \
+    offering = after_anketa or (("₽" in (reply.text or "")) or force_options or wants_photos) \
         and not is_order_step and not picked and not size_change and not order_text and not up_turn \
         and not keep_photos and not addons
     city_cat = catalog.get_city(city)
     # Для режима «конкретный цветок» и «сделать больше/меньше» общий добор фото не нужен.
     if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS \
             and not flowers and not size_change and not order_text and not up_turn and not keep_photos:
-        query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])
+        query = _catalog_query(history)
         # Добираем ТОЛЬКО букеты (не поштучные розы по 250₽, не открытки с котиками), кроме случая,
         # когда клиент ПРЯМО СЕЙЧАС просит именно поштучно/подарки. Смотрим текущее сообщение, а не всю историю,
         # чтобы слово «открытка» из этапа сбора данных не превращало показ букетов в показ открыток.
@@ -1474,7 +1579,12 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = reply.photos[:MIN_OPTIONS]
 
     # Если перехватили «вопрос о подборе» и сами приложили фото — заменяем «уточню…» на нормальный показ.
-    if wants_photos and not picked and len(reply.photos) >= 2 and "₽" not in (reply.text or "") \
+    if after_anketa and len(reply.photos) >= 2:
+        bud = next((catalog_budget(m["content"]) for m in reversed(history)
+                    if m["role"] == "user" and catalog_budget(m["content"])), None)
+        reply.text = (f"Спасибо, всё записала 🌸 Вот варианты{f' до {bud} ₽' if bud else ''} — какой нравится? "
+                      "Можно ответить на фото «этот» или написать цену.")
+    elif wants_photos and not picked and len(reply.photos) >= 2 and "₽" not in (reply.text or "") \
             and not keep_photos and not order_text:
         # Клиент просил «предложите / не знаю что выбрать» — текст про показанные фото, а не новые вопросы.
         reply.text = ("Вот несколько вариантов на мой вкус 🌸 Какой нравится? Можно ответить на фото «этот». "
@@ -1512,6 +1622,14 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.text = ("Это время сегодня, к сожалению, уже прошло 🙏 Подскажите, пожалуйста, на какое время "
                       "сегодня (попозже) или на другую дату — и я всё подберу.")
         reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
+    # Клиент назвал бюджет (хоть в первом сообщении) — дороже не показываем (кроме уже выбранного/открыток).
+    if not from_staff and reply.photos and not keep_photos and not picked:
+        bud = next((catalog_budget(m["content"]) for m in reversed(history)
+                    if m["role"] == "user" and catalog_budget(m["content"])), None)
+        if bud:
+            fit = [p for p in reply.photos if p["price"] <= bud * 1.1 or catalog.is_addon(p, city)]
+            if fit:
+                reply.photos = fit
     # Букет уже выбран — других букетов не показываем, пока клиент сам не попросит («покажите другие»).
     chosen = "" if from_staff else (db.get_setting(f"chosen:{client}") or "")
     # ИИ переспрашивает то, что клиент УЖЕ сказал (доставка/дата/время) — заменяем на вопрос о недостающем.
