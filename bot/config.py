@@ -99,6 +99,24 @@ TELEGRAM_STAFF_IDS = [int(x) for x in _list("TELEGRAM_STAFF_IDS") if x.lstrip("-
 if len(TELEGRAM_STAFF_IDS) != len(_list("TELEGRAM_STAFF_IDS")):
     print("ВНИМАНИЕ: в TELEGRAM_STAFF_IDS должны быть только числа (ID из /start). Лишнее пропущено.")
 # Куда слать заказы и вопросы: ID группы сотрудников. Если пусто - каждому из STAFF_IDS.
+
+
+def is_staff(user_id):
+    """Сотрудник из .env или временный доступ из temp_staff.json ([{"id": 123, "until": "2026-10-28T09:00+03:00"}]).
+    Временный доступ сам заканчивается в указанное время. Заказы/вопросы временным НЕ приходят — только /test."""
+    if user_id in TELEGRAM_STAFF_IDS:
+        return True
+    from datetime import datetime, timezone
+    try:
+        with open("temp_staff.json", encoding="utf-8") as f:
+            for g in json.load(f):
+                if int(g["id"]) == user_id and datetime.now(timezone.utc) < datetime.fromisoformat(g["until"]):
+                    return True
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return False
+
+
 TELEGRAM_ORDERS_CHAT = os.getenv("TELEGRAM_ORDERS_CHAT", "")
 
 # --- Сервер ---

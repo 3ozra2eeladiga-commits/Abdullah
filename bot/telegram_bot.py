@@ -192,7 +192,7 @@ def _handle(msg, deliver):
     user_id = msg.get("from", {}).get("id")
     text = (msg.get("text") or "").strip()
 
-    if user_id not in config.TELEGRAM_STAFF_IDS:
+    if not config.is_staff(user_id):
         if text.startswith("/start") or text.startswith("/myid"):
             send(chat_id, f"Ваш ID: {user_id}\nДоступ к боту закрыт. Передайте этот номер администратору.")
         return
