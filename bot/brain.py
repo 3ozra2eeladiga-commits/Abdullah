@@ -577,34 +577,40 @@ def _rub(n):
 
 
 def _order_summary(o):
-    """Итог заказа для клиента — собирает код, аккуратно и с правильными суммами."""
-    lines = ["Проверьте, пожалуйста, заказ 🌸", ""]
+    """Короткий итог заказа для клиента — как написал бы живой флорист. Телефоны и служебное — только флористу."""
+    items = []
     for it in o.get("товары") or []:
+        name = str(it.get("название") or "").strip()
         qty = it.get("кол-во") or 1
         try:
-            lines.append(f"• {it.get('название', '')} × {qty} — {_rub(it.get('сумма') or 0)}")
+            q = f" × {qty}" if int(qty) > 1 else ""
         except (TypeError, ValueError):
-            lines.append(f"• {it.get('название', '')} × {qty}")
-    if o.get("упаковка") and str(o["упаковка"]).strip() not in ("", "...", "—"):
-        lines.append(f"• Упаковка: {o['упаковка']}")
+            q = ""
+        items.append(f"{name}{q}")
     price = str(o.get("доставка_цена") or "")
+    when = " ".join(x for x in (str(o.get("дата") or "").strip(), f"к {o['время']}" if o.get("время") else "") if x)
     if (o.get("получение") or "").lower().startswith("самовывоз"):
-        lines.append(f"• Самовывоз: {o.get('адрес') or o.get('город') or ''}")
+        how = f"Самовывоз {when}, {o.get('адрес') or ''}".strip(", ")
     else:
         cost = "бесплатно" if price == "0" else (_rub(price) if price.isdigit() else "стоимость уточнит менеджер")
-        lines.append(f"• Доставка ({cost}): {o.get('адрес') or ''}")
-    lines.append(f"• Когда: {o.get('дата') or ''}, {o.get('время') or ''}")
-    lines.append(f"• Заказчик: {o.get('заказчик') or ''}")
-    lines.append(f"• Получатель: {o.get('получатель') or ''}")
+        how = f"Доставка {when}, {o.get('адрес') or ''} — {cost}".strip()
+    who = str(o.get("получатель") or "").split(",")[0].strip()
     card = str(o.get("открытка") or "").strip()
+    extra = []
+    if who:
+        extra.append(f"для {who}")
     if card and card.lower() not in ("нет", "не нужна", "-", "—"):
-        lines.append(f"• Открытка: «{card}»")
+        extra.append(f"открытка «{card}»")
+    lines = ["Отлично, всё записала 🌸", ", ".join(items), how]
+    if extra:
+        t = ", ".join(extra)
+        lines.append(t[:1].upper() + t[1:])
     try:
         total = int(o.get("сумма_товаров") or 0) + (int(price) if price.isdigit() else 0)
-        lines += ["", f"Итого: {_rub(total)}" + ("" if price.isdigit() else " + доставка")]
+        lines.append(f"Итого: {_rub(total)}" + ("" if price.isdigit() else " + доставка"))
     except (TypeError, ValueError):
         pass
-    lines += ["", "Всё верно?"]
+    lines.append("Всё верно?")
     return "\n".join(lines)
 
 
