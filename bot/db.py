@@ -135,6 +135,7 @@ def clear_history(client):
     _exec("DELETE FROM messages WHERE client=?", (client,))
     _exec("DELETE FROM client_city WHERE client=?", (client,))
     _exec("DELETE FROM pending_orders WHERE client=?", (client,))
+    _exec("DELETE FROM settings WHERE key IN (?,?)", (f"upsize:{client}", f"addons:{client}"))
 
 
 def set_city(client, city):
@@ -148,6 +149,10 @@ def get_city(client):
 
 def set_setting(key, value):
     _exec("INSERT OR REPLACE INTO settings VALUES (?,?)", (key, str(value)))
+
+
+def del_setting(key):
+    _exec("DELETE FROM settings WHERE key=?", (key,))
 
 
 def get_setting(key, default=None):

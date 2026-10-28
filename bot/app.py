@@ -91,6 +91,13 @@ def _format_order(order_id, client, reply):
         each = it.get("цена_за_шт") or it.get("цена")
         total = it.get("сумма") or (each * qty if isinstance(each, (int, float)) else each)
         lines.append(f"   • {val(it.get('название'))} × {qty} = {val(total)} ₽")
+    try:
+        extra = int(o.get("доплата") or 0)
+    except (TypeError, ValueError):
+        extra = 0
+    if extra:
+        lines.append(f"   ➕ {'Собрать ПЫШНЕЕ: добавить цветов на' if extra > 0 else 'Собрать СКРОМНЕЕ: на'} "
+                     f"{abs(extra)} ₽{'' if extra > 0 else ' меньше'}")
     if o.get("упаковка"):
         lines.append(f"   🎀 Упаковка: {val(o['упаковка'])}")
     lines.append(f"   💰 Сумма товаров: {val(o.get('сумма_товаров'))} ₽")

@@ -113,6 +113,23 @@ class Catalog:
                     return it
             return self.by_code.get(code)
 
+    def section_of(self, code):
+        """В каком разделе каталога лежит товар."""
+        with self._lock:
+            for name, items in self.sections:
+                if any(it["code"] == code for it in items):
+                    return name
+        return None
+
+    def cards(self, limit=6):
+        """Открытки из каталога (в названии «открытк»), в наличии и с фото — от дешёвых к дорогим."""
+        with self._lock:
+            out = [it for it in self.by_code.values()
+                   if "открытк" in it["title"].lower() and it["images"]
+                   and (it["stock"] is None or it["stock"] > 0)]
+        # Первой — открытка «с полем для записи»: на ней пишут текст клиента.
+        return sorted(out, key=lambda x: ("запис" not in x["title"].lower(), x["price"]))[:limit]
+
     def find_by_flower(self, pattern, limit=5):
         """Товары с этим цветком в названии: (поштучные, букеты). Только в наличии и с фото."""
         pieces, bouquets = [], []
@@ -349,6 +366,24 @@ class Catalogs:
             if it:
                 return it
         return None
+
+    def cards(self, city=None, limit=6):
+        c = self.by_city.get(city) if city else None
+        cats = [c] if c else list(self.by_city.values())
+        out = []
+        for c in cats:
+            out += c.cards(limit)
+        return sorted(out, key=lambda x: ("запис" not in x["title"].lower(), x["price"]))[:limit]
+
+    def is_addon(self, item, city=None):
+        """Дополнение к букету (открытка, шар, игрушка…), а не сам букет — его добавляют к заказу, а не меняют букет."""
+        if "открытк" in item["title"].lower():
+            return True
+        for c in ([self.by_city[city]] if city in self.by_city else list(self.by_city.values())):
+            sec = c.section_of(item["code"])
+            if sec:
+                return "к букету" in sec.lower()
+        return False
 
     def find_by_flower(self, pattern, city=None, limit=5):
         """(поштучные, букеты) с этим цветком — в каталоге нужного города."""

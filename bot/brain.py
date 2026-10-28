@@ -177,9 +177,14 @@ RULES = """Ты — флорист цветочного магазина и пе
   САМА, ТОЛЬКО после подтверждения клиента («да», «всё верно»).
 - Если клиент что-то ПОПРАВИЛ (например, время) — заново покажи полный итог с исправлением, СНОВА с [ЗАКАЗ],
   и спроси «всё верно?». После «да» — «Заказ принят, с вами свяжутся по оплате» и СНОВА приложи [ЗАКАЗ] с финалом.
-- Про открытку: если клиент НЕ хочет открытку — в поле «открытка» напиши «нет».
+- ОТКРЫТКА ПЛАТНАЯ — это товар из каталога (в названии «Открытка», раздел «К букету»). Никогда не говори, что
+  она бесплатная. Если нужна — выбранную открытку добавь в «товары» отдельной строкой с её кодом, а текст для неё —
+  в поле «открытка». Если клиент НЕ хочет открытку — в поле «открытка» напиши «нет».
+- «СДЕЛАТЬ ПЫШНЕЕ / ПОБОЛЬШЕ» выбранный букет: спроси, НА КАКУЮ СУММУ добавить (например, «+3000 ₽»), и поставь её
+  в поле «доплата» (если клиент хочет скромнее/меньше — со знаком минус). Флорист сам доберёт цветы на эту сумму.
+  Других букетов при этом НЕ предлагай и коллег ([ВОПРОС]) не спрашивай.
 Формат метки (только когда ВСЁ собрано):
-[ЗАКАЗ]{"товары": [{"код": "...", "название": "...", "кол-во": 1, "цена_за_шт": 0, "сумма": 0}], "сумма_товаров": 0,
+[ЗАКАЗ]{"товары": [{"код": "...", "название": "...", "кол-во": 1, "цена_за_шт": 0, "сумма": 0}], "сумма_товаров": 0, "доплата": 0,
 "упаковка": "...", "доставка_цена": "0 | <<ЦЕНА_ДОСТАВКИ>> | уточнят", "дата": "...", "время": "...", "город": "...",
 "получение": "доставка|самовывоз", "адрес": "...",
 "заказчик": "фамилия имя, телефон", "получатель": "фамилия имя, телефон", "открытка": "...",
@@ -465,6 +470,37 @@ def _phone_was_given(order_value, client_text):
     return digits[-7:] in client_digits
 
 
+CARD_ASK_Q = ("Нужна ли открытка к букету? Открытки платные — от {min} ₽. Если нужна — напишите текст для неё, "
+              "если нет — так и скажите 🌸")
+CARD_PICK_Q = ("Открытки у нас платные 🌸 Выберите, пожалуйста, одну из вариантов ниже — нажмите на фото и "
+               "ответьте «эту». Текст «{text}» напишем на ней.")
+
+
+def _money(text):
+    """Сумма из сообщения клиента: «3000», «на 3 000», «3 тыс», «+5к» → 3000 / 5000. Телефоны не считаем."""
+    t = (text or "").lower()
+    if re.search(r"\d{10,}", re.sub(r"[\s()+-]", "", t)) and not re.search(r"руб|₽|тыс", t):
+        return None
+    m = re.search(r"(\d+(?:[.,]\d+)?)\s*(?:тыс|т\.|к\b)", t)
+    if m:
+        return int(float(m.group(1).replace(",", ".")) * 1000)
+    m = re.search(r"\d[\d\s]{1,6}\d|\d{3,6}", t)
+    if m:
+        n = int(re.sub(r"\s", "", m.group(0)))
+        return n if 100 <= n <= 300000 else None
+    return None
+
+
+def _last_bouquet(history, city):
+    """Последний букет, о котором шла речь в разговоре (по номеру/названию), — не дополнение."""
+    for m in reversed(history):
+        found = _picked_by_number(m["content"], city) + _picked_from_caption(m["content"], city)
+        found = [x for x in found if not catalog.is_addon(x, city)]
+        if found:
+            return found[0]
+    return None
+
+
 def _order_missing(o, client_text):
     """Проверяет заказ. Возвращает вопрос о первом недостающем/подозрительном, или None если всё есть.
 
@@ -484,8 +520,12 @@ def _order_missing(o, client_text):
         return "Кому дарим? Напишите фамилию, имя и телефон получателя."
     if not _phone_was_given(o.get("получатель"), client_text):
         return "Подскажите номер телефона получателя — на случай, если нужно согласовать доставку."
-    if not (o.get("открытка") or "").strip():
-        return "Нужна ли открытка к букету? Если да — напишите, что на ней написать (если не нужна — так и скажите)."
+    card = (o.get("открытка") or "").strip()
+    if not card:
+        return CARD_ASK_Q
+    if card.lower() not in ("нет", "не нужна", "не надо", "-", "—") and not any(
+            "открытк" in str(it.get("название") or "").lower() for it in o.get("товары") or []):
+        return CARD_PICK_Q
     return None
 
 # ИИ иногда «доигрывает» диалог за клиента. Обрезаем ответ на первой выдуманной реплике клиента.
@@ -511,17 +551,52 @@ def _fill_order(order, city):
             qty = it.get("кол-во") or 1
             it["сумма"] = real["price"] * qty if isinstance(qty, (int, float)) else real["price"]
     try:
-        order["сумма_товаров"] = sum(int(x.get("сумма") or 0) for x in order["товары"])
+        extra = int(order.get("доплата") or 0)
+    except (TypeError, ValueError):
+        extra = 0
+    order["доплата"] = extra
+    try:
+        order["сумма_товаров"] = sum(int(x.get("сумма") or 0) for x in order["товары"]) + extra
     except (TypeError, ValueError):
         pass
     order["доставка_цена"] = _delivery_price(order)
     return order
 
 
+def _apply_client_state(order, client, city):
+    """Подставляет в заказ то, что клиент уже выбрал, даже если ИИ это забыл: дополнения (открытка и т.п.)
+    и доплату «собрать пышнее/скромнее». Пересчитывает суммы."""
+    if not isinstance(order, dict):
+        return order
+    items = order.get("товары")
+    if not isinstance(items, list):
+        items = order["товары"] = []
+    have = {str(it.get("код") or "").strip().lower() for it in items}
+    for code in [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]:
+        if code not in have and catalog.get(code, city):
+            items.append({"код": code, "кол-во": 1})
+    up = db.get_setting(f"upsize:{client}") or ""
+    if up:
+        _code, sign, amount = (up.split("|") + ["", "", ""])[:3]
+        if amount:
+            order["доплата"] = int(amount) * (-1 if sign == "-" else 1)
+            note = (f"Собрать пышнее: добавить цветов на {amount} ₽" if sign != "-"
+                    else f"Собрать скромнее: на {amount} ₽ меньше")
+            c = str(order.get("комментарий") or "").strip()
+            if note not in c:
+                order["комментарий"] = (c + "; " if c else "") + note
+    return _fill_order(order, city)
+
+
+def _clear_client_state(client):
+    db.del_setting(f"upsize:{client}")
+    db.del_setting(f"addons:{client}")
+
+
 # Формат метки заказа — для отдельного «добора» заказа, если ИИ забыл поставить метку в разговоре.
 ORDER_FORMAT = (
     '[ЗАКАЗ]{"товары": [{"код": "...", "название": "...", "кол-во": 1, "цена_за_шт": 0, "сумма": 0}], '
-    '"сумма_товаров": 0, "упаковка": "...", "доставка_цена": "0 | <<ЦЕНА_ДОСТАВКИ>> | уточнят", "дата": "...", "время": "...", '
+    '"сумма_товаров": 0, "доплата": 0, "упаковка": "...", "доставка_цена": "0 | <<ЦЕНА_ДОСТАВКИ>> | уточнят", "дата": "...", "время": "...", '
     '"город": "...", "получение": "доставка|самовывоз", "адрес": "...", "заказчик": "фамилия имя, телефон", '
     '"получатель": "фамилия имя, телефон", "открытка": "...", "комментарий": "..."}[/ЗАКАЗ]'
 )
@@ -594,6 +669,12 @@ def _order_summary(o):
         except (TypeError, ValueError):
             q = ""
         items.append(f"{name}{q}")
+    try:
+        extra = int(o.get("доплата") or 0)
+    except (TypeError, ValueError):
+        extra = 0
+    if extra:
+        items.append(f"{'собрать пышнее: +' if extra > 0 else 'собрать скромнее: −'}{_rub(abs(extra))}")
     price = str(o.get("доставка_цена") or "")
     when = " ".join(x for x in (str(o.get("дата") or "").strip(), f"к {o['время']}" if o.get("время") else "") if x)
     if (o.get("получение") or "").lower().startswith("самовывоз"):
@@ -717,12 +798,10 @@ def system_prompt(history, city, picked=(), flower_block="", size_change=False):
     if picked:
         lines = "\n".join(f"- [{it['code']}] {it['title']} — {it['price']} ₽" for it in picked)
         if size_change:
-            picked_block = ("\n\n# КЛИЕНТ ХОЧЕТ ЭТОТ БУКЕТ БОЛЬШЕ ИЛИ МЕНЬШЕ — НЕ показывай другие букеты!\n"
-                            "Сначала СПРОСИ, на какую СУММУ сделать больше/меньше (назови текущую цену), например: "
-                            "«Этот букет стоит X ₽. На какую сумму хотите его увеличить/уменьшить? Подберу под неё 🌸». "
-                            "Вопрос про деньги, НЕ про количество цветов. Когда клиент назовёт сумму — предложи "
-                            "вариант под неё; если он хочет ИМЕННО этот букет, но крупнее/меньше — скажи «уточню "
-                            "у флориста» и поставь [ВОПРОС] с деталями (какой букет, на какую сумму). Букет:\n" + lines)
+            picked_block = ("\n\n# КЛИЕНТ ХОЧЕТ ЭТОТ БУКЕТ ПЫШНЕЕ ИЛИ СКРОМНЕЕ — НЕ показывай другие букеты!\n"
+                            "Спроси ОДНИМ вопросом, на какую сумму добавить (или уменьшить), например: «Этот букет "
+                            "стоит X ₽. На какую сумму добавить цветов? Например, +3000 ₽». Не спрашивай коллег — "
+                            "флорист сам доберёт цветы по сумме. Букет:\n" + lines)
         else:
             picked_block = ("\n\n# КЛИЕНТ УЖЕ ВЫБРАЛ ЭТОТ БУКЕТ — ЭТО ОКОНЧАТЕЛЬНЫЙ ВЫБОР\n"
                             "Коротко подтверди выбор (название и цена) и СРАЗУ иди к оформлению — задай следующий "
@@ -830,10 +909,18 @@ def respond(client, incoming, from_staff=False, quote=""):
                + _picked_from_caption(detect, city)) if not from_staff else [])
     _seen = set()
     picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
-    # В историю пишем слова клиента; если он ответил (reply) на фото букета — дописываем, о каком букете речь,
-    # обычной фразой. Иначе ИИ видит только «вот это» и переспрашивает номер, хотя букет уже понятен.
-    if quote and picked and not from_staff:
-        content = f"{incoming} — про букет «{picked[0]['title']}» ({picked[0]['price']} ₽)"
+    # Дополнения (открытка, шар, игрушка…) ДОБАВЛЯЮТ к заказу — выбранный букет при этом не меняется.
+    addons = [p for p in picked if catalog.is_addon(p, city)]
+    picked = [p for p in picked if p not in addons]
+    if addons and not from_staff:
+        saved = [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]
+        saved += [a["code"] for a in addons if a["code"] not in saved]
+        db.set_setting(f"addons:{client}", ",".join(saved))
+    # В историю пишем слова клиента; если он ответил (reply) на фото — дописываем, о каком товаре речь,
+    # обычной фразой. Иначе ИИ видит только «вот это» и переспрашивает номер, хотя всё уже понятно.
+    if quote and (picked or addons) and not from_staff:
+        it0 = (picked or addons)[0]
+        content = f"{incoming} — про «{it0['title']}» ({it0['price']} ₽)"
     db.add_message(client, "user", content)
     wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
@@ -842,6 +929,49 @@ def respond(client, incoming, from_staff=False, quote=""):
     size_change = (bool(SIZE_CHANGE_RE.search(incoming or ""))
                    and not re.search(r"вариант|ещё|еще|друг|показ|покаж|выбор", incoming or "", re.I)
                    and (bool(picked) or bool(re.search(r"\bэтот\b|\bэту\b|\bэто\b|\bтакой\b|\bтакую\b|\bего\b|\bеё\b|\bее\b", incoming or "", re.I))))
+    # «Сделать пышнее/скромнее» выбранный букет: запоминаем КАКОЙ букет и НА СКОЛЬКО добавить (доплата).
+    # Флорист сам доберёт цветы на эту сумму. Других букетов не предлагаем.
+    up_block, up_turn, up_target, up_amount, up_sign = "", False, None, "", "+"
+    if not from_staff:
+        up_key = f"upsize:{client}"
+        if size_change:
+            target = picked[0] if picked else _last_bouquet(db.history(client), city)
+            if target:
+                sign = "-" if re.search(r"меньше|поменьше|компактн|поскромн|дешевле", incoming or "", re.I) else "+"
+                db.set_setting(up_key, f"{target['code']}|{sign}|")
+        up = db.get_setting(up_key) or ""
+        if up:
+            code, up_sign, up_amount = (up.split("|") + ["", "", ""])[:3]
+            up_target = catalog.get(code, city) or catalog.get(code)
+            if up_target and not up_amount and not size_change:
+                n = _money(incoming)
+                if n:
+                    up_amount = str(n)
+                    db.set_setting(up_key, f"{code}|{up_sign}|{up_amount}")
+                    up_turn = True
+            if up_target:
+                word = "ПЫШНЕЕ (добавить цветов)" if up_sign == "+" else "СКРОМНЕЕ (убрать часть цветов)"
+                if not up_amount:
+                    up_turn = True
+                    up_block = (f"\n\n# КЛИЕНТ ХОЧЕТ СДЕЛАТЬ БУКЕТ «{up_target['title']}» ({up_target['price']} ₽) "
+                                f"{word}\nСпроси ОДНИМ коротким вопросом, на какую сумму "
+                                f"{'добавить' if up_sign == '+' else 'уменьшить'}, например: «На какую сумму добавить "
+                                "цветов? Например, +3000 ₽». НЕ предлагай другие букеты, НЕ спрашивай коллег.")
+                else:
+                    total = up_target["price"] + (int(up_amount) if up_sign == "+" else -int(up_amount))
+                    up_block = (f"\n\n# РЕШЕНО: букет «{up_target['title']}» собрать {word.lower()}, "
+                                f"{'+' if up_sign == '+' else '−'}{up_amount} ₽ (итого за букет {total} ₽). Флорист сам "
+                                "доберёт цветы на эту сумму.\nЕсли клиент только что назвал сумму — коротко подтверди и "
+                                f"продолжай оформление (следующий недостающий вопрос). В [ЗАКАЗ] поставь этот букет "
+                                f"(код {up_target['code']}) и \"доплата\": {'' if up_sign == '+' else '-'}{up_amount}. "
+                                "НЕ предлагай другие букеты и НЕ задавай [ВОПРОС] коллегам.")
+    addon_block = ""
+    if addons:
+        addon_block = ("\n\n# КЛИЕНТ ДОБАВЛЯЕТ К ЗАКАЗУ (это дополнение — выбранный букет НЕ меняется!)\n"
+                       + "\n".join(f"- [{a['code']}] {a['title']} — {a['price']} ₽" for a in addons)
+                       + "\nКоротко подтверди, добавь в «товары» [ЗАКАЗ] отдельной строкой с кодом. Если это открытка и "
+                         "текст для неё ещё не известен — спроси текст. Продолжай оформление.")
+
     # Клиент назвал конкретный цветок (лилии, каллы...) — ищем его СТРОГО в каталоге, не даём ИИ выдумывать.
     flower_block, flower_photos, flower_absent = "", [], False
     flowers = _flowers_requested(incoming) if (not from_staff and city and not picked) else []
@@ -869,7 +999,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                         "из каталога. Ничего не выдумывай.\n" + "\n".join(lines))
 
     history = db.history(client)
-    raw = llm.complete(system_prompt(history, city, picked, flower_block, size_change), _merge_roles(history))
+    raw = llm.complete(system_prompt(history, city, picked, flower_block + up_block + addon_block, size_change),
+                       _merge_roles(history))
     # ИИ выдал шаблонный отказ (ложный фильтр YandexGPT на безобидную просьбу) — не пугаем клиента, переспрашиваем.
     if llm.is_refusal(raw):
         if re.search(r"больше|крупнее|пышнее|объёмн|дороже|меньше|дешевле|бюджет", incoming or "", re.I):
@@ -882,18 +1013,29 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.set_city(client, reply.city)
         city = reply.city
 
-    # В заказе берём настоящие название и цену товара из каталога по коду (чтобы ИИ не подменил, как «тюльпан»).
+    # В заказе берём настоящие название и цену товара из каталога по коду (чтобы ИИ не подменил, как «тюльпан»),
+    # и добавляем то, что клиент уже выбрал (открытка, доплата за пышность), даже если ИИ это забыл.
     _fill_order(reply.order, city)
+    keep_photos = False                          # фото выбора открытки — не трогать дальше
+    if reply.order and not from_staff:
+        _apply_client_state(reply.order, client, city)
 
     # Не даём оформить заказ без адреса (при доставке), телефонов, имён и открытки — вместо заказа просим недостающее.
     if reply.order:
         client_text = " ".join(m["content"] for m in history if m["role"] == "user")
         miss = _order_missing(reply.order, client_text)
         if miss:
+            card_photos = []
+            if miss == CARD_ASK_Q:
+                miss = CARD_ASK_Q.format(min=min((c["price"] for c in catalog.cards(city)), default=50))
+            elif miss == CARD_PICK_Q:
+                card_photos = catalog.cards(city)
+                miss = CARD_PICK_Q.format(text=str(reply.order.get("открытка") or "").strip())
             reply.order = None
             reply.order_raw = ""
-            reply.photos = []
+            reply.photos = card_photos
             reply.text = miss
+            keep_photos = bool(card_photos)
     # Метка [ЗАКАЗ] не разобралась в JSON (ИИ поставил её рано/криво) — флористу неполный заказ НЕ шлём.
     if reply.order_raw and not reply.order:
         reply.order_raw = ""
@@ -917,10 +1059,13 @@ def respond(client, incoming, from_staff=False, quote=""):
             # Запасной путь: итог был, но ИИ не поставил метку — соберём заказ из переписки.
             if not pend and re.search(r"принят|оформл|свяжут|готов|подтвержд|заказ ваш", reply.text or "", re.I):
                 pend = _extract_order(client, city)
+                if pend:
+                    _apply_client_state(pend, client, city)
             if pend:
                 reply.order = pend
         if reply.order:                          # уходит флористу
             db.clear_pending_order(client)
+            _clear_client_state(client)
             reply.text = "Спасибо! Заказ принят 🌸 Скоро с вами свяжутся по оплате."
             reply.photos = []
             order_text = True
@@ -933,7 +1078,7 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     # Клиент выбрал букет (по фото/номеру) — показываем ТОЛЬКО его, без «других вариантов». Он уже выбрал,
     # как чипсы в магазине: не предлагаем альтернативы, а идём оформлять.
-    if picked and not reply.order and not size_change and not order_text:
+    if picked and not reply.order and not size_change and not order_text and not keep_photos:
         reply.photos = list(picked)
     elif size_change:
         reply.photos = []
@@ -951,17 +1096,18 @@ def respond(client, incoming, from_staff=False, quote=""):
     # даже если в тексте есть слово «оформлю» (из подсказки про номер/ссылку). Иначе фото пропадали.
     is_variant_listing = (reply.text or "").count("₽") >= 3
     is_order_step = bool(ORDER_STEP_RE.search(reply.text or "")) and not is_variant_listing
-    if reply.photos and is_order_step and not picked:
+    if reply.photos and is_order_step and not picked and not keep_photos:
         reply.photos = []
 
     # Если бот перечислил товары с ценами (есть «₽») и это не этап заказа — это показ вариантов.
     # Тогда код сам прикладывает фото (минимум 5), даже если модель забыла метки [ФОТО] или прислала только текст.
     offering = (("₽" in (reply.text or "")) or force_options or wants_photos) \
-        and not is_order_step and not picked and not size_change and not order_text
+        and not is_order_step and not picked and not size_change and not order_text and not up_turn \
+        and not keep_photos
     city_cat = catalog.get_city(city)
     # Для режима «конкретный цветок» и «сделать больше/меньше» общий добор фото не нужен.
     if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS \
-            and not flowers and not size_change and not order_text:
+            and not flowers and not size_change and not order_text and not up_turn and not keep_photos:
         query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])
         # Добираем ТОЛЬКО букеты (не поштучные розы по 250₽, не открытки с котиками), кроме случая,
         # когда клиент ПРЯМО СЕЙЧАС просит именно поштучно/подарки. Смотрим текущее сообщение, а не всю историю,
@@ -993,6 +1139,18 @@ def respond(client, incoming, from_staff=False, quote=""):
                "Подскажите, пожалуйста: доставка или самовывоз, и на какую дату и к какому часу?")
         reply.text = f"Отличный выбор 🌸 {it['title']} — {it['price']} ₽. Оформляем его! {nxt}"
         reply.photos = []
+
+    # Режим «пышнее/скромнее»: никаких других букетов и вопросов коллегам — флорист получит доплату в заказе.
+    if up_target and not from_staff:
+        if up_turn and not keep_photos and not order_text:
+            reply.photos = []
+        if reply.question and re.search(r"увелич|пышн|добав|больш|объ[её]м|уменьш|сумм", reply.question, re.I):
+            reply.question = ""
+        if up_turn and up_amount and re.search(r"уточн\w*[^.?!]{0,30}флорист", reply.text or "", re.I):
+            total = up_target["price"] + (int(up_amount) if up_sign == "+" else -int(up_amount))
+            reply.text = (f"Хорошо 🌸 {'Добавим цветов' if up_sign == '+' else 'Соберём скромнее'} — "
+                          f"{'+' if up_sign == '+' else '−'}{_rub(int(up_amount))}, итого за букет {_rub(total)}. "
+                          "Флорист соберёт его по этой сумме. Продолжим оформление?")
 
     # ИИ написал заглушку «[ссылка на каталог]» вместо настоящего адреса — подставляем реальный URL города.
     if reply.text and LINK_PLACEHOLDER_RE.search(reply.text):
