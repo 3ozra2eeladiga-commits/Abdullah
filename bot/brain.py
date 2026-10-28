@@ -510,6 +510,7 @@ def _fill_order(order, city):
         order["сумма_товаров"] = sum(int(x.get("сумма") or 0) for x in order["товары"])
     except (TypeError, ValueError):
         pass
+    order["доставка_цена"] = _delivery_price(order)
     return order
 
 
@@ -537,6 +538,76 @@ def _extract_order(client, city):
     return _fill_order(o, city) if o else None
 
 
+def _order_json_span(text):
+    """Находит в тексте блок {...} с данными заказа (есть «товары» или «заказчик»). Возвращает (начало, конец)."""
+    for i, ch in enumerate(text or ""):
+        if ch != "{":
+            continue
+        depth = 0
+        for j in range(i, len(text)):
+            if text[j] == "{":
+                depth += 1
+            elif text[j] == "}":
+                depth -= 1
+                if depth == 0:
+                    block = text[i:j + 1]
+                    if '"товары"' in block or '"заказчик"' in block:
+                        return i, j + 1
+                    break
+    return None
+
+
+def _delivery_price(order):
+    """Цена доставки по правилам магазина (а не «на глаз» ИИ): Пятигорск/Минводы — бесплатно от 1500 ₽,
+    иначе 250 ₽; другие города — уточнят; самовывоз — 0."""
+    if (order.get("получение") or "").lower().startswith("самовывоз"):
+        return "0"
+    town = (order.get("город") or "").lower()
+    if any(k in town for k in ("пятигор", "минерал", "минвод")):
+        try:
+            total = int(order.get("сумма_товаров") or 0)
+        except (TypeError, ValueError):
+            total = 0
+        return "0" if total >= 1500 else "250"
+    return "уточнят"
+
+
+def _rub(n):
+    return f"{int(n):,}".replace(",", " ") + " ₽"
+
+
+def _order_summary(o):
+    """Итог заказа для клиента — собирает код, аккуратно и с правильными суммами."""
+    lines = ["Проверьте, пожалуйста, заказ 🌸", ""]
+    for it in o.get("товары") or []:
+        qty = it.get("кол-во") or 1
+        try:
+            lines.append(f"• {it.get('название', '')} × {qty} — {_rub(it.get('сумма') or 0)}")
+        except (TypeError, ValueError):
+            lines.append(f"• {it.get('название', '')} × {qty}")
+    if o.get("упаковка") and str(o["упаковка"]).strip() not in ("", "...", "—"):
+        lines.append(f"• Упаковка: {o['упаковка']}")
+    price = str(o.get("доставка_цена") or "")
+    if (o.get("получение") or "").lower().startswith("самовывоз"):
+        lines.append(f"• Самовывоз: {o.get('адрес') or o.get('город') or ''}")
+    else:
+        cost = "бесплатно" if price == "0" else (_rub(price) if price.isdigit() else "стоимость уточнит менеджер")
+        lines.append(f"• Доставка ({cost}): {o.get('адрес') or ''}")
+    lines.append(f"• Когда: {o.get('дата') or ''}, {o.get('время') or ''}")
+    lines.append(f"• Заказчик: {o.get('заказчик') or ''}")
+    lines.append(f"• Получатель: {o.get('получатель') or ''}")
+    card = str(o.get("открытка") or "").strip()
+    if card and card.lower() not in ("нет", "не нужна", "-", "—"):
+        lines.append(f"• Открытка: «{card}»")
+    try:
+        total = int(o.get("сумма_товаров") or 0) + (int(price) if price.isdigit() else 0)
+        lines += ["", f"Итого: {_rub(total)}" + ("" if price.isdigit() else " + доставка")]
+    except (TypeError, ValueError):
+        pass
+    lines += ["", "Всё верно?"]
+    return "\n".join(lines)
+
+
 def _parse_order_json(s):
     """Разбирает JSON заказа, терпимо к типичным огрехам ИИ (лишние запятые, текст вокруг)."""
     for candidate in (s, s[s.find("{"): s.rfind("}") + 1] if "{" in s and "}" in s else s):
@@ -544,6 +615,7 @@ def _parse_order_json(s):
             return json.loads(candidate)
         except json.JSONDecodeError:
             pass
+    s = re.sub(r'(["\d\]}])\s*\n(\s*["{])', r"\1,\n\2", s)  # ИИ забыл запятые между строками
     fixed = re.sub(r",\s*([}\]])", r"\1", s)  # убрать висящие запятые
     fixed = fixed[fixed.find("{"): fixed.rfind("}") + 1] if "{" in fixed else fixed
     try:
@@ -644,6 +716,13 @@ def parse(raw, city=None):
     if m:
         reply.order_raw = m.group(1).strip()
         reply.order = _parse_order_json(reply.order_raw)
+    else:
+        # ИИ вывалил JSON заказа прямо в текст (без пары меток [ЗАКАЗ]…[/ЗАКАЗ]) — забираем его и прячем от клиента.
+        span = _order_json_span(raw)
+        if span:
+            reply.order_raw = raw[span[0]:span[1]]
+            reply.order = _parse_order_json(reply.order_raw)
+            raw = raw[:span[0]] + raw[span[1]:]
     m = QUESTION_RE.search(raw)
     if m:
         reply.question = m.group(1).strip()
@@ -758,24 +837,32 @@ def respond(client, incoming, from_staff=False, quote=""):
     if reply.order_raw and not reply.order:
         reply.order_raw = ""
 
-    # Заказ флористу уходит ТОЛЬКО после подтверждения клиента («да»), с актуальными данными.
-    # Пока бот переспрашивает «всё верно?» — заказ копим как ожидающий и флористу НЕ шлём.
+    # Заказ флористу уходит ТОЛЬКО после «да» на итог, который клиент видел. Итог «всё верно?» собирает КОД
+    # (аккуратно, без служебных данных, с правильной доставкой), а не ИИ.
+    order_text = False                           # текст ответа — итог/принятие заказа (фото не нужны)
     if not from_staff:
-        asking_confirm = bool(CONFIRM_ASK_RE.search(reply.text or ""))
-        if reply.order:
-            db.set_pending_order(client, reply.order)  # всегда запоминаем последний собранный заказ
-            if asking_confirm:
-                reply.order = None       # ещё переспрашиваем — флористу пока не отправляем
-                reply.order_raw = ""
-        elif (CONFIRM_YES_RE.search(incoming or "") and not CORRECTION_RE.search(incoming or "")):
-            pend = db.get_pending_order(client)   # клиент подтвердил — отправляем накопленный заказ
-            # Запасной путь: заказа в памяти нет (ИИ не поставил метку), но бот «принял» — соберём из переписки.
+        confirmed = bool(CONFIRM_YES_RE.search(incoming or "")) and not CORRECTION_RE.search(incoming or "")
+        prev = db.get_pending_order(client)      # итог, который клиент уже видел
+        if reply.order:                          # ИИ собрал полный заказ
+            if confirmed and prev:
+                pass                             # клиент сказал «да» на итог — отправляем (свежие данные)
+            else:
+                db.set_pending_order(client, reply.order)
+                reply.text = _order_summary(reply.order)
+                reply.photos, reply.order, reply.order_raw = [], None, ""
+                order_text = True
+        elif confirmed:
+            pend = prev
+            # Запасной путь: итог был, но ИИ не поставил метку — соберём заказ из переписки.
             if not pend and re.search(r"принят|оформл|свяжут|готов|подтвержд|заказ ваш", reply.text or "", re.I):
                 pend = _extract_order(client, city)
             if pend:
                 reply.order = pend
-        if reply.order and not asking_confirm:
-            db.clear_pending_order(client)         # заказ уходит флористу — очищаем ожидание
+        if reply.order:                          # уходит флористу
+            db.clear_pending_order(client)
+            reply.text = "Спасибо! Заказ принят 🌸 Скоро с вами свяжутся по оплате."
+            reply.photos = []
+            order_text = True
 
     # «Вопрос флористу», который на самом деле про подбор букетов — не беспокоим коллег, показываем сами.
     force_options = False
@@ -785,7 +872,7 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     # Клиент выбрал букет (по фото/номеру) — показываем ТОЛЬКО его, без «других вариантов». Он уже выбрал,
     # как чипсы в магазине: не предлагаем альтернативы, а идём оформлять.
-    if picked and not reply.order and not size_change:
+    if picked and not reply.order and not size_change and not order_text:
         reply.photos = list(picked)
     elif size_change:
         reply.photos = []
@@ -809,11 +896,11 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Если бот перечислил товары с ценами (есть «₽») и это не этап заказа — это показ вариантов.
     # Тогда код сам прикладывает фото (минимум 5), даже если модель забыла метки [ФОТО] или прислала только текст.
     offering = (("₽" in (reply.text or "")) or force_options or wants_photos) \
-        and not is_order_step and not picked and not size_change
+        and not is_order_step and not picked and not size_change and not order_text
     city_cat = catalog.get_city(city)
     # Для режима «конкретный цветок» и «сделать больше/меньше» общий добор фото не нужен.
     if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS \
-            and not flowers and not size_change:
+            and not flowers and not size_change and not order_text:
         query = " ".join([m["content"] for m in history if m["role"] == "user"][-4:])
         # Добираем ТОЛЬКО букеты (не поштучные розы по 250₽, не открытки с котиками), кроме случая,
         # когда клиент ПРЯМО СЕЙЧАС просит именно поштучно/подарки. Смотрим текущее сообщение, а не всю историю,

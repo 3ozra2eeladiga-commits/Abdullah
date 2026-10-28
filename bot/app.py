@@ -101,7 +101,8 @@ def _format_order(order_id, client, reply):
         lines.append(f"🏪 Самовывоз — {val(o.get('город'))}, {val(o.get('адрес'))}")
     else:
         lines.append(f"🚗 Доставка — {val(o.get('город'))}, {val(o.get('адрес'))}")
-        lines.append(f"   стоимость доставки: {val(o.get('доставка_цена'))}")
+        dp = str(o.get("доставка_цена") or "").strip()
+        lines.append("   стоимость доставки: " + ("бесплатно" if dp == "0" else f"{dp} ₽" if dp.isdigit() else val(dp)))
     lines += [
         "",
         f"👤 Заказчик: {val(o.get('заказчик'))}",
