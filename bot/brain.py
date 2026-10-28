@@ -329,6 +329,26 @@ def _card_pick_turn(client, incoming, last_q=""):
                 or re.search(r"конверт|\d{2,4}\s*(?:₽|р)", incoming or "", re.I))
 
 
+MORE_RE = re.compile(r"друг|ещ[её]|остальн|не нрав|не то\b|иные|\bвсе\s+(?:открыт|конверт)", re.I)
+
+
+def _more_cards_request(client, incoming, last_q=""):
+    """Клиент просит показать ДРУГИЕ открытки: «покажи ещё открытки», или «другие» сразу после показа открыток."""
+    t = incoming or ""
+    if not MORE_RE.search(t):
+        return False
+    if re.search(r"открыт|конверт|карточ", t, re.I):
+        return True
+    return bool(re.search(r"открыт", _last_bot_text(client, last_q), re.I)) and len(t) < 60
+
+
+def _remember_cards(client, cards):
+    """Какие открытки клиенту уже показали — чтобы «ещё» показывало новые."""
+    shown = [c for c in (db.get_setting(f"cards_shown:{client}") or "").split(",") if c]
+    shown += [c["code"] for c in cards if c["code"] not in shown]
+    db.set_setting(f"cards_shown:{client}", ",".join(shown))
+
+
 def _card_yes(client, incoming, city, last_q=""):
     """Бот предложил одну простую открытку («Берём её?»), клиент ответил «да» — это её выбор."""
     last = _last_bot_text(client, last_q)
@@ -1001,6 +1021,18 @@ def respond(client, incoming, from_staff=False, quote=""):
         text = "Поняла 🌸 Передала флористу — она свяжется с вами по заказу в ближайшее время."
         db.add_message(client, "assistant", text)
         return Reply(text=text, question=f"Клиент просит отменить/изменить заказ: «{incoming}»", city=city)
+    # «Покажи другие открытки» — показываем те, что ещё НЕ показывали (а не те же самые).
+    if not from_staff and not picked and not addons and _more_cards_request(client, incoming, last_q):
+        shown = [c for c in (db.get_setting(f"cards_shown:{client}") or "").split(",") if c]
+        fresh = [c for c in catalog.cards(city, limit=1000) if c["code"] not in shown][:MIN_OPTIONS + 1]
+        if fresh:
+            _remember_cards(client, fresh)
+            text = "Вот ещё открытки 🌸 Выберите понравившуюся — нажмите на фото и ответьте «эту»."
+        else:
+            text = ("Это все открытки, что у нас сейчас есть 🌸 Выберите любую из показанных — нажмите на фото "
+                    "и ответьте «эту». Или возьмём простую с полем для записи.")
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, photos=fresh, city=city)
     wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
     # Срабатывает и когда выбран букет (picked), и когда клиент пишет «этот/его/такой ... побольше» без reply.
@@ -1110,6 +1142,8 @@ def respond(client, incoming, from_staff=False, quote=""):
             elif miss == CARD_PICK_Q:
                 card_text = str(reply.order.get("открытка") or "").strip()
                 card_photos = catalog.cards(city, text=card_text)
+                if not from_staff:
+                    _remember_cards(client, card_photos)
                 if len(card_photos) == 1:
                     miss = CARD_ONE_Q.format(price=card_photos[0]["price"], text=card_text)
                 else:
