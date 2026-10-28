@@ -511,7 +511,8 @@ FAKE_QUESTION_RE = re.compile(
 SHOW_REQUEST_RE = re.compile(
     r"кидай|скин|покаж|показыв|пришли\s+фото|давай\s+фото|на ваш вкус|хочу посмотрет|что есть|фото сюда", re.I)
 # ИИ переспрашивает, какой букет выбран, хотя выбор уже известен.
-SUMMARY_RE = re.compile(r"вс[её]\s+(?:ли\s+)?верно|проверьте[^.?!]{0,20}заказ|ваш заказ:", re.I)
+SUMMARY_RE = re.compile(r"вс[её]\s+(?:ли\s+)?верно|провер\w*[^.?!]{0,30}(?:заказ|данн)|ваш заказ:|подвед\w*\s+итог|"
+                        r"итог\w*\s+заказ|данные для оформления|давайте\s+подытож", re.I)
 ASK_WHICH_RE = re.compile(
     r"(?:номер|назван\w*)\s+(?:понравивш\w+\s+)?букет|какой\s+(?:именно\s+)?букет|"
     r"как(?:ой|ую|ие)[^.?!]{0,30}(?:букет|вариант)[^.?!]{0,30}(?:понрав|выбрал|нрав)|"
@@ -732,7 +733,7 @@ def _apply_client_state(order, client, city):
 
 
 def _clear_client_state(client):
-    for k in ("upsize", "addons", "nocard", "shown", "cards_shown"):
+    for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -1064,6 +1065,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Дополнения (открытка, шар, игрушка…) ДОБАВЛЯЮТ к заказу — выбранный букет при этом не меняется.
     addons = [p for p in picked if catalog.is_addon(p, city)]
     picked = [p for p in picked if p not in addons]
+    if picked and not from_staff:
+        db.set_setting(f"chosen:{client}", picked[0]["code"])   # букет выбран — других больше не подсовываем
     if addons and not from_staff:
         saved = [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]
         # Новая открытка заменяет прежнюю открытку (конверт — прежний конверт), а не добавляется второй.
@@ -1259,14 +1262,15 @@ def respond(client, incoming, from_staff=False, quote=""):
                 order_text = True
         elif SUMMARY_RE.search(reply.text or "") and not prev:
             # ИИ сам написал итог «Всё ли верно?» без метки — собираем заказ и показываем НАШ короткий итог.
+            # Если чего-то не хватает (открытка, дата…) — спрашиваем это, а не показываем итог ИИ.
             o = _extract_order(client, city)
+            reply.photos = []
+            order_text = True
             if o:
                 _apply_client_state(o, client, city)
-                if not _order_missing(o, " ".join(m["content"] for m in history if m["role"] == "user")):
+                if not ask_missing(o):
                     db.set_pending_order(client, o)
                     reply.text = _order_summary(o)
-                    reply.photos = []
-                    order_text = True
         elif confirmed:
             pend = prev
             # Запасной путь: итог был, но ИИ не поставил метку — соберём заказ из переписки.
@@ -1385,6 +1389,13 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.text = ("Это время сегодня, к сожалению, уже прошло 🙏 Подскажите, пожалуйста, на какое время "
                       "сегодня (попозже) или на другую дату — и я всё подберу.")
         reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
+    # Букет уже выбран — других букетов не показываем, пока клиент сам не попросит («покажите другие»).
+    chosen = "" if from_staff else (db.get_setting(f"chosen:{client}") or "")
+    if chosen and reply.photos and not keep_photos and not re.search(
+            r"друг|ещ[её]|вариант|покаж|покаж|скин|кинь|кидай|поменя|замен|не нрав|передумал", incoming or "", re.I):
+        reply.photos = [p for p in reply.photos if p["code"] == chosen and p in picked]
+    elif chosen and reply.photos and not keep_photos:
+        db.del_setting(f"chosen:{client}")    # клиент сам попросил другие — снимаем «замок»
     # Запоминаем, что показали (по порядку) — чтобы понять «давайте последний / второй вариант».
     if not from_staff and len(reply.photos) >= 2:
         db.set_setting(f"shown:{client}", ",".join(p["code"] for p in reply.photos))
