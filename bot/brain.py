@@ -395,6 +395,17 @@ def _picked_by_price(client, incoming, city):
     return near if len(near) == 1 else []
 
 
+ALMOST_DONE_Q = "Почти готово 🌸 Напишите, пожалуйста, «да» — и я пришлю итог заказа для проверки."
+
+
+def _has_address(user_msgs):
+    """Клиент уже назвал адрес: «ул. Весенняя 33», «Крайнего 90», «адрес крайнего 90»."""
+    return any(re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|дом|кв|квартир\w*)\b\.?\s*\S|"
+                         r"адрес\w*\s*[:-]?\s*[А-ЯЁа-яёA-Za-z][^\n]{0,40}?\d+|"
+                         r"^[А-ЯЁа-яё][а-яё-]+(?:\s+[А-ЯЁа-яё][а-яё-]+)?,?\s+\d+", m.strip(), re.I)
+               for m in user_msgs)
+
+
 def _next_question(user_msgs, city):
     """Следующий вопрос оформления — только о том, чего клиент ЕЩЁ НЕ говорил (не переспрашиваем доставку/дату)."""
     t = " ".join(user_msgs).lower()
@@ -412,9 +423,7 @@ def _next_question(user_msgs, city):
     if not (has_date and has_time):
         return "Подскажите, пожалуйста, на какую дату и к какому часу нужен букет?"
     pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
-    has_addr = any(re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|д|дом|кв|квартир\w*)\b\.?\s*\S|"
-                             r"^[А-ЯЁа-яё][а-яё-]+(?:\s+[А-ЯЁа-яё][а-яё-]+)?,?\s+\d+", m.strip(), re.I)
-                   for m in user_msgs)
+    has_addr = _has_address(user_msgs)
     if not pickup and not has_addr:
         return "Подскажите, пожалуйста, адрес доставки: улица, дом, квартира 📍"
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
@@ -424,7 +433,7 @@ def _next_question(user_msgs, city):
         return "Кому дарим? Напишите фамилию, имя и телефон получателя."
     if not re.search(r"открытк", t):
         return "Нужна ли открытка к букету? Если да — напишите текст для неё 💌"
-    return "Всё записала 🌸 Сейчас пришлю итог заказа — проверьте, пожалуйста."
+    return ALMOST_DONE_Q
 
 
 # Клиент отказался от открытки коротким «нет» в ответ на вопрос про открытку.
@@ -1277,10 +1286,9 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"lastq:{client}", miss)
         return True
 
-    if reply.order:
-        ask_missing(reply.order)
-    elif refused_in_order:
-        # ИИ отказался отвечать посреди оформления: собираем заказ из переписки и спрашиваем недостающее / итог.
+    def advance(prefix=""):
+        """ИИ застрял (отказ или переспрашивает уже сказанное): собираем заказ из переписки КОДОМ и спрашиваем
+        недостающее, а если всё есть — показываем итог. Если собрать не вышло — следующий вопрос по порядку."""
         o = _extract_order(client, city)
         if o:
             _apply_client_state(o, client, city)
@@ -1289,8 +1297,15 @@ def respond(client, incoming, from_staff=False, quote=""):
                 reply.text = _order_summary(o)
                 reply.photos = []
         else:
-            reply.text = "Спасибо, записала 🌸 " + _next_question(
-                [m["content"] for m in history if m["role"] == "user"], city)
+            nq = _next_question([m["content"] for m in history if m["role"] == "user"], city)
+            reply.text = nq if nq == ALMOST_DONE_Q else prefix + nq
+            if not from_staff:
+                db.set_setting(f"lastq:{client}", nq)
+
+    if reply.order:
+        ask_missing(reply.order)
+    elif refused_in_order:
+        advance("Спасибо, записала 🌸 ")
     # Метка [ЗАКАЗ] не разобралась в JSON (ИИ поставил её рано/криво) — флористу неполный заказ НЕ шлём.
     if reply.order_raw and not reply.order:
         reply.order_raw = ""
@@ -1323,10 +1338,18 @@ def respond(client, incoming, from_staff=False, quote=""):
         elif confirmed:
             pend = prev
             # Запасной путь: итог был, но ИИ не поставил метку — соберём заказ из переписки.
-            if not pend and re.search(r"принят|оформл|свяжут|готов|подтвержд|заказ ваш", reply.text or "", re.I):
+            if not pend and (re.search(r"принят|оформл|свяжут|готов|подтвержд|заказ ваш", reply.text or "", re.I)
+                             or last_q == ALMOST_DONE_Q):
                 pend = _extract_order(client, city)
                 if pend:
                     _apply_client_state(pend, client, city)
+                    if last_q == ALMOST_DONE_Q and not ask_missing(pend):
+                        # Обещали итог — показываем его, а флористу отправим после «да» на итог.
+                        db.set_pending_order(client, pend)
+                        reply.text = _order_summary(pend)
+                        reply.photos = []
+                        order_text = True
+                        pend = None
             if pend:
                 reply.order = pend
         if reply.order and ask_missing(reply.order):
@@ -1446,10 +1469,14 @@ def respond(client, incoming, from_staff=False, quote=""):
         asks_way = re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк|заед\w*[^.?!]{0,40}магазин", reply.text, re.I)
         asks_when = re.search(r"на\s+как\w+\s+(?:дату|день|число)|во\s+сколько|к\s+какому\s+(?:часу|времени)|"
                               r"какое\s+время|какая\s+дата", reply.text, re.I)
+        asks_addr = re.search(r"адрес", reply.text, re.I) and "?" in reply.text or re.search(
+            r"(?:нужен|уточните|подскажите)[^.?!]{0,30}адрес", reply.text, re.I)
         nxt = _next_question(user_msgs, city)
         known_way = not re.search(r"доставка или самовывоз", nxt)
         known_when = not re.search(r"дату", nxt)
-        if (asks_way and known_way) or (asks_when and known_when):
+        if asks_addr and _has_address(user_msgs) and not (asks_way and not known_way) and not (asks_when and not known_when):
+            advance("Спасибо 🌸 ")          # адрес уже есть, а ИИ снова его просит — идём дальше кодом
+        elif (asks_way and known_way) or (asks_when and known_when):
             reply.text = (f"Отличный выбор 🌸 {picked[0]['title']} — {picked[0]['price']} ₽. Оформляем его! {nxt}"
                           if picked else nxt)
     if chosen and reply.photos and not keep_photos and not re.search(
