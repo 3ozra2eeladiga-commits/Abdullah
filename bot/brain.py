@@ -411,9 +411,20 @@ def _next_question(user_msgs, city):
         return "Подскажите, пожалуйста: доставка или самовывоз?"
     if not (has_date and has_time):
         return "Подскажите, пожалуйста, на какую дату и к какому часу нужен букет?"
-    if re.search(r"самовывоз|заберу|забер[её]м", t):
+    pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
+    has_addr = any(re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|д|дом|кв|квартир\w*)\b\.?\s*\S|"
+                             r"^[А-ЯЁа-яё][а-яё-]+(?:\s+[А-ЯЁа-яё][а-яё-]+)?,?\s+\d+", m.strip(), re.I)
+                   for m in user_msgs)
+    if not pickup and not has_addr:
+        return "Подскажите, пожалуйста, адрес доставки: улица, дом, квартира 📍"
+    phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
+    if len(phones) < 1:
         return "Как вас зовут (фамилия и имя) и ваш телефон для связи?"
-    return "Подскажите, пожалуйста, адрес доставки: улица, дом, квартира 📍"
+    if len(phones) < 2:
+        return "Кому дарим? Напишите фамилию, имя и телефон получателя."
+    if not re.search(r"открытк", t):
+        return "Нужна ли открытка к букету? Если да — напишите текст для неё 💌"
+    return "Всё записала 🌸 Сейчас пришлю итог заказа — проверьте, пожалуйста."
 
 
 # Клиент отказался от открытки коротким «нет» в ответ на вопрос про открытку.
@@ -1210,8 +1221,13 @@ def respond(client, incoming, from_staff=False, quote=""):
     raw = llm.complete(system_prompt(history, city, picked, flower_block + up_block + addon_block, size_change),
                        _merge_roles(history))
     # ИИ выдал шаблонный отказ (ложный фильтр YandexGPT на безобидную просьбу) — не пугаем клиента, переспрашиваем.
+    refused_in_order = False
     if llm.is_refusal(raw):
-        if re.search(r"больше|крупнее|пышнее|объёмн|дороже|меньше|дешевле|бюджет", incoming or "", re.I):
+        if not from_staff and (picked or db.get_setting(f"chosen:{client}")):
+            # Идёт оформление (букет выбран) — не «уточните подробнее», а дальше по заказу (ниже, кодом).
+            refused_in_order = True
+            raw = "Спасибо, записала 🌸"
+        elif re.search(r"больше|крупнее|пышнее|объёмн|дороже|меньше|дешевле|бюджет", incoming or "", re.I):
             raw = "Конечно 🌸 На какую сумму ориентируетесь? Подберу вариант под неё."
         else:
             raw = "Секундочку 🌸 Уточните, пожалуйста, чуть подробнее — и я помогу подобрать."
@@ -1263,6 +1279,18 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     if reply.order:
         ask_missing(reply.order)
+    elif refused_in_order:
+        # ИИ отказался отвечать посреди оформления: собираем заказ из переписки и спрашиваем недостающее / итог.
+        o = _extract_order(client, city)
+        if o:
+            _apply_client_state(o, client, city)
+            if not ask_missing(o):
+                db.set_pending_order(client, o)
+                reply.text = _order_summary(o)
+                reply.photos = []
+        else:
+            reply.text = "Спасибо, записала 🌸 " + _next_question(
+                [m["content"] for m in history if m["role"] == "user"], city)
     # Метка [ЗАКАЗ] не разобралась в JSON (ИИ поставил её рано/криво) — флористу неполный заказ НЕ шлём.
     if reply.order_raw and not reply.order:
         reply.order_raw = ""
