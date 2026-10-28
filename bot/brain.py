@@ -159,7 +159,9 @@ RULES = """Ты — флорист цветочного магазина и пе
 4) телефон заказчика и телефон получателя;
 5) что написать на открытке (если нужна);
 6) дата и время получения;
-7) адрес доставки (или из какого магазина самовывоз).
+7) адрес доставки (или из какого магазина самовывоз). Спрашивая адрес, ВСЕГДА дай пример: «улица, дом, подъезд,
+   этаж, квартира — например: ул. Крайнего, 90, подъезд 2, этаж 3, кв. 15». Если клиент назвал улицу и дом — адрес
+   ЕСТЬ, не требуй «точный адрес» снова (квартиру можно уточнить один раз, без повторов).
 Когда всё известно — повтори клиенту итог: товары, количество, их сумму и доставку, и спроси «Всё верно?».
 <<ДОСТАВКА>>
 - Доставка в любой ДРУГОЙ город (<<ДРУГИЕ_ГОРОДА>>):
@@ -395,6 +397,8 @@ def _picked_by_price(client, incoming, city):
     return near if len(near) == 1 else []
 
 
+ADDRESS_Q = ("Напишите, пожалуйста, полный адрес доставки 📍 Например: ул. Крайнего, 90, подъезд 2, этаж 3, кв. 15 "
+             "(если частный дом — просто улица и номер дома).")
 ALMOST_DONE_Q = "Почти готово 🌸 Напишите, пожалуйста, «да» — и я пришлю итог заказа для проверки."
 
 
@@ -404,6 +408,29 @@ def _has_address(user_msgs):
                          r"адрес\w*\s*[:-]?\s*[А-ЯЁа-яёA-Za-z][^\n]{0,40}?\d+|"
                          r"^[А-ЯЁа-яё][а-яё-]+(?:\s+[А-ЯЁа-яё][а-яё-]+)?,?\s+\d+", m.strip(), re.I)
                for m in user_msgs)
+
+
+def _known_facts(user_msgs):
+    """Что клиент УЖЕ сказал (по его же сообщениям) — чтобы ИИ это не переспрашивал."""
+    out = []
+    def find(rx):
+        return next((m.strip() for m in reversed(user_msgs) if re.search(rx, m, re.I)), "")
+    way = find(r"доставк|самовывоз|заберу|забер[её]м|привез")
+    if way:
+        out.append(f"способ получения: «{way[:80]}»")
+    when = find(r"сегодня|завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}[:.]\d{2}\b|понедельник|вторник|"
+                r"сред[уа]|четверг|пятниц|суббот|воскресень")
+    if when:
+        out.append(f"дата/время: «{when[:80]}»")
+    if _has_address(user_msgs):
+        out.append("адрес: уже назван (смотри переписку)")
+    phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", " ".join(user_msgs))
+    if phones:
+        out.append(f"телефоны: {', '.join(phones[:2])}")
+    occ = find(r"рожден|юбиле|свадьб|8 марта|годовщ|выписк|извин|любим|маме|папе|просто так")
+    if occ:
+        out.append(f"повод: «{occ[:80]}»")
+    return out
 
 
 def _next_question(user_msgs, city):
@@ -425,7 +452,7 @@ def _next_question(user_msgs, city):
     pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
     has_addr = _has_address(user_msgs)
     if not pickup and not has_addr:
-        return "Подскажите, пожалуйста, адрес доставки: улица, дом, квартира 📍"
+        return ADDRESS_Q
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
     if len(phones) < 1:
         return "Как вас зовут (фамилия и имя) и ваш телефон для связи?"
@@ -689,7 +716,7 @@ def _order_missing(o, client_text):
     if not str(o.get("дата") or "").strip() or str(o.get("дата")).strip() in ("—", "-", "..."):
         return "На какую дату нужен букет? 📅"
     if o.get("получение") == "доставка" and len((o.get("адрес") or "").strip()) < 6:
-        return "Подскажите, пожалуйста, точный адрес доставки: город, улица, дом, квартира 📍"
+        return ADDRESS_Q
     if _time_is_vague(o.get("время")):
         return "Подскажите, пожалуйста, точное время — к которому часу нужен букет? (например, к 14:00) 🕒"
     if _time_already_passed(o.get("дата"), o.get("время")):
@@ -963,6 +990,9 @@ def _rules():
 
 def system_prompt(history, city, picked=(), flower_block="", size_change=False):
     catalog.ensure_fresh()
+    facts = _known_facts([m["content"] for m in history if m["role"] == "user"])
+    known_block = ("\n\n# КЛИЕНТ УЖЕ СКАЗАЛ — НЕ СПРАШИВАЙ ЭТО ПОВТОРНО (переспрос раздражает клиента!)\n"
+                   + "\n".join(f"- {f}" for f in facts)) if facts else ""
     shop_info = Path(config.SHOP_INFO_FILE).read_text(encoding="utf-8")
     now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=3)))
     head = f"{_rules()}\nСейчас: {now:%d.%m.%Y %H:%M} (Москва).\n\n# ПРАВИЛА МАГАЗИНА\n{shop_info}\n\n"
@@ -1002,6 +1032,7 @@ def system_prompt(history, city, picked=(), flower_block="", size_change=False):
         f"{city_cat.relevant_text(query, discussed)}"
         + picked_block
         + flower_block
+        + known_block
     )
 
 
@@ -1473,10 +1504,30 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Букет уже выбран — других букетов не показываем, пока клиент сам не попросит («покажите другие»).
     chosen = "" if from_staff else (db.get_setting(f"chosen:{client}") or "")
     # ИИ переспрашивает то, что клиент УЖЕ сказал (доставка/дата/время) — заменяем на вопрос о недостающем.
+    if not chosen and not from_staff and not order_text and not keep_photos and not reply.order and reply.text \
+            and not reply.photos:
+        # До выбора букета: ИИ переспрашивает уже сказанные доставку/дату — убираем этот вопрос из ответа.
+        um = [m["content"] for m in history if m["role"] == "user"]
+        nq = _next_question(um, city)
+        kw = not re.search(r"доставка или самовывоз", nq)
+        kd = not re.search(r"дату", nq)
+        parts = re.split(r"(?<=[.?!])\s+", reply.text.strip())
+        keep = [p for p in parts if not ((kw and re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|нужна\s+ли\s+доставк|"
+                                                            r"доставка\s+нужна|заед\w*[^.?!]{0,40}магазин", p, re.I))
+                                         or (kd and re.search(r"на\s+как\w+\s+(?:дату|день|число)|во\s+сколько|"
+                                                              r"к\s+какому\s+(?:часу|времени)|какое\s+время|какая\s+дата",
+                                                              p, re.I)))]
+        if len(keep) != len(parts):
+            reply.text = " ".join(keep).strip() if any("?" in p for p in keep) else (
+                (" ".join(keep).strip() + " " if keep else "") +
+                ("Какой бюджет и какие цветы любите? Или сразу показать варианты 🌸"
+                 if any(f.startswith("повод") for f in _known_facts(um)) else
+                 "Подскажите, по какому поводу букет и какой бюджет? Или сразу показать варианты 🌸")).strip()
     if chosen and not order_text and not keep_photos and not reply.order and reply.text:
         user_msgs = [m["content"] for m in history if m["role"] == "user"]
         t = " ".join(user_msgs).lower()
-        asks_way = re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк|заед\w*[^.?!]{0,40}магазин", reply.text, re.I)
+        asks_way = re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк|заед\w*[^.?!]{0,40}магазин|"
+                             r"нужна\s+ли\s+доставк|доставка\s+нужна", reply.text, re.I)
         asks_when = re.search(r"на\s+как\w+\s+(?:дату|день|число)|во\s+сколько|к\s+какому\s+(?:часу|времени)|"
                               r"какое\s+время|какая\s+дата", reply.text, re.I)
         asks_addr = re.search(r"адрес", reply.text, re.I) and "?" in reply.text or re.search(
