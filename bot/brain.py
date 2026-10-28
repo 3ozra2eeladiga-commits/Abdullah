@@ -314,6 +314,49 @@ def _picked_from_caption(text, city):
     return [best] if best else []
 
 
+def _card_pick_turn(client, incoming):
+    """Клиент выбирает открытку словами: бот только что предлагал выбрать открытку, или клиент назвал
+    конверт/цену. Иначе «открытка с днём рождения» — это скорее ТЕКСТ для открытки, а не её выбор."""
+    last = next((m["content"] for m in reversed(db.history(client, 4)) if m["role"] == "assistant"), "")
+    return bool(re.search(r"открытки у нас платные|выбер\w*[^.?!]*открытк", last, re.I)
+                or re.search(r"конверт|\d{2,4}\s*(?:₽|р)", incoming or "", re.I))
+
+
+def _picked_card_by_name(text, city):
+    """Клиент НАПИСАЛ название открытки/конверта словами («конверт с днём рождения 120 руб»), без номера и reply.
+    Ищем среди открыток каталога ту, у которой все значимые слова названия есть в тексте клиента."""
+    t = (text or "").lower().replace("ё", "е")
+    if not CARD_RE.search(t):
+        return []
+    words = set(re.findall(r"[а-яa-z]+", t))
+    skip = set(re.findall(r"[а-яa-z]+", config.SHOP_NAME.lower().replace("ё", "е")))
+
+    def has(w):  # слово названия есть у клиента (с учётом окончаний: «ромашке»/«ромашки»)
+        stem = w[:max(3, len(w) - 2)]
+        return any(x.startswith(stem) for x in words)
+
+    cc = catalog.get_city(city)
+    cats = [cc] if cc else list(catalog.by_city.values())
+    scored = []
+    for c in cats:
+        for it in c.by_code.values():
+            title = it["title"].lower().replace("ё", "е")
+            if not (CARD_RE.search(title) and it["images"]):
+                continue
+            kind = CARD_RE.search(title).group(0)
+            sig = [w for w in re.findall(r"[а-яa-z]+", title)
+                   if len(w) >= 3 and w not in skip and not CARD_RE.match(w)]
+            if not sig or not all(has(w) for w in sig):
+                continue
+            score = len(sig) + (1 if kind in t else 0) + (1 if re.search(rf"\b{it['price']}\b", t) else 0)
+            scored.append((score, it))
+    if not scored:
+        return []
+    scored.sort(key=lambda x: -x[0])
+    best = [it for sc, it in scored if sc == scored[0][0]]
+    return best[:1] if len({it["title"] for it in best}) == 1 else []
+
+
 # Цветы: каноничное имя -> регулярка словоформ (для поиска и в сообщении клиента, и в названиях товаров).
 # Осторожно с ложными совпадениями: «роз» не должно ловить «розовый».
 FLOWERS = {
@@ -906,7 +949,9 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     # Букет, выбранный клиентом: по номеру (№600), ссылке с сайта или ответу (reply) на фото букета.
     picked = ((_picked_by_number(detect, city) + _picked_from_site(detect, city)
-               + _picked_from_caption(detect, city)) if not from_staff else [])
+               + _picked_from_caption(detect, city)
+               + (_picked_card_by_name(incoming, city) if _card_pick_turn(client, incoming) else []))
+              if not from_staff else [])
     _seen = set()
     picked = [p for p in picked if not (p["code"] in _seen or _seen.add(p["code"]))]
     # Дополнения (открытка, шар, игрушка…) ДОБАВЛЯЮТ к заказу — выбранный букет при этом не меняется.
@@ -918,7 +963,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.set_setting(f"addons:{client}", ",".join(saved))
     # В историю пишем слова клиента; если он ответил (reply) на фото — дописываем, о каком товаре речь,
     # обычной фразой. Иначе ИИ видит только «вот это» и переспрашивает номер, хотя всё уже понятно.
-    if quote and (picked or addons) and not from_staff:
+    if ((quote and (picked or addons)) or (addons and not picked)) and not from_staff:
         it0 = (picked or addons)[0]
         content = f"{incoming} — про «{it0['title']}» ({it0['price']} ₽)"
     db.add_message(client, "user", content)
@@ -974,7 +1019,7 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     # Клиент назвал конкретный цветок (лилии, каллы...) — ищем его СТРОГО в каталоге, не даём ИИ выдумывать.
     flower_block, flower_photos, flower_absent = "", [], False
-    flowers = _flowers_requested(incoming) if (not from_staff and city and not picked) else []
+    flowers = _flowers_requested(incoming) if (not from_staff and city and not picked and not addons) else []
     if flowers:
         lines = []
         for canon, pat in flowers:
@@ -1082,6 +1127,13 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = list(picked)
     elif size_change:
         reply.photos = []
+    elif addons and not reply.order and not keep_photos:
+        reply.photos = []              # выбрал открытку/подарок — букеты не подсовываем
+    # ИИ всё равно просит выбрать открытку, хотя клиент её уже выбрал — подтверждаем выбор сами.
+    if addons and not reply.order and not keep_photos and re.search(
+            r"выбер\w*[^.?!]*открытк|открытки у нас платные", reply.text or "", re.I):
+        a0 = addons[0]
+        reply.text = f"Отлично, добавила к заказу 🌸 {a0['title']} — {a0['price']} ₽. Продолжаем оформление!"
 
     # Клиент спросил конкретный цветок — показываем СТРОГО найденное в каталоге (а не что выдумал ИИ).
     if flowers and not reply.order:
@@ -1103,7 +1155,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Тогда код сам прикладывает фото (минимум 5), даже если модель забыла метки [ФОТО] или прислала только текст.
     offering = (("₽" in (reply.text or "")) or force_options or wants_photos) \
         and not is_order_step and not picked and not size_change and not order_text and not up_turn \
-        and not keep_photos
+        and not keep_photos and not addons
     city_cat = catalog.get_city(city)
     # Для режима «конкретный цветок» и «сделать больше/меньше» общий добор фото не нужен.
     if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS \
