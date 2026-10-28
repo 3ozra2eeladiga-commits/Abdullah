@@ -598,7 +598,7 @@ def _order_summary(o):
     card = str(o.get("открытка") or "").strip()
     extra = []
     if who:
-        extra.append(f"для {who}")
+        extra.append(f"получатель — {who}")
     if card and card.lower() not in ("нет", "не нужна", "-", "—"):
         extra.append(f"открытка «{card}»")
     lines = ["Отлично, всё записала 🌸", ", ".join(items), how]
