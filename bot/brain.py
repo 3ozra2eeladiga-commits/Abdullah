@@ -1144,6 +1144,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         fresh = [c for c in catalog.cards(city, limit=1000) if c["code"] not in shown][:MIN_OPTIONS + 1]
         if fresh:
             _remember_cards(client, fresh)
+            db.set_setting(f"shown:{client}", ",".join(p["code"] for p in fresh))   # для «последний вариант»
             text = "Вот ещё открытки 🌸 Выберите понравившуюся — нажмите на фото и ответьте «эту»."
         else:
             text = ("Это все открытки, что у нас сейчас есть 🌸 Выберите любую из показанных — нажмите на фото "
@@ -1306,6 +1307,15 @@ def respond(client, incoming, from_staff=False, quote=""):
         ask_missing(reply.order)
     elif refused_in_order:
         advance("Спасибо, записала 🌸 ")
+    elif not from_staff and addons and any(CARD_RE.search(a["title"]) for a in addons):
+        # Клиент выбрал открытку — подтверждаем и сразу идём дальше: итог или вопрос о недостающем.
+        a0 = next(a for a in addons if CARD_RE.search(a["title"]))
+        had_pending = db.get_pending_order(client)
+        advance()
+        if db.get_pending_order(client) is not had_pending and reply.text.startswith("Отлично, всё записала"):
+            pass                                # показан итог — в нём уже есть открытка
+        else:
+            reply.text = f"Отлично, добавила к заказу 🌸 {a0['title']} — {a0['price']} ₽.\n\n{reply.text}"
     # Метка [ЗАКАЗ] не разобралась в JSON (ИИ поставил её рано/криво) — флористу неполный заказ НЕ шлём.
     if reply.order_raw and not reply.order:
         reply.order_raw = ""
@@ -1485,6 +1495,6 @@ def respond(client, incoming, from_staff=False, quote=""):
     elif chosen and reply.photos and not keep_photos:
         db.del_setting(f"chosen:{client}")    # клиент сам попросил другие — снимаем «замок»
     # Запоминаем, что показали (по порядку) — чтобы понять «давайте последний / второй вариант».
-    if not from_staff and len(reply.photos) >= 2:
+    if not from_staff and (len(reply.photos) >= 2 or (keep_photos and reply.photos)):
         db.set_setting(f"shown:{client}", ",".join(p["code"] for p in reply.photos))
     return reply
