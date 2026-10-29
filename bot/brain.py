@@ -848,6 +848,11 @@ def _order_missing(o, client_text):
     if not _phone_was_given(o.get("получатель"), client_text):
         return "Подскажите номер телефона получателя — на случай, если нужно согласовать доставку."
     card = (o.get("открытка") or "").strip()
+    # Заглушка ИИ («...», «текст») или текст, которого клиент НЕ писал, — это не ответ клиента про открытку.
+    if card.lower() not in ("нет", "не нужна", "не надо", "-", "—", "без текста") and (
+            not re.sub(r"[\W_]+", "", card) or card.lower() in ("текст", "текст открытки")
+            or re.sub(r"[\W_]+", "", card.lower()) not in re.sub(r"[\W_]+", "", (client_text or "").lower())):
+        card = ""
     if not card:
         return CARD_ASK_Q
     if card.lower() not in ("нет", "не нужна", "не надо", "-", "—") and catalog.cards(o.get("город")) and not any(
@@ -920,6 +925,38 @@ def _apply_client_state(order, client, city):
             if note not in c:
                 order["комментарий"] = (c + "; " if c else "") + note
     return _fill_order(order, city)
+
+
+_SENT_SPLIT_RE = re.compile(r"(?<=[.!?…])\s+(?=[«\"(]?[А-ЯЁA-Z0-9])|(?<=[\U0001F300-\U0001FAFF\u2600-\u27BF])\s+(?=[А-ЯЁ])")
+_ABBR_RE = re.compile(r"(?:\b(?:ул|д|кв|г|пр|пер|т\.?е|т|стр|корп|эт|под|тел|руб|им)\.|№\s*\d+\.)$", re.I)
+
+
+def pretty(text):
+    """Длинный ответ клиенту одним сплошным абзацем трудно читать — разбиваем на короткие абзацы
+    (по 1–2 предложения, вопрос — отдельной строкой). Уже оформленный текст (с переносами) не трогаем."""
+    t = (text or "").strip()
+    if "\n" in t or len(t) < 140:
+        return t
+    parts, buf = [], ""
+    for piece in _SENT_SPLIT_RE.split(t):
+        buf = f"{buf} {piece}".strip() if buf else piece
+        if _ABBR_RE.search(buf):
+            continue                         # «ул. Крайнего» — не конец предложения
+        parts.append(buf)
+        buf = ""
+    if buf:
+        parts.append(buf)
+    paras, cur = [], ""
+    for i, sent in enumerate(parts):
+        last_q = i == len(parts) - 1 and sent.rstrip().endswith("?")
+        if cur and (last_q or len(cur) + len(sent) > 160 or cur.count(". ") + cur.count("! ") >= 1):
+            paras.append(cur)
+            cur = sent
+        else:
+            cur = f"{cur} {sent}".strip()
+    if cur:
+        paras.append(cur)
+    return "\n\n".join(paras)
 
 
 def _drop_prev_items(order, client):

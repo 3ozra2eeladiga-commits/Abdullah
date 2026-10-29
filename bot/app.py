@@ -159,7 +159,7 @@ def deliver(client, text, from_staff=False, quote=""):
             return
 
         if reply.text:
-            _send_text(client, reply.text)
+            _send_text(client, brain.pretty(reply.text))  # короткими абзацами — легче читать
         for item in reply.photos:
             _send_photo(client, item)
 
