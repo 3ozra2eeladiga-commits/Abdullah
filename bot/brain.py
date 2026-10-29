@@ -1241,6 +1241,7 @@ def parse(raw, city=None):
     text = ORDER_RE.sub("", raw)
     text = re.sub(r"\[/?\s*ЗАКАЗ\s*\]", "", text)  # одиночная метка [ЗАКАЗ] без пары — не показываем клиенту
     text = QUESTION_RE.sub("", text)
+    text = re.sub(r"\[/?\s*ВОПРОС\s*\]", "", text)  # одиночная метка [ВОПРОС] без пары — не показываем клиенту
     text = CITY_RE.sub("", text)
     text = PHOTO_RE.sub(lambda m: "" if catalog.get(m.group(1) or m.group(2), city) else m.group(0), text)
     text = HANDOFF_RE.sub("", text)
@@ -1385,14 +1386,18 @@ def respond(client, incoming, from_staff=False, quote=""):
     # НО не путаем с «покажи побольше ВАРИАНТОВ» — там как раз нужно показать.
     size_change = (bool(SIZE_CHANGE_RE.search(incoming or ""))
                    and not re.search(r"вариант|ещё|еще|друг|показ|покаж|выбор", incoming or "", re.I)
-                   and (bool(picked) or bool(re.search(r"\bэтот\b|\bэту\b|\bэто\b|\bтакой\b|\bтакую\b|\bего\b|\bеё\b|\bее\b", incoming or "", re.I))))
+                   and (bool(picked) or (bool(db.get_setting(f"chosen:{client}")) and bool(re.search(
+                            r"побольше|пышнее|крупнее|объ[её]мн|поменьше|поскромн|компактн|побогаче|пороскошн", incoming or "", re.I)))
+                        or bool(re.search(r"\bэтот\b|\bэту\b|\bэто\b|\bтакой\b|\bтакую\b|\bего\b|\bеё\b|\bее\b|\bих\b",
+                                          incoming or "", re.I))))
     # «Сделать пышнее/скромнее» выбранный букет: запоминаем КАКОЙ букет и НА СКОЛЬКО добавить (доплата).
     # Флорист сам доберёт цветы на эту сумму. Других букетов не предлагаем.
     up_block, up_turn, up_target, up_amount, up_sign = "", False, None, "", "+"
     if not from_staff:
         up_key = f"upsize:{client}"
         if size_change:
-            target = picked[0] if picked else _last_bouquet(db.history(client), city)
+            ch = db.get_setting(f"chosen:{client}")
+            target = picked[0] if picked else (catalog.get(ch, city) if ch else None) or _last_bouquet(db.history(client), city)
             if target:
                 sign = "-" if re.search(r"меньше|поменьше|компактн|поскромн|дешевле", incoming or "", re.I) else "+"
                 db.set_setting(up_key, f"{target['code']}|{sign}|")
@@ -1704,11 +1709,20 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.photos = []
         if reply.question and re.search(r"увелич|пышн|добав|больш|объ[её]м|уменьш|сумм", reply.question, re.I):
             reply.question = ""
-        if up_turn and up_amount and re.search(r"уточн\w*[^.?!]{0,30}флорист", reply.text or "", re.I):
-            total = up_target["price"] + (int(up_amount) if up_sign == "+" else -int(up_amount))
-            reply.text = (f"Хорошо 🌸 {'Добавим цветов' if up_sign == '+' else 'Соберём скромнее'} — "
-                          f"{'+' if up_sign == '+' else '−'}{_rub(int(up_amount))}, итого за букет {_rub(total)}. "
-                          "Флорист соберёт его по этой сумме. Продолжим оформление?")
+        # Пышнее/скромнее решает КОД, а не ИИ: флориста не спрашиваем — пожелание просто идёт в заявку.
+        if up_turn and not reply.order and not order_text and not keep_photos:
+            reply.question = ""
+            if up_amount:
+                total = up_target["price"] + (int(up_amount) if up_sign == "+" else -int(up_amount))
+                nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city)
+                reply.text = (f"Хорошо 🌸 {'Добавим цветов' if up_sign == '+' else 'Соберём скромнее'} — "
+                              f"{'+' if up_sign == '+' else '−'}{_rub(int(up_amount))}, итого за букет {_rub(total)}. "
+                              f"Флорист соберёт его на эту сумму. {nxt}")
+                db.set_setting(f"lastq:{client}", nxt)
+            else:
+                reply.text = (f"Хорошо 🌸 Букет стоит {_rub(up_target['price'])}. На какую сумму "
+                              f"{'добавить цветов? Например, +1500 ₽' if up_sign == '+' else 'сделать скромнее? Например, −1000 ₽'}"
+                              " — флорист соберёт по этой сумме.")
 
     # ИИ написал заглушку «[ссылка на каталог]» вместо настоящего адреса — подставляем реальный URL города.
     if reply.text and LINK_PLACEHOLDER_RE.search(reply.text):
