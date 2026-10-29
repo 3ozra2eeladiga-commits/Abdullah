@@ -914,6 +914,9 @@ CARD_WANT_RE = re.compile(r"(?<!не\s)(?<!не)нужн\w*\s+(?:всё\s*же\s
                           r"давай\w*\s+(?:[\w-]+\s+)?открытк|добав\w*\s+(?:[\w-]+\s+)?открытк|(?:\bи|\bс|плюс|\+)\s+открытк|"
                           r"открытк\w*\s+(?:у\s+вас\s+)?есть|есть\s+(?:ли\s+)?(?:у\s+вас\s+)?открытк|какие\s+(?:есть\s+)?открытк|"
                           r"покаж\w*\s+открытк|скин\w*\s+открытк", re.I)
+# «Хочу поменять открытку», «другую открытку», «замените открытку»
+CHANGE_CARD_RE = re.compile(r"(?:помен|смен|замен|друг)\w*\s+(?:\w+\s+)?(?:открытк|конверт)|"
+                            r"(?:открытк|конверт)\w*\s+(?:\w+\s+)?(?:помен|смен|замен|друг)", re.I)
 # «Вы записали дату и время?», «что вы записали?», «правильно записали адрес?»
 RECORDED_Q_RE = re.compile(r"(?:записали|запомнили|учли|зафиксировали|занесли|записала\s+ли|ты\s+записала)\s+(?:ли\s+)?(?:\w+\s+)?"
                            r"(?:дат|врем|адрес|телефон|имя|имен|заказ|открыт|данн|вс[её])|что\s+(?:вы\s+)?записал|"
@@ -1088,11 +1091,11 @@ def _order_missing(o, client_text):
         return "Имя и телефон получателя?"
     card = (o.get("открытка") or "").strip()
     # Заглушка ИИ («...», «текст») или текст, которого клиент НЕ писал, — это не ответ клиента про открытку.
-    if card.lower() not in ("нет", "не нужна", "не надо", "-", "—", "без текста") and (
+    if not o.get("_открытка_подтверждена") and card.lower() not in ("нет", "не нужна", "не надо", "-", "—", "без текста") and (
             not re.sub(r"[\W_]+", "", card) or card.lower() in ("текст", "текст открытки")
             or re.sub(r"[\W_]+", "", card.lower()) not in re.sub(r"[\W_]+", "", (client_text or "").lower())):
         card = ""
-    if card.lower() in ("нет", "не нужна", "не надо", "-", "—") and not re.search(
+    if card.lower() in ("нет", "не нужна", "не надо", "-", "—") and not o.get("_открытка_подтверждена") and not re.search(
             r"\bнет\b|не\s*нуж|не\s*надо|без\s+открыт|без\s+текст|не\s*хочу", client_text or "", re.I):
         card = ""                               # «нет» придумал ИИ — клиент на вопрос про открытку не ответил
     if not card:
@@ -1176,9 +1179,11 @@ def _apply_client_state(order, client, city):
             order[k] = v
     if db.get_setting(f"nocard:{client}") and not db.get_setting(f"cardtext:{client}"):
         order["открытка"] = "нет"               # клиент сказал «без открытки» — это окончательно
+        order["_открытка_подтверждена"] = True
     ct = db.get_setting(f"cardtext:{client}")
     if ct:
         order["открытка"] = ct              # текст, который клиент подтвердил — как есть, без правок
+        order["_открытка_подтверждена"] = True
     # Дата — по ПОСЛЕДНЕМУ, что сказал клиент («сегодня» → потом «ладно, завтра» → значит завтра).
     user_msgs = [m["content"] for m in db.history(client) if m["role"] == "user"]
     latest = _latest_date(user_msgs)
@@ -2264,6 +2269,27 @@ def respond(client, incoming, from_staff=False, quote=""):
             text += "\n\n" + last_q
         db.add_message(client, "assistant", text)
         return Reply(text=text, city=city)
+    # «Хочу поменять открытку» (текст оставляем) — убираем выбранную открытку и показываем другие.
+    if not from_staff and not picked and not addons and CHANGE_CARD_RE.search(incoming or "") \
+            and not NO_CARD_AT_ALL_RE.search(incoming or ""):
+        cur = [c for c in (db.get_setting(f"addons:{client}") or "").split(",")
+               if c and catalog.get(c) and CARD_RE.search(catalog.get(c)["title"])]
+        db.set_setting(f"addons:{client}", ",".join(c for c in (db.get_setting(f"addons:{client}") or "").split(",")
+                                                     if c and c not in cur))
+        db.del_setting(f"cardstep:{client}")
+        db.del_setting(f"nocard:{client}")
+        db.clear_pending_order(client)
+        keep_txt = db.get_setting(f"cardtext:{client}") or ""
+        seen_c = set(cur) | set(c for c in (db.get_setting(f"cards_shown:{client}") or "").split(",") if c)
+        cards = [x for x in catalog.cards(city, limit=1000) if x["code"] not in seen_c][:MIN_OPTIONS + 1] \
+            or [x for x in catalog.cards(city, limit=MIN_OPTIONS + 2) if x["code"] not in cur][:MIN_OPTIONS + 1]
+        _remember_cards(client, cards)
+        db.set_setting(f"shown:{client}", ",".join(p["code"] for p in cards))
+        text = ("Хорошо 🌸 Выберите другую открытку — ответьте «эту» на фото."
+                + (f" Текст «{keep_txt}» оставим." if keep_txt and keep_txt not in ("нет", "без текста") else ""))
+        db.set_setting(f"lastq:{client}", text)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, photos=cards, city=city)
     # «Открытки есть?» — не спрашиваем текст, а сразу показываем открытки (с фото и ценами), потом спросим текст.
     if not from_staff and not picked and not addons and CARDS_ASK_RE.search(incoming or "") \
             and not _more_cards_request(client, incoming, last_q, quote_more):
