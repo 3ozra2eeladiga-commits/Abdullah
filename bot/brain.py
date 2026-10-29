@@ -696,6 +696,11 @@ CONFIRM_ASK_RE = re.compile(r"всё верно|все верно|всё пра�
 # Клиент ПОДТВЕРДИЛ заказ.
 CONFIRM_YES_RE = re.compile(r"\b(да|ага|угу|верно|правильн\w*|подтвержда\w*|оформля\w*|соглас\w*|всё так|все так|норм\w*|ок|окей)\b", re.I)
 # Клиент что-то ПОПРАВИЛ/возразил — это не подтверждение.
+# Клиент ответил на итог просто «нет» — не повторяем тот же итог, а спрашиваем, что исправить.
+BARE_NO_RE = re.compile(r"^\W*(?:нет|не\s*верно|неверно|неправильно|не\s+так|не\s+совсем|не\s+то)\W*$", re.I)
+# Клиент после оформленного заказа хочет ЕЩЁ один, новый заказ.
+NEW_ORDER_RE = re.compile(r"ещ[её]\s+(?:\w+\s+)?(?:купить|заказать|букет|заказ|цвет)|нов\w+\s+заказ|"
+                          r"хочу\s+ещ[её]|друг\w+\s+букет|ещ[её]\s+один", re.I)
 CORRECTION_RE = re.compile(r"\bнет\b|\bне\b|поменя|измен|друг|ошиб|неправильн|не так|а не", re.I)
 
 
@@ -876,6 +881,8 @@ def _apply_client_state(order, client, city):
     items = order.get("товары")
     if not isinstance(items, list):
         items = order["товары"] = []
+    _drop_prev_items(order, client)
+    items = order["товары"]
     have = {str(it.get("код") or "").strip().lower() for it in items}
     for code in [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]:
         if code not in have and catalog.get(code, city):
@@ -893,6 +900,39 @@ def _apply_client_state(order, client, city):
             if note not in c:
                 order["комментарий"] = (c + "; " if c else "") + note
     return _fill_order(order, city)
+
+
+def _drop_prev_items(order, client):
+    """Убирает из нового заказа товары ПРЕДЫДУЩЕГО (уже отправленного) заказа — ИИ собирает заказ из всей
+    переписки и подтягивает старый букет. Оставляем, только если клиент выбрал его заново."""
+    try:
+        prev = json.loads(db.get_setting(f"prev_items:{client}") or "[]")
+    except ValueError:
+        prev = []
+    if not prev:
+        return
+    keep = {db.get_setting(f"chosen:{client}") or ""} | set((db.get_setting(f"addons:{client}") or "").split(","))
+    keep.discard("")
+    codes = {p["code"] for p in prev if p.get("code")}
+    titles = {p["title"] for p in prev if p.get("title")}
+
+    def old(it):
+        code = str(it.get("код") or "").strip().lower()
+        if code in keep:
+            return False
+        return code in codes or str(it.get("название") or "").strip().lower() in titles
+
+    items = order.get("товары") or []
+    fresh = [it for it in items if not (isinstance(it, dict) and old(it))]
+    if fresh and len(fresh) != len(items):
+        order["товары"] = fresh
+
+
+def _remember_sent_items(order, client):
+    """Запоминаем товары отправленного заказа — чтобы они не попали в следующий заказ этого клиента."""
+    prev = [{"code": str(it.get("код") or "").strip().lower(), "title": str(it.get("название") or "").strip().lower()}
+            for it in order.get("товары") or [] if isinstance(it, dict)]
+    db.set_setting(f"prev_items:{client}", json.dumps(prev, ensure_ascii=False))
 
 
 def _clear_client_state(client):
@@ -916,6 +956,15 @@ def _extract_order(client, city):
            "в формате ниже — и больше НИЧЕГО не пиши. Бери только то, что реально сказал клиент; чего нет — "
            "оставь пустым. Код товара — 6 символов из каталога, если он упоминался.\nФормат:\n"
            + ORDER_FORMAT.replace("<<ЦЕНА_ДОСТАВКИ>>", str(config.DELIVERY_PRICE)))
+    try:
+        prev = json.loads(db.get_setting(f"prev_items:{client}") or "[]")
+    except ValueError:
+        prev = []
+    if prev:
+        sys += ("\nВАЖНО: в переписке был ПРЕДЫДУЩИЙ заказ, он уже оформлен: "
+                + ", ".join(p["title"] or p["code"] for p in prev)
+                + ". Его товары в новый заказ НЕ включай — только то, что клиент выбрал ПОСЛЕ него. "
+                  "Данные получателя, адрес, телефоны можно взять из переписки.")
     try:
         raw = llm.complete(sys, _merge_roles(db.history(client)), attempts=2)
     except Exception:
@@ -1272,6 +1321,16 @@ def respond(client, incoming, from_staff=False, quote=""):
         text = "Поняла 🌸 Передала флористу — она свяжется с вами по заказу в ближайшее время."
         db.add_message(client, "assistant", text)
         return Reply(text=text, question=f"Клиент просит отменить/изменить заказ: «{incoming}»", city=city)
+    # Клиент ответил «нет» на итог «Всё верно?» — не повторяем итог, спрашиваем, что поправить.
+    if not from_staff and db.get_pending_order(client) and BARE_NO_RE.search(incoming or ""):
+        text = "Хорошо, поправим 🌸 Напишите, пожалуйста, что изменить — букет, дату и время, адрес или получателя?"
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
+    # После оформленного заказа клиент хочет ещё один — это НОВЫЙ заказ: старый букет не держим, показываем варианты.
+    new_order = (not from_staff and not picked and not addons and db.has_order(client)
+                 and bool(NEW_ORDER_RE.search(incoming or "")))
+    if new_order:
+        db.del_setting(f"chosen:{client}")
     # «Покажи другие открытки» — показываем те, что ещё НЕ показывали (а не те же самые).
     if not from_staff and not picked and not addons and _more_cards_request(client, incoming, last_q):
         shown = [c for c in (db.get_setting(f"cards_shown:{client}") or "").split(",") if c]
@@ -1285,7 +1344,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                     "и ответьте «эту». Или возьмём простую с полем для записи.")
         db.add_message(client, "assistant", text)
         return Reply(text=text, photos=fresh, city=city)
-    wants_photos = (not from_staff) and bool(SHOW_REQUEST_RE.search(incoming or ""))
+    wants_photos = (not from_staff) and (bool(SHOW_REQUEST_RE.search(incoming or "")) or new_order)
     # Клиент ответил на анкету и главное известно (город, доставка/самовывоз, дата+время) — сразу к выбору букета.
     after_anketa = False
     if not from_staff and city and not picked and not addons and not db.get_setting(f"chosen:{client}"):
@@ -1511,6 +1570,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         if reply.order and ask_missing(reply.order):
             pass                                 # чего-то не хватает — спросили, а не «заказ принят»
         elif reply.order:                        # уходит флористу
+            _remember_sent_items(reply.order, client)
             db.clear_pending_order(client)
             _clear_client_state(client)
             reply.text = CHECK_SENT_TEXT
@@ -1682,6 +1742,10 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff and not reply.order and db.get_setting(f"ocheck:{client}") and re.search(
             r"заказ\w*\s+(?:уже\s+)?(?:принят|подтвержд|оформлен)", reply.text or "", re.I):
         reply.text = "Заказ сейчас на проверке у флориста — как только проверит наличие, сразу напишу 🌸"
+    # Новый заказ после оформленного — уже купленный букет среди вариантов не показываем.
+    if new_order and reply.photos:
+        bought = {p["code"] for p in json.loads(db.get_setting(f"prev_items:{client}") or "[]")}
+        reply.photos = [p for p in reply.photos if p["code"] not in bought] or reply.photos
     # Запоминаем, что показали (по порядку) — чтобы понять «давайте последний / второй вариант».
     if not from_staff and (len(reply.photos) >= 2 or (keep_photos and reply.photos)):
         db.set_setting(f"shown:{client}", ",".join(p["code"] for p in reply.photos))
