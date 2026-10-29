@@ -534,6 +534,45 @@ NOW_Q_RE = re.compile(r"сейчас|щас|работаете|открыт[ыо
                       r"в\s+такое\s+время|ночью|поздно", re.I)
 
 
+def shops_closed_now(city=None):
+    """Все магазины (города) сейчас закрыты?"""
+    cities = [city] if city else [c.get("name") for c in config.city_list() if c.get("name")]
+    now = datetime.datetime.now(_MSK)
+    h = now.hour + now.minute / 60
+    return not any(st <= h < en for st, en in (_shop_hours(c) for c in cities))
+
+
+def opening_text(city=None):
+    """«утром, с 07:30» / «завтра, с 08:00» — когда магазин откроется (для ответов ночью)."""
+    cities = [city] if city else [c.get("name") for c in config.city_list() if c.get("name")]
+    opens = []
+    for c in cities:
+        shops = _city_shops(c)
+        opens += [hrs.split("–")[0] for _a, hrs in shops] or [f"{_shop_hours(c)[0]:02d}:00"]
+    first = min(opens) if opens else "08:00"
+    now = datetime.datetime.now(_MSK)
+    return f"{'утром' if now.hour < 12 else 'завтра'}, с {first}"
+
+
+_REL_NUM = {"один": 1, "одну": 1, "два": 2, "две": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "пол": 0.5}
+
+
+def _relative_dt(text):
+    """«через 2 часа», «через два часа», «через час», «через полчаса», «через 30 минут» → дата-время (МСК)."""
+    t = (text or "").lower()
+    m = re.search(r"через\s+(?:(\d+|" + "|".join(_REL_NUM) + r")\s*)?(час\w*|минут\w*|полчаса)", t)
+    if not m:
+        return None
+    n = m.group(1)
+    unit = m.group(2)
+    if unit.startswith("полчаса"):
+        delta = datetime.timedelta(minutes=30)
+    else:
+        k = float(n) if n and n.isdigit() else _REL_NUM.get(n or "", 1)
+        delta = datetime.timedelta(hours=k) if unit.startswith("час") else datetime.timedelta(minutes=k)
+    return datetime.datetime.now(_MSK) + delta
+
+
 def _closed_now_note(client, city, asked=False):
     """Магазины сейчас закрыты (ночь) — один раз в день честно предупреждаем: заказ оформим, привезём завтра.
     asked=True (клиент сам спросил «сейчас можно?») — и когда до закрытия меньше 2 часов: сегодня не успеем."""
@@ -635,6 +674,9 @@ def _latest_date(user_msgs):
 def _latest_time(user_msgs):
     """Последнее время, которое назвал клиент: «в 09:00» → «ладно в 12:00» → «12:00». Пусто, если не называл."""
     for m in reversed(user_msgs):
+        rel = _relative_dt(m)
+        if rel:
+            return f"{rel:%H:%M}"
         if re.search(r"\d{5,}", re.sub(r"[\s()+-]", "", m or "")) and not re.search(r"\b\d{1,2}[:.]\d{2}\b", m or ""):
             continue                               # сообщение с телефоном
         found = re.findall(r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b", m or "")
@@ -698,6 +740,8 @@ def _closed_hours_msg(hour, city):
 def _fix_way_typos(client, text):
     """Опечатки в ответе на «доставка или самовывоз?» («саморезов», «самовызов», «дастафка») — исправляем,
     чтобы бот понял ответ, а не задавал странные вопросы. Только для коротких ответов на этот вопрос."""
+    # «сама вызов», «само вывоз», «сам вывоз» — так клавиатура разбивает «самовывоз»
+    text = re.sub(r"\bсам[аоы]?\s+вы[вз]?[оаы]?[зс]\w*", "самовывоз", text or "", flags=re.I)
     words = (text or "").split()
     if not words or len(words) > 3:
         return text
@@ -2602,6 +2646,16 @@ def respond(client, incoming, from_staff=False, quote=""):
                         "из каталога. Ничего не выдумывай.\n" + "\n".join(lines))
 
     history = db.history(client)
+    # Заявка уже у флориста (ждём подтверждения) — бот не «болтает» ИИ-ответами (и не тратит токены): первый раз
+    # короткий ответ, дальше сообщения клиента просто передаём флористу. Новый заказ/изменения — обработаны выше.
+    if not from_staff and db.get_setting(f"ocheck:{client}") and not new_order and not picked and not addons:
+        when = opening_text(city) if shops_closed_now(city) else "в ближайшие минуты"
+        if not db.get_setting(f"waitnote:{client}"):
+            db.set_setting(f"waitnote:{client}", "1")
+            text = f"Заявка у флориста ✅ Она проверит и подтвердит заказ {when}. Если нужно что-то изменить — напишите."
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city, staff_note=f"💬 Клиент пишет, пока ждёт подтверждения заявки: «{incoming}»")
+        return Reply(text="", city=city, staff_note=f"💬 Клиент пишет, пока ждёт подтверждения заявки: «{incoming}»")
     raw = llm.complete(system_prompt(history, city, picked, flower_block + up_block + addon_block, size_change,
                                      known=None if from_staff else _known_order(client)),
                        _merge_roles(history))
@@ -3069,6 +3123,12 @@ def respond(client, incoming, from_staff=False, quote=""):
         _hour_from_text(incoming) if re.search(r"\d|ночью", incoming or "") and not re.search(
             r"\d{5,}|₽|руб|тыс|бюджет|№", incoming or "", re.I) else None,
         catalog.match_city(incoming or "") or city)
+    rel = None if (from_staff or closed) else _relative_dt(incoming)
+    if rel and not closed:
+        st_, en_ = _shop_hours(catalog.match_city(incoming or "") or city or "")
+        if not (st_ <= rel.hour + rel.minute / 60 < en_):
+            closed = (f"Через это время магазин будет закрыт 🙏 Откроемся {opening_text(city)} — "
+                      "к какому времени удобно?")
     late = "" if (from_staff or closed) else _too_late_today_msg(incoming, catalog.match_city(incoming or "") or city)
     if not late and not from_staff and not closed and db.get_setting(f"lateask:{client}") \
             and not db.get_setting(f"florist_note:{client}") \

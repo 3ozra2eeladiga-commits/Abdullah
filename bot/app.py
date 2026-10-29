@@ -281,6 +281,7 @@ def on_check(order_id, action):
         db.add_message(client, "assistant", text)
         db.set_setting(f"ostatus:{order_id}", action)
         db.del_setting(f"ocheck:{client}")
+        db.del_setting(f"waitnote:{client}")
         if action in ("no", "other"):
             db.pause(client, config.HUMAN_PAUSE_HOURS)    # дальше с клиентом говорит флорист, бот не мешает
     if action == "ok":
@@ -404,7 +405,9 @@ def _photo_question(client, buf):
                      [{"text": "✍️ Другое — отвечу сам", "callback_data": f"ph:other:{qid}"}]])
     _save_photo_buf(client, {})
     many = len(photos) > 1
-    text = f"Спросила флориста, есть ли {'такие' if many else 'такой'} в наличии — ответим за пару минут 🌸"
+    when = (f"флорист ответит {brain.opening_text(city if city in catalog.city_names else None)} (магазин сейчас закрыт)"
+            if brain.shops_closed_now(city if city in catalog.city_names else None) else "ответим за пару минут")
+    text = f"Спросила флориста, есть ли {'такие' if many else 'такой'} в наличии — {when} 🌸"
     _send_text(client, text)
     db.add_message(client, "assistant", text)
 
