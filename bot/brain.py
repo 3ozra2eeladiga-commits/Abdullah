@@ -783,6 +783,14 @@ CARD_ASK_Q = ("Нужна ли открытка к букету? Открытк�
               "Понравится — ответьте на фото «эту» и напишите текст; если открытка не нужна — так и скажите.")
 CARD_ONE_Q = ("Открытки у нас платные 🌸 Подойдёт {title} — {price} ₽, на ней напишем "
               "«{text}». Берём её? (Если открытка не нужна — так и скажите.)")
+# Текст открытки: спрашиваем ОТДЕЛЬНО (название открытки — это не текст), показываем и подтверждаем, пишем как есть.
+CARD_TEXT_Q = ("Какой текст написать на открытке? Пришлите его одним сообщением 💌 "
+               "Если текст не нужен — напишите «Без текста», если открытка не нужна — «Без открытки».")
+CARD_TEXT_CONFIRM_Q = "Текст на открытке: «{text}». Всё верно? Ответьте «да», «исправить» или «без открытки» 🌸"
+CARD_TEXT_AGAIN_Q = "Хорошо 🌸 Пришлите, пожалуйста, новый текст для открытки одним сообщением."
+QUESTION_LIKE_RE = re.compile(r"\?\s*$|^\W*(?:как|когда|сколько|можно|а\s+если|где|почему|зачем|есть\s+ли|что\s+(?:если|будет|можно))\b", re.I)
+NO_TEXT_RE = re.compile(r"^\W*(?:без\s+текст\w*|без\s+надпис\w*|текст\s+не\s+нуж\w*|ничего\s+не\s+пиш\w*|не\s+надо\s+пис\w*)\W*$", re.I)
+NO_CARD_AT_ALL_RE = re.compile(r"без\s+открытк|открытк\w*\s+не\s+нуж|не\s+нужн\w*\s+открытк", re.I)
 CARD_PICK_Q = ("Открытки у нас платные 🌸 Выберите, пожалуйста, один из вариантов ниже — нажмите на фото и "
                "ответьте «эту». Текст «{text}» напишем на ней.")
 
@@ -898,6 +906,9 @@ def _apply_client_state(order, client, city):
             items.append({"код": code, "кол-во": 1})
     if db.get_setting(f"nocard:{client}") and not str(order.get("открытка") or "").strip():
         order["открытка"] = "нет"
+    ct = db.get_setting(f"cardtext:{client}")
+    if ct:
+        order["открытка"] = ct              # текст, который клиент подтвердил — как есть, без правок
     up = db.get_setting(f"upsize:{client}") or ""
     if up:
         _code, sign, amount = (up.split("|") + ["", "", ""])[:3]
@@ -945,7 +956,7 @@ def _remember_sent_items(order, client):
 
 
 def _clear_client_state(client):
-    for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen"):
+    for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -1331,6 +1342,47 @@ def respond(client, incoming, from_staff=False, quote=""):
         text = "Поняла 🌸 Передала флористу — она свяжется с вами по заказу в ближайшее время."
         db.add_message(client, "assistant", text)
         return Reply(text=text, question=f"Клиент просит отменить/изменить заказ: «{incoming}»", city=city)
+    # Текст открытки (бот спросил его после выбора открытки): вопрос — отвечает ИИ, потом снова просим текст;
+    # иначе это ТЕКСТ (хоть смайлик) — показываем и ждём «да». В заказ — только подтверждённый, как есть.
+    card_step = "" if (from_staff or picked or addons) else (db.get_setting(f"cardstep:{client}") or "")
+    card_remind = False
+    if card_step:
+        t = (incoming or "").strip()
+        def _card_say(text, step):
+            db.set_setting(f"cardstep:{client}", step)
+            db.set_setting(f"lastq:{client}", text)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
+        go_on = None                        # текст решён — продолжаем оформление как обычно
+        if NO_CARD_AT_ALL_RE.search(t):
+            saved = [c for c in (db.get_setting(f"addons:{client}") or "").split(",")
+                     if c and not (catalog.get(c) and CARD_RE.search(catalog.get(c)["title"]))]
+            db.set_setting(f"addons:{client}", ",".join(saved))
+            db.set_setting(f"nocard:{client}", "1")
+            db.set_setting(f"cardtext:{client}", "нет")
+            go_on = "Открытка не нужна, продолжаем оформление."
+        elif card_step == "ask":
+            if NO_TEXT_RE.search(t):
+                db.set_setting(f"cardtext:{client}", "без текста")
+                go_on = "Открытка без текста, продолжаем оформление."
+            elif QUESTION_LIKE_RE.search(t):
+                card_remind = True          # сначала ответим на вопрос, потом снова попросим текст
+            elif t:
+                return _card_say(CARD_TEXT_CONFIRM_Q.format(text=t), "confirm:" + t)
+        elif card_step.startswith("confirm:"):
+            if CONFIRM_YES_RE.search(t) and not CORRECTION_RE.search(t):
+                db.set_setting(f"cardtext:{client}", card_step[len("confirm:"):])
+                go_on = "Текст для открытки записан, продолжаем оформление."
+            elif re.search(r"исправ|измен|поменя|друг|^\W*нет\W*$|не\s+так|не\s+верно", t, re.I):
+                return _card_say(CARD_TEXT_AGAIN_Q, "ask")
+            elif QUESTION_LIKE_RE.search(t):
+                card_remind = True
+            elif t:
+                return _card_say(CARD_TEXT_CONFIRM_Q.format(text=t), "confirm:" + t)
+        if go_on:
+            db.del_setting(f"cardstep:{client}")
+            db.clear_pending_order(client)  # итог покажем заново — уже с открыткой
+            incoming = go_on
     # Клиент ответил «нет» на итог «Всё верно?» — не повторяем итог, спрашиваем, что поправить.
     if not from_staff and db.get_pending_order(client) and BARE_NO_RE.search(incoming or ""):
         text = "Хорошо, поправим 🌸 Напишите, пожалуйста, что изменить — букет, дату и время, адрес или получателя?"
@@ -1498,6 +1550,22 @@ def respond(client, incoming, from_staff=False, quote=""):
     def ask_missing(order):
         """Если в заказе чего-то не хватает — вместо заказа задаём вопрос о недостающем. True, если спросили."""
         nonlocal keep_photos
+        # В заказе есть открытка, а её текст клиент ещё не подтвердил — спрашиваем текст отдельно
+        # (название открытки — это не текст). Если клиент текст уже писал — сразу показываем на подтверждение.
+        card_item = next((it for it in order.get("товары") or [] if isinstance(it, dict)
+                          and CARD_RE.search(str(it.get("название") or ""))), None)
+        if card_item and not from_staff and not db.get_setting(f"cardtext:{client}"):
+            m_txt = re.search(r"Текст «(.+?)» напишем|напишем\s+«(.+?)»", last_q or "")
+            txt = m_txt and (m_txt.group(1) or m_txt.group(2))
+            q = CARD_TEXT_CONFIRM_Q.format(text=txt) if txt else CARD_TEXT_Q
+            db.set_setting(f"cardstep:{client}", ("confirm:" + txt) if txt else "ask")
+            db.set_setting(f"lastq:{client}", q)
+            db.clear_pending_order(client)
+            a0 = next((a for a in addons if CARD_RE.search(a["title"])), None)
+            reply.text = (f"Отлично, добавила к заказу 🌸 {a0['title']} — {a0['price']} ₽.\n\n" if a0 else "") + q
+            reply.order, reply.order_raw, reply.photos, reply.question = None, "", [], ""
+            keep_photos = True              # не подмешивать букеты к вопросу о тексте
+            return True
         miss = _order_missing(order, client_text)
         if not miss:
             return False
@@ -1555,6 +1623,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         advance()
         if db.get_pending_order(client) is not had_pending and reply.text.startswith("Отлично, всё записала"):
             pass                                # показан итог — в нём уже есть открытка
+        elif reply.text.startswith("Отлично, добавила"):
+            pass                                # уже подтвердили и спросили текст открытки
         else:
             reply.text = f"Отлично, добавила к заказу 🌸 {a0['title']} — {a0['price']} ₽.\n\n{reply.text}"
     # Метка [ЗАКАЗ] не разобралась в JSON (ИИ поставил её рано/криво) — флористу неполный заказ НЕ шлём.
@@ -1793,6 +1863,9 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff and not reply.order and db.get_setting(f"ocheck:{client}") and re.search(
             r"заказ\w*\s+(?:уже\s+)?(?:принят|подтвержд|оформлен)", reply.text or "", re.I):
         reply.text = "Заказ сейчас на проверке у флориста — как только проверит наличие, сразу напишу 🌸"
+    if card_remind and not reply.order:
+        reply.photos = []
+        reply.text = (reply.text or "").rstrip() + "\n\nИ пришлите, пожалуйста, текст для открытки одним сообщением 💌"
     # Новый заказ после оформленного — уже купленный букет среди вариантов не показываем.
     if new_order and reply.photos:
         bought = {p["code"] for p in json.loads(db.get_setting(f"prev_items:{client}") or "[]")}

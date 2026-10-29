@@ -86,7 +86,10 @@ def _format_order(order_id, client, reply):
                 "Ответьте на это сообщение, чтобы написать клиенту.")
 
     def val(x):
-        return str(x).strip() if x not in (None, "", "—") else "—"
+        return str(x).strip() if str(x if x is not None else "").strip() not in ("", "—", "...", "…") else "—"
+
+    def given(x):  # поле реально заполнено (ИИ иногда оставляет «...» из шаблона)
+        return val(x) != "—"
 
     pickup = o.get("получение") == "самовывоз"
     lines = [f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{order_id}", _label(client), "━━━━━━━━━━━━━━", "🛍 ТОВАР:"]
@@ -102,7 +105,7 @@ def _format_order(order_id, client, reply):
     if extra:
         lines.append(f"   ➕ {'Собрать ПЫШНЕЕ: добавить цветов на' if extra > 0 else 'Собрать СКРОМНЕЕ: на'} "
                      f"{abs(extra)} ₽{'' if extra > 0 else ' меньше'}")
-    if o.get("упаковка"):
+    if given(o.get("упаковка")):
         lines.append(f"   🎀 Упаковка: {val(o['упаковка'])}")
     lines.append(f"   💰 Сумма товаров: {val(o.get('сумма_товаров'))} ₽")
     lines.append("")
@@ -120,9 +123,9 @@ def _format_order(order_id, client, reply):
         f"👤 Заказчик: {val(o.get('заказчик'))}",
         f"🎁 Получатель: {val(o.get('получатель'))}",
     ]
-    if o.get("открытка"):
-        lines.append(f"✉️ Открытка: {val(o['открытка'])}")
-    if o.get("комментарий"):
+    if given(o.get("открытка")):
+        lines.append(f"✉️ Текст открытки: {val(o['открытка'])}")
+    if given(o.get("комментарий")):
         lines.append(f"📝 Комментарий: {val(o['комментарий'])}")
     lines += ["━━━━━━━━━━━━━━",
               "👉 Клиенту НЕ подтверждали заказ: проверьте, есть ли букет/цветы и свежие ли они, и нажмите кнопку.",
