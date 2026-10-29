@@ -2414,9 +2414,12 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.question = f"Клиент просит сразу назвать стоимость доставки: «{incoming}». Ответьте клиенту."
         else:
             note = "Стоимость доставки флорист сообщит при подтверждении заказа, вместе с суммой к оплате 🌸"
-            rest = re.sub(r"[^.!?]*(?:доставк)[^.!?]*(?:₽|руб|бесплат|стоит|стоимост)[^.!?]*[.!?]?", "",
-                          reply.text or "", flags=re.I)
-            reply.text = (note + (" " + rest.strip() if rest.strip() else "")).strip()
+            # Из ответа ИИ убираем всё про доставку — наша фраза уже это говорит (без повтора дважды).
+            rest = " ".join(p for p in re.split(r"(?<=[.!?])\s+|\n+", reply.text or "")
+                            if p.strip() and not re.search(r"доставк|флорист\w*\s+сообщ", p, re.I)).strip()
+            if not rest and db.get_pending_order(client):
+                rest = "Остальное в заказе верно? Ответьте «да» или «нет»."
+            reply.text = (note + ("\n\n" + rest if rest else "")).strip()
             if reply.question and re.search(r"доставк", reply.question, re.I):
                 reply.question = ""
         reply.photos = [] if not keep_photos else reply.photos
