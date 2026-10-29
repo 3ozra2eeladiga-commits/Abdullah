@@ -783,6 +783,11 @@ CONTACTS_Q = ("Напишите, пожалуйста, одним сообщен
 # Клиент возмущается, что его переспрашивают: «я уже ответил / уже писал».
 CARD_TEXT_PREFIX_RE = re.compile(r"^\W*(?:текст(?:\s+(?:для|на)\s+открытк\w*)?|на\s+открытк\w*(?:\s+(?:напиш\w*|текст))?)"
                                  r"\s*[:—–-]?\s+(.+)$", re.I | re.S)
+CARD_WANT_RE = re.compile(r"(?<!не\s)(?<!не)нужн\w*\s+(?:всё\s*же\s+|все\s*таки\s+|всё-таки\s+)?открытк|"
+                          r"открытк\w*\s+(?:всё\s*же\s+|все\s*таки\s+|всё-таки\s+|тоже\s+)?нужн|хочу\s+(?:\w+\s+)?открытк|"
+                          r"давай\w*\s+(?:[\w-]+\s+)?открытк|добав\w*\s+(?:[\w-]+\s+)?открытк", re.I)
+REASK_RE = re.compile(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|адрес|телефон|имя|фамили|открытк|дат[уа]|"
+                      r"во\s+сколько|к\s+какому", re.I)
 FAKE_SENT_RE = re.compile(r"передал\w*\s+(?:заказ\w*\s+)?флорист\w*\s+на\s+проверк|заказ\w*\s+(?:уже\s+)?(?:принят|подтвержд[её]н|оформлен)",
                           re.I)
 ALREADY_RE = re.compile(r"уже\s+(?:вам\s+)?(?:ответил|написал|писал|говорил|сказал|отправил|скинул|присылал|указал)", re.I)
@@ -1582,16 +1587,24 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.set_setting(f"lastq:{client}", text)
         db.add_message(client, "assistant", text)
         return Reply(text=text, photos=photos, city=city)
+    # Клиент передумал: «всё-таки нужна открытка» после «без открытки» — снимаем отказ и показываем открытки.
+    want_card = (not from_staff and not addons and not NO_CARD_AT_ALL_RE.search(incoming or "")
+                 and bool(CARD_WANT_RE.search(incoming or "")))
+    if want_card and db.get_setting(f"nocard:{client}"):
+        db.del_setting(f"nocard:{client}")
+        db.clear_pending_order(client)
     # «Да, нужна открытка / нужен текст», а открытка ещё не выбрана — сначала выбор открытки (с фото), потом текст.
     has_card = any(catalog.get(c) and CARD_RE.search(catalog.get(c)["title"])
                    for c in (db.get_setting(f"addons:{client}") or "").split(",") if c)
     if not from_staff and not picked and not addons and not has_card and not card_step and not card_done \
+            and want_card or (not from_staff and not picked and not addons and not has_card and not card_step
+                              and not card_done
             and not db.get_pending_order(client) and not db.get_setting(f"nocard:{client}") \
             and not db.get_setting(f"cardtext:{client}") \
             and re.search(r"нужн\w*\s+(?:ли\s+)?(?:\w+\s+)?(?:открытк|текст)|открытк\w*\s+нужн|хотите[^.?!]{0,30}открытк",
                           _last_bot_text(client, last_q), re.I) \
             and re.search(r"^\W*да\b|нуж\w*\s+(?:и\s+)?(?:текст|открытк)|(?:текст|открытк)\w*\s+нуж|хочу\s+открытк", incoming or "", re.I) \
-            and not NO_CARD_RE.search(incoming or ""):
+            and not NO_CARD_RE.search(incoming or "")):
         cards = catalog.cards(city, limit=5)
         if cards:
             _remember_cards(client, cards)
@@ -2110,13 +2123,21 @@ def respond(client, incoming, from_staff=False, quote=""):
         asks_card = re.search(r"открытк", reply.text, re.I) and "?" in reply.text \
             and not SUMMARY_RE.search(reply.text) and (
             db.get_setting(f"nocard:{client}") or db.get_setting(f"cardtext:{client}"))
-        if (asks_who and len(PHONE_RE.findall(t)) >= 2) or asks_card:
-            advance("Спасибо 🌸 ")
-        elif asks_addr and _has_address(user_msgs) and not (asks_way and not known_way) and not (asks_when and not known_when):
-            advance("Спасибо 🌸 ")          # адрес уже есть, а ИИ снова его просит — идём дальше кодом
-        elif (asks_way and known_way) or (asks_when and known_when):
-            reply.text = (f"Отличный выбор 🌸 {picked[0]['title']} — {picked[0]['price']} ₽. Оформляем его! {nxt}"
-                          if picked else nxt)
+        reask = ((asks_who and len(PHONE_RE.findall(t)) >= 2) or asks_card
+                 or (asks_addr and _has_address(user_msgs) and not (asks_way and not known_way)
+                     and not (asks_when and not known_when))
+                 or (asks_way and known_way) or (asks_when and known_when))
+        if reask:
+            # ИИ переспрашивает уже известное. Его ОТВЕТ клиенту (на вопрос «а розы свежие?») оставляем,
+            # выкидываем только переспросы — и дальше ведём оформление кодом (итог или недостающее).
+            answer = " ".join(p for p in _SENT_SPLIT_RE.split(reply.text.strip())
+                              if p and "?" not in p and not REASK_RE.search(p)) if "?" in (incoming or "") else ""
+            if picked:
+                reply.text = f"Отличный выбор 🌸 {picked[0]['title']} — {picked[0]['price']} ₽. Оформляем его! {nxt}"
+            else:
+                advance("Спасибо 🌸 ")
+                if answer:
+                    reply.text = f"{answer}\n\n{reply.text.replace('Спасибо 🌸 ', '', 1)}"
     if chosen and reply.photos and not keep_photos and not re.search(
             r"друг|ещ[её]|вариант|покаж|покаж|скин|кинь|кидай|поменя|замен|не нрав|передумал", incoming or "", re.I):
         reply.photos = [p for p in reply.photos if p["code"] == chosen and p in picked]
