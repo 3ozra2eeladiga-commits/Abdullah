@@ -857,7 +857,13 @@ CARD_TEXT_IN_RE = re.compile(r"открытк\w*[^«\"“]{0,40}[«\"“](.+?)[�
                              r"(?:текст\w*|напиш\w*|надпис\w*)\s*(?:на\s+открытк\w*\s*)?[:—–-]\s*(.+?)(?:$|\n)", re.I)
 CARD_WANT_RE = re.compile(r"(?<!не\s)(?<!не)нужн\w*\s+(?:всё\s*же\s+|все\s*таки\s+|всё-таки\s+)?открытк|"
                           r"открытк\w*\s+(?:всё\s*же\s+|все\s*таки\s+|всё-таки\s+|тоже\s+)?нужн|хочу\s+(?:\w+\s+)?открытк|"
-                          r"давай\w*\s+(?:[\w-]+\s+)?открытк|добав\w*\s+(?:[\w-]+\s+)?открытк|(?:\bи|\bс|плюс|\+)\s+открытк", re.I)
+                          r"давай\w*\s+(?:[\w-]+\s+)?открытк|добав\w*\s+(?:[\w-]+\s+)?открытк|(?:\bи|\bс|плюс|\+)\s+открытк|"
+                          r"открытк\w*\s+(?:у\s+вас\s+)?есть|есть\s+(?:ли\s+)?(?:у\s+вас\s+)?открытк|какие\s+(?:есть\s+)?открытк|"
+                          r"покаж\w*\s+открытк|скин\w*\s+открытк", re.I)
+# «Открытки есть?», «какие есть открытки?», «покажите открытки» — сразу показываем открытки с фото и ценами.
+CARDS_ASK_RE = re.compile(r"открытк\w*\s+(?:у\s+вас\s+)?есть|есть\s+(?:ли\s+)?(?:у\s+вас\s+)?открытк|"
+                          r"какие\s+(?:у\s+вас\s+)?(?:есть\s+)?открытк|покаж\w*\s+(?:\w+\s+)?открытк|"
+                          r"скин\w*\s+(?:\w+\s+)?открытк|можно\s+(?:\w+\s+)?открытк", re.I)
 REASK_RE = re.compile(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|адрес|телефон|имя|фамили|открытк|дат[уа]|"
                       r"во\s+сколько|к\s+какому", re.I)
 PROMISE_PHOTOS_RE = re.compile(r"\b(?:подберу|отправлю|пришлю|скину|покажу|подкину)\b[^.!?]{0,40}(?:фото|вариант|букет)", re.I)
@@ -1799,6 +1805,22 @@ def respond(client, incoming, from_staff=False, quote=""):
         it0 = (picked or addons)[0]
         content = f"{incoming} — про «{it0['title']}» ({it0['price']} ₽)"
     db.add_message(client, "user", content)
+    # Клиент выбрал открытку (ответом на фото / названием) — сразу просим текст для неё (или показываем уже
+    # названный текст на подтверждение). Не зависим от того, собрал ли ИИ заказ.
+    card_pick = next((a for a in addons if CARD_RE.search(a["title"])), None) if not from_staff else None
+    if card_pick and not picked and not db.get_setting(f"addto:{client}") and not db.get_setting(f"cardtext:{client}"):
+        db.del_setting(f"nocard:{client}")
+        wtxt = (db.get_setting(f"wantcard_text:{client}") or "").strip()
+        if wtxt:
+            q = CARD_TEXT_CONFIRM_Q.format(text=wtxt)
+            db.set_setting(f"cardstep:{client}", "confirm:" + wtxt)
+        else:
+            q = _card_text_q(card_pick["title"])
+            db.set_setting(f"cardstep:{client}", "ask")
+        text = f"Добавила открытку — {card_pick['price']} ₽ 🌸\n{q}"
+        db.set_setting(f"lastq:{client}", q)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # Клиент сам сказал «нужна открытка» (хоть в первом сообщении) — запоминаем, чтобы потом не спрашивать
     # «открытку добавим?», а сразу предложить выбрать. Текст для неё, если назвал, — тоже.
     if not from_staff and CARD_WANT_RE.search(incoming or "") and not NO_CARD_AT_ALL_RE.search(incoming or ""):
@@ -2097,6 +2119,20 @@ def respond(client, incoming, from_staff=False, quote=""):
         new_order = True
     if new_order:
         db.del_setting(f"chosen:{client}")
+    # «Открытки есть?» — не спрашиваем текст, а сразу показываем открытки (с фото и ценами), потом спросим текст.
+    if not from_staff and not picked and not addons and CARDS_ASK_RE.search(incoming or "") \
+            and not _more_cards_request(client, incoming, last_q, quote_more):
+        wtxt = db.get_setting(f"wantcard_text:{client}") or ""
+        cards = catalog.cards(city, limit=MIN_OPTIONS + 1, text=wtxt or None)
+        if cards:
+            _remember_cards(client, cards)
+            db.set_setting(f"shown:{client}", ",".join(p["code"] for p in cards))
+            for k in ("nocard", "cardstep"):
+                db.del_setting(f"{k}:{client}")
+            text = "Да, есть 🌸 Выберите открытку — ответьте «эту» на фото. Скажите «ещё», если хотите другие."
+            db.set_setting(f"lastq:{client}", text)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, photos=cards, city=city)
     # «Покажи другие открытки» — показываем те, что ещё НЕ показывали (а не те же самые).
     if not from_staff and not picked and not addons and _more_cards_request(client, incoming, last_q, quote_more):
         if OTHER_CARD_RE.search(incoming or ""):     # «нужна другая / не эта» — прежнюю открытку убираем из заказа
