@@ -197,48 +197,42 @@ def deliver(client, text, from_staff=False, quote=""):
 # ---------- Проверка наличия флористом (кнопки под заявкой) ----------
 
 CHECK_ACTIONS = {
-    "ok": ("✅ Всё есть", "Флорист проверил — всё в наличии, цветы свежие 🌸 Заказ подтверждён! "
+    "ok": ("✅ Всё верно", "Флорист проверил — всё в наличии, цветы свежие 🌸 Заказ подтверждён! "
                           "Сейчас пришлём ссылку на оплату."),
-    "swap": ("🔁 Нужна замена", "Флорист проверил наличие: некоторых цветов из состава сейчас нет, нужна небольшая "
-                               "замена 🌸 Сейчас подскажу, на что заменим — или можно выбрать другой букет."),
-    "no": ("❌ Нет в наличии", "К сожалению, этого букета сейчас нет в наличии 😔 Давайте подберу похожий — "
-                              "показать варианты?"),
+    "no": ("❌ Что-то не в наличии", "Флорист проверил заказ: из выбранного сейчас что-то не в наличии 🙏 "
+                                    "Флорист скоро свяжется с вами, объяснит причину и предложит замену."),
 }
 
 
-def _check_buttons(order_id, actions=("ok", "swap", "no")):
+def _check_buttons(order_id, actions=("ok", "no")):
     return [[{"text": CHECK_ACTIONS[a][0], "callback_data": f"chk:{a}:{order_id}"}] for a in actions]
 
 
 def on_check(order_id, action):
     """Флорист нажал кнопку под заявкой. Сообщаем клиенту результат проверки. Возвращает текст для флориста."""
+    action = {"swap": "no"}.get(action, action)        # старые заявки с кнопкой «Нужна замена»
     row = db.get_order(order_id)
     if not row or action not in CHECK_ACTIONS:
         return "Заявка не найдена."
     client, _ = row
-    status = db.get_setting(f"ostatus:{order_id}")
-    # После «замены» ещё можно подтвердить (клиент согласился), остальное — один раз.
-    if status not in ("check", "swap") or (status == "swap" and action != "ok"):
+    if db.get_setting(f"ostatus:{order_id}") != "check":
         return f"По заявке №{order_id} уже отмечено, повторно не отправляю."
     label, text = CHECK_ACTIONS[action]
     with _client_locks[client]:
         _send_text(client, text)
         db.add_message(client, "assistant", text)
         db.set_setting(f"ostatus:{order_id}", action)
-        if action == "swap":
-            db.set_setting(f"ocheck:{client}", order_id)   # заказ всё ещё не подтверждён
-        else:
-            db.del_setting(f"ocheck:{client}")
+        db.del_setting(f"ocheck:{client}")
+        if action == "no":
+            db.pause(client, config.HUMAN_PAUSE_HOURS)    # дальше с клиентом говорит флорист, бот не мешает
     if action == "ok":
         telegram_bot.notify_staff(client, f"✅ Заявка №{order_id} подтверждена, клиенту написали.\n"
                                           "Отправьте ссылку на оплату — ответом на это сообщение.")
-    elif action == "swap":
-        telegram_bot.notify_staff(client, f"🔁 Заявка №{order_id}: клиенту сказали, что нужна замена.\n"
-                                          "Напишите ответом на это сообщение, на что заменить — бот передаст клиенту. "
-                                          "Когда клиент согласится — нажмите кнопку.",
-                                  buttons=_check_buttons(order_id, ("ok",)))
     else:
-        telegram_bot.notify_staff(client, f"❌ Заявка №{order_id}: клиенту предложили выбрать другой букет.")
+        telegram_bot.notify_staff(client, f"❌ Заявка №{order_id}: клиенту написали, что чего-то нет в наличии и "
+                                          "флорист скоро свяжется.\nНапишите клиенту сами (в чате или ответом на это "
+                                          f"сообщение). Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; "
+                                          "/resume ответом на это сообщение — включить бота.")
     return f"{label} — клиенту отправлено."
 
 
