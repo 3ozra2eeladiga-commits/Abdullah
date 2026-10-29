@@ -1160,6 +1160,13 @@ def _apply_client_state(order, client, city):
     if photo_item and not any(not CARD_RE.search(str(it.get("название") or "")) and (it.get("код") or it.get("название"))
                               for it in items if isinstance(it, dict)):
         items.insert(0, {"название": photo_item, "кол-во": 1, "сумма": 0})   # букет по фото клиента
+    # Букет, который клиент ВЫБРАЛ (chosen), всегда в заказе — даже если ИИ, собирая заказ, его потерял.
+    ch = (db.get_setting(f"chosen:{client}") or "").strip().lower()
+    if ch and catalog.get(ch, city) and not any(
+            isinstance(it, dict) and not CARD_RE.search(str(it.get("название") or ""))
+            and (it.get("код") or it.get("название")) and not re.search(r"упаковк", str(it.get("название") or ""), re.I)
+            for it in items):
+        items.insert(0, {"код": ch, "кол-во": 1})
     have = {str(it.get("код") or "").strip().lower() for it in items}
     for code in [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]:
         if code not in have and catalog.get(code, city):
