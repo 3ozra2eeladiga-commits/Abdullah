@@ -151,6 +151,18 @@ def notify_staff_order(client, items, text, buttons=None):
             db.link_staff_message(chat, msg["message_id"], client)
 
 
+def photo_bytes(photo):
+    """Байты фото клиента: Telegram file_id или ссылка (Инстаграм). Ошибка — None."""
+    try:
+        if str(photo).startswith("http"):
+            return requests.get(photo, timeout=30).content
+        f = call("getFile", file_id=photo)
+        return requests.get(f"https://api.telegram.org/file/bot{config.TELEGRAM_TOKEN}/{f['file_path']}", timeout=30).content
+    except Exception as e:
+        log.warning("Не удалось скачать фото: %s", e)
+        return None
+
+
 def _recognize_voice(voice):
     """Скачивает голосовое и превращает в текст. Возвращает (текст, сообщение_об_ошибке) — одно пустое."""
     if voice.get("duration", 0) > speech.MAX_SECONDS:

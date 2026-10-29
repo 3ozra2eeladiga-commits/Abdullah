@@ -86,6 +86,8 @@ def _yandex_model():
 
 
 YANDEX_MODEL = _yandex_model()
+# Визуальная модель для распознавания фото клиента (букет / открытка / не цветы). Пусто — не распознаём.
+VISION_MODEL = os.getenv("VISION_MODEL", "gemma-3-27b-it/latest")
 
 GIGACHAT_AUTH_KEY = os.getenv("GIGACHAT_AUTH_KEY", "")
 GIGACHAT_SCOPE = os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS")

@@ -5,6 +5,7 @@
     messages — [{"role": "user"|"assistant", "content": "..."}]
 и возвращают текст ответа.
 """
+import base64
 import logging
 import re
 import time
@@ -139,3 +140,38 @@ def complete(system, messages, attempts=3):
     if last_refusal:
         return last_refusal  # все попытки — отказ; brain заменит его на мягкий переспрос
     raise last_error
+
+
+IMAGE_KINDS = ("букет", "открытка", "цветы", "другое")
+
+
+def classify_image(data):
+    """Что на фото клиента: «букет», «открытка», «цветы» (поштучно/в горшке) или «другое» (селфи, еда, документы…).
+    Визуальная модель Yandex AI Studio (OpenAI-совместимый API). Ошибка/нет ключа — None (бот работает как раньше)."""
+    if not data or not config.YANDEX_API_KEY or not config.YANDEX_FOLDER_ID:
+        return None
+    try:
+        r = requests.post(
+            "https://llm.api.cloud.yandex.net/v1/chat/completions",
+            headers={"Authorization": f"Api-Key {config.YANDEX_API_KEY}", "x-folder-id": config.YANDEX_FOLDER_ID},
+            json={
+                "model": f"gpt://{config.YANDEX_FOLDER_ID}/{config.VISION_MODEL}",
+                "temperature": 0,
+                "max_tokens": 10,
+                "messages": [{"role": "user", "content": [
+                    {"type": "text", "text": "Что на фото? Ответь ОДНИМ словом: букет, открытка, цветы или другое "
+                                             "(другое — если на фото нет цветов и открыток: человек, еда, вещи, документ)."},
+                    {"type": "image_url",
+                     "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(data).decode()}},
+                ]}],
+            },
+            timeout=40,
+        )
+        if r.status_code != 200:
+            log.warning("Распознавание фото: ошибка %s %s", r.status_code, r.text[:300])
+            return None
+        ans = (r.json()["choices"][0]["message"]["content"] or "").strip().lower()
+        return next((k for k in IMAGE_KINDS if k[:5] in ans), None)
+    except Exception as e:
+        log.warning("Распознавание фото не удалось: %s", e)
+        return None

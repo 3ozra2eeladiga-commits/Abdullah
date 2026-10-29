@@ -14,7 +14,7 @@ from collections import defaultdict
 from flask import Flask, Response, abort, request
 from waitress import serve
 
-from . import brain, config, db, images, instagram, telegram_bot
+from . import brain, config, db, images, instagram, llm, telegram_bot
 from .catalog import catalog
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -389,6 +389,17 @@ def _photo_question(client, buf):
     db.set_city(client, city)
     question = " ".join(t for t in texts if not (catalog.match_city(t) and len(t) < 30)) or "есть такой?"
     card = bool(re.search(r"открытк|конверт", " ".join(texts), re.I))
+    # Смотрим, что на фото: селфи / еда / вещи — флористу не шлём (это не букет); открытка — спрашиваем про открытку.
+    kinds = [llm.classify_image(telegram_bot.photo_bytes(p)) for p in buf["photos"]]
+    if kinds and all(k == "другое" for k in kinds):
+        text = "На фото не вижу цветов 🙂 Пришлите, пожалуйста, фото букета или открытки, которую хотите, — сразу спрошу флориста."
+        _send_text(client, text)
+        db.add_message(client, "assistant", text)
+        _save_photo_buf(client, {})
+        return
+    if kinds and any(k == "открытка" for k in kinds) and not any(k in ("букет", "цветы") for k in kinds):
+        card = True
+    buf["photos"] = [p for p, k in zip(buf["photos"], kinds) if k != "другое"] or buf["photos"]
     what = "открытку" if card else "букет"
     photos = buf["photos"]
     for n, photo in enumerate(photos, 1):
