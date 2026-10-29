@@ -168,15 +168,17 @@ def deliver(client, text, from_staff=False, quote=""):
                                               f"Сообщение клиента: {text}\nОтветьте на это сообщение, чтобы написать клиенту.")
             return
 
+        order_id = db.save_order(client, reply.order) if reply.order else None
+        if order_id and reply.text:
+            reply.text += f"\nНомер заказа: №{order_id}"   # по нему клиент может спросить или отменить
         if reply.text:
             _send_text(client, brain.pretty(reply.text))  # короткими абзацами — легче читать
         for item in reply.photos:
             _send_photo(client, item)
 
-        # Клиенту сказали «заказ принят» — значит, флорист ОБЯЗАН его получить. Если каких-то полей не хватает,
-        # заказ всё равно уходит, но с пометкой — флорист уточнит у клиента. Заказ не должен теряться.
+        # Клиенту сказали «передала флористу» — значит, флорист ОБЯЗАН получить заявку. Если каких-то полей не
+        # хватает, она всё равно уходит, но с пометкой — флорист уточнит у клиента. Заказ не должен теряться.
         if reply.order:
-            order_id = db.save_order(client, reply.order)
             # Фото заказанных товаров — чтобы флорист сразу видел, что собирать.
             items = []
             for it in reply.order.get("товары", []):
@@ -193,8 +195,8 @@ def deliver(client, text, from_staff=False, quote=""):
             telegram_bot.notify_staff_order(client, items, card, buttons=_check_buttons(order_id))
         elif reply.order_raw:
             log.warning("Заказ не распознан (%s): %s", client, reply.order_raw)
-        if reply.staff_note:                     # дополнение к уже отправленному заказу и т.п.
-            telegram_bot.notify_staff_order(client, reply.staff_photos, reply.staff_note)
+        if reply.staff_note:                     # дополнение к отправленному заказу, отмена и т.п.
+            telegram_bot.notify_staff_order(client, reply.staff_photos, f"{reply.staff_note}\n{_label(client)}")
         if reply.question:
             telegram_bot.notify_staff(client, f"❓ ВОПРОС ОТ БОТА\n{_label(client)}\n\n{reply.question}\n\n"
                                               "Ответьте на это сообщение — бот передаст ответ клиенту.")

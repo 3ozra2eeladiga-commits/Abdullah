@@ -554,7 +554,7 @@ def _next_question(user_msgs, city, order=None):
     if len(phones) < 2:
         return "Имя и телефон получателя?"
     if not re.search(r"открытк", t):
-        return "Открытку добавим?"
+        return "Открытку добавим? Ответьте «да» или «нет» 🌸"
     return ALMOST_DONE_Q
 
 
@@ -801,16 +801,16 @@ def _phone_was_given(order_value, client_text):
     return digits[-7:] in client_digits
 
 
-CARD_ASK_Q = "Открытку добавим? От {min} ₽ — ответьте «эту» на фото или «без открытки» 🌸"
+CARD_ASK_Q = "Открытку добавим? От {min} ₽ — ответьте «да» или «нет» 🌸"
 CARD_ONE_Q = "Подойдёт {title} — {price} ₽, напишем «{text}». Берём?"
 # Текст открытки: спрашиваем ОТДЕЛЬНО (название открытки — это не текст), показываем и подтверждаем, пишем как есть.
-CARD_TEXT_CONFIRM_Q = "Напишем: «{text}». Верно?"
+CARD_TEXT_CONFIRM_Q = "Напишем: «{text}». Верно? Ответьте «да» или «нет»."
 _PRINTED_RE = re.compile(r"[\"«“]\s*(.+?)\s*(?:[\"»”]|'')")
 
 
 def _card_text_q(title):
     """Вопрос о тексте открытки — максимально просто (Абдулла: «чтобы и ребёнок понял»)."""
-    return "Что написать на открытке? Если ничего — напишите «без текста» 🌸"
+    return "Что написать на открытке? Пришлите текст одним сообщением. Если ничего — «без текста» 🌸"
 
 
 CARD_TEXT_AGAIN_Q = "Хорошо, какой текст напишем?"
@@ -1090,6 +1090,7 @@ def _remember_sent_items(order, client):
     db.set_setting(f"draft:{client}", json.dumps(d, ensure_ascii=False))
 
 
+ASK_START_RE = re.compile(r"\W*(?:уточните|подскажите|напишите|пришлите|укажите|сообщите)\b", re.I)
 FILLER_RE = re.compile(r"^\s*(?:понимаю\s+вас|спасибо\s+за\s+(?:уточнение|информацию|ответ)|простите\s+за\s+(?:недоразумение|путаницу)|"
                        r"извините\s+за\s+(?:путаницу|недоразумение)|отличный\s+вопрос|хороший\s+вопрос)[^.!?…]*[.!?…]+\s*", re.I)
 _KNOWN_Q = [  # (вопрос ИИ, как понять, что ответ уже известен)
@@ -1102,7 +1103,8 @@ _KNOWN_Q = [  # (вопрос ИИ, как понять, что ответ уж�
      or k.get("получение") == "самовывоз"),
     (re.compile(r"(?:имя|фамили|телефон|номер)", re.I),
      lambda k, um, c: len(PHONE_RE.findall(" ".join(um))) >= 2),
-    (re.compile(r"нужн\w*\s+ли[^.?!]{0,20}открытк|открытк\w*[^.?!]{0,25}(?:нужн|добав|хотите)", re.I),
+    (re.compile(r"нужн\w*\s+ли[^.?!]{0,20}открытк|открытк\w*[^.?!]{0,25}(?:нужн|добав|хотите)|"
+                r"(?:нуж\w*|добав\w*|хотите)[^.?!]{0,30}(?:открытк|текст\w*\s+на\s+открытк)", re.I),
      lambda k, um, c: bool(db.get_setting(f"nocard:{c}") or db.get_setting(f"cardtext:{c}")
                            or db.get_setting(f"wantcard:{c}"))),
 ]
@@ -1115,18 +1117,23 @@ def _polish_ai_text(text, client, city, user_msgs):
     known = _known_order(client)
     parts = [p for p in _SENT_SPLIT_RE.split(t) if p.strip()]
     keep, dropped = [], False
+    is_q = lambda p: "?" in p or bool(ASK_START_RE.match(p))
     for p in parts:
-        if "?" in p and any(rx.search(p) and ok(known, user_msgs, client) for rx, ok in _KNOWN_Q):
+        if is_q(p) and any(rx.search(p) and ok(known, user_msgs, client) for rx, ok in _KNOWN_Q):
             dropped = True
             continue
         keep.append(p)
+    # Один вопрос за раз: клиенту проще ответить, а коду — понять ответ. Остальные вопросы — следующими сообщениями.
+    first_q = next((i for i, p in enumerate(keep) if is_q(p)), None)
+    if first_q is not None:
+        keep = keep[:first_q + 1] + [p for p in keep[first_q + 1:] if not is_q(p)]
     if len(keep) > 3:                             # длинно: первые 2 предложения + последний вопрос
         q = next((p for p in reversed(keep) if "?" in p), None)
         keep = keep[:2] + ([q] if q and q not in keep[:2] else [])
     out = " ".join(keep).strip()
     # Букет выбран, а ИИ ни о чём не спросил («Хорошо!») — оформление ведёт КОД: следующий нужный вопрос,
     # а если всё собрано — итог (флаг для respond).
-    if "?" not in out and db.get_setting(f"chosen:{client}"):
+    if not any(is_q(p) for p in keep) and db.get_setting(f"chosen:{client}"):
         nq = _next_question(user_msgs, city, known)
         if nq == ALMOST_DONE_Q:
             return out or text, True
@@ -1568,7 +1575,37 @@ def respond(client, incoming, from_staff=False, quote=""):
         text = _anketa(incoming, city)
         db.add_message(client, "assistant", text)
         return Reply(text=text, city=city)
-    # Клиент после оформления просит отменить/изменить заказ — это решает флорист, бот только передаёт.
+    # ОТМЕНА заказа: «хочу отменить» → «Отменить заказ №N (…)? да / нет» → «да» → отменён, флористу — уведомление.
+    cancel_q = "" if from_staff else (db.get_setting(f"cancelq:{client}") or "")
+    if cancel_q:
+        db.del_setting(f"cancelq:{client}")
+        oid = int(cancel_q)
+        if CONFIRM_YES_RE.search(incoming or "") and not CORRECTION_RE.search(incoming or ""):
+            db.set_setting(f"ostatus:{oid}", "cancel")
+            db.del_setting(f"ocheck:{client}")
+            text = f"Заказ №{oid} отменён 🌸 Если захотите — оформим новый."
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city, staff_note=f"🚫 КЛИЕНТ ОТМЕНИЛ ЗАКАЗ №{oid}\n"
+                                                         "Если уже оплачен — свяжитесь с клиентом по возврату.")
+        if re.search(r"^\W*(?:нет|не\s+надо|не\s+отменя\w*)\b", incoming or "", re.I):
+            text = f"Хорошо, заказ №{oid} в силе 🌸"
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
+    if not from_staff and re.search(r"\bотмен\w*", incoming or "", re.I) and db.has_order(client):
+        oid = db.last_order_id(client)
+        row = db.get_order(oid)
+        if db.get_setting(f"ostatus:{oid}") == "cancel":
+            text = f"Заказ №{oid} уже отменён 🌸"
+        else:
+            o = row[1] if row else {}
+            item = next((str(it.get("название") or "") for it in o.get("товары") or []
+                         if isinstance(it, dict) and not CARD_RE.search(str(it.get("название") or ""))), "")
+            desc = ", ".join(x for x in (item, str(o.get("дата") or "").strip()) if x)
+            text = f"Отменить заказ №{oid}{f' ({desc})' if desc else ''}? Ответьте «да» или «нет»."
+            db.set_setting(f"cancelq:{client}", oid)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
+    # Клиент после оформления просит изменить заказ («передумал») — это решает флорист, бот только передаёт.
     if not from_staff and CANCEL_RE.search(incoming or "") and db.has_order(client):
         text = "Поняла, передала флористу — скоро свяжется 🌸"
         db.add_message(client, "assistant", text)
@@ -1714,7 +1751,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                               and not card_done
             and not db.get_pending_order(client) and not db.get_setting(f"nocard:{client}") \
             and not db.get_setting(f"cardtext:{client}") \
-            and re.search(r"нужн\w*\s+(?:ли\s+)?(?:\w+\s+)?(?:открытк|текст)|открытк\w*\s+нужн|хотите[^.?!]{0,30}открытк",
+            and re.search(r"нужн\w*\s+(?:ли\s+)?(?:\w+\s+)?(?:открытк|текст)|открытк\w*\s+(?:нужн|добав)|хотите[^.?!]{0,30}открытк",
                           _last_bot_text(client, last_q), re.I) \
             and re.search(r"^\W*да\b|нуж\w*\s+(?:и\s+)?(?:текст|открытк)|(?:текст|открытк)\w*\s+нуж|хочу\s+открытк", incoming or "", re.I) \
             and not NO_CARD_RE.search(incoming or "")):
@@ -1927,10 +1964,8 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"shown:{client}", ",".join(c["code"] for c in card_photos))
             miss = CARD_PICK_Q.format(text=txt) if txt else "Вы хотели открытку — выберите, ответьте «эту» на фото 🌸"
         elif miss == CARD_ASK_Q:
-            card_photos = catalog.cards(city, limit=5)       # сразу показываем разные варианты, а не одну
-            if not from_staff:
-                _remember_cards(client, card_photos)
-            miss = CARD_ASK_Q.format(min=min((c["price"] for c in card_photos), default=50))
+            # Сначала простой вопрос «да / нет»; на «да» — открытки на выбор.
+            miss = CARD_ASK_Q.format(min=min((c["price"] for c in catalog.cards(city)), default=50))
         elif miss == CARD_PICK_Q:
             card_text = str(order.get("открытка") or "").strip()
             card_photos = catalog.cards(city, text=card_text)
