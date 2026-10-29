@@ -137,6 +137,16 @@ def deliver(client, text, from_staff=False, quote=""):
     """Главная функция: сообщение (от клиента или от сотрудника) -> ответ клиенту.
     quote — текст сообщения, на которое клиент ответил (reply), для распознавания букета."""
     with _client_locks[client]:
+        # Клиент прислал фото и теперь пишет, что хочет («у вас есть такой?») — фото с вопросом флористу.
+        if not from_staff and not db.is_paused(client) and _photo_buf(client).get("photos"):
+            old = _photo_timers.pop(client, None)
+            if old:
+                old.cancel()
+            buf = _photo_buf(client)
+            db.add_message(client, "user", text)
+            buf.setdefault("texts", []).append(text)
+            _photo_question(client, buf)
+            return
         if not from_staff and db.is_paused(client):
             db.add_message(client, "user", text)
             # Бот молчит (клиента ведёт сотрудник), но вопрос о заказе/доставке не должен потеряться — флористу.
@@ -236,23 +246,167 @@ def on_check(order_id, action):
     return f"{label} — клиенту отправлено."
 
 
-def _handle_client_photos(client, image_urls, caption=""):
-    """Клиент прислал фото букета. Бот не видит картинок — пересылаем флористу,
-    а клиенту отвечаем по-человечески, без выдуманных названий и цен."""
+# ---------- Фото от клиента: ждём, что он хочет, потом каждое фото — флористу с кнопками ----------
+# Бот картинок не видит: это может быть букет, открытка, что угодно. Поэтому фото копятся, пока клиент не напишет
+# («у вас есть такой?»); нужен город (из какого магазина). Потом КАЖДОЕ фото — отдельным сообщением флористу:
+# «✅ Есть / ❌ Нет — предложить другие / ✍️ Другое (отвечу сам)».
+PHOTO_WAIT_SEC = 3          # несколько фото (альбом) приходят пачкой — ждём, пока придут все
+PHOTO_NUDGE_SEC = 90        # прислал фото и молчит — через полторы минуты спросим, что подсказать
+_photo_timers = {}
+
+
+def _photo_buf(client):
+    try:
+        return json.loads(db.get_setting(f"cphotos:{client}") or "") or {}
+    except ValueError:
+        return {}
+
+
+def _save_photo_buf(client, buf):
+    if buf.get("photos"):
+        db.set_setting(f"cphotos:{client}", json.dumps(buf, ensure_ascii=False))
+    else:
+        db.del_setting(f"cphotos:{client}")
+
+
+def _later(client, sec, fn):
+    old = _photo_timers.pop(client, None)
+    if old:
+        old.cancel()
+    t = threading.Timer(sec, fn, args=(client,))
+    t.daemon = True
+    _photo_timers[client] = t
+    t.start()
+
+
+def on_client_photo(client, photo, caption=""):
+    """Клиент прислал фото (Telegram file_id или ссылка из Инстаграма) — запоминаем и ждём остальные/текст."""
     with _client_locks[client]:
         if db.is_paused(client):
+            return                          # клиента ведёт флорист — он и видит фото в чате
+        buf = _photo_buf(client)
+        buf.setdefault("photos", []).append(photo)
+        if caption:
+            buf.setdefault("texts", []).append(caption)
+        _save_photo_buf(client, buf)
+        db.add_message(client, "user", "[клиент прислал фото]" + (f": {caption}" if caption else ""))
+    _later(client, PHOTO_WAIT_SEC, _photos_settled)
+
+
+def _photos_settled(client):
+    with _client_locks[client]:
+        buf = _photo_buf(client)
+        if not buf.get("photos"):
             return
-        db.add_message(client, "user", "[клиент прислал фото букета]" + (f": {caption}" if caption else ""))
-        reply = ("Спасибо 🌸 Если этот букет с нашего сайта — напишите, пожалуйста, его НОМЕР (он под фото, "
-                 "например №600), и я сразу его найду и оформлю. А фото я на всякий случай уже передала "
-                 "флористу — подберём точь-в-точь или похожее.")
-        _send_text(client, reply)
-        db.add_message(client, "assistant", reply)
-        staff_note = (f"📸 Клиент прислал фото букета ({_label(client)}).\n"
-                      + (f"Подпись клиента: «{caption}»\n" if caption else "")
-                      + "Посмотрите фото и ответьте на это сообщение с ценой/наличием — бот передаст клиенту.")
-        for url in image_urls:
-            telegram_bot.notify_staff_photo(client, url, staff_note)
+        if buf.get("texts"):
+            _photo_question(client, buf)    # подпись к фото уже есть — сразу к делу
+            return
+    _later(client, PHOTO_NUDGE_SEC, _photo_nudge)
+
+
+def _photo_nudge(client):
+    with _client_locks[client]:
+        buf = _photo_buf(client)
+        if buf.get("photos") and not buf.get("texts") and not buf.get("nudged"):
+            text = "Подскажите, что хотите по фото — такой букет? 🌸"
+            _send_text(client, text)
+            db.add_message(client, "assistant", text)
+            buf["nudged"] = True
+            _save_photo_buf(client, buf)
+
+
+def _photo_question(client, buf):
+    """Есть фото и слова клиента. Нужен город — потом каждое фото флористу с кнопками. Вызывать под блокировкой."""
+    texts = buf.get("texts", [])
+    city = db.get_city(client) or next((catalog.match_city(t) for t in texts if catalog.match_city(t)), None)
+    if not city:
+        if not buf.get("asked_city"):
+            text = (f"В какой город нужны цветы — {', '.join(catalog.city_names)} или рядом? "
+                    "Сразу спрошу флориста про фото 🌸")
+            _send_text(client, text)
+            db.add_message(client, "assistant", text)
+            buf["asked_city"] = True
+            _save_photo_buf(client, buf)
+            return
+        text = "Подскажите город — и сразу спрошу флориста 🌸"
+        _send_text(client, text)
+        db.add_message(client, "assistant", text)
+        return
+    db.set_city(client, city)
+    question = " ".join(t for t in texts if not (catalog.match_city(t) and len(t) < 30)) or "есть такой?"
+    card = bool(re.search(r"открытк|конверт", " ".join(texts), re.I))
+    what = "открытку" if card else "букет"
+    photos = buf["photos"]
+    for n, photo in enumerate(photos, 1):
+        qid = int(db.get_setting("phq_seq") or 0) + 1
+        db.set_setting("phq_seq", qid)
+        db.set_setting(f"phq:{qid}", json.dumps({"client": client, "card": card, "q": question,
+                                                 "n": n if len(photos) > 1 else 0}, ensure_ascii=False))
+        part = f" ({n} из {len(photos)})" if len(photos) > 1 else ""
+        telegram_bot.notify_staff_photo(
+            client, photo,
+            f"📸 Клиент спрашивает {what} по фото{part}\n{_label(client)}, {city}\n«{question}»\nЕсть в наличии?",
+            buttons=[[{"text": "✅ Есть", "callback_data": f"ph:ok:{qid}"}],
+                     [{"text": "❌ Нет — предложить другие", "callback_data": f"ph:no:{qid}"}],
+                     [{"text": "✍️ Другое — отвечу сам", "callback_data": f"ph:other:{qid}"}]])
+    _save_photo_buf(client, {})
+    many = len(photos) > 1
+    text = f"Спросила флориста, есть ли {'такие' if many else 'такой'} в наличии — ответим за пару минут 🌸"
+    _send_text(client, text)
+    db.add_message(client, "assistant", text)
+
+
+def on_photo_button(qid, action):
+    """Флорист нажал кнопку под фото клиента. Возвращает текст для флориста."""
+    try:
+        rec = json.loads(db.get_setting(f"phq:{qid}") or "")
+    except ValueError:
+        rec = None
+    if not rec or action not in ("ok", "no", "other"):
+        return "Вопрос не найден."
+    if rec.get("done"):
+        return "По этому фото уже ответили."
+    client = rec["client"]
+    rec["done"] = action
+    db.set_setting(f"phq:{qid}", json.dumps(rec, ensure_ascii=False))
+    if action == "other":
+        return "Ответьте клиенту сами — ответом на это фото (или в чате)."
+    with _client_locks[client]:
+        city = db.get_city(client)
+        photos = []
+        if action == "ok" and rec.get("card"):
+            text = "Такая открытка есть 🌸 Добавим?"
+        elif action == "ok":
+            # Букет с фото есть — он и есть выбранный букет: оформляем его (цену в заявке подтвердит флорист).
+            n = rec.get("n") or 0
+            db.set_setting(f"chosen:{client}", f"photo:{qid}")
+            db.set_setting(f"photo_item:{client}", f"Букет как на фото клиента{f' (фото {n})' if n else ''}")
+            nq = brain._next_question([m["content"] for m in db.history(client) if m["role"] == "user"],
+                                      city, brain._known_order(client))
+            db.set_setting(f"lastq:{client}", nq)
+            text = f"Букет{f' с фото {n}' if n else ''} есть в наличии 🌸 Оформляем! {nq}"
+        else:
+            text = ("Такой открытки сейчас нет 😔 Вот похожие:" if rec.get("card")
+                    else "Такого сейчас нет 😔 Вот похожие — может, что-то понравится?")
+            cc = catalog.get_city(city) if city else None
+            if rec.get("card"):
+                photos = catalog.cards(city, limit=5)
+            elif cc:
+                photos = cc.relevant_items(rec.get("q") or "популярные букеты", limit=5, bouquets_only=True)[:5] \
+                    or cc.relevant_items("популярные букеты", limit=5, bouquets_only=True)[:5]
+            if photos:
+                db.set_setting(f"shown:{client}", ",".join(p["code"] for p in photos))
+        _send_text(client, text)
+        for it in photos:
+            _send_photo(client, it)
+        db.add_message(client, "assistant", text)
+    return "Клиенту отправлено."
+
+
+def _handle_client_photos(client, image_urls, caption=""):
+    """Инстаграм: фото клиента — так же, как в Telegram (копим, ждём слова, потом флористу с кнопками)."""
+    for i, url in enumerate(image_urls):
+        on_client_photo(client, url, caption if i == 0 else "")
 
 
 def _handle_instagram(payload):
@@ -330,7 +484,7 @@ def _disable_windows_quick_edit():
 def main():
     _disable_windows_quick_edit()
     catalog.refresh()
-    telegram_bot.start(deliver, on_check)
+    telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
 

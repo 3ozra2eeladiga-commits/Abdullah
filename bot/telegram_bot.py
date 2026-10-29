@@ -96,31 +96,28 @@ def send_client_photo(client, item):
         db.remember_sent(f"biz:{cid}:{msg['message_id']}")
 
 
-def notify_staff_photo(client, photo, caption):
-    """Пересылает фото сотрудникам (photo — ссылка или file_id Telegram).
+def notify_staff_photo(client, photo, caption, buttons=None):
+    """Пересылает фото сотрудникам (photo — ссылка или file_id Telegram), можно с кнопками.
     Ответ сотрудника на это фото уйдёт данному клиенту. Если фото не ушло — шлём хотя бы текст."""
     for chat in staff_chats():
-        msg = call("sendPhoto", chat_id=chat, photo=photo, caption=caption[:1000])
+        msg = call("sendPhoto", chat_id=chat, photo=photo, caption=caption[:1000], **_keyboard(buttons))
         if not msg:
-            msg = send(chat, caption + "\n(фото клиента не удалось переслать — посмотрите в переписке)")
+            msg = send(chat, caption + "\n(фото клиента не удалось переслать — посмотрите в переписке)",
+                       **_keyboard(buttons))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
 
 
+_hooks = {}   # обработчики из app: on_photo (фото от клиента), on_check / on_photo_button (кнопки)
+
+
 def _client_photo(client, msg):
-    """Клиент прислал фото букета. Бот не видит картинок — просим номер и страхуем пересылкой флористу."""
+    """Клиент прислал фото. Бот картинок не видит — отдаём в app: там фото копятся, пока клиент не скажет,
+    что хочет, и потом уходят флористу с кнопками «есть / нет / другое»."""
     caption = (msg.get("caption") or "").strip()
     file_id = msg["photo"][-1]["file_id"]  # самое крупное фото
-    db.add_message(client, "user", "[клиент прислал фото букета]" + (f": {caption}" if caption else ""))
-    reply = ("Спасибо 🌸 Если этот букет с нашего сайта — напишите, пожалуйста, его НОМЕР (он под фото, "
-             "например №600), и я сразу его найду и оформлю. А фото я на всякий случай уже передала "
-             "флористу — подберём точь-в-точь или похожее.")
-    send_client(client, reply)
-    db.add_message(client, "assistant", reply)
-    staff_note = (f"📸 Клиент прислал фото букета ({_client_label(client)}).\n"
-                  + (f"Подпись клиента: «{caption}»\n" if caption else "")
-                  + "Посмотрите фото и ответьте на это сообщение с ценой/наличием — бот передаст клиенту.")
-    notify_staff_photo(client, file_id, staff_note)
+    if _hooks.get("on_photo"):
+        _hooks["on_photo"](client, file_id, caption)
 
 
 def staff_chats():
@@ -326,16 +323,17 @@ def _handle_business(update, deliver):
 
 
 def _handle_callback(cq, on_check):
-    """Сотрудник нажал кнопку под заявкой (chk:<действие>:<номер заказа>)."""
+    """Сотрудник нажал кнопку: под заявкой (chk:<действие>:<номер заказа>) или под фото клиента (ph:…:<номер>)."""
     user_id = cq.get("from", {}).get("id")
     if not config.is_staff(user_id):
         call("answerCallbackQuery", callback_query_id=cq["id"], text="Нет доступа")
         return
     parts = (cq.get("data") or "").split(":")
-    if len(parts) != 3 or parts[0] != "chk" or not parts[2].isdigit():
+    handler = {"chk": on_check, "ph": _hooks.get("on_photo_button")}.get(parts[0]) if len(parts) == 3 else None
+    if not handler or not parts[2].isdigit():
         call("answerCallbackQuery", callback_query_id=cq["id"])
         return
-    result = on_check(int(parts[2]), parts[1])
+    result = handler(int(parts[2]), parts[1])
     call("answerCallbackQuery", callback_query_id=cq["id"], text=result[:200])
     m = cq.get("message") or {}
     if m:
@@ -370,7 +368,8 @@ def run_polling(deliver, on_check):
             time.sleep(5)
 
 
-def start(deliver, on_check):
+def start(deliver, on_check, on_photo=None, on_photo_button=None):
+    _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return

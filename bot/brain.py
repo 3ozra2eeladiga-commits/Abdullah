@@ -936,6 +936,10 @@ def _apply_client_state(order, client, city):
         items = order["товары"] = []
     _drop_prev_items(order, client)
     items = order["товары"]
+    photo_item = db.get_setting(f"photo_item:{client}")
+    if photo_item and not any(not CARD_RE.search(str(it.get("название") or "")) and (it.get("код") or it.get("название"))
+                              for it in items if isinstance(it, dict)):
+        items.insert(0, {"название": photo_item, "кол-во": 1, "сумма": 0})   # букет по фото клиента
     have = {str(it.get("код") or "").strip().lower() for it in items}
     for code in [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]:
         if code not in have and catalog.get(code, city):
@@ -1120,11 +1124,15 @@ def _polish_ai_text(text, client, city, user_msgs):
         q = next((p for p in reversed(keep) if "?" in p), None)
         keep = keep[:2] + ([q] if q and q not in keep[:2] else [])
     out = " ".join(keep).strip()
-    if dropped and "?" not in out and db.get_setting(f"chosen:{client}"):
+    # Букет выбран, а ИИ ни о чём не спросил («Хорошо!») — оформление ведёт КОД: следующий нужный вопрос,
+    # а если всё собрано — итог (флаг для respond).
+    if "?" not in out and db.get_setting(f"chosen:{client}"):
         nq = _next_question(user_msgs, city, known)
+        if nq == ALMOST_DONE_Q:
+            return out or text, True
         out = f"{out}\n\n{nq}".strip() if out else nq
         db.set_setting(f"lastq:{client}", nq)
-    return out or text
+    return out or text, False
 
 
 def _clear_addon(client):
@@ -1165,7 +1173,7 @@ def _finish_addon(client, city, order_id):
 
 def _clear_client_state(client):
     for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep",
-              "wantcard", "wantcard_text"):
+              "wantcard", "wantcard_text", "photo_item"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -1282,7 +1290,10 @@ def _order_summary(o):
         lines.append(t[:1].upper() + t[1:])
     try:
         total = int(o.get("сумма_товаров") or 0) + (int(price) if price.isdigit() else 0)
-        lines.append(f"Итого: {_rub(total)}" + ("" if price.isdigit() else " + доставка"))
+        if any("фото клиента" in str(it.get("название") or "") for it in o.get("товары") or []):
+            lines.append("Цену букета подтвердит флорист")   # букет по фото — цены из каталога нет
+        else:
+            lines.append(f"Итого: {_rub(total)}" + ("" if price.isdigit() else " + доставка"))
     except (TypeError, ValueError):
         pass
     lines.append("Всё верно?")
@@ -2270,5 +2281,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.set_setting(f"shown:{client}", ",".join(p["code"] for p in reply.photos))
     # ФИНАЛЬНЫЙ ФИЛЬТР ответа ИИ: без «воды», коротко, и никаких вопросов о том, что клиент уже сказал.
     if not from_staff and reply.text and reply.text == ai_text and not reply.order:
-        reply.text = _polish_ai_text(reply.text, client, city, [m["content"] for m in history if m["role"] == "user"])
+        reply.text, to_summary = _polish_ai_text(reply.text, client, city,
+                                                 [m["content"] for m in history if m["role"] == "user"])
+        if to_summary and not keep_photos:
+            advance()                                # всё собрано — показываем итог (или спрашиваем недостающее)
     return reply
