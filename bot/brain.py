@@ -777,6 +777,7 @@ CARD_WANT_RE = re.compile(r"(?<!не\s)(?<!не)нужн\w*\s+(?:всё\s*же\s
                           r"давай\w*\s+(?:[\w-]+\s+)?открытк|добав\w*\s+(?:[\w-]+\s+)?открытк|(?:\bи|\bс|плюс|\+)\s+открытк", re.I)
 REASK_RE = re.compile(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|адрес|телефон|имя|фамили|открытк|дат[уа]|"
                       r"во\s+сколько|к\s+какому", re.I)
+PROMISE_PHOTOS_RE = re.compile(r"\b(?:подберу|отправлю|пришлю|скину|покажу|подкину)\b[^.!?]{0,40}(?:фото|вариант|букет)", re.I)
 FAKE_SENT_RE = re.compile(r"передал\w*\s+(?:заказ\w*\s+)?флорист\w*\s+на\s+проверк|флорист\w*\s+проверит\s+наличие|заказ\w*\s+(?:уже\s+)?(?:принят|подтвержд[её]н|оформлен)",
                           re.I)
 ALREADY_RE = re.compile(r"уже\s+(?:вам\s+)?(?:ответил|написал|писал|говорил|сказал|отправил|скинул|присылал|указал)", re.I)
@@ -1807,6 +1808,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.add_message(client, "assistant", text)
         return Reply(text=text, photos=fresh, city=city)
     wants_photos = (not from_staff) and (bool(SHOW_REQUEST_RE.search(incoming or "")) or new_order)
+    # Бот спросил «скинуть сюда фото или ссылку на сайт?», клиент: «тут / сюда / фото» — показываем фото.
+    if not from_staff and re.search(r"^\W*(?:тут|сюда|здесь|фото|давай\w*|скинь\w*|присыла\w*|да)\W*$", incoming or "", re.I) \
+            and re.search(r"скину\s+сюда|фото\s+на\s+ваш\s+вкус|сюда[^.?!]{0,30}или[^.?!]{0,30}сайт",
+                          _last_bot_text(client, last_q), re.I):
+        wants_photos = True
     # Клиент ответил на анкету и город известен — сразу к выбору букета.
     after_anketa = False
     if not from_staff and city and not picked and not addons and not db.get_setting(f"chosen:{client}"):
@@ -2102,6 +2108,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         order_text = True
     # «Вопрос флористу», который на самом деле про подбор букетов — не беспокоим коллег, показываем сами.
     force_options = refused_offer
+    # ИИ пообещал «сейчас подберу и отправлю фото», а фото не приложил — прикладываем сами, иначе клиент ждёт впустую.
+    if not from_staff and not reply.photos and not reply.order and not order_text and city \
+            and PROMISE_PHOTOS_RE.search(reply.text or ""):
+        force_options = True
+        wants_photos = True
     if reply.question and FAKE_QUESTION_RE.search(reply.question):
         reply.question = ""
         force_options = True
