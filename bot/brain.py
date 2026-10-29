@@ -40,7 +40,8 @@ RULES = """Ты — флорист цветочного магазина и пе
 
 ГРУБОСТЬ: если клиент грубит, оскорбляет тебя, магазин или цветы, хамит, унижает (даже без мата и даже другими
 словами — «ваши цветы мусор», «ты вонючка», «вы бездари» и т. п.) — ответь ТОЛЬКО меткой [ГРУБО] и больше ничего.
-Обычное недовольство без оскорблений («дорого», «не нравится этот букет», «вы мне не нравитесь») — НЕ грубость.
+Обычное недовольство без оскорблений («дорого», «не нравится этот букет», «вы мне не нравитесь») и лёгкое
+раздражение или шутка («иди домой», «отстань», «надоели», «ну вы даёте») — НЕ грубость.
 
 ОДНА РЕПЛИКА ЗА РАЗ (ОЧЕНЬ ВАЖНО)
 - Пиши ТОЛЬКО одну свою реплику и останавливайся. Жди ответа клиента.
@@ -1913,6 +1914,20 @@ def respond(client, incoming, from_staff=False, quote=""):
         m_in = CARD_TEXT_IN_RE.search(incoming or "")
         if m_in and _meaningful(next(g for g in m_in.groups() if g)):
             db.set_setting(f"wantcard_text:{client}", next(g for g in m_in.groups() if g).strip())
+    # «Да» на «Открытку добавим?» — не переспрашиваем, а сразу показываем открытки с фото и ценами.
+    if not from_staff and last_q.startswith(CARD_ASK_Q.split("{")[0]) and CONFIRM_YES_RE.search(incoming or "") \
+            and not CORRECTION_RE.search(incoming or "") and not addons:
+        db.set_setting(f"wantcard:{client}", "1")
+        db.del_setting(f"nocard:{client}")
+        wtxt = db.get_setting(f"wantcard_text:{client}") or ""
+        cards = catalog.cards(city, limit=MIN_OPTIONS + 1, text=wtxt or None)
+        if cards:
+            _remember_cards(client, cards)
+            db.set_setting(f"shown:{client}", ",".join(p["code"] for p in cards))
+            text = "Отлично 🌸 Выберите открытку — ответьте «эту» на фото. Скажите «ещё», если хотите другие."
+            db.set_setting(f"lastq:{client}", text)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, photos=cards, city=city)
     # Грубость/мат: первый раз — предупреждение, второй — бот прекращает переписку (сотруднику — уведомление).
     if not from_staff and RUDE_RE.search(PRAISE_RE.sub(" ", incoming or "")):
         return _rude_reply(client, incoming, city)
