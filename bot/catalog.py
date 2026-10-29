@@ -5,6 +5,7 @@
 """
 import json
 import logging
+import random
 import re
 import threading
 import time
@@ -224,6 +225,8 @@ class Catalog:
             if bouquets_only and name in NON_BOUQUET:
                 continue
             for it in items:
+                if it.get("stock") is not None and it["stock"] <= 0 and it["code"] not in keep_codes:
+                    continue                    # на сайте нет в наличии — не предлагаем
                 title = it["title"].lower()
                 score = sum(1 for s in stems if s in title) * 2
                 if name in wanted_sections:
@@ -242,10 +245,14 @@ class Catalog:
             # Ничего конкретного не спросили — показываем ходовые букеты
             for name, items in sections:
                 if name in DEFAULT_SECTIONS:
-                    scored += [(0.5, name, it) for it in items if not budget or it["price"] <= budget]
+                    scored += [(0.5, name, it) for it in items if (not budget or it["price"] <= budget)
+                               and not (it.get("stock") is not None and it["stock"] <= 0)]
 
         # С бюджетом — сначала то, что ближе к бюджету (дороже), а не самое дешёвое
-        scored.sort(key=lambda s: (-s[0], -s[2]["price"] if budget else 0))
+        # Внутри одинаково подходящих — случайный порядок, чтобы клиенту не показывали одно и то же каждый раз
+        # (с бюджетом — сначала то, что близко к бюджету: «корзинами» по 15% бюджета).
+        scored.sort(key=lambda s: (-s[0], -int(s[2]["price"] // max(1, budget * 0.15)) if budget else 0,
+                                   random.random()))
         picked, seen = {}, set()
         per_section = max(8, limit // 3)  # чтобы один раздел не занял всё место (готовые vs коллекция)
         for score, name, it in scored:
