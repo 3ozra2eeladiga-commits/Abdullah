@@ -39,6 +39,10 @@ RULES = """Ты — флорист цветочного магазина и пе
 удобно клиенту): город, дата и время, букет, доставка/самовывоз, адрес, имена и телефоны, открытка.
 Не бросай разговор на полпути: если чего-то из этого ещё не знаешь — спрашивай дальше. Подробный порядок ниже.
 
+НЕ ПО ТЕМЕ: если сообщение клиента вообще не про цветы, заказ, доставку или магазин (болтовня, политика, просьбы
+решить задачу, игры, тесты бота и т. п.) — ответь ТОЛЬКО меткой [НЕ_ПО_ТЕМЕ] и больше ничего. Приветствия, вопросы
+о магазине, ценах, цветах, доставке, открытках — это по теме.
+
 ГРУБОСТЬ: если клиент грубит, оскорбляет тебя, магазин или цветы, хамит, унижает (даже без мата и даже другими
 словами — «ваши цветы мусор», «ты вонючка», «вы бездари» и т. п.) — ответь ТОЛЬКО меткой [ГРУБО] и больше ничего.
 Обычное недовольство без оскорблений («дорого», «не нравится этот букет», «вы мне не нравитесь») и лёгкое
@@ -818,6 +822,33 @@ def _contacts_next_q(st):
     if not st.get("to_phone"):
         return f"А номер телефона получателя ({st['to_name']})? 📞"
     return ""
+
+
+MAX_MSGS_PER_DAY = 80          # столько сообщений за сутки без заказа — и бот останавливается (защита от «баловства»)
+MAX_ORDERS_PER_DAY = 4         # больше заявок за сутки — дальше только через флориста
+
+
+def _stop_chat(client, city, text, staff_text):
+    """Останавливаем бота для этого клиента на сутки, объясняем причину и сообщаем сотруднику."""
+    db.add_message(client, "assistant", text)
+    db.pause(client, 24)
+    return Reply(text=text, city=city, question=staff_text + " /resume — включить бота обратно.")
+
+
+def _abuse_check(client, city):
+    """Клиент бесконечно переписывается, не доводя до заказа, или оформляет заявку за заявкой — останавливаем."""
+    day_ago = datetime.datetime.now(_MSK).timestamp() - 24 * 3600
+    if db.count_orders_since(client, day_ago) >= MAX_ORDERS_PER_DAY:
+        return _stop_chat(client, city,
+                          "Сегодня вы оформили уже несколько заявок 🙏 Чтобы ничего не перепутать, дальше вам поможет "
+                          "флорист — она свяжется с вами. Бот пока не отвечает.",
+                          f"🚫 Бот остановил переписку: за сутки уже {MAX_ORDERS_PER_DAY}+ заявок от клиента — проверьте.")
+    if db.count_user_messages_since(client, day_ago) > MAX_MSGS_PER_DAY and not db.count_orders_since(client, day_ago):
+        return _stop_chat(client, city,
+                          "Мы уже долго переписываемся, а заказ так и не оформлен 🙏 Чтобы не тратить ваше время, "
+                          "дальше вам поможет флорист — она свяжется с вами. Бот пока не отвечает.",
+                          f"🚫 Бот остановил переписку: больше {MAX_MSGS_PER_DAY} сообщений за сутки без заказа.")
+    return None
 
 
 def _rude_reply(client, incoming, city):
@@ -2217,6 +2248,10 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Грубость/мат: первый раз — предупреждение, второй — бот прекращает переписку (сотруднику — уведомление).
     if not from_staff and RUDE_RE.search(PRAISE_RE.sub(" ", incoming or "")):
         return _rude_reply(client, incoming, city)
+    if not from_staff and not client.startswith("tg:"):     # в режиме /test лимиты не мешают проверкам
+        stop = _abuse_check(client, city)
+        if stop:
+            return stop
     # Первое сообщение клиента — отвечаем анкетой: сразу все главные вопросы, чтобы потом не переспрашивать.
     first_closed = _closed_hours_msg(_hour_from_text(incoming), catalog.match_city(incoming or "") or city) \
         if not from_staff and re.search(r"\d|ночью", incoming or "") else ""
@@ -2734,6 +2769,20 @@ def respond(client, incoming, from_staff=False, quote=""):
     # ИИ распознал грубость, которую не поймал список слов («ваши цветы мусор», «вы бездари») — тот же порядок.
     if not from_staff and re.search(r"\[\s*ГРУБО\s*\]", raw or "", re.I):
         return _rude_reply(client, incoming, city)
+    # Не по теме: 1–2 раза мягко возвращаем к цветам, на 3-й подряд — останавливаем переписку (бережём кредиты).
+    if not from_staff and re.search(r"\[\s*НЕ_ПО_ТЕМЕ\s*\]", raw or "", re.I):
+        n = int(db.get_setting(f"offtopic:{client}") or 0) + 1
+        db.set_setting(f"offtopic:{client}", n)
+        if n >= 3:
+            return _stop_chat(client, city, "Вы пишете не по теме заказа цветов, поэтому переписку пришлось остановить 🙏 "
+                                            "Если захотите заказать цветы — напишите нам позже.",
+                              f"🚫 Бот остановил переписку: клиент 3 раза подряд пишет не по теме. Последнее: «{incoming}».")
+        text = ("Я помогаю только с цветами и заказами 🌸 Подсказать букет или оформить доставку?" if n == 1 else
+                "Давайте по теме 🙏 Если продолжите писать не про цветы, переписку придётся остановить. "
+                "Подобрать букет?")
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
+    db.del_setting(f"offtopic:{client}")
     raw = re.sub(r"\[\s*ГРУБО\s*\]", "", raw or "", flags=re.I)
     # ИИ выдал шаблонный отказ (ложный фильтр YandexGPT на безобидную просьбу) — не пугаем клиента, переспрашиваем.
     refused_in_order = False

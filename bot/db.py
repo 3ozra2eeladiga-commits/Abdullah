@@ -171,7 +171,7 @@ def clear_history(client):
     _exec("DELETE FROM settings WHERE key IN (?,?)", (f"lateask:{client}", f"florist_note:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?)", (f"pickup_shop:{client}", f"replace_note:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?)", (f"closed_note:{client}", f"waitnote:{client}"))
-    _exec("DELETE FROM settings WHERE key=?", (f"contacts:{client}",))
+    _exec("DELETE FROM settings WHERE key IN (?,?)", (f"contacts:{client}", f"offtopic:{client}"))
 
 
 def set_city(client, city):
@@ -219,3 +219,13 @@ def photo_code(tg_chat, tg_message):
     row = _exec("SELECT code FROM photo_msgs WHERE tg_chat=? AND tg_message=?",
                 (str(tg_chat), tg_message)).fetchone()
     return row["code"] if row else None
+
+
+def count_user_messages_since(client, ts):
+    row = _exec("SELECT COUNT(*) AS n FROM messages WHERE client=? AND role='user' AND created>=?", (client, ts)).fetchone()
+    return int(row["n"]) if row else 0
+
+
+def count_orders_since(client, ts):
+    row = _exec("SELECT COUNT(*) AS n FROM orders WHERE client=? AND created>=?", (client, ts)).fetchone()
+    return int(row["n"]) if row else 0
