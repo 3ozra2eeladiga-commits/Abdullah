@@ -521,6 +521,47 @@ def _anketa(incoming, city):
     return f"{head} {ask} Или сразу {ANKETA_TAIL}"
 
 
+def _shop_hours(city):
+    """Часы работы магазина города (shop.json → cities[].hours), по умолчанию 8–22."""
+    c = next((c for c in config.city_list() if c.get("name") == city), None)
+    h = (c or {}).get("hours") or [8, 22]
+    return int(h[0]), int(h[1])
+
+
+def _hour_from_text(t):
+    """Час, названный клиентом: «в 2 ночи» → 2, «к 23:00» → 23, «в 7 вечера» → 19, «в 6 утра» → 6. Иначе None."""
+    t = str(t or "").lower()
+    m = re.search(r"\b([01]?\d|2[0-3])[:.](\d{2})\b", t)
+    if m:
+        return int(m.group(1))
+    m = re.search(r"\b(?:в|к|на|до|около)\s*([01]?\d|2[0-3])\s*(ночи|утра|вечера|дня|час\w*)?(?=\W|$)"
+                  r"(?!\s*(?:-?го\b|числ|январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр|"
+                  r"этаж|подъезд|кв|шт|роз|букет|человек|минут|дн|недел|раз|год|лет|тыс|₽|руб))", t)
+    if not m:
+        return 2 if re.search(r"\bночью\b", t) else None
+    h, part = int(m.group(1)), (m.group(2) or "")
+    if part.startswith("вечер") and h < 12:
+        h += 12
+    elif part.startswith("дня") and h <= 6:
+        h += 12
+    elif part.startswith("ноч") and h == 12:
+        h = 0
+    elif not part and 1 <= h < 8:
+        h += 12             # «в 2», «к 5» без «ночи/утра» — так говорят про день: 14:00, 17:00
+    return h
+
+
+def _closed_hours_msg(hour, city):
+    """Если названное время вне часов работы магазина — вежливый ответ с часами работы, иначе ""."""
+    if hour is None or not city:
+        return ""
+    start, end = _shop_hours(city)
+    if start <= hour < end:
+        return ""
+    return (f"К сожалению, в {hour:02d}:00 доставить не получится 🙏 Магазин ({city}) работает с {start:02d}:00 до "
+            f"{end:02d}:00 — доставляем в это время. Подскажите, к какому часу удобно?")
+
+
 def _next_question(user_msgs, city, order=None):
     """Следующий вопрос оформления — только о том, чего клиент ЕЩЁ НЕ говорил (не переспрашиваем доставку/дату).
     order — уже собранный заказ (итог, который клиент видел): что в нём есть, тоже не спрашиваем."""
@@ -870,6 +911,10 @@ def _order_missing(o, client_text):
     if _time_already_passed(o.get("дата"), o.get("время")):
         return ("Кажется, это время сегодня уже прошло 🕒 Подскажите, пожалуйста, актуальное время "
                 "(или другую дату доставки).")
+    closed = _closed_hours_msg(_hour_from_text(o.get("время")), catalog.match_city(str(o.get("город") or "")) or
+                               catalog.match_city(str(o.get("адрес") or "")))
+    if closed:
+        return closed
     # Имена и телефоны — ОДНИМ вопросом (Абдулла: не тянуть по одному), спрашиваем только недостающее.
     need_me = not (o.get("заказчик") or "").strip() or not _phone_was_given(o.get("заказчик"), client_text)
     need_to = not (o.get("получатель") or "").strip() or not _phone_was_given(o.get("получатель"), client_text)
@@ -2355,8 +2400,16 @@ def respond(client, incoming, from_staff=False, quote=""):
         site = config.cities().get(city, "")
         reply.text = LINK_PLACEHOLDER_RE.sub(site, reply.text) if site else LINK_PLACEHOLDER_RE.sub("", reply.text)
 
+    # Клиент назвал время, когда магазин закрыт («в 2 ночи») — сразу говорим часы работы, ничего не оформляем.
+    closed = "" if from_staff else _closed_hours_msg(
+        _hour_from_text(incoming) if re.search(r"\d|ночью", incoming or "") and not re.search(
+            r"\d{5,}|₽|руб|тыс|бюджет|№", incoming or "", re.I) else None,
+        catalog.match_city(incoming or "") or city)
+    if closed:
+        reply.text = closed
+        reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
     # Клиент назвал СЕГОДНЯШНЕЕ время, которое уже прошло («сегодня утром» вечером) — сразу честно уточняем.
-    if not from_staff and _past_time_mention(incoming):
+    elif not from_staff and _past_time_mention(incoming):
         reply.text = ("Это время сегодня, к сожалению, уже прошло 🙏 Подскажите, пожалуйста, на какое время "
                       "сегодня (попозже) или на другую дату — и я всё подберу.")
         reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
