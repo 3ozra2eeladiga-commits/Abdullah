@@ -188,7 +188,7 @@ def deliver(client, text, from_staff=False, quote=""):
             items = []
             for it in reply.order.get("товары", []):
                 code = (it.get("код") or "").strip().lower()
-                obj = catalog.get(code) if code else None
+                obj = catalog.get(code) if code else brain._find_by_title(str(it.get("название") or ""), None)
                 if obj and obj.get("images"):
                     items.append(obj)
             card = _format_order(order_id, client, reply)

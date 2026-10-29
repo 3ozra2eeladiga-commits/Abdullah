@@ -1175,6 +1175,10 @@ def _fill_order(order, city):
     if not isinstance(order, dict) or not isinstance(order.get("товары"), list):
         return order
     for it in order["товары"]:
+        if isinstance(it, dict) and not (it.get("код") or "").strip() and it.get("название"):
+            found = _find_by_title(str(it["название"]), city)   # ИИ дал название без кода — находим товар сами
+            if found:
+                it["код"] = found["code"]
         code = (it.get("код") or "").strip().lower()
         real = catalog.get(code, city) if code else None
         if real:
@@ -1198,6 +1202,24 @@ def _fill_order(order, city):
         order["адрес"] = a.strip(" ,")
     order["доставка_цена"] = _delivery_price(order)
     return order
+
+
+def _find_by_title(name, city):
+    """Товар каталога по названию (точно или почти точно) — для позиций, где ИИ не поставил код."""
+    n = re.sub(r"\s+", " ", name.lower()).strip(" .")
+    if len(n) < 6 or re.search(r"упаковк|фото клиента|доплат", n):
+        return None
+    cc = catalog.get_city(city)
+    cats = [cc] if cc else list(catalog.by_city.values())
+    best = None
+    for c in cats:
+        for it in c.by_code.values():
+            t = re.sub(r"\s+", " ", it["title"].lower()).strip()
+            if t == n:
+                return it
+            if (n in t or t in n) and min(len(n), len(t)) >= 10 and (best is None or len(t) > len(best["title"])):
+                best = it
+    return best
 
 
 def _apply_client_state(order, client, city):
