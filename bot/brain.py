@@ -578,6 +578,23 @@ def _hour_from_text(t):
 URGENT_MIN_HOURS = 2      # срочный заказ: доставка не раньше чем через 2 часа (сборка + оплата + дорога)
 
 
+_DATE_WORD_RE = re.compile(r"послезавтра|завтра|сегодня|\b\d{1,2}[./]\d{1,2}(?:[./]\d{2,4})?\b|\b\d{1,2}\s+(?:январ|феврал|"
+                           r"март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)\w*", re.I)
+
+
+def _latest_date(user_msgs):
+    """Последняя дата, которую назвал клиент: «сегодня» → «ладно, завтра» → «завтра». Пусто, если не называл."""
+    for m in reversed(user_msgs):
+        found = [x.group(0) for x in _DATE_WORD_RE.finditer(m or "")
+                 # «в 09.00», «к 14.30» — это время, а не дата
+                 if not (re.match(r"\d{1,2}[.]\d{2}$", x.group(0))
+                         and (re.search(r"(?:\bв|\bк|\bс|\bдо|\bна)\s*$", (m or "")[:x.start()], re.I)
+                              or int(x.group(0).split(".")[1]) > 12))]
+        if found:
+            return found[-1].lower()
+    return ""
+
+
 def _too_late_today_msg(text, city):
     """«Сегодня / срочно / пока не закроется магазин», а до закрытия меньше 2 часов — честно: сегодня не успеем."""
     t = (text or "").lower()
@@ -1133,6 +1150,10 @@ def _apply_client_state(order, client, city):
     ct = db.get_setting(f"cardtext:{client}")
     if ct:
         order["открытка"] = ct              # текст, который клиент подтвердил — как есть, без правок
+    # Дата — по ПОСЛЕДНЕМУ, что сказал клиент («сегодня» → потом «ладно, завтра» → значит завтра).
+    latest = _latest_date([m["content"] for m in db.history(client) if m["role"] == "user"])
+    if latest and not db.get_setting(f"asap:{client}"):
+        order["дата"] = latest
     if db.get_setting(f"asap:{client}"):
         soon = datetime.datetime.now(_MSK) + datetime.timedelta(hours=URGENT_MIN_HOURS)
         order["дата"] = "сегодня"
@@ -2005,6 +2026,9 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"asap:{client}", "1")
         elif re.search(r"завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}[:.]\d{2}\b", incoming or ""):
             db.del_setting(f"asap:{client}")
+            if re.search(r"завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b", incoming or ""):
+                db.del_setting(f"lateask:{client}")       # клиент выбрал другой день — «сегодня» больше не обсуждаем
+                db.del_setting(f"florist_note:{client}")
     # Ответ на вопрос об упаковке («обычная» / «пышная») — запоминаем и сразу дальше: итог или недостающее.
     if not from_staff and not card_done and last_q.startswith(PACK_Q.split("{")[0]):
         lush = re.search(r"пышн|красив|нарядн|\bда\b|дорог", incoming or "", re.I)
