@@ -1026,8 +1026,13 @@ def _order_missing(o, client_text):
     if _time_is_vague(o.get("время")):
         return "Подскажите, пожалуйста, точное время — к которому часу нужен букет? (например, к 14:00) 🕒"
     if _time_already_passed(o.get("дата"), o.get("время")):
-        return ("Кажется, это время сегодня уже прошло 🕒 Подскажите, пожалуйста, актуальное время "
-                "(или другую дату доставки).")
+        city_o = catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or ""))
+        late = _too_late_today_msg("сегодня", city_o)
+        if late:
+            return late
+        soon = datetime.datetime.now(_MSK) + datetime.timedelta(hours=URGENT_MIN_HOURS)
+        return (f"Это время сегодня уже прошло 🕒 Можем привезти сегодня как можно скорее — примерно с {soon:%H:%M}. "
+                "Подходит? Или напишите другое время/дату.")
     closed = _closed_hours_msg(_hour_from_text(o.get("время")), catalog.match_city(str(o.get("город") or "")) or
                                catalog.match_city(str(o.get("адрес") or "")))
     if closed:
@@ -1127,6 +1132,10 @@ def _apply_client_state(order, client, city):
     ct = db.get_setting(f"cardtext:{client}")
     if ct:
         order["открытка"] = ct              # текст, который клиент подтвердил — как есть, без правок
+    if db.get_setting(f"asap:{client}"):
+        soon = datetime.datetime.now(_MSK) + datetime.timedelta(hours=URGENT_MIN_HOURS)
+        order["дата"] = "сегодня"
+        order["время"] = f"как можно скорее (примерно с {soon:%H:%M})"
     pack = db.get_setting(f"pack:{client}") or ""
     order["товары"] = [it for it in order["товары"] if not (isinstance(it, dict) and not it.get("код")
                                                             and re.search(r"упаковк", str(it.get("название") or ""), re.I))]
@@ -1426,7 +1435,7 @@ def _finish_addon(client, city, order_id):
 
 def _clear_client_state(client):
     for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep",
-              "wantcard", "wantcard_text", "photo_item", "pack"):
+              "wantcard", "wantcard_text", "photo_item", "pack", "asap"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -1975,6 +1984,16 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.clear_pending_order(client)  # итог покажем заново — уже с открыткой
             incoming = go_on
             card_done = True
+    # «Как можно скорее / прямо сейчас / через 5 минут» (или «да» на наше «как можно скорее — подходит?») —
+    # запоминаем: сегодня, ближайшее время. «Завтра / другая дата» — снимаем.
+    if not from_staff:
+        if re.search(r"как можно скор|прямо\s+сейчас|срочно|побыстрее|поскорее|через\s+\d+\s*мин|сейчас\s+(?:отправ|привез|достав)|"
+                     r"пока\s+не\s+закр|до\s+закрыт", incoming or "", re.I) \
+                or (last_q.startswith("Это время сегодня уже прошло") and CONFIRM_YES_RE.search(incoming or "")
+                    and not CORRECTION_RE.search(incoming or "")):
+            db.set_setting(f"asap:{client}", "1")
+        elif re.search(r"завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}[:.]\d{2}\b", incoming or ""):
+            db.del_setting(f"asap:{client}")
     # Ответ на вопрос об упаковке («обычная» / «пышная») — запоминаем и сразу дальше: итог или недостающее.
     if not from_staff and not card_done and last_q.startswith(PACK_Q.split("{")[0]):
         lush = re.search(r"пышн|красив|нарядн|\bда\b|дорог", incoming or "", re.I)
