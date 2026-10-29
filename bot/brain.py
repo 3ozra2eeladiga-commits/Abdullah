@@ -950,8 +950,11 @@ def _apply_client_state(order, client, city):
     for code in [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]:
         if code not in have and catalog.get(code, city):
             items.append({"код": code, "кол-во": 1})
-    if db.get_setting(f"nocard:{client}") and not str(order.get("открытка") or "").strip():
-        order["открытка"] = "нет"
+    for k, v in _draft(client).items():         # чего нет в заказе, но клиент уже говорил — из черновика
+        if k in DRAFT_KEYS and not _meaningful(order.get(k)) and _meaningful(v):
+            order[k] = v
+    if db.get_setting(f"nocard:{client}") and not db.get_setting(f"cardtext:{client}"):
+        order["открытка"] = "нет"               # клиент сказал «без открытки» — это окончательно
     ct = db.get_setting(f"cardtext:{client}")
     if ct:
         order["открытка"] = ct              # текст, который клиент подтвердил — как есть, без правок
@@ -1000,6 +1003,62 @@ def pretty(text):
     return "\n\n".join(paras)
 
 
+# ---------- ЧЕРНОВИК ЗАКАЗА: всё, что клиент уже сообщил (в любом порядке) ----------
+# Каждое сообщение с данными (телефон, адрес, дата, «самовывоз»…) разбирается и копится в черновике. Все вопросы
+# бота и проверки берут данные отсюда — что клиент уже сказал хоть раз, больше НЕ спрашиваем, даже после сбоя.
+DRAFT_KEYS = ("дата", "время", "город", "получение", "адрес", "заказчик", "получатель", "комментарий")
+DATA_SIGNAL_RE = re.compile(r"\d{3,}|\b(?:ул|улиц\w*|дом|кв|подъезд|этаж|просп\w*|пер)\b|доставк|самовывоз|заберу|"
+                            r"сегодня|завтра|послезавтра|\d{1,2}[:.]\d{2}|\bк\s*\d{1,2}\b|получател|зовут|фамили|"
+                            r"заказчик|понедельник|вторник|сред[уа]|четверг|пятниц|суббот|воскресень|январ|феврал|март|"
+                            r"апрел|ма[яй]\b|июн|июл|август|сентябр|октябр|ноябр|декабр", re.I)
+
+
+def _meaningful(v):
+    v = str(v if v is not None else "").strip()
+    return v not in ("", "—", "-", "...", "…", "нет данных") and bool(re.sub(r"[\W_]+", "", v))
+
+
+def _draft(client):
+    try:
+        return json.loads(db.get_setting(f"draft:{client}") or "{}")
+    except ValueError:
+        return {}
+
+
+def _known_order(client):
+    """Всё известное о заказе: черновик + итог, который клиент видел (итог главнее)."""
+    d = _draft(client)
+    for k, v in (db.get_pending_order(client) or {}).items():
+        if _meaningful(v) or isinstance(v, list):
+            d[k] = v
+    if db.get_setting(f"cardtext:{client}"):
+        d["открытка"] = db.get_setting(f"cardtext:{client}")
+    elif db.get_setting(f"nocard:{client}"):
+        d["открытка"] = "нет"
+    return d
+
+
+def _update_draft(client, city, incoming, client_text):
+    """Сообщение с данными — разбираем всю переписку и дополняем черновик (непустым, телефоны — только реальные)."""
+    if not DATA_SIGNAL_RE.search(incoming or ""):
+        return
+    o = _extract_order(client, city)
+    if not o:
+        return
+    _fill_phones(o, client_text)
+    d = _draft(client)
+    for k in DRAFT_KEYS:
+        v = o.get(k)
+        if not _meaningful(v):
+            continue
+        if k in ("заказчик", "получатель") and not _phone_was_given(v, client_text) and _meaningful(d.get(k)):
+            continue                          # не меняем номер из переписки на выдуманный
+        if k == "адрес" and o.get("получение") == "самовывоз":
+            continue
+        d[k] = v
+    db.set_setting(f"draft:{client}", json.dumps(d, ensure_ascii=False))
+
+
 def _drop_prev_items(order, client):
     """Убирает из нового заказа товары ПРЕДЫДУЩЕГО (уже отправленного) заказа — ИИ собирает заказ из всей
     переписки и подтягивает старый букет. Оставляем, только если клиент выбрал его заново."""
@@ -1031,6 +1090,10 @@ def _remember_sent_items(order, client):
     prev = [{"code": str(it.get("код") or "").strip().lower(), "title": str(it.get("название") or "").strip().lower()}
             for it in order.get("товары") or [] if isinstance(it, dict)]
     db.set_setting(f"prev_items:{client}", json.dumps(prev, ensure_ascii=False))
+    d = _draft(client)                         # имена/адрес оставляем для следующего заказа, а дату — нет
+    for k in ("дата", "время", "комментарий"):
+        d.pop(k, None)
+    db.set_setting(f"draft:{client}", json.dumps(d, ensure_ascii=False))
 
 
 def _clear_client_state(client):
@@ -1232,9 +1295,13 @@ def _rules():
             .replace("<<ЦЕНА_ДОСТАВКИ>>", str(price)))
 
 
-def system_prompt(history, city, picked=(), flower_block="", size_change=False):
+def system_prompt(history, city, picked=(), flower_block="", size_change=False, known=None):
     catalog.ensure_fresh()
     facts = _known_facts([m["content"] for m in history if m["role"] == "user"])
+    for k in DRAFT_KEYS + ("открытка",):
+        v = (known or {}).get(k)
+        if _meaningful(v):
+            facts.append(f"{k}: {v}" + (" (открытка НЕ нужна — не предлагай)" if k == "открытка" and str(v) == "нет" else ""))
     known_block = ("\n\n# КЛИЕНТ УЖЕ СКАЗАЛ — НЕ СПРАШИВАЙ ЭТО ПОВТОРНО (переспрос раздражает клиента!)\n"
                    + "\n".join(f"- {f}" for f in facts)) if facts else ""
     shop_info = Path(config.SHOP_INFO_FILE).read_text(encoding="utf-8")
@@ -1420,6 +1487,23 @@ def respond(client, incoming, from_staff=False, quote=""):
         text = "Поняла 🌸 Передала флористу — она свяжется с вами по заказу в ближайшее время."
         db.add_message(client, "assistant", text)
         return Reply(text=text, question=f"Клиент просит отменить/изменить заказ: «{incoming}»", city=city)
+    # «Без открытки» в ЛЮБОМ месте разговора — окончательно: открытку из заказа убираем и больше не предлагаем.
+    if not from_staff and NO_CARD_AT_ALL_RE.search(incoming or ""):
+        saved = [c for c in (db.get_setting(f"addons:{client}") or "").split(",")
+                 if c and not (catalog.get(c) and CARD_RE.search(catalog.get(c)["title"]))]
+        db.set_setting(f"addons:{client}", ",".join(saved))
+        db.set_setting(f"nocard:{client}", "1")
+        db.del_setting(f"cardtext:{client}")
+        if not db.get_setting(f"cardstep:{client}"):
+            pend0 = db.get_pending_order(client)
+            if pend0:                            # итог уже был — показываем его заново, без открытки
+                pend0["товары"] = [it for it in pend0.get("товары") or []
+                                   if not CARD_RE.search(str(it.get("название") or ""))]
+                db.set_pending_order(client, _apply_client_state(pend0, client, city))
+    # Всё, что клиент сообщил (в любом порядке), копим в черновике заказа — чтобы потом НИЧЕГО не переспрашивать.
+    if not from_staff and city and any(m["role"] == "assistant" for m in db.history(client, 6)):
+        _update_draft(client, city, incoming,
+                      " ".join(m["content"] for m in db.history(client) if m["role"] == "user"))
     # Клиент прислал номер без нескольких цифр (8990019) — сразу просим полный, а не гадаем, чей он.
     digits_only = re.sub(r"[\s()+-]", "", incoming or "")
     if not from_staff and digits_only.isdigit() and 6 <= len(digits_only) <= 10 and digits_only[0] in "789":
@@ -1639,7 +1723,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                         "из каталога. Ничего не выдумывай.\n" + "\n".join(lines))
 
     history = db.history(client)
-    raw = llm.complete(system_prompt(history, city, picked, flower_block + up_block + addon_block, size_change),
+    raw = llm.complete(system_prompt(history, city, picked, flower_block + up_block + addon_block, size_change,
+                                     known=None if from_staff else _known_order(client)),
                        _merge_roles(history))
     # ИИ выдал шаблонный отказ (ложный фильтр YandexGPT на безобидную просьбу) — не пугаем клиента, переспрашиваем.
     refused_in_order = False
@@ -1737,7 +1822,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                 reply.text = _order_summary(o)
                 reply.photos = []
         else:
-            nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, db.get_pending_order(client))
+            nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
             reply.text = nq if nq == ALMOST_DONE_Q else prefix + nq
             if not from_staff:
                 db.set_setting(f"lastq:{client}", nq)
@@ -1924,7 +2009,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Букет уже выбран (по фото/номеру/ссылке), а ИИ всё равно переспрашивает «какой букет / номер» —
     # не даём ему это сделать: подтверждаем выбор и идём к оформлению.
     # Клиент просто выбрал (без вопроса) — тоже кодом: подтверждаем и задаём ОДИН следующий короткий вопрос.
-    nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, db.get_pending_order(client)) if picked else ""
+    nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client)) if picked else ""
     if picked and not size_change and not from_staff and not reply.order and not order_text and not keep_photos \
             and (ASK_WHICH_RE.search(reply.text or "") or ("?" not in (incoming or "") and nxt != ALMOST_DONE_Q)):
         it = picked[0]
@@ -1944,7 +2029,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             if up_amount:
                 total = up_target["price"] + (int(up_amount) if up_sign == "+" else -int(up_amount))
                 pend = db.get_pending_order(client)
-                nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, pend)
+                nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
                 head = (f"Хорошо 🌸 {'Добавим цветов' if up_sign == '+' else 'Соберём скромнее'} — "
                         f"{'+' if up_sign == '+' else '−'}{_rub(int(up_amount))}, итого за букет {_rub(total)}. "
                         "Флорист соберёт его на эту сумму.")
@@ -1984,7 +2069,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             and not reply.photos:
         # До выбора букета: ИИ переспрашивает уже сказанные доставку/дату — убираем этот вопрос из ответа.
         um = [m["content"] for m in history if m["role"] == "user"]
-        nq = _next_question(um, city, db.get_pending_order(client))
+        nq = _next_question(um, city, _known_order(client))
         kw = not re.search(r"доставка или самовывоз", nq)
         kd = not re.search(r"дату", nq)
         parts = re.split(r"(?<=[.?!])\s+", reply.text.strip())
@@ -2008,13 +2093,16 @@ def respond(client, incoming, from_staff=False, quote=""):
                               r"какое\s+время|какая\s+дата", reply.text, re.I)
         asks_addr = re.search(r"адрес", reply.text, re.I) and "?" in reply.text or re.search(
             r"(?:нужен|уточните|подскажите)[^.?!]{0,30}адрес", reply.text, re.I)
-        nxt = _next_question(user_msgs, city, db.get_pending_order(client))
+        nxt = _next_question(user_msgs, city, _known_order(client))
         known_way = not re.search(r"доставка или самовывоз", nxt)
         known_when = not re.search(r"дату", nxt)
         # ИИ снова просит имена/телефоны, хотя клиент уже прислал оба номера — не переспрашиваем, идём дальше кодом.
         asks_who = re.search(r"(?:ваш\w*|получател\w*)[^.?!]{0,40}(?:имя|фамили|телефон|номер)|"
                              r"(?:имя|фамили|телефон|номер)[^.?!]{0,40}(?:получател|заказчик|ваш)", reply.text, re.I)
-        if asks_who and len(PHONE_RE.findall(t)) >= 2:
+        asks_card = re.search(r"открытк", reply.text, re.I) and "?" in reply.text \
+            and not SUMMARY_RE.search(reply.text) and (
+            db.get_setting(f"nocard:{client}") or db.get_setting(f"cardtext:{client}"))
+        if (asks_who and len(PHONE_RE.findall(t)) >= 2) or asks_card:
             advance("Спасибо 🌸 ")
         elif asks_addr and _has_address(user_msgs) and not (asks_way and not known_way) and not (asks_when and not known_when):
             advance("Спасибо 🌸 ")          # адрес уже есть, а ИИ снова его просит — идём дальше кодом
