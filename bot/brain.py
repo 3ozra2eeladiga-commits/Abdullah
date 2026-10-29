@@ -775,6 +775,51 @@ def _fix_way_typos(client, text):
     return " ".join(out)
 
 
+# Наши вопросы про имена/телефоны (и ИИ-шные «ваше имя и телефон»).
+CONTACT_Q_RE = re.compile(r"имя\s+и\s+телефон|ваш\s+(?:номер\s+)?телефон|как\s+вас\s+зовут|как\s+зовут\s+получател|"
+                          r"телефон\w*\s+получател", re.I)
+_NAME_STOP = set("имя имени фамилия заказчик заказчика заказчику получатель получателя получателю мой моё мое моя "
+                 "меня зовут номер телефон телефона тел это вот и а да нет мне я её ее его ей ему кому для от "
+                 "ваш ваше спасибо пожалуйста".split())
+
+
+def _name_from(text):
+    """Имя из сообщения клиента («Абдулла», «меня зовут Анна Смирнова», «имя получателя: Анна»)."""
+    t = PHONE_RE.sub(" ", text or "")
+    if re.search(r"\d|самовыв|достав|завтра|сегодня|адрес|улиц|открыт|букет", t, re.I) or ALREADY_RE.search(t) \
+            or re.search(r"\b(?:уже|выше|там|всё|все|ок|окей|хорошо|понял\w*|ладно|зачем|почему|сколько|можно|"
+                         r"давай\w*|подожд\w*|стоп|отмен\w*|не\b|нету)\b", t, re.I):
+        return ""
+    words = [w for w in re.findall(r"[А-ЯЁа-яёA-Za-z-]{2,}", t) if w.lower() not in _NAME_STOP]
+    if not words or len(words) > 3:
+        return ""
+    return " ".join(w[:1].upper() + w[1:] for w in words)
+
+
+def _contacts(client):
+    try:
+        return json.loads(db.get_setting(f"contacts:{client}") or "{}")
+    except ValueError:
+        return {}
+
+
+def _contacts_next_q(st):
+    """Следующий вопрос о контактах — ровно о недостающем. Пусто, если все четыре есть."""
+    if not st.get("me_name") and not st.get("me_phone"):
+        return "Ваше имя и телефон? 🌸"
+    if not st.get("me_name"):
+        return "Спасибо 🌸 А как вас зовут? (имя и фамилия)"
+    if not st.get("me_phone"):
+        return f"{st['me_name']}, а ваш номер телефона? 📞"
+    if not st.get("to_name") and not st.get("to_phone"):
+        return "Спасибо 🌸 А имя и телефон получателя? (кому дарим)"
+    if not st.get("to_name"):
+        return "А как зовут получателя?"
+    if not st.get("to_phone"):
+        return f"А номер телефона получателя ({st['to_name']})? 📞"
+    return ""
+
+
 def _rude_reply(client, incoming, city):
     """Грубость: первый раз — предупреждение, второй — бот прекращает переписку на сутки и сообщает сотруднику."""
     n = int(db.get_setting(f"rude:{client}") or 0) + 1
@@ -1363,6 +1408,11 @@ def _apply_client_state(order, client, city):
         soon = datetime.datetime.now(_MSK) + datetime.timedelta(hours=URGENT_MIN_HOURS)
         order["дата"] = "сегодня"
         order["время"] = f"как можно скорее (примерно с {soon:%H:%M})"
+    ct_ = _contacts(client)
+    if ct_.get("me_name") and ct_.get("me_phone"):
+        order["заказчик"] = f"{ct_['me_name']}, {ct_['me_phone']}"
+    if ct_.get("to_name") and ct_.get("to_phone"):
+        order["получатель"] = f"{ct_['to_name']}, {ct_['to_phone']}"
     shop = db.get_setting(f"pickup_shop:{client}") or ""
     if shop and (order.get("получение") or "").lower().startswith("самовывоз"):
         order["адрес"] = shop
@@ -1685,7 +1735,7 @@ def _finish_addon(client, city, order_id):
 
 def _clear_client_state(client):
     for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep",
-              "wantcard", "wantcard_text", "photo_item", "pack", "asap", "lateask", "florist_note", "pickup_shop", "replace_note"):
+              "wantcard", "wantcard_text", "photo_item", "pack", "asap", "lateask", "florist_note", "pickup_shop", "replace_note", "contacts"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -2111,25 +2161,31 @@ def respond(client, incoming, from_staff=False, quote=""):
         m_in = CARD_TEXT_IN_RE.search(incoming or "")
         if m_in and _meaningful(next(g for g in m_in.groups() if g)):
             db.set_setting(f"wantcard_text:{client}", next(g for g in m_in.groups() if g).strip())
-    # Имена и телефоны клиент присылает ПО ОДНОМУ: прислал только свои — спрашиваем получателя (и наоборот),
-    # дальше не идём, пока не будет обоих.
-    if not from_staff and re.search(r"имя\s+и\s+телефон", _last_bot_text(client, last_q), re.I):
-        phones_now = PHONE_RE.findall(incoming or "")
-        phones_all = PHONE_RE.findall(" ".join(m["content"] for m in db.history(client, 1000) if m["role"] == "user"))
-        text = ""
-        if phones_now and len(set(re.sub(r"\D", "", p) for p in phones_all)) < 2:
-            rec = re.search(r"получател", incoming or "", re.I)
-            text = ("Спасибо 🌸 А ваше имя и телефон?" if rec else
-                    "Спасибо 🌸 А имя и телефон получателя? (кому дарим)")
-        elif not phones_now and re.search(r"[А-ЯЁ][а-яё]+", incoming or "") and not re.search(r"\?", incoming or "") \
-                and not re.search(r"самовыв|достав|забер|завтра|сегодня|\d|адрес|\bул\b|улиц|открыт|да\b|нет\b",
-                                  incoming or "", re.I) \
-                and len(phones_all) < 2 and len((incoming or "").split()) <= 4:
-            text = "Спасибо 🌸 И номер телефона, пожалуйста 📞"
-        if text:
-            db.set_setting(f"lastq:{client}", "Имя и телефон: " + text)
-            db.add_message(client, "assistant", text)
-            return Reply(text=text, city=city)
+    # Имена и телефоны — добиваемся ВСЕХ четырёх: имя и телефон заказчика, имя и телефон получателя. Клиент может
+    # присылать по частям («мой телефон …», «Абдулла») — спрашиваем ровно недостающее, дальше не идём.
+    if not from_staff and CONTACT_Q_RE.search(_last_bot_text(client, last_q)) and len(PHONE_RE.findall(incoming or "")) < 2 \
+            and not re.search(r"\?", incoming or ""):
+        st = _contacts(client)
+        phone = PHONE_RE.search(incoming or "")
+        name = _name_from(incoming)
+        to_rec = bool(re.search(r"получател|кому|ей\b|ему\b|мам[аеы]|пап[аеы]", incoming or "", re.I)) or \
+            (st.get("me_name") and st.get("me_phone"))
+        if phone or name:
+            key = "to" if to_rec else "me"
+            if phone:
+                st[f"{key}_phone"] = phone.group(0).strip()
+            if name:
+                st[f"{key}_name"] = name
+            db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+            q = _contacts_next_q(st)
+            if q:
+                db.set_setting(f"lastq:{client}", q)
+                db.add_message(client, "assistant", q)
+                return Reply(text=q, city=city)
+            # Все четыре есть — дальше обычное оформление с полными данными.
+            incoming = (f"Заказчик: {st['me_name']}, {st['me_phone']}. "
+                        f"Получатель: {st['to_name']}, {st['to_phone']}.")
+            db.del_setting(f"lastq:{client}")
     # «Да» на «Открытку добавим?» — не переспрашиваем, а сразу показываем открытки с фото и ценами.
     if not from_staff and last_q.startswith(CARD_ASK_Q.split("{")[0]) and CONFIRM_YES_RE.search(incoming or "") \
             and not CORRECTION_RE.search(incoming or "") and not addons:
