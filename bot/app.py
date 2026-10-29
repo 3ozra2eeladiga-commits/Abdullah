@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -35,6 +36,9 @@ VERSION = _version()
 app = Flask(__name__)
 _client_locks = defaultdict(threading.Lock)
 
+# Клиент спрашивает о судьбе заказа: «получили?», «когда привезут?», «где заказ?», «доставили?»
+STATUS_RE = re.compile(r"получил|доставил|доставлен|привез|привёз|когда\s+(?:будет|привез|достав|приед)|где\s+(?:заказ|букет|курьер)|"
+                       r"статус|заказ\s+(?:принят|оформлен|готов)|курьер|едет|в\s+пути|оплат", re.I)
 SORRY = "Извините, у нас небольшая техническая заминка 🙏 Сотрудник скоро ответит вам."
 
 
@@ -132,6 +136,10 @@ def deliver(client, text, from_staff=False, quote=""):
     with _client_locks[client]:
         if not from_staff and db.is_paused(client):
             db.add_message(client, "user", text)
+            # Бот молчит (клиента ведёт сотрудник), но вопрос о заказе/доставке не должен потеряться — флористу.
+            if STATUS_RE.search(text or ""):
+                telegram_bot.notify_staff(client, f"📦 Клиент спрашивает о заказе/доставке ({_label(client)}):\n"
+                                                  f"«{text}»\nОтветьте клиенту в чате или ответом на это сообщение.")
             if client.startswith("tg:"):
                 # В режиме проверки «клиент» — сам сотрудник: подсказываем, почему бот молчит
                 telegram_bot.send(client.split(":", 1)[1],
