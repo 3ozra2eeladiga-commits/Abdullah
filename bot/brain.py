@@ -1025,7 +1025,7 @@ def _order_missing(o, client_text):
         return ADDRESS_Q
     if _time_is_vague(o.get("время")):
         return "Подскажите, пожалуйста, точное время — к которому часу нужен букет? (например, к 14:00) 🕒"
-    if _time_already_passed(o.get("дата"), o.get("время")):
+    if _time_already_passed(o.get("дата"), o.get("время")) and not o.get("_время_уточнит_флорист"):
         city_o = catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or ""))
         late = _too_late_today_msg("сегодня", city_o)
         if late:
@@ -1033,7 +1033,8 @@ def _order_missing(o, client_text):
         soon = datetime.datetime.now(_MSK) + datetime.timedelta(hours=URGENT_MIN_HOURS)
         return (f"Это время сегодня уже прошло 🕒 Можем привезти сегодня как можно скорее — примерно с {soon:%H:%M}. "
                 "Подходит? Или напишите другое время/дату.")
-    closed = _closed_hours_msg(_hour_from_text(o.get("время")), catalog.match_city(str(o.get("город") or "")) or
+    closed = "" if o.get("_время_уточнит_флорист") else _closed_hours_msg(
+        _hour_from_text(o.get("время")), catalog.match_city(str(o.get("город") or "")) or
                                catalog.match_city(str(o.get("адрес") or "")))
     if closed:
         return closed
@@ -1136,6 +1137,13 @@ def _apply_client_state(order, client, city):
         soon = datetime.datetime.now(_MSK) + datetime.timedelta(hours=URGENT_MIN_HOURS)
         order["дата"] = "сегодня"
         order["время"] = f"как можно скорее (примерно с {soon:%H:%M})"
+    note = db.get_setting(f"florist_note:{client}") or ""
+    if note:
+        order["_время_уточнит_флорист"] = True
+        order["время"] = "как можно скорее (сегодня, до закрытия)"
+        c0 = str(order.get("комментарий") or "").strip()
+        if note not in c0:
+            order["комментарий"] = (c0 + "; " if c0 else "") + "❗ " + note
     pack = db.get_setting(f"pack:{client}") or ""
     order["товары"] = [it for it in order["товары"] if not (isinstance(it, dict) and not it.get("код")
                                                             and re.search(r"упаковк", str(it.get("название") or ""), re.I))]
@@ -1435,7 +1443,7 @@ def _finish_addon(client, city, order_id):
 
 def _clear_client_state(client):
     for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep",
-              "wantcard", "wantcard_text", "photo_item", "pack", "asap"):
+              "wantcard", "wantcard_text", "photo_item", "pack", "asap", "lateask", "florist_note"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -1535,7 +1543,8 @@ def _order_summary(o):
     price = str(o.get("доставка_цена") or "")
     win = _delivery_window(o.get("дата"), o.get("время")) if o.get("получение") != "самовывоз" else ""
     when = " ".join(x for x in (str(o.get("дата") or "").strip(),
-                                win or (f"к {o['время']}" if o.get("время") else "")) if x)
+                                win or ((str(o["время"]) if re.match(r"\s*как можно", str(o["время"]))
+                                         else f"к {o['время']}") if o.get("время") else "")) if x)
     if (o.get("получение") or "").lower().startswith("самовывоз"):
         how = f"Самовывоз {when}, {o.get('адрес') or ''}".strip(", ")
     else:
@@ -1561,6 +1570,8 @@ def _order_summary(o):
             lines.append(f"Итого: {_rub(total)}" + ("" if price.isdigit() else " + доставка"))
     except (TypeError, ValueError):
         pass
+    if o.get("_время_уточнит_флорист"):
+        lines.append("⏰ Успеем ли сегодня — флорист подтвердит вместе с заказом")
     lines.append("Всё верно?")
     return "\n".join(lines)
 
@@ -2714,9 +2725,28 @@ def respond(client, incoming, from_staff=False, quote=""):
             r"\d{5,}|₽|руб|тыс|бюджет|№", incoming or "", re.I) else None,
         catalog.match_city(incoming or "") or city)
     late = "" if (from_staff or closed) else _too_late_today_msg(incoming, catalog.match_city(incoming or "") or city)
+    if not late and not from_staff and not closed and db.get_setting(f"lateask:{client}") \
+            and not db.get_setting(f"florist_note:{client}") \
+            and re.search(r"успе|можете|отправ|привез|достав|до\s*(?:10|22|20|закр)|сегодн|сейчас|срочн|минут", incoming or "", re.I) \
+            and not re.search(r"завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b", incoming or "", re.I):
+        late = _too_late_today_msg("сегодня", catalog.match_city(incoming or "") or city)   # настаивает на «сегодня»
+    if late and not from_staff:
+        if db.get_setting(f"lateask:{client}"):
+            # Клиент настаивает («можете до 10?», «через 5 минут отправьте») — не спорим по кругу: записываем
+            # его просьбу флористу (она подтвердит или предложит завтра) и продолжаем оформление.
+            db.set_setting(f"asap:{client}", "1")
+            db.set_setting(f"florist_note:{client}", "Клиент просит доставить СЕГОДНЯ как можно скорее (до закрытия мало "
+                                                      "времени) — успеете? Если нет, предложите клиенту завтра.")
+            nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
+            late = ("Хорошо 🌸 Уточню у флориста, успеем ли сегодня, — она подтвердит вместе с заказом. "
+                    f"А пока продолжим: {nq}")
+        else:
+            db.set_setting(f"lateask:{client}", "1")
     if closed or late:
         reply.text = closed or late
         reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
+    if not from_staff and (reply.text or "").startswith("Сегодня, к сожалению, уже не успеем"):
+        db.set_setting(f"lateask:{client}", "1")      # уже сказали «не успеем» — на повтор не спорим, а флористу
     # Клиент назвал СЕГОДНЯШНЕЕ время, которое уже прошло («сегодня утром» вечером) — сразу честно уточняем.
     elif not from_staff and _past_time_mention(incoming):
         reply.text = ("Это время сегодня, к сожалению, уже прошло 🙏 Подскажите, пожалуйста, на какое время "

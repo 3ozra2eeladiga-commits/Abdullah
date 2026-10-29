@@ -168,6 +168,7 @@ def clear_history(client):
           (f"editorder:{client}", f"photo_item:{client}", f"cphotos:{client}", f"addto:{client}", f"wantcard:{client}", f"wantcard_text:{client}", f"draft:{client}", f"cardtext:{client}", f"cardstep:{client}", f"site_sent:{client}", f"prev_items:{client}", f"nocard:{client}", f"shown:{client}", f"chosen:{client}", f"ocheck:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?)", (f"rude:{client}", f"pack:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?)", (f"seen:{client}", f"asap:{client}"))
+    _exec("DELETE FROM settings WHERE key IN (?,?)", (f"lateask:{client}", f"florist_note:{client}"))
 
 
 def set_city(client, city):
