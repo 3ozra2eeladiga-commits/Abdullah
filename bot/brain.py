@@ -613,6 +613,25 @@ def _latest_time(user_msgs):
     return ""
 
 
+PICKUP_Q_HEAD = "Из какого магазина заберёте?"
+
+
+def _city_shops(city):
+    """Магазины города для самовывоза: [(адрес, часы), ...] из shop.json."""
+    c = next((c for c in config.city_list() if c.get("name") == city), None)
+    return [tuple(x) for x in (c or {}).get("shops") or []]
+
+
+def _shop_in(text, shops):
+    """Какой магазин из списка упомянут в тексте (по названию улицы) — (адрес, часы) или None."""
+    t = (text or "").lower()
+    for a, h in shops:
+        street = re.sub(r"^(?:ул\.?|улица|пр\.?|проспект)\s*", "", a.lower()).split(",")[0].strip()
+        if street and street[:6] in t:
+            return (a, h)
+    return None
+
+
 def _too_late_today_msg(text, city):
     """«Сегодня / срочно / пока не закроется магазин», а до закрытия меньше 2 часов — честно: сегодня не успеем."""
     t = (text or "").lower()
@@ -1067,6 +1086,12 @@ def _order_missing(o, client_text):
         return ADDRESS_Q
     if _time_is_vague(o.get("время")):
         return "Подскажите, пожалуйста, точное время — к которому часу нужен букет? (например, к 14:00) 🕒"
+    # Самовывоз — из КАКОГО магазина (в городе их может быть несколько). Даём готовые ответы «1» / «2».
+    if (o.get("получение") or "").lower().startswith("самовывоз") and not o.get("_магазин_выбран"):
+        shops = _city_shops(catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or "")))
+        if len(shops) > 1 and not _shop_in(str(o.get("адрес") or ""), shops):
+            return PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {a} ({h})" for i, (a, h) in enumerate(shops, 1)) \
+                + "\nОтветьте цифрой 🌸"
     if _time_already_passed(o.get("дата"), o.get("время")) and not o.get("_время_уточнит_флорист"):
         city_o = catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or ""))
         late = _too_late_today_msg("сегодня", city_o)
@@ -1196,6 +1221,17 @@ def _apply_client_state(order, client, city):
         soon = datetime.datetime.now(_MSK) + datetime.timedelta(hours=URGENT_MIN_HOURS)
         order["дата"] = "сегодня"
         order["время"] = f"как можно скорее (примерно с {soon:%H:%M})"
+    shop = db.get_setting(f"pickup_shop:{client}") or ""
+    if shop and (order.get("получение") or "").lower().startswith("самовывоз"):
+        order["адрес"] = shop
+        order["город"] = city or order.get("город")
+        order["_магазин_выбран"] = True
+    elif (order.get("получение") or "").lower().startswith("самовывоз"):
+        shops = _city_shops(city)
+        if len(shops) == 1:                     # в городе один магазин — выбирать нечего
+            order["адрес"] = shops[0][0]
+            order["город"] = city
+            order["_магазин_выбран"] = True
     note = db.get_setting(f"florist_note:{client}") or ""
     if note:
         order["_время_уточнит_флорист"] = True
@@ -1502,7 +1538,7 @@ def _finish_addon(client, city, order_id):
 
 def _clear_client_state(client):
     for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep",
-              "wantcard", "wantcard_text", "photo_item", "pack", "asap", "lateask", "florist_note"):
+              "wantcard", "wantcard_text", "photo_item", "pack", "asap", "lateask", "florist_note", "pickup_shop"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -2081,6 +2117,17 @@ def respond(client, incoming, from_staff=False, quote=""):
             if re.search(r"завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b", incoming or ""):
                 db.del_setting(f"lateask:{client}")       # клиент выбрал другой день — «сегодня» больше не обсуждаем
                 db.del_setting(f"florist_note:{client}")
+    # Ответ на «Из какого магазина заберёте? 1 — … 2 — …»: цифра или улица.
+    if not from_staff and _last_bot_text(client, last_q).startswith(PICKUP_Q_HEAD):
+        shops = _city_shops(city)
+        m_n = re.match(r"^\D*(\d)\D*$", (incoming or "").strip())
+        pick = shops[int(m_n.group(1)) - 1] if m_n and 1 <= int(m_n.group(1)) <= len(shops) else _shop_in(incoming, shops)
+        if pick:
+            db.set_setting(f"pickup_shop:{client}", pick[0])
+            card_pend = db.get_pending_order(client)
+            db.clear_pending_order(client)
+            incoming = "Магазин для самовывоза выбран, продолжаем оформление."
+            card_done = True
     # Ответ на вопрос об упаковке («обычная» / «пышная») — запоминаем и сразу дальше: итог или недостающее.
     if not from_staff and not card_done and last_q.startswith(PACK_Q.split("{")[0]):
         lush = re.search(r"пышн|красив|нарядн|\bда\b|дорог", incoming or "", re.I)
