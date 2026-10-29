@@ -812,31 +812,24 @@ CARD_ASK_Q = ("Нужна ли открытка к букету? Открытк�
 CARD_ONE_Q = ("Открытки у нас платные 🌸 Подойдёт {title} — {price} ₽, на ней напишем "
               "«{text}». Берём её? (Если открытка не нужна — так и скажите.)")
 # Текст открытки: спрашиваем ОТДЕЛЬНО (название открытки — это не текст), показываем и подтверждаем, пишем как есть.
-CARD_TEXT_CONFIRM_Q = ("Флорист напишет на открытке от руки: «{text}».\n"
-                       "Всё верно? Ответьте «да», «исправить» или «без открытки» 🌸")
+CARD_TEXT_CONFIRM_Q = "Напишем от руки: «{text}». Верно? (да / исправить)"
 _PRINTED_RE = re.compile(r"[\"«“]\s*(.+?)\s*(?:[\"»”]|'')")
 
 
 def _card_text_q(title):
-    """Вопрос о тексте открытки: напечатанная надпись (в названии) уже есть — свой текст флорист пишет от руки."""
+    """Короткий вопрос о тексте: надпись на открытке уже напечатана, свои слова флорист пишет от руки."""
     t = title or ""
-    if re.search(r"запис", t, re.I):
-        return ("На открытке есть поле для записи — флорист напишет на нём ваш текст от руки 💌\n"
-                "Что написать? Пришлите одним сообщением. Если текст не нужен — напишите «Без текста».")
     m = _PRINTED_RE.search(t)
-    printed = m.group(1).strip(" ,.") if m and not re.search(r"аудио", t, re.I) else ""
-    if printed and re.search(r"конверт", t, re.I):
-        head = (f"На конверте уже напечатано «{printed}» 🌸 Внутрь флорист может вложить карточку с вашими словами "
-                "(напишет от руки).\n")
-    else:
-        head = (f"На открытке уже напечатано «{printed}» 🌸 На обороте флорист может написать от руки ваши слова.\n"
-                if printed else "На открытке флорист может написать от руки ваши слова 🌸\n")
-    enough = "Если хватит напечатанной надписи" if printed else "Если текст не нужен"
-    return head + (f"Что написать? Пришлите одним сообщением. {enough} — напишите «Без текста», "
-                   "если открытка не нужна — «Без открытки».")
-CARD_TEXT_AGAIN_Q = "Хорошо 🌸 Пришлите, пожалуйста, новый текст для открытки одним сообщением."
+    printed = m.group(1).strip(" ,.") if m and not re.search(r"аудио|запис", t, re.I) else ""
+    where = "внутрь конверта" if re.search(r"конверт", t, re.I) else ("на поле открытки" if re.search(r"запис", t, re.I)
+                                                                     else "на обороте")
+    head = f"На открытке напечатано «{printed}». " if printed else ""
+    return f"{head}Что написать {where} от руки? Если ничего — «Без текста» 🌸"
+
+
+CARD_TEXT_AGAIN_Q = "Хорошо 🌸 Пришлите новый текст для открытки одним сообщением."
 QUESTION_LIKE_RE = re.compile(r"\?\s*$|^\W*(?:как|когда|сколько|можно|а\s+если|где|почему|зачем|есть\s+ли|что\s+(?:если|будет|можно))\b", re.I)
-NO_TEXT_RE = re.compile(r"^\W*(?:без\s+текст\w*|без\s+надпис\w*|текст\s+не\s+нуж\w*|ничего\s+не\s+пиш\w*|не\s+надо\s+пис\w*)\W*$", re.I)
+NO_TEXT_RE = re.compile(r"^\W*(?:без\s+текст\w*|без\s+надпис\w*|текст\s+не\s+нуж\w*|ничего\s+не\s+пиш\w*|не\s+надо\s+пис\w*|ничего)\W*$", re.I)
 NO_CARD_AT_ALL_RE = re.compile(r"без\s+открытк|открытк\w*\s+не\s+нуж|не\s+нужн\w*\s+открытк", re.I)
 CARD_PICK_Q = ("Открытки у нас платные 🌸 Выберите, пожалуйста, один из вариантов ниже — нажмите на фото и "
                "ответьте «эту». Текст «{text}» напишем на ней.")
@@ -1438,6 +1431,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     # иначе это ТЕКСТ (хоть смайлик) — показываем и ждём «да». В заказ — только подтверждённый, как есть.
     card_step = "" if (from_staff or picked or addons) else (db.get_setting(f"cardstep:{client}") or "")
     card_remind = False
+    card_done = False                       # текст открытки решён — дальше оформление ведёт КОД (итог / недостающее)
+    card_pend = None
     if card_step:
         t = (incoming or "").strip()
         m0 = CARD_TEXT_PREFIX_RE.search(t)
@@ -1476,10 +1471,12 @@ def respond(client, incoming, from_staff=False, quote=""):
                 return _card_say(CARD_TEXT_CONFIRM_Q.format(text=t), "confirm:" + t)
         if go_on:
             db.del_setting(f"cardstep:{client}")
+            card_pend = db.get_pending_order(client)
             db.clear_pending_order(client)  # итог покажем заново — уже с открыткой
             incoming = go_on
+            card_done = True
     # «Текст: ты крутой» / «на открытке напишите …» — это текст открытки, а не болтовня.
-    m_ct = None if (from_staff or picked or addons) else CARD_TEXT_PREFIX_RE.search(incoming or "")
+    m_ct = None if (from_staff or picked or addons or card_done) else CARD_TEXT_PREFIX_RE.search(incoming or "")
     if m_ct and m_ct.group(1).strip() and not re.match(r"не\s+(?:нуж|надо)|без\b", m_ct.group(1).strip(), re.I):
         txt = m_ct.group(1).strip()
         has_card0 = any(catalog.get(c) and CARD_RE.search(catalog.get(c)["title"])
@@ -1499,7 +1496,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # «Да, нужна открытка / нужен текст», а открытка ещё не выбрана — сначала выбор открытки (с фото), потом текст.
     has_card = any(catalog.get(c) and CARD_RE.search(catalog.get(c)["title"])
                    for c in (db.get_setting(f"addons:{client}") or "").split(",") if c)
-    if not from_staff and not picked and not addons and not has_card and not card_step \
+    if not from_staff and not picked and not addons and not has_card and not card_step and not card_done \
             and re.search(r"открытк", _last_bot_text(client, last_q), re.I) \
             and re.search(r"^\W*да\b|нуж\w*\s+(?:и\s+)?(?:текст|открытк)|(?:текст|открытк)\w*\s+нуж|хочу\s+открытк", incoming or "", re.I) \
             and not NO_CARD_RE.search(incoming or ""):
@@ -1694,7 +1691,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"lastq:{client}", q)
             db.clear_pending_order(client)
             a0 = next((a for a in addons if CARD_RE.search(a["title"])), None)
-            reply.text = (f"Отлично, добавила к заказу 🌸 {a0['title']} — {a0['price']} ₽.\n\n" if a0 else "") + q
+            reply.text = (f"Добавила открытку — {a0['price']} ₽ 🌸\n" if a0 else "") + q
             reply.order, reply.order_raw, reply.photos, reply.question = None, "", [], ""
             keep_photos = True              # не подмешивать букеты к вопросу о тексте
             return True
@@ -1748,6 +1745,14 @@ def respond(client, incoming, from_staff=False, quote=""):
     already = not from_staff and bool(ALREADY_RE.search(incoming or "")) and not reply.order
     if reply.order:
         ask_missing(reply.order)
+    elif card_done:
+        # Текст открытки подтверждён — не болтаем, сразу итог (или вопрос о том, чего ещё не хватает).
+        if card_pend and not ask_missing(_apply_client_state(card_pend, client, city)):
+            db.set_pending_order(client, card_pend)
+            reply.text, reply.photos = "Записала 🌸\n\n" + _order_summary(card_pend), []
+        elif not card_pend:
+            advance("Записала 🌸 ")
+        reply.question = ""
     elif already and (db.get_setting(f"chosen:{client}") or db.get_pending_order(client)):
         # «Я уже ответил» — не спорим и не переспрашиваем: собираем заказ из переписки КОДОМ.
         pend = db.get_pending_order(client)
@@ -1765,7 +1770,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         advance()
         if db.get_pending_order(client) is not had_pending and reply.text.startswith("Отлично, всё записала"):
             pass                                # показан итог — в нём уже есть открытка
-        elif reply.text.startswith("Отлично, добавила"):
+        elif reply.text.startswith(("Отлично, добавила", "Добавила открытку")):
             pass                                # уже подтвердили и спросили текст открытки
         else:
             reply.text = f"Отлично, добавила к заказу 🌸 {a0['title']} — {a0['price']} ₽.\n\n{reply.text}"
