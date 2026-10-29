@@ -124,7 +124,7 @@ def _format_order(order_id, client, reply):
         f"🎁 Получатель: {val(o.get('получатель'))}",
     ]
     if given(o.get("открытка")):
-        lines.append(f"✉️ Текст открытки: {val(o['открытка'])}")
+        lines.append(f"✉️ Текст открытки (написать от руки): {val(o['открытка'])}")
     if given(o.get("комментарий")):
         lines.append(f"📝 Комментарий: {val(o['комментарий'])}")
     lines += ["━━━━━━━━━━━━━━",

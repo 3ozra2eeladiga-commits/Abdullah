@@ -784,9 +784,28 @@ CARD_ASK_Q = ("Нужна ли открытка к букету? Открытк�
 CARD_ONE_Q = ("Открытки у нас платные 🌸 Подойдёт {title} — {price} ₽, на ней напишем "
               "«{text}». Берём её? (Если открытка не нужна — так и скажите.)")
 # Текст открытки: спрашиваем ОТДЕЛЬНО (название открытки — это не текст), показываем и подтверждаем, пишем как есть.
-CARD_TEXT_Q = ("Какой текст написать на открытке? Пришлите его одним сообщением 💌 "
-               "Если текст не нужен — напишите «Без текста», если открытка не нужна — «Без открытки».")
-CARD_TEXT_CONFIRM_Q = "Текст на открытке: «{text}». Всё верно? Ответьте «да», «исправить» или «без открытки» 🌸"
+CARD_TEXT_CONFIRM_Q = ("Флорист напишет на открытке от руки: «{text}».\n"
+                       "Всё верно? Ответьте «да», «исправить» или «без открытки» 🌸")
+_PRINTED_RE = re.compile(r"[\"«“]\s*(.+?)\s*(?:[\"»”]|'')")
+
+
+def _card_text_q(title):
+    """Вопрос о тексте открытки: напечатанная надпись (в названии) уже есть — свой текст флорист пишет от руки."""
+    t = title or ""
+    if re.search(r"запис", t, re.I):
+        return ("На открытке есть поле для записи — флорист напишет на нём ваш текст от руки 💌\n"
+                "Что написать? Пришлите одним сообщением. Если текст не нужен — напишите «Без текста».")
+    m = _PRINTED_RE.search(t)
+    printed = m.group(1).strip(" ,.") if m and not re.search(r"аудио", t, re.I) else ""
+    if printed and re.search(r"конверт", t, re.I):
+        head = (f"На конверте уже напечатано «{printed}» 🌸 Внутрь флорист может вложить карточку с вашими словами "
+                "(напишет от руки).\n")
+    else:
+        head = (f"На открытке уже напечатано «{printed}» 🌸 На обороте флорист может написать от руки ваши слова.\n"
+                if printed else "На открытке флорист может написать от руки ваши слова 🌸\n")
+    enough = "Если хватит напечатанной надписи" if printed else "Если текст не нужен"
+    return head + (f"Что написать? Пришлите одним сообщением. {enough} — напишите «Без текста», "
+                   "если открытка не нужна — «Без открытки».")
 CARD_TEXT_AGAIN_Q = "Хорошо 🌸 Пришлите, пожалуйста, новый текст для открытки одним сообщением."
 QUESTION_LIKE_RE = re.compile(r"\?\s*$|^\W*(?:как|когда|сколько|можно|а\s+если|где|почему|зачем|есть\s+ли|что\s+(?:если|будет|можно))\b", re.I)
 NO_TEXT_RE = re.compile(r"^\W*(?:без\s+текст\w*|без\s+надпис\w*|текст\s+не\s+нуж\w*|ничего\s+не\s+пиш\w*|не\s+надо\s+пис\w*)\W*$", re.I)
@@ -1103,7 +1122,7 @@ def _order_summary(o):
     if who:
         extra.append(f"получатель — {who}")
     if card and card.lower() not in ("нет", "не нужна", "-", "—"):
-        extra.append(f"открытка «{card}»")
+        extra.append("открытка без текста" if card.lower() == "без текста" else f"текст на открытке «{card}»")
     lines = ["Отлично, всё записала 🌸", ", ".join(items), how]
     if extra:
         t = ", ".join(extra)
@@ -1593,8 +1612,11 @@ def respond(client, incoming, from_staff=False, quote=""):
                           and CARD_RE.search(str(it.get("название") or ""))), None)
         if card_item and not from_staff and not db.get_setting(f"cardtext:{client}"):
             m_txt = re.search(r"Текст «(.+?)» напишем|напишем\s+«(.+?)»", last_q or "")
-            txt = m_txt and (m_txt.group(1) or m_txt.group(2))
-            q = CARD_TEXT_CONFIRM_Q.format(text=txt) if txt else CARD_TEXT_Q
+            txt = (m_txt and (m_txt.group(1) or m_txt.group(2))) or ""
+            norm = lambda x: re.sub(r"[\W_]+", "", x.lower())
+            if not norm(txt) or norm(txt) not in norm(client_text):
+                txt = ""                    # заглушка «...» или текст, которого клиент не писал
+            q = CARD_TEXT_CONFIRM_Q.format(text=txt) if txt else _card_text_q(card_item.get("название"))
             db.set_setting(f"cardstep:{client}", ("confirm:" + txt) if txt else "ask")
             db.set_setting(f"lastq:{client}", q)
             db.clear_pending_order(client)
