@@ -1086,6 +1086,47 @@ def _remember_sent_items(order, client):
     db.set_setting(f"draft:{client}", json.dumps(d, ensure_ascii=False))
 
 
+FILLER_RE = re.compile(r"^\s*(?:понимаю\s+вас|спасибо\s+за\s+(?:уточнение|информацию|ответ)|простите\s+за\s+(?:недоразумение|путаницу)|"
+                       r"извините\s+за\s+(?:путаницу|недоразумение)|отличный\s+вопрос|хороший\s+вопрос)[^.!?…]*[.!?…]+\s*", re.I)
+_KNOWN_Q = [  # (вопрос ИИ, как понять, что ответ уже известен)
+    (re.compile(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|нужна\s+ли\s+доставк|заберёте\s+сами", re.I),
+     lambda k, um, c: _meaningful(k.get("получение")) or bool(re.search(r"доставк|самовывоз|заберу", " ".join(um), re.I))),
+    (re.compile(r"на\s+как\w+\s+(?:дату|день|число)|какая\s+дата|к\s+какому\s+(?:часу|времени)|во\s+сколько|какое\s+время", re.I),
+     lambda k, um, c: _meaningful(k.get("дата")) and _meaningful(k.get("время"))),
+    (re.compile(r"адрес", re.I),
+     lambda k, um, c: (_meaningful(k.get("адрес")) and len(str(k.get("адрес"))) >= 6) or _has_address(um)
+     or k.get("получение") == "самовывоз"),
+    (re.compile(r"(?:имя|фамили|телефон|номер)", re.I),
+     lambda k, um, c: len(PHONE_RE.findall(" ".join(um))) >= 2),
+    (re.compile(r"нужн\w*\s+ли[^.?!]{0,20}открытк|открытк\w*[^.?!]{0,25}(?:нужн|добав|хотите)", re.I),
+     lambda k, um, c: bool(db.get_setting(f"nocard:{c}") or db.get_setting(f"cardtext:{c}")
+                           or db.get_setting(f"wantcard:{c}"))),
+]
+
+
+def _polish_ai_text(text, client, city, user_msgs):
+    """Ответ ИИ перед отправкой: убираем «Понимаю вас / Спасибо за уточнение», вопросы о том, что клиент уже
+    сказал (по черновику и переписке), и длинноты. Если вопросов не осталось — добавляем следующий нужный."""
+    t = FILLER_RE.sub("", text).strip() or text
+    known = _known_order(client)
+    parts = [p for p in _SENT_SPLIT_RE.split(t) if p.strip()]
+    keep, dropped = [], False
+    for p in parts:
+        if "?" in p and any(rx.search(p) and ok(known, user_msgs, client) for rx, ok in _KNOWN_Q):
+            dropped = True
+            continue
+        keep.append(p)
+    if len(keep) > 3:                             # длинно: первые 2 предложения + последний вопрос
+        q = next((p for p in reversed(keep) if "?" in p), None)
+        keep = keep[:2] + ([q] if q and q not in keep[:2] else [])
+    out = " ".join(keep).strip()
+    if dropped and "?" not in out and db.get_setting(f"chosen:{client}"):
+        nq = _next_question(user_msgs, city, known)
+        out = f"{out}\n\n{nq}".strip() if out else nq
+        db.set_setting(f"lastq:{client}", nq)
+    return out or text
+
+
 def _clear_addon(client):
     for k in ("addto", "addons", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text"):
         db.del_setting(f"{k}:{client}")
@@ -1825,6 +1866,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             raw = "Секундочку 🌸 Уточните, пожалуйста, чуть подробнее — и я помогу подобрать."
     db.add_message(client, "assistant", raw)
     reply = parse(raw, city)
+    ai_text = reply.text                          # что написал ИИ (если код потом заменит текст — фильтр не нужен)
     if reply.city and reply.city in catalog.city_names and reply.city != city:
         db.set_city(client, reply.city)
         city = reply.city
@@ -2226,4 +2268,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Запоминаем, что показали (по порядку) — чтобы понять «давайте последний / второй вариант».
     if not from_staff and (len(reply.photos) >= 2 or (keep_photos and reply.photos)):
         db.set_setting(f"shown:{client}", ",".join(p["code"] for p in reply.photos))
+    # ФИНАЛЬНЫЙ ФИЛЬТР ответа ИИ: без «воды», коротко, и никаких вопросов о том, что клиент уже сказал.
+    if not from_staff and reply.text and reply.text == ai_text and not reply.order:
+        reply.text = _polish_ai_text(reply.text, client, city, [m["content"] for m in history if m["role"] == "user"])
     return reply
