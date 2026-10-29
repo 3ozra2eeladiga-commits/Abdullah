@@ -2011,7 +2011,12 @@ def respond(client, incoming, from_staff=False, quote=""):
         nxt = _next_question(user_msgs, city, db.get_pending_order(client))
         known_way = not re.search(r"доставка или самовывоз", nxt)
         known_when = not re.search(r"дату", nxt)
-        if asks_addr and _has_address(user_msgs) and not (asks_way and not known_way) and not (asks_when and not known_when):
+        # ИИ снова просит имена/телефоны, хотя клиент уже прислал оба номера — не переспрашиваем, идём дальше кодом.
+        asks_who = re.search(r"(?:ваш\w*|получател\w*)[^.?!]{0,40}(?:имя|фамили|телефон|номер)|"
+                             r"(?:имя|фамили|телефон|номер)[^.?!]{0,40}(?:получател|заказчик|ваш)", reply.text, re.I)
+        if asks_who and len(PHONE_RE.findall(t)) >= 2:
+            advance("Спасибо 🌸 ")
+        elif asks_addr and _has_address(user_msgs) and not (asks_way and not known_way) and not (asks_when and not known_when):
             advance("Спасибо 🌸 ")          # адрес уже есть, а ИИ снова его просит — идём дальше кодом
         elif (asks_way and known_way) or (asks_when and known_when):
             reply.text = (f"Отличный выбор 🌸 {picked[0]['title']} — {picked[0]['price']} ₽. Оформляем его! {nxt}"
