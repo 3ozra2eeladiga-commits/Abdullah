@@ -136,6 +136,9 @@ def _format_order(order_id, client, reply):
 def deliver(client, text, from_staff=False, quote=""):
     """Главная функция: сообщение (от клиента или от сотрудника) -> ответ клиенту.
     quote — текст сообщения, на которое клиент ответил (reply), для распознавания букета."""
+    if not from_staff and config.is_secret_code(text):   # секретный код: ответ сразу, в историю и ИИ не попадает
+        _send_text(client, config.SECRET_REPLY)
+        return
     with _client_locks[client]:
         # Клиент прислал фото и теперь пишет, что хочет («у вас есть такой?») — фото с вопросом флористу.
         if not from_staff and not db.is_paused(client) and _photo_buf(client).get("photos"):

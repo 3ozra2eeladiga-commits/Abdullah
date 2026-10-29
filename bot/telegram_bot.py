@@ -193,6 +193,9 @@ def _handle(msg, deliver):
     user_id = msg.get("from", {}).get("id")
     text = (msg.get("text") or "").strip()
 
+    if config.is_secret_code(text):                    # секретный код — отвечаем и больше ничего не делаем
+        send(chat_id, config.SECRET_REPLY)
+        return
     if not config.is_staff(user_id):
         if text.startswith("/start") or text.startswith("/myid"):
             send(chat_id, f"Ваш ID: {user_id}\nДоступ к боту закрыт. Передайте этот номер администратору.")

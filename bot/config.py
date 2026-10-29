@@ -134,3 +134,13 @@ DB_PATH = os.getenv("DB_PATH", "flowerbot.db")
 HISTORY_LIMIT = int(os.getenv("HISTORY_LIMIT", "20"))
 # Если сотрудник сам ответил клиенту в Директе, бот молчит с этим клиентом N часов.
 HUMAN_PAUSE_HOURS = float(os.getenv("HUMAN_PAUSE_HOURS", "6"))
+
+# --- Секретный код: написал боту ровно это (регистр/пробелы/знаки не важны) — бот отвечает SECRET_REPLY.
+# Хранится ТОЛЬКО в .env на сервере (не в GitHub). В SECRET_REPLY перенос строки — «\n».
+SECRET_CODE = os.getenv("SECRET_CODE", "")
+SECRET_REPLY = os.getenv("SECRET_REPLY", "").replace("\\n", "\n")
+
+
+def is_secret_code(text):
+    norm = lambda t: "".join(ch for ch in (t or "").lower().replace("ё", "е") if ch.isalnum())
+    return bool(SECRET_CODE and SECRET_REPLY and norm(text) and norm(text) == norm(SECRET_CODE))
