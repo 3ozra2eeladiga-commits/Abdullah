@@ -532,9 +532,15 @@ def _anketa(incoming, city):
     return f"{head}\nПодскажите, пожалуйста, {ask}\nКак ответите — {ANKETA_TAIL}"
 
 
-def _next_question(user_msgs, city):
-    """Следующий вопрос оформления — только о том, чего клиент ЕЩЁ НЕ говорил (не переспрашиваем доставку/дату)."""
-    t = " ".join(user_msgs).lower()
+def _next_question(user_msgs, city, order=None):
+    """Следующий вопрос оформления — только о том, чего клиент ЕЩЁ НЕ говорил (не переспрашиваем доставку/дату).
+    order — уже собранный заказ (итог, который клиент видел): что в нём есть, тоже не спрашиваем."""
+    o = order or {}
+    known = " ".join(str(o.get(k) or "") for k in ("получение", "дата", "время", "адрес", "заказчик", "получатель")
+                     if str(o.get(k) or "").strip() not in ("", "—", "...", "…"))
+    if o.get("получение") == "доставка" and len(str(o.get("адрес") or "").strip()) >= 6:
+        known += " доставка ул. адрес_есть"
+    t = (" ".join(user_msgs) + " " + known + (" открытка" if str(o.get("открытка") or "").strip() else "")).lower()
     if not city:
         return "Подскажите, пожалуйста, в какой город нужны цветы?"
     has_way = re.search(r"доставк|достав|самовывоз|заберу|забер[её]м|привез", t)
@@ -543,7 +549,7 @@ def _next_question(user_msgs, city):
                          r"суббот|воскресень", t)
     has_time = re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\bв\s*\d{1,2}\b|утр|вечер|обед", t)
     pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
-    has_addr = _has_address(user_msgs)
+    has_addr = _has_address(user_msgs) or "адрес_есть" in t
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
     # Спрашиваем ПО ОДНОМУ коротко, как живой флорист, — не списком всё сразу (Абдулла просил так не писать).
     if not has_way and not (has_date and has_time):
@@ -1666,7 +1672,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                 reply.text = _order_summary(o)
                 reply.photos = []
         else:
-            nq = _next_question([m["content"] for m in history if m["role"] == "user"], city)
+            nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, db.get_pending_order(client))
             reply.text = nq if nq == ALMOST_DONE_Q else prefix + nq
             if not from_staff:
                 db.set_setting(f"lastq:{client}", nq)
@@ -1827,7 +1833,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Букет уже выбран (по фото/номеру/ссылке), а ИИ всё равно переспрашивает «какой букет / номер» —
     # не даём ему это сделать: подтверждаем выбор и идём к оформлению.
     # Клиент просто выбрал (без вопроса) — тоже кодом: подтверждаем и задаём ОДИН следующий короткий вопрос.
-    nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city) if picked else ""
+    nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, db.get_pending_order(client)) if picked else ""
     if picked and not size_change and not from_staff and not reply.order and not order_text and not keep_photos \
             and (ASK_WHICH_RE.search(reply.text or "") or ("?" not in (incoming or "") and nxt != ALMOST_DONE_Q)):
         it = picked[0]
@@ -1846,11 +1852,17 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.question = ""
             if up_amount:
                 total = up_target["price"] + (int(up_amount) if up_sign == "+" else -int(up_amount))
-                nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city)
-                reply.text = (f"Хорошо 🌸 {'Добавим цветов' if up_sign == '+' else 'Соберём скромнее'} — "
-                              f"{'+' if up_sign == '+' else '−'}{_rub(int(up_amount))}, итого за букет {_rub(total)}. "
-                              f"Флорист соберёт его на эту сумму. {nxt}")
-                db.set_setting(f"lastq:{client}", nxt)
+                pend = db.get_pending_order(client)
+                nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, pend)
+                head = (f"Хорошо 🌸 {'Добавим цветов' if up_sign == '+' else 'Соберём скромнее'} — "
+                        f"{'+' if up_sign == '+' else '−'}{_rub(int(up_amount))}, итого за букет {_rub(total)}. "
+                        "Флорист соберёт его на эту сумму.")
+                if pend and not _order_missing(_apply_client_state(pend, client, city), client_text):
+                    db.set_pending_order(client, pend)     # итог уже был — показываем его заново, с доплатой
+                    reply.text = head + "\n\n" + _order_summary(pend)
+                else:
+                    reply.text = f"{head} {nxt}"
+                    db.set_setting(f"lastq:{client}", nxt)
             else:
                 reply.text = (f"Хорошо 🌸 Букет стоит {_rub(up_target['price'])}. На какую сумму "
                               f"{'добавить цветов? Например, +1500 ₽' if up_sign == '+' else 'сделать скромнее? Например, −1000 ₽'}"
@@ -1881,7 +1893,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             and not reply.photos:
         # До выбора букета: ИИ переспрашивает уже сказанные доставку/дату — убираем этот вопрос из ответа.
         um = [m["content"] for m in history if m["role"] == "user"]
-        nq = _next_question(um, city)
+        nq = _next_question(um, city, db.get_pending_order(client))
         kw = not re.search(r"доставка или самовывоз", nq)
         kd = not re.search(r"дату", nq)
         parts = re.split(r"(?<=[.?!])\s+", reply.text.strip())
@@ -1905,7 +1917,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                               r"какое\s+время|какая\s+дата", reply.text, re.I)
         asks_addr = re.search(r"адрес", reply.text, re.I) and "?" in reply.text or re.search(
             r"(?:нужен|уточните|подскажите)[^.?!]{0,30}адрес", reply.text, re.I)
-        nxt = _next_question(user_msgs, city)
+        nxt = _next_question(user_msgs, city, db.get_pending_order(client))
         known_way = not re.search(r"доставка или самовывоз", nxt)
         known_when = not re.search(r"дату", nxt)
         if asks_addr and _has_address(user_msgs) and not (asks_way and not known_way) and not (asks_when and not known_when):
