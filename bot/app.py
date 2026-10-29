@@ -183,6 +183,8 @@ def deliver(client, text, from_staff=False, quote=""):
             telegram_bot.notify_staff_order(client, items, card, buttons=_check_buttons(order_id))
         elif reply.order_raw:
             log.warning("Заказ не распознан (%s): %s", client, reply.order_raw)
+        if reply.staff_note:                     # дополнение к уже отправленному заказу и т.п.
+            telegram_bot.notify_staff_order(client, reply.staff_photos, reply.staff_note)
         if reply.question:
             telegram_bot.notify_staff(client, f"❓ ВОПРОС ОТ БОТА\n{_label(client)}\n\n{reply.question}\n\n"
                                               "Ответьте на это сообщение — бот передаст ответ клиенту.")

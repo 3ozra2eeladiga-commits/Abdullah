@@ -94,6 +94,15 @@ def get_order(order_id):
     return (row["client"], json.loads(row["data"])) if row else None
 
 
+def last_order_id(client):
+    row = _exec("SELECT id FROM orders WHERE client=? ORDER BY id DESC LIMIT 1", (client,)).fetchone()
+    return row["id"] if row else None
+
+
+def update_order(order_id, data):
+    _exec("UPDATE orders SET data=? WHERE id=?", (json.dumps(data, ensure_ascii=False), order_id))
+
+
 def has_order(client):
     """Был ли заказ в текущей переписке (после /reset старые заказы не считаются)."""
     return _exec("SELECT 1 FROM orders o WHERE client=? AND created >= "
@@ -150,8 +159,8 @@ def clear_history(client):
     _exec("DELETE FROM pending_orders WHERE client=?", (client,))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?)",
           tuple(f"{k}:{client}" for k in ("upsize", "addons", "lastq", "cards_shown")))
-    _exec("DELETE FROM settings WHERE key IN (?,?,?,?,?,?,?,?,?,?,?)",
-          (f"wantcard:{client}", f"wantcard_text:{client}", f"draft:{client}", f"cardtext:{client}", f"cardstep:{client}", f"site_sent:{client}", f"prev_items:{client}", f"nocard:{client}", f"shown:{client}", f"chosen:{client}", f"ocheck:{client}"))
+    _exec("DELETE FROM settings WHERE key IN (?,?,?,?,?,?,?,?,?,?,?,?)",
+          (f"addto:{client}", f"wantcard:{client}", f"wantcard_text:{client}", f"draft:{client}", f"cardtext:{client}", f"cardstep:{client}", f"site_sent:{client}", f"prev_items:{client}", f"nocard:{client}", f"shown:{client}", f"chosen:{client}", f"ocheck:{client}"))
 
 
 def set_city(client, city):

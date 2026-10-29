@@ -270,6 +270,8 @@ class Reply:
     question: str = ""
     handoff: bool = False
     city: str | None = None
+    staff_note: str = ""                         # сообщение флористу (например, дополнение к отправленному заказу)
+    staff_photos: list = field(default_factory=list)
 
 
 # «Отмените заказ», «передумал»; «отметить это» — так голосовой ввод часто слышит «отменить».
@@ -802,19 +804,13 @@ def _phone_was_given(order_value, client_text):
 CARD_ASK_Q = "Открытку добавим? От {min} ₽ — ответьте «эту» на фото или «без открытки» 🌸"
 CARD_ONE_Q = "Подойдёт {title} — {price} ₽, напишем «{text}». Берём?"
 # Текст открытки: спрашиваем ОТДЕЛЬНО (название открытки — это не текст), показываем и подтверждаем, пишем как есть.
-CARD_TEXT_CONFIRM_Q = "Напишем от руки: «{text}». Верно? (да / исправить)"
+CARD_TEXT_CONFIRM_Q = "Напишем: «{text}». Верно?"
 _PRINTED_RE = re.compile(r"[\"«“]\s*(.+?)\s*(?:[\"»”]|'')")
 
 
 def _card_text_q(title):
-    """Короткий вопрос о тексте: надпись на открытке уже напечатана, свои слова флорист пишет от руки."""
-    t = title or ""
-    m = _PRINTED_RE.search(t)
-    printed = m.group(1).strip(" ,.") if m and not re.search(r"аудио|запис", t, re.I) else ""
-    where = "внутрь конверта" if re.search(r"конверт", t, re.I) else ("на поле открытки" if re.search(r"запис", t, re.I)
-                                                                     else "на обороте")
-    head = f"На ней напечатано «{printed}». " if printed else ""
-    return f"{head}Что дописать от руки {where}? Или «без текста» 🌸"
+    """Вопрос о тексте открытки — максимально просто (Абдулла: «чтобы и ребёнок понял»)."""
+    return "Что написать на открытке? Если ничего — напишите «без текста» 🌸"
 
 
 CARD_TEXT_AGAIN_Q = "Хорошо, какой текст напишем?"
@@ -1088,6 +1084,42 @@ def _remember_sent_items(order, client):
     for k in ("дата", "время", "комментарий"):
         d.pop(k, None)
     db.set_setting(f"draft:{client}", json.dumps(d, ensure_ascii=False))
+
+
+def _clear_addon(client):
+    for k in ("addto", "addons", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text"):
+        db.del_setting(f"{k}:{client}")
+
+
+def _finish_addon(client, city, order_id):
+    """Открытка и её текст подтверждены — дописываем в отправленный заказ и сообщаем флористу."""
+    text_card = db.get_setting(f"cardtext:{client}") or ""
+    cards = [catalog.get(c) for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]
+    cards = [c for c in cards if c and CARD_RE.search(c["title"])]
+    if text_card == "нет" or not cards:
+        _clear_addon(client)
+        text = "Хорошо, без открытки 🌸 Заказ остаётся как был."
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
+    c0 = cards[-1]
+    row = db.get_order(order_id)
+    if row:
+        data = row[1]
+        data.setdefault("товары", []).append({"код": c0["code"], "название": c0["title"], "кол-во": 1,
+                                             "цена_за_шт": c0["price"], "сумма": c0["price"]})
+        data["открытка"] = text_card
+        try:
+            data["сумма_товаров"] = int(data.get("сумма_товаров") or 0) + c0["price"]
+        except (TypeError, ValueError):
+            pass
+        db.update_order(order_id, data)
+    _clear_addon(client)
+    words = "без текста" if text_card == "без текста" else f"текст «{text_card}»"
+    text = f"Готово 🌸 Открытку добавили к заказу (+{c0['price']} ₽), {words}."
+    db.add_message(client, "assistant", text)
+    note = (f"➕ ДОПОЛНЕНИЕ К ЗАКАЗУ №{order_id}\nКлиент добавил открытку: {c0['title']} — {c0['price']} ₽\n"
+            f"✉️ Текст (написать от руки): {text_card}\nОтветьте на это сообщение — текст уйдёт клиенту.")
+    return Reply(text=text, city=city, staff_note=note, staff_photos=[c0])
 
 
 def _clear_client_state(client):
@@ -1560,6 +1592,43 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.clear_pending_order(client)  # итог покажем заново — уже с открыткой
             incoming = go_on
             card_done = True
+    # ---- Открытка к УЖЕ отправленному заказу («забыл открытку») — не новый заказ, цветы заново НЕ выбираем ----
+    addto = "" if from_staff else (db.get_setting(f"addto:{client}") or "")
+    if card_done and addto:
+        return _finish_addon(client, city, int(addto))
+    if not from_staff and not addto and not picked and not addons and db.has_order(client) \
+            and not db.get_pending_order(client) and not db.get_setting(f"chosen:{client}") \
+            and CARD_WANT_RE.search(incoming or "") and not NO_CARD_AT_ALL_RE.search(incoming or ""):
+        oid = db.last_order_id(client)
+        db.set_setting(f"addto:{client}", oid)
+        for k in ("nocard", "cardtext", "cardstep"):
+            db.del_setting(f"{k}:{client}")
+        txt = db.get_setting(f"wantcard_text:{client}") or ""
+        cards = catalog.cards(city, limit=5, text=txt or None)
+        _remember_cards(client, cards)
+        db.set_setting(f"shown:{client}", ",".join(c["code"] for c in cards))
+        text = "Добавим к вашему заказу 🌸 Выберите открытку — ответьте «эту» на фото."
+        db.set_setting(f"lastq:{client}", text)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, photos=cards, city=city)
+    if addto and any(CARD_RE.search(a["title"]) for a in addons):
+        a0 = next(a for a in addons if CARD_RE.search(a["title"]))
+        txt = db.get_setting(f"wantcard_text:{client}") or ""
+        if txt:
+            q = CARD_TEXT_CONFIRM_Q.format(text=txt)
+            db.set_setting(f"cardstep:{client}", "confirm:" + txt)
+        else:
+            q = _card_text_q(a0["title"])
+            db.set_setting(f"cardstep:{client}", "ask")
+        text = f"Добавила открытку — {a0['price']} ₽ 🌸\n{q}"
+        db.set_setting(f"lastq:{client}", q)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
+    if addto and NO_CARD_AT_ALL_RE.search(incoming or ""):
+        _clear_addon(client)
+        text = "Хорошо, без открытки 🌸 Заказ остаётся как был."
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # «Текст: ты крутой» / «на открытке напишите …» — это текст открытки, а не болтовня.
     m_ct = None if (from_staff or picked or addons or card_done) else CARD_TEXT_PREFIX_RE.search(incoming or "")
     if m_ct and m_ct.group(1).strip() and not re.match(r"не\s+(?:нуж|надо)|без\b", m_ct.group(1).strip(), re.I):
