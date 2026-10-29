@@ -742,6 +742,7 @@ SUMMARY_RE = re.compile(r"вс[её]\s+(?:ли\s+)?верно|провер\w*[^.
 ASK_WHICH_RE = re.compile(
     r"(?:номер|назван\w*)\s+(?:понравивш\w+\s+)?букет|какой\s+(?:именно\s+)?букет|"
     r"как(?:ой|ую|ие)[^.?!]{0,30}(?:букет|вариант)[^.?!]{0,30}(?:понрав|выбрал|нрав)|"
+    r"какой\s+из\s+(?:букет|вариант)\w*|"
     r"опишите[^.?!]{0,30}подробнее|уточните[^.?!]{0,30}подробнее", re.I)
 # ИИ иногда пишет заглушку вместо ссылки: «[ссылка на каталог]», «<ссылка>», «[сайт]» — подставим настоящий URL.
 LINK_PLACEHOLDER_RE = re.compile(r"[\[<]\s*(?:ссылк\w*|сайт\w*)[^\]>]*[\]>]", re.I)
@@ -884,6 +885,9 @@ RUDE_RE = re.compile(r"ху[йяеёи]|пизд|\bеб(?:а[нтл]|у[тчщ]|
                      r"\bидите\s+вы\b|\bпошли\s+вы\b|\bдебил|\bидиот|\bуро[дт]\b|\bтварь|"
                      r"\bговн|\bдерьм|\bвоня(?:еш|ет|ют|ешь)|\bвонюч|\bтуп(?:ая|ой|ые|ица)\b|\bдур(?:а|ак|ачк\w*|ой)\b|"
                      r"\bотстой|\bзаткн|\bотвали|\bбесиш|\bчмо\b|\bлох\b|\bсволоч|\bмраз|\bскотин|\bхамк|\bубог", re.I)
+# Восторг с матом («охуенный», «заебись», «пиздато») — это похвала, а не грубость.
+PRAISE_RE = re.compile(r"\b[ао]ху[ея]н\w*|\b[ао]хуи?т\w*|\bзаеб(?:ись|ок|ато)\w*|\bпиздат\w*|\bохрен[ея]н\w*|"
+                       r"\bофиген\w*|\bзашибис\w*", re.I)
 # «Сколько стоит доставка?», «доставка платная?»
 DELIV_PRICE_RE = re.compile(r"(?:сколько|стоимост|цен[аы]|почём|почем)\w*[^.?!]{0,25}доставк|"
                             r"доставк\w*[^.?!]{0,20}(?:сколько|стоит|стоимост|цен[аы]|платн|бесплат)", re.I)
@@ -1726,7 +1730,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         if m_in and _meaningful(next(g for g in m_in.groups() if g)):
             db.set_setting(f"wantcard_text:{client}", next(g for g in m_in.groups() if g).strip())
     # Грубость/мат: первый раз — предупреждение, второй — бот прекращает переписку (сотруднику — уведомление).
-    if not from_staff and RUDE_RE.search(incoming or ""):
+    if not from_staff and RUDE_RE.search(PRAISE_RE.sub(" ", incoming or "")):
         return _rude_reply(client, incoming, city)
     # Первое сообщение клиента — отвечаем анкетой: сразу все главные вопросы, чтобы потом не переспрашивать.
     first_closed = _closed_hours_msg(_hour_from_text(incoming), catalog.match_city(incoming or "") or city) \
@@ -2125,6 +2129,14 @@ def respond(client, incoming, from_staff=False, quote=""):
             raw = "Секундочку 🌸 Уточните, пожалуйста, чуть подробнее — и я помогу подобрать."
     db.add_message(client, "assistant", raw)
     reply = parse(raw, city)
+    # Про открытку — ВСЕГДА отдельный вопрос (его задаёт код в свой момент). ИИ не вплетает открытку в другие
+    # вопросы, если клиент сам про неё не спрашивал.
+    if not from_staff and reply.text and not re.search(r"открыт|конверт|карточк", incoming or "", re.I) \
+            and not reply.order:
+        parts = re.split(r"(?<=[.!?])\s+", reply.text.strip())
+        keep = [p for p in parts if not re.search(r"открытк", p, re.I)]
+        if keep and len(keep) != len(parts):
+            reply.text = " ".join(keep)
     ai_text = reply.text                          # что написал ИИ (если код потом заменит текст — фильтр не нужен)
     if reply.city and reply.city in catalog.city_names and reply.city != city:
         db.set_city(client, reply.city)
@@ -2426,6 +2438,14 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Букет уже выбран (по фото/номеру/ссылке), а ИИ всё равно переспрашивает «какой букет / номер» —
     # не даём ему это сделать: подтверждаем выбор и идём к оформлению.
     # Клиент просто выбрал (без вопроса) — тоже кодом: подтверждаем и задаём ОДИН следующий короткий вопрос.
+    # Букет выбран раньше (а сейчас, например, «хорошо» после предупреждения), но ИИ снова спрашивает «какой из
+    # букетов» — не переспрашиваем: подтверждаем выбранный и идём дальше.
+    chosen_it = None if (from_staff or picked) else catalog.get(db.get_setting(f"chosen:{client}") or "", city)
+    if chosen_it and not reply.order and not order_text and not keep_photos and ASK_WHICH_RE.search(reply.text or ""):
+        nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
+        reply.text = f"Оформляем {chosen_it['title']} — {chosen_it['price']} ₽ 🌸 {nq}"
+        reply.photos = []
+        db.set_setting(f"lastq:{client}", nq)
     nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client)) if picked else ""
     if picked and not size_change and not from_staff and not reply.order and not order_text and not keep_photos \
             and (ASK_WHICH_RE.search(reply.text or "") or ("?" not in (incoming or "") and nxt != ALMOST_DONE_Q)):
