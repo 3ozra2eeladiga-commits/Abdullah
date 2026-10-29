@@ -827,7 +827,7 @@ FAKE_QUESTION_RE = re.compile(
 )
 # Клиент сам просит показать букеты фотографиями — тогда код точно приложит фото, даже если модель замялась.
 SHOW_REQUEST_RE = re.compile(
-    r"кидай|скин|покаж|показыв|пришли\s+фото|давай\s+фото|на ваш вкус|на твой вкус|хочу посмотрет|что есть|фото сюда|"
+    r"кидай|скин|покаж|показыв|пришли\s+фото|давай\s+фото|присла|присыла|пришли(?:те)?\b|на ваш вкус|на твой вкус|хочу посмотрет|что есть|фото сюда|"
     r"не знаю\s*,?\s*(?:что|как(?:ой|ие|ую)|чего)|предлаг|предлож|посовету|подбер\w*\s+сам|сам[аи]?\s+(?:выбер|подбер|предлож)|без разницы|любой|любые", re.I)
 # ИИ переспрашивает, какой букет выбран, хотя выбор уже известен.
 SUMMARY_RE = re.compile(r"вс[её]\s+(?:ли\s+)?верно|провер\w*[^.?!]{0,30}(?:заказ|данн)|ваш заказ:|подвед\w*\s+итог|"
@@ -2153,8 +2153,15 @@ def respond(client, incoming, from_staff=False, quote=""):
         if old:
             prev.append({"code": old["code"], "title": old["title"].strip().lower()})
         db.set_setting(f"prev_items:{client}", json.dumps(prev, ensure_ascii=False))
-        last = [catalog.get(c, city) for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
+        # Показываем БУКЕТЫ (не открытки): из тех, что клиент уже видел, а если их нет — подбираем новые.
+        seen_codes = [c for c in ((db.get_setting(f"shown:{client}") or "") + "," +
+                                  (db.get_setting(f"seen:{client}") or "")).split(",") if c]
+        last = [catalog.get(c, city) for c in dict.fromkeys(seen_codes)]
         opts = [x for x in last if x and x["code"] != ch_code and not catalog.is_addon(x, city)][:MIN_OPTIONS]
+        if len(opts) < 3 and catalog.get_city(city):
+            more = catalog.get_city(city).relevant_items(_catalog_query(db.history(client, 60)), {ch_code},
+                                                         limit=MIN_OPTIONS * 2, bouquets_only=True)
+            opts += [x for x in more if x["code"] != ch_code and x not in opts][:MIN_OPTIONS - len(opts)]
         text = "Хорошо, выбор отменила 🌸 Какой букет вам нравится? " + (
             "Вот варианты — ответьте «этот» на фото, или скажите «ещё»." if opts else "Могу прислать варианты.")
         db.set_setting(f"lastq:{client}", text)
@@ -2844,7 +2851,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.text = f"Вот варианты{f' до {bud} ₽' if bud else ''} 🌸 Какой нравится? Ответьте «этот» на фото."
     elif new_order and len(reply.photos) >= 2:
         reply.text = "Вот другие варианты 🌸 Какой нравится?"
-    elif wants_photos and not picked and len(reply.photos) >= 2 and "₽" not in (reply.text or "") \
+    elif wants_photos and not picked and len(reply.photos) >= 2 and ("₽" not in (reply.text or "") or re.search(
+            r"(?:укажите|назовите|напишите)\s+(?:его\s+)?номер", reply.text or "", re.I)) \
             and not keep_photos and not order_text:
         # Клиент просил «предложите / не знаю что выбрать» — текст про показанные фото, а не новые вопросы.
         reply.text = "Вот варианты на мой вкус 🌸 Какой нравится?"
@@ -2932,6 +2940,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.text = ("Это время сегодня, к сожалению, уже прошло 🙏 Подскажите, пожалуйста, на какое время "
                       "сегодня (попозже) или на другую дату — и я всё подберу.")
         reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
+    # Открытки показываем, только когда речь об открытках; при подборе букетов — только букеты.
+    if not from_staff and reply.photos and not keep_photos and not re.search(r"открыт|конверт|карточ", incoming or "", re.I):
+        only_b = [p for p in reply.photos if not CARD_RE.search(p["title"])]
+        if only_b or not any(not CARD_RE.search(p["title"]) for p in reply.photos):
+            reply.photos = only_b
     # Клиент назвал бюджет (хоть в первом сообщении) — дороже не показываем (кроме уже выбранного/открыток).
     if not from_staff and reply.photos and not keep_photos and not picked:
         bud = next((catalog_budget(m["content"]) for m in reversed(history)
