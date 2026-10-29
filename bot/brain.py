@@ -2333,6 +2333,9 @@ def respond(client, incoming, from_staff=False, quote=""):
             up_target = catalog.get(code, city) or catalog.get(code)
             if up_target and not up_amount and not size_change:
                 n = _money(incoming)
+                # «Да» на «На сколько добавить? Например, +1500 ₽» — берём сумму из нашего же примера.
+                if not n and CONFIRM_YES_RE.search(incoming or "") and not CORRECTION_RE.search(incoming or ""):
+                    n = 1500 if up_sign == "+" else 1000
                 if n:
                     up_amount = str(n)
                     db.set_setting(up_key, f"{code}|{up_sign}|{up_amount}")
@@ -2520,6 +2523,13 @@ def respond(client, incoming, from_staff=False, quote=""):
         elif not card_pend:
             advance("Записала 🌸 ")
         reply.question = ""
+    elif already and re.search(r"имя\s+и\s+телефон|телефон", _last_bot_text(client, last_q), re.I) and len(re.findall(
+            r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}",
+            " ".join(m["content"] for m in history if m["role"] == "user"))) < 2:
+        # «Я уже отправил», но в этой переписке номеров нет (например, после перезапуска) — честно просим ещё раз.
+        reply.text = ("Простите, в нашей переписке не вижу номеров 🙏 Пришлите, пожалуйста, ещё раз одним сообщением: "
+                      "ваше имя и телефон, имя и телефон получателя.")
+        reply.photos = []
     elif already and (db.get_setting(f"chosen:{client}") or db.get_pending_order(client)):
         # «Я уже ответил» — не спорим и не переспрашиваем: собираем заказ из переписки КОДОМ.
         pend = db.get_pending_order(client)
