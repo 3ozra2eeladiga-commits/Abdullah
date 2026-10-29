@@ -857,6 +857,9 @@ def _card_text_q(title):
     return "Что написать на открытке? Пришлите текст одним сообщением. Если ничего — «без текста» 🌸"
 
 
+# «Сколько стоит доставка?», «доставка платная?»
+DELIV_PRICE_RE = re.compile(r"(?:сколько|стоимост|цен[аы]|почём|почем)\w*[^.?!]{0,25}доставк|"
+                            r"доставк\w*[^.?!]{0,20}(?:сколько|стоит|стоимост|цен[аы]|платн|бесплат)", re.I)
 # В ответ на «что написать на открытке» клиент хочет ДРУГУЮ открытку / передумал — это не текст.
 OTHER_CARD_RE = re.compile(r"друг(?:ая|ую|ие|ой|их)\b|ещ[её]\s+(?:открыт|вариант)|есть\s+ещ[её]|другие\s+вариант|"
                            r"не\s+(?:эт[уа]|ту|та)\b|передумал|покаж\w*\s+(?:друг|ещ|открыт)|не\s+та\s+открыт", re.I)
@@ -1352,6 +1355,8 @@ def _delivery_price(order):
     от free_from ₽, иначе price ₽; другие города — уточнят; самовывоз — 0."""
     if (order.get("получение") or "").lower().startswith("самовывоз"):
         return "0"
+    if config.DELIVERY_BY_FLORIST:
+        return "уточнят"                       # цену доставки называет флорист при подтверждении
     town = " " + (order.get("город") or "").lower()
     own = any(c.get("name", "").lower() in town or any(a.lower() in town for a in c.get("aliases", []))
               for c in config.city_list())
@@ -1392,7 +1397,8 @@ def _order_summary(o):
     if (o.get("получение") or "").lower().startswith("самовывоз"):
         how = f"Самовывоз {when}, {o.get('адрес') or ''}".strip(", ")
     else:
-        cost = "бесплатно" if price == "0" else (_rub(price) if price.isdigit() else "стоимость уточнит менеджер")
+        cost = "бесплатно" if price == "0" else (_rub(price) if price.isdigit() else
+                                                 "стоимость доставки сообщит флорист при подтверждении")
         how = f"Доставка {when}, {o.get('адрес') or ''} — {cost}".strip()
     who = str(o.get("получатель") or "").split(",")[0].strip()
     card = str(o.get("открытка") or "").strip()
@@ -1485,8 +1491,10 @@ def _rules():
     return (RULES
             .replace("<<ГДЕ>>", where)
             .replace("<<ГОРОДА>>", _city_rules())
-            .replace("<<ДОСТАВКА>>", f"- Доставка по городам магазина ({_join_ru(names)}): товаров от {free} ₽ — "
-                                     f"бесплатно, меньше {free} ₽ — {price} ₽.")
+            .replace("<<ДОСТАВКА>>", ("- Стоимость доставки НЕ называй (бесплатной доставки нет): её сообщит флорист "
+                                      "при подтверждении заказа, вместе с суммой к оплате." if config.DELIVERY_BY_FLORIST
+                                      else f"- Доставка по городам магазина ({_join_ru(names)}): товаров от {free} ₽ — "
+                                      f"бесплатно, меньше {free} ₽ — {price} ₽."))
             .replace("<<ДРУГИЕ_ГОРОДА>>", _other_towns())
             .replace("<<ЦЕНА_ДОСТАВКИ>>", str(price)))
 
@@ -2267,6 +2275,25 @@ def respond(client, incoming, from_staff=False, quote=""):
             advance()
         reply.photos, reply.question = [], ""
         order_text = True
+    # «Сколько стоит доставка?» — цену называет флорист при подтверждении. Спросили второй раз (настаивают) —
+    # передаём вопрос флористу, чтобы ответила сразу.
+    if not from_staff and config.DELIVERY_BY_FLORIST and DELIV_PRICE_RE.search(incoming or ""):
+        asks = sum(1 for m in history if m["role"] == "user" and DELIV_PRICE_RE.search(m["content"]))
+        if asks >= 2 or re.search(r"сейчас|сразу|точно|конкретн|всё[- ]?таки|все[- ]?таки|хочу знать|скажите", incoming, re.I):
+            reply.text = "Хорошо, уточняю у флориста стоимость доставки — она скоро напишет вам 🌸"
+            reply.question = f"Клиент просит сразу назвать стоимость доставки: «{incoming}». Ответьте клиенту."
+        else:
+            note = "Стоимость доставки флорист сообщит при подтверждении заказа, вместе с суммой к оплате 🌸"
+            rest = re.sub(r"[^.!?]*(?:доставк)[^.!?]*(?:₽|руб|бесплат|стоит|стоимост)[^.!?]*[.!?]?", "",
+                          reply.text or "", flags=re.I)
+            reply.text = (note + (" " + rest.strip() if rest.strip() else "")).strip()
+            if reply.question and re.search(r"доставк", reply.question, re.I):
+                reply.question = ""
+        reply.photos = [] if not keep_photos else reply.photos
+    elif not from_staff and config.DELIVERY_BY_FLORIST and not order_text and reply.text:
+        # ИИ сам назвал цену доставки («бесплатно от 1500», «250 ₽») — убираем: цену называет флорист.
+        reply.text = re.sub(r"[^.!?\n]*доставк[^.!?\n]*(?:бесплат|\d+\s*(?:₽|руб))[^.!?\n]*[.!?]?\s*", "",
+                            reply.text, flags=re.I).strip() or reply.text
     # Про скидки отвечаем сразу сами: сейчас скидок нет (коллег не беспокоим).
     if not from_staff and re.search(r"скидк|скидоч|промокод|акци[яию]", incoming or "", re.I):
         no_disc = "Сейчас скидок у нас, к сожалению, нет 🌸"

@@ -117,7 +117,8 @@ def _format_order(order_id, client, reply):
     else:
         lines.append(f"🚗 Доставка — {val(o.get('город'))}, {val(o.get('адрес'))}")
         dp = str(o.get("доставка_цена") or "").strip()
-        lines.append("   стоимость доставки: " + ("бесплатно" if dp == "0" else f"{dp} ₽" if dp.isdigit() else val(dp)))
+        lines.append("   стоимость доставки: " + ("бесплатно" if dp == "0" else f"{dp} ₽" if dp.isdigit() else
+                                                  "назовите клиенту при подтверждении" if dp == "уточнят" else val(dp)))
     lines += [
         "",
         f"👤 Заказчик: {val(o.get('заказчик'))}",
