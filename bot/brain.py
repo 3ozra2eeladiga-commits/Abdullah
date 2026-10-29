@@ -279,6 +279,9 @@ class Reply:
 
 
 # «Отмените заказ», «передумал»; «отметить это» — так голосовой ввод часто слышит «отменить».
+# «Подождите, я передумал», «хочу другой букет», «не этот», «давайте другой» — после выбора букета.
+RECHOOSE_RE = re.compile(r"передумал|друг(?:ой|ую|ие)\s+(?:букет|вариант|композиц)|не\s+(?:этот|эту|то)\b|"
+                         r"давайте\s+друг|хочу\s+друг|поменя\w*\s+букет|другой\s+выбер|выбер\w*\s+друг", re.I)
 CANCEL_RE = re.compile(r"\bотмен\w*|\bотмет\w*\s+(?:это|его|заказ)|передумал", re.I)
 CODE_RE = re.compile(r"\b([0-9a-f]{6})\b")
 MIN_OPTIONS = 5  # сколько минимум букетов показывать, когда бот предлагает варианты
@@ -1939,6 +1942,28 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.clear_pending_order(client)
             incoming = "Упаковка выбрана, продолжаем оформление."
             card_done = True
+    # «Подождите, я передумал» / «хочу другой букет» после выбора (заказ ещё не отправлен) — выбор отменяем
+    # и снова спрашиваем, какой букет нравится (показываем варианты без отменённого).
+    ch_code = "" if (from_staff or picked or addons or card_done) else (db.get_setting(f"chosen:{client}") or "")
+    if ch_code and not db.get_setting(f"cardstep:{client}") and RECHOOSE_RE.search(incoming or "") \
+            and not re.search(r"открыт|конверт|адрес|врем|дат|получател|телефон", incoming or "", re.I):
+        old = catalog.get(ch_code, city)
+        db.del_setting(f"chosen:{client}")
+        db.clear_pending_order(client)
+        try:
+            prev = json.loads(db.get_setting(f"prev_items:{client}") or "[]")
+        except ValueError:
+            prev = []
+        if old:
+            prev.append({"code": old["code"], "title": old["title"].strip().lower()})
+        db.set_setting(f"prev_items:{client}", json.dumps(prev, ensure_ascii=False))
+        last = [catalog.get(c, city) for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
+        opts = [x for x in last if x and x["code"] != ch_code and not catalog.is_addon(x, city)][:MIN_OPTIONS]
+        text = "Хорошо, выбор отменила 🌸 Какой букет вам нравится? " + (
+            "Вот варианты — ответьте «этот» на фото, или скажите «ещё»." if opts else "Могу прислать варианты.")
+        db.set_setting(f"lastq:{client}", text)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, photos=opts, city=city)
     # ---- ИЗМЕНЕНИЕ уже отправленного заказа («поменять адрес / время / получателя») — не новый заказ! ----
     # (идёт новый заказ — выбран новый букет — тогда правки относятся к нему, а не к старому)
     active = None if (from_staff or NEW_ORDER_RE.search(incoming or "") or db.get_setting(f"chosen:{client}")) \
