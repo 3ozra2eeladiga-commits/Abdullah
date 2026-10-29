@@ -552,14 +552,17 @@ def _closed_now_note(client, city, asked=False):
     if db.get_setting(f"closed_note:{client}") == now.strftime("%Y-%m-%d"):
         return ""
     db.set_setting(f"closed_note:{client}", now.strftime("%Y-%m-%d"))
-    parts = []
-    for c in cities:
-        st, en = _shop_hours(c)
-        parts.append(f"{c} — с {st:02d}:00 до {en:02d}:00")
-    start = min(st for st, _ in hours.values())
-    when = "утром" if h < start else "завтра"
-    return (f"Сейчас магазины закрыты 🌙 Работаем ежедневно: {'; '.join(parts)}. Заказ можно оформить прямо сейчас — "
-            f"привезём {when} с {start:02d}:00 или к удобному времени, а флорист подтвердит его утром.")
+    when = "утром" if h < min(st for st, _ in hours.values()) else "завтра"
+    opens = []
+    for c in ([city] if city else cities):
+        shops = _city_shops(c)
+        if shops:
+            opens += [f"{c}, {a} — с {hrs.split('–')[0]}" for a, hrs in shops]
+        else:
+            opens.append(f"{c} — с {_shop_hours(c)[0]:02d}:00")
+    return (f"Сейчас магазины закрыты 🌙 Откроемся {when}:\n" + "\n".join(opens) +
+            "\nЗаказ можно оформить сейчас — флорист подтвердит его при открытии.\n"
+            "1 — оформить сейчас\n2 — напишу позже")
 
 
 def _anketa(incoming, city):
@@ -2082,6 +2085,19 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"lastq:{client}", text)
             db.add_message(client, "assistant", text)
             return Reply(text=text, photos=cards, city=city)
+    # Ответ на «Сейчас магазины закрыты … 1 — оформить сейчас / 2 — напишу позже».
+    if not from_staff and last_q.startswith("Сейчас магазины закрыты"):
+        t = (incoming or "").strip().lower()
+        if re.match(r"^\W*(?:1|да|оформ\w*|давай\w*|хорошо|ок)\b", t):
+            text = "Отлично 🌸 " + _anketa("", city).split("\n", 1)[-1]
+            db.set_setting(f"lastq:{client}", text)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
+        if re.match(r"^\W*(?:2|нет|позже|утром|потом|напишу)\b", t):
+            text = "Хорошо 🌸 Ждём вас! Напишите, когда будет удобно."
+            db.del_setting(f"lastq:{client}")
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
     # Грубость/мат: первый раз — предупреждение, второй — бот прекращает переписку (сотруднику — уведомление).
     if not from_staff and RUDE_RE.search(PRAISE_RE.sub(" ", incoming or "")):
         return _rude_reply(client, incoming, city)
@@ -2090,10 +2106,10 @@ def respond(client, incoming, from_staff=False, quote=""):
         if not from_staff and re.search(r"\d|ночью", incoming or "") else ""
     if not from_staff and "?" not in (incoming or "") and not picked and not addons and not first_closed \
             and not any(m["role"] == "assistant" for m in db.history(client, 6)):
-        text = _anketa(incoming, city)
         note = _closed_now_note(client, city)
+        text = note or _anketa(incoming, city)
         if note:
-            text = note + "\n\n" + text
+            db.set_setting(f"lastq:{client}", note)
         db.add_message(client, "assistant", text)
         return Reply(text=text, city=city)
     # ОТМЕНА заказа: «хочу отменить» → «Отменить заказ №N (…)? да / нет» → «да» → отменён, флористу — уведомление.
@@ -3092,7 +3108,9 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff and NOW_Q_RE.search(incoming or "") and not order_text:
         note = _closed_now_note(client, city, asked=True)
         if note:
-            reply.text = (note + ("\n\n" + reply.text if reply.text else "")).strip()
+            reply.text = note                  # коротко: только это, с вариантами ответа цифрой
+            reply.photos, reply.question = [], ""
+            db.set_setting(f"lastq:{client}", note)
     # Клиент назвал бюджет (хоть в первом сообщении) — дороже не показываем (кроме уже выбранного/открыток).
     if not from_staff and reply.photos and not keep_photos and not picked:
         bud = next((catalog_budget(m["content"]) for m in reversed(history)
