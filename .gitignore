@@ -4,4 +4,3 @@ __pycache__/
 .venv/
 cache/
 flowerbot.zip
-shop/secret.json
