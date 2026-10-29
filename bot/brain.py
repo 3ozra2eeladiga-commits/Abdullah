@@ -827,7 +827,7 @@ FAKE_QUESTION_RE = re.compile(
 )
 # Клиент сам просит показать букеты фотографиями — тогда код точно приложит фото, даже если модель замялась.
 SHOW_REQUEST_RE = re.compile(
-    r"кидай|скин|покаж|показыв|пришли\s+фото|давай\s+фото|присла|присыла|пришли(?:те)?\b|на ваш вкус|на твой вкус|хочу посмотрет|что есть|фото сюда|"
+    r"кидай|кидыв|скин|покаж|показыв|пришли\s+фото|давай\s+фото|присла|присыла|пришли(?:те)?\b|на ваш вкус|на твой вкус|хочу посмотрет|что есть|фото сюда|"
     r"не знаю\s*,?\s*(?:что|как(?:ой|ие|ую)|чего)|предлаг|предлож|посовету|подбер\w*\s+сам|сам[аи]?\s+(?:выбер|подбер|предлож)|без разницы|любой|любые", re.I)
 # ИИ переспрашивает, какой букет выбран, хотя выбор уже известен.
 SUMMARY_RE = re.compile(r"вс[её]\s+(?:ли\s+)?верно|провер\w*[^.?!]{0,30}(?:заказ|данн)|ваш заказ:|подвед\w*\s+итог|"
@@ -2810,12 +2810,12 @@ def respond(client, incoming, from_staff=False, quote=""):
         # Добираем ТОЛЬКО букеты (не поштучные розы по 250₽, не открытки с котиками), кроме случая,
         # когда клиент ПРЯМО СЕЙЧАС просит именно поштучно/подарки. Смотрим текущее сообщение, а не всю историю,
         # чтобы слово «открытка» из этапа сбора данных не превращало показ букетов в показ открыток.
-        bouquets_only = not re.search(
+        bouquets_only = bool(re.search(r"букет|композиц", incoming or "", re.I)) or not re.search(
             r"поштучн|штучн|\bшт\b|\d+\s*(?:роз|тюльпан|гвоздик|хризантем|гербер|пион|ромаш)|"
             r"шар|игрушк|подар|открытк|ваз|растен|горшк|сухоцвет|невест|"
             r"похорон|траур|помин|соболезн|венок|гвоздик", incoming or "", re.I)
         shown = {p["code"] for p in reply.photos}
-        if re.search(r"ещ[её]|больше|друг|закид|кида|мало|остальн|ещё варианты", incoming or "", re.I):
+        if re.search(r"ещ[её]|больше|друг|закид|кида|кидыв|мало|остальн|ещё варианты", incoming or "", re.I):
             # «Ещё варианты» — только те, что клиент ещё НЕ видел.
             shown |= set(c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c)
             shown |= set(c for c in (db.get_setting(f"seen:{client}") or "").split(",") if c)
@@ -2825,7 +2825,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                 shown.add(it["code"])
                 if len(reply.photos) >= n_show:
                     break
-        if len(reply.photos) < n_show and re.search(r"ещ[её]|больше|друг|закид|кида|мало|остальн", incoming or "", re.I):
+        if len(reply.photos) < n_show and re.search(r"ещ[её]|больше|друг|закид|кида|кидыв|мало|остальн", incoming or "", re.I):
             # Подходящие по запросу кончились — добираем любые букеты в наличии, которые клиент ещё не видел
             # (ближе к его бюджету, если он известен).
             bud = catalog_budget(query) or 0
@@ -2941,7 +2941,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                       "сегодня (попозже) или на другую дату — и я всё подберу.")
         reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
     # Открытки показываем, только когда речь об открытках; при подборе букетов — только букеты.
-    if not from_staff and reply.photos and not keep_photos and not re.search(r"открыт|конверт|карточ", incoming or "", re.I):
+    wants_cards = bool(re.search(r"открыт|конверт|карточ", incoming or "", re.I)) and not re.search(
+        r"букет|композиц|цвет|не\s+открыт|это\s+открыт", incoming or "", re.I)
+    if not from_staff and reply.photos and not keep_photos and not wants_cards:
         only_b = [p for p in reply.photos if not CARD_RE.search(p["title"])]
         if only_b or not any(not CARD_RE.search(p["title"]) for p in reply.photos):
             reply.photos = only_b
