@@ -1185,7 +1185,7 @@ def _apply_client_state(order, client, city):
         order["открытка"] = ct              # текст, который клиент подтвердил — как есть, без правок
         order["_открытка_подтверждена"] = True
     # Дата — по ПОСЛЕДНЕМУ, что сказал клиент («сегодня» → потом «ладно, завтра» → значит завтра).
-    user_msgs = [m["content"] for m in db.history(client) if m["role"] == "user"]
+    user_msgs = [m["content"] for m in db.history(client, 1000) if m["role"] == "user"]
     latest = _latest_date(user_msgs)
     if latest and not db.get_setting(f"asap:{client}"):
         order["дата"] = latest
@@ -1532,7 +1532,7 @@ def _extract_order(client, city):
                 + ". Его товары в новый заказ НЕ включай — только то, что клиент выбрал ПОСЛЕ него. "
                   "Данные получателя, адрес, телефоны можно взять из переписки.")
     try:
-        raw = llm.complete(sys, _merge_roles(db.history(client)), attempts=2)
+        raw = llm.complete(sys, _merge_roles(db.history(client, 60)), attempts=2)
     except Exception:
         return None
     m = ORDER_RE.search(raw or "")
@@ -2247,7 +2247,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # «Вы записали дату и время?» — отвечаем, ЧТО записано (из черновика заказа), и повторяем текущий вопрос.
     if not from_staff and RECORDED_Q_RE.search(incoming or ""):
         k = _known_order(client)
-        um = [m["content"] for m in db.history(client) if m["role"] == "user"]
+        um = [m["content"] for m in db.history(client, 1000) if m["role"] == "user"]
         d_ = _latest_date(um) or str(k.get("дата") or "").strip()
         t_ = _latest_time(um) or str(k.get("время") or "").strip()
         win = _delivery_window(d_, t_) if t_ else ""
@@ -2469,7 +2469,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         _apply_client_state(reply.order, client, city)
 
     # Не даём оформить заказ без адреса (при доставке), телефонов, имён и открытки — вместо заказа просим недостающее.
-    client_text = " ".join(m["content"] for m in history if m["role"] == "user")
+    # ВСЯ переписка клиента (а не последние 20 сообщений): телефоны/имена могли прийти давно — не переспрашиваем.
+    client_text = " ".join(m["content"] for m in db.history(client, 1000) if m["role"] == "user")
 
     def ask_missing(order):
         """Если в заказе чего-то не хватает — вместо заказа задаём вопрос о недостающем. True, если спросили."""
@@ -2558,7 +2559,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.question = ""
     elif already and re.search(r"имя\s+и\s+телефон|телефон", _last_bot_text(client, last_q), re.I) and len(re.findall(
             r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}",
-            " ".join(m["content"] for m in history if m["role"] == "user"))) < 2:
+            " ".join(m["content"] for m in db.history(client, 1000) if m["role"] == "user"))) < 2:
         # «Я уже отправил», но в этой переписке номеров нет (например, после перезапуска) — честно просим ещё раз.
         reply.text = ("Простите, в нашей переписке не вижу номеров 🙏 Пришлите, пожалуйста, ещё раз одним сообщением: "
                       "ваше имя и телефон, имя и телефон получателя.")
