@@ -575,6 +575,25 @@ def _hour_from_text(t):
     return h
 
 
+URGENT_MIN_HOURS = 2      # срочный заказ: доставка не раньше чем через 2 часа (сборка + оплата + дорога)
+
+
+def _too_late_today_msg(text, city):
+    """«Сегодня / срочно / пока не закроется магазин», а до закрытия меньше 2 часов — честно: сегодня не успеем."""
+    t = (text or "").lower()
+    if not re.search(r"сегодня|прямо\s+сейчас|срочно|как можно скор|побыстрее|поскорее|пока\s+не\s+закр|до\s+закрыт", t):
+        return ""
+    if re.search(r"завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b", t):
+        return ""
+    start, end = _shop_hours(city or "")
+    now = datetime.datetime.now(_MSK)
+    if now.hour + now.minute / 60 + URGENT_MIN_HOURS <= end:
+        return ""
+    where = f" ({city})" if city else ""
+    return (f"Сегодня, к сожалению, уже не успеем 🙏 Магазин{where} работает до {end:02d}:00, а на сборку и доставку "
+            f"нужно около {URGENT_MIN_HOURS} часов. Можем доставить завтра — к какому времени удобно (с {start:02d}:00)?")
+
+
 def _closed_hours_msg(hour, city):
     """Если названное время вне часов работы магазина — вежливый ответ с часами работы, иначе ""."""
     if hour is None or not city:
@@ -2675,8 +2694,9 @@ def respond(client, incoming, from_staff=False, quote=""):
         _hour_from_text(incoming) if re.search(r"\d|ночью", incoming or "") and not re.search(
             r"\d{5,}|₽|руб|тыс|бюджет|№", incoming or "", re.I) else None,
         catalog.match_city(incoming or "") or city)
-    if closed:
-        reply.text = closed
+    late = "" if (from_staff or closed) else _too_late_today_msg(incoming, catalog.match_city(incoming or "") or city)
+    if closed or late:
+        reply.text = closed or late
         reply.photos, reply.order, reply.order_raw, reply.question, reply.handoff = [], None, "", "", False
     # Клиент назвал СЕГОДНЯШНЕЕ время, которое уже прошло («сегодня утром» вечером) — сразу честно уточняем.
     elif not from_staff and _past_time_mention(incoming):
