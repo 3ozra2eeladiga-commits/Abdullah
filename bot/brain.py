@@ -800,6 +800,23 @@ def _name_from(text):
     return " ".join(w[:1].upper() + w[1:] for w in words)
 
 
+def _contacts_from_text(text):
+    """«Иван Петров 8928…, Анна Смирнова 8928…» / «Имя заказчика: …\nТелефон заказчика: …\nИмя получателя: …» →
+    {me_name, me_phone, to_name, to_phone}. Имя — перед телефоном, а если перед ним пусто — сразу после."""
+    t = text or ""
+    ms = list(PHONE_RE.finditer(t))
+    if len(ms) < 2:
+        return {}
+    p1, p2 = ms[0], ms[1]
+    before1, between, after2 = t[:p1.start()], t[p1.end():p2.start()], t[p2.end():]
+    me_name = _name_from(before1)
+    if me_name:
+        to_name = _name_from(between) or _name_from(after2)
+    else:                                           # «8928… Иван, 8928… Анна» — имена после телефонов
+        me_name, to_name = _name_from(between), _name_from(after2)
+    return {"me_name": me_name, "me_phone": p1.group(0).strip(), "to_name": to_name, "to_phone": p2.group(0).strip()}
+
+
 def _contacts(client):
     try:
         return json.loads(db.get_setting(f"contacts:{client}") or "{}")
@@ -2198,6 +2215,14 @@ def respond(client, incoming, from_staff=False, quote=""):
         m_in = CARD_TEXT_IN_RE.search(incoming or "")
         if m_in and _meaningful(next(g for g in m_in.groups() if g)):
             db.set_setting(f"wantcard_text:{client}", next(g for g in m_in.groups() if g).strip())
+    # Клиент прислал ОБА телефона (и имена) одним сообщением — в том числе исправление после «Всё верно? — Нет» —
+    # записываем как есть: заказчик — первый, получатель — второй. Новые данные заменяют старые.
+    if not from_staff and len(PHONE_RE.findall(incoming or "")) >= 2:
+        both = _contacts_from_text(incoming)
+        if both:
+            st = _contacts(client)
+            st.update({k: v for k, v in both.items() if v})
+            db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
     # Имена и телефоны — добиваемся ВСЕХ четырёх: имя и телефон заказчика, имя и телефон получателя. Клиент может
     # присылать по частям («мой телефон …», «Абдулла») — спрашиваем ровно недостающее, дальше не идём.
     if not from_staff and CONTACT_Q_RE.search(_last_bot_text(client, last_q)) and len(PHONE_RE.findall(incoming or "")) < 2 \
