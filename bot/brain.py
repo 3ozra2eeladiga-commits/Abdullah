@@ -38,6 +38,10 @@ RULES = """Ты — флорист цветочного магазина и пе
 удобно клиенту): город, дата и время, букет, доставка/самовывоз, адрес, имена и телефоны, открытка.
 Не бросай разговор на полпути: если чего-то из этого ещё не знаешь — спрашивай дальше. Подробный порядок ниже.
 
+ГРУБОСТЬ: если клиент грубит, оскорбляет тебя, магазин или цветы, хамит, унижает (даже без мата и даже другими
+словами — «ваши цветы мусор», «ты вонючка», «вы бездари» и т. п.) — ответь ТОЛЬКО меткой [ГРУБО] и больше ничего.
+Обычное недовольство без оскорблений («дорого», «не нравится этот букет», «вы мне не нравитесь») — НЕ грубость.
+
 ОДНА РЕПЛИКА ЗА РАЗ (ОЧЕНЬ ВАЖНО)
 - Пиши ТОЛЬКО одну свою реплику и останавливайся. Жди ответа клиента.
 - НЕ продолжай разговор за клиента. Не пиши строки вида «Пользователь:», «Клиент:», «Покупатель:».
@@ -560,6 +564,23 @@ def _closed_hours_msg(hour, city):
         return ""
     return (f"К сожалению, в {hour:02d}:00 доставить не получится 🙏 Магазин ({city}) работает с {start:02d}:00 до "
             f"{end:02d}:00 — доставляем в это время. Подскажите, к какому часу удобно?")
+
+
+def _rude_reply(client, incoming, city):
+    """Грубость: первый раз — предупреждение, второй — бот прекращает переписку на сутки и сообщает сотруднику."""
+    n = int(db.get_setting(f"rude:{client}") or 0) + 1
+    db.set_setting(f"rude:{client}", n)
+    if n == 1:
+        text = ("Давайте общаться уважительно 🙏 Если грубость повторится, переписку придётся остановить. "
+                "Если хотите заказать цветы — с радостью помогу.")
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
+    text = "Переписка остановлена из-за грубых сообщений."
+    db.add_message(client, "assistant", text)
+    db.pause(client, 24)
+    return Reply(text=text, city=city,
+                 question=f"🚫 Клиент грубит — бот прекратил переписку на сутки. Последнее сообщение: «{incoming}». "
+                          "/resume — включить бота обратно.")
 
 
 def _next_question(user_msgs, city, order=None):
@@ -1706,19 +1727,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"wantcard_text:{client}", next(g for g in m_in.groups() if g).strip())
     # Грубость/мат: первый раз — предупреждение, второй — бот прекращает переписку (сотруднику — уведомление).
     if not from_staff and RUDE_RE.search(incoming or ""):
-        n = int(db.get_setting(f"rude:{client}") or 0) + 1
-        db.set_setting(f"rude:{client}", n)
-        if n == 1:
-            text = ("Давайте общаться уважительно 🙏 Если грубость повторится, переписку придётся остановить. "
-                    "Если хотите заказать цветы — с радостью помогу.")
-            db.add_message(client, "assistant", text)
-            return Reply(text=text, city=city)
-        text = "Переписка остановлена из-за грубых сообщений."
-        db.add_message(client, "assistant", text)
-        db.pause(client, 24)
-        return Reply(text=text, city=city,
-                     question=f"🚫 Клиент грубит — бот прекратил переписку на сутки. Последнее сообщение: «{incoming}». "
-                              "/resume — включить бота обратно.")
+        return _rude_reply(client, incoming, city)
     # Первое сообщение клиента — отвечаем анкетой: сразу все главные вопросы, чтобы потом не переспрашивать.
     first_closed = _closed_hours_msg(_hour_from_text(incoming), catalog.match_city(incoming or "") or city) \
         if not from_staff and re.search(r"\d|ночью", incoming or "") else ""
@@ -2094,6 +2103,10 @@ def respond(client, incoming, from_staff=False, quote=""):
     raw = llm.complete(system_prompt(history, city, picked, flower_block + up_block + addon_block, size_change,
                                      known=None if from_staff else _known_order(client)),
                        _merge_roles(history))
+    # ИИ распознал грубость, которую не поймал список слов («ваши цветы мусор», «вы бездари») — тот же порядок.
+    if not from_staff and re.search(r"\[\s*ГРУБО\s*\]", raw or "", re.I):
+        return _rude_reply(client, incoming, city)
+    raw = re.sub(r"\[\s*ГРУБО\s*\]", "", raw or "", flags=re.I)
     # ИИ выдал шаблонный отказ (ложный фильтр YandexGPT на безобидную просьбу) — не пугаем клиента, переспрашиваем.
     refused_in_order = False
     refused_offer = False
