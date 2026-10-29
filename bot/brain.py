@@ -2420,6 +2420,15 @@ def respond(client, incoming, from_staff=False, quote=""):
     # «Вопрос флористу», который на самом деле про подбор букетов — не беспокоим коллег, показываем сами.
     # ИИ хотел показать фото, но коды выдумал — фото подберёт код (с учётом бюджета).
     force_options = refused_offer or (bool(re.search(r"\[\s*(?:фото|photo)\b", raw, re.I)) and not reply.photos)
+    # ИИ перечислил букеты с номерами, которых НЕТ в каталоге («Букет №101 — 3650 ₽») — это выдумка: убираем текст
+    # и показываем настоящие букеты с фото.
+    if not from_staff and reply.text and not reply.order:
+        nums = re.findall(r"№\s*(\d{2,4})", reply.text)
+        fake = [n for n in nums if not catalog.find_by_number(n, city)]
+        if fake:
+            reply.text = "Вот ещё варианты 🌸 Какой нравится? Ответьте «этот» на фото."
+            reply.photos = [p for p in reply.photos if p in picked]
+            force_options = True
     # ИИ пообещал «сейчас подберу и отправлю фото», а фото не приложил — прикладываем сами, иначе клиент ждёт впустую.
     if not from_staff and not reply.photos and not reply.order and not order_text and city \
             and PROMISE_PHOTOS_RE.search(reply.text or ""):
@@ -2478,12 +2487,26 @@ def respond(client, incoming, from_staff=False, quote=""):
             r"шар|игрушк|подар|открытк|ваз|растен|горшк|сухоцвет|невест|"
             r"похорон|траур|помин|соболезн|венок|гвоздик", incoming or "", re.I)
         shown = {p["code"] for p in reply.photos}
+        if re.search(r"ещ[её]|больше|друг|закид|кида|мало|остальн|ещё варианты", incoming or "", re.I):
+            # «Ещё варианты» — только те, что клиент ещё НЕ видел.
+            shown |= set(c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c)
+            shown |= set(c for c in (db.get_setting(f"seen:{client}") or "").split(",") if c)
         for it in city_cat.relevant_items(query, shown, limit=MIN_OPTIONS * 2, bouquets_only=bouquets_only):
             if it["code"] not in shown:
                 reply.photos.append(it)
                 shown.add(it["code"])
                 if len(reply.photos) >= MIN_OPTIONS:
                     break
+        if len(reply.photos) < MIN_OPTIONS and re.search(r"ещ[её]|больше|друг|закид|кида|мало|остальн", incoming or "", re.I):
+            # Подходящие по запросу кончились — добираем любые букеты в наличии, которые клиент ещё не видел
+            # (ближе к его бюджету, если он известен).
+            bud = catalog_budget(query) or 0
+            pool = [it for it in city_cat.relevant_items("букет", shown, limit=200, bouquets_only=True)
+                    if it["code"] not in shown and it.get("images")]
+            pool.sort(key=lambda it: abs(it["price"] - bud) if bud else 0)
+            for it in pool[:MIN_OPTIONS - len(reply.photos)]:
+                reply.photos.append(it)
+                shown.add(it["code"])
     # Показ вариантов — максимум 5 фото за раз, чтобы не заваливать клиента.
     if offering and len(reply.photos) > MIN_OPTIONS:
         reply.photos = reply.photos[:MIN_OPTIONS]
@@ -2640,7 +2663,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                 if answer:
                     reply.text = f"{answer}\n\n{reply.text.replace('Спасибо 🌸 ', '', 1)}"
     if chosen and reply.photos and not keep_photos and not re.search(
-            r"друг|ещ[её]|вариант|покаж|покаж|скин|кинь|кидай|поменя|замен|не нрав|передумал", incoming or "", re.I):
+            r"друг|ещ[её]|вариант|покаж|скин|кинь|кида|закид|больше|мало|поменя|замен|не нрав|передумал", incoming or "", re.I):
         reply.photos = [p for p in reply.photos if p["code"] == chosen and p in picked]
     elif chosen and reply.photos and not keep_photos:
         db.del_setting(f"chosen:{client}")    # клиент сам попросил другие — снимаем «замок»
@@ -2661,6 +2684,11 @@ def respond(client, incoming, from_staff=False, quote=""):
             and not db.get_setting(f"site_sent:{client}") and site not in (reply.text or ""):
         reply.text = ((reply.text or "").rstrip() + f"\nВсе букеты на сайте: {site}").strip()
         db.set_setting(f"site_sent:{client}", "1")
+    # Всё, что клиент уже видел, — чтобы «ещё варианты» не повторяли показанное.
+    if not from_staff and reply.photos:
+        seen = [c for c in (db.get_setting(f"seen:{client}") or "").split(",") if c]
+        seen += [p["code"] for p in reply.photos if p["code"] not in seen]
+        db.set_setting(f"seen:{client}", ",".join(seen[-200:]))
     # Запоминаем, что показали (по порядку) — чтобы понять «давайте последний / второй вариант».
     if not from_staff and (len(reply.photos) >= 2 or (keep_photos and reply.photos)):
         db.set_setting(f"shown:{client}", ",".join(p["code"] for p in reply.photos))
