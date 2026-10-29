@@ -3292,6 +3292,16 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.text = note                  # коротко: только это, с вариантами ответа цифрой
             reply.photos, reply.question = [], ""
             db.set_setting(f"lastq:{client}", note)
+    # Самовывоз в городе с несколькими магазинами — всегда наш вопрос с цифрами (а не рассказ ИИ про улицы).
+    if not from_staff and city and not order_text and not keep_photos and not reply.order \
+            and len(_city_shops(city)) > 1 and not db.get_setting(f"pickup_shop:{client}") \
+            and (re.search(r"самовывоз|заберу|забер[её]м", incoming or "", re.I)
+                 or re.search(r"из\s+какого\s+магазин|какой\s+магазин|орджоникидзе[^.?!]{0,40}украинск", reply.text or "", re.I)):
+        shops = _city_shops(city)
+        reply.text = PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {a} ({h})" for i, (a, h) in enumerate(shops, 1)) \
+            + "\nОтветьте цифрой 🌸"
+        reply.photos, reply.question = [], ""
+        db.set_setting(f"lastq:{client}", reply.text)
     # Клиент назвал бюджет (хоть в первом сообщении) — дороже не показываем (кроме уже выбранного/открыток).
     if not from_staff and reply.photos and not keep_photos and not picked:
         bud = next((catalog_budget(m["content"]) for m in reversed(history)
