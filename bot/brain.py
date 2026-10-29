@@ -778,6 +778,8 @@ CARD_WANT_RE = re.compile(r"(?<!не\s)(?<!не)нужн\w*\s+(?:всё\s*же\s
 REASK_RE = re.compile(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|адрес|телефон|имя|фамили|открытк|дат[уа]|"
                       r"во\s+сколько|к\s+какому", re.I)
 PROMISE_PHOTOS_RE = re.compile(r"\b(?:подберу|отправлю|пришлю|скину|покажу|подкину)\b[^.!?]{0,40}(?:фото|вариант|букет)", re.I)
+OCCASION_RE = re.compile(r"рожден|юбиле|свадьб|8\s*марта|годовщ|выписк|извин|любим|маме|папе|просто\s+так|"
+                         r"выпускн|1\s*сентябр|учител|благодар|похорон|траур|соболезн", re.I)
 FAKE_SENT_RE = re.compile(r"передал\w*\s+(?:заказ\w*\s+)?флорист\w*\s+на\s+проверк|флорист\w*\s+проверит\s+наличие|заказ\w*\s+(?:уже\s+)?(?:принят|подтвержд[её]н|оформлен)",
                           re.I)
 ALREADY_RE = re.compile(r"уже\s+(?:вам\s+)?(?:ответил|написал|писал|говорил|сказал|отправил|скинул|присылал|указал)", re.I)
@@ -1102,6 +1104,10 @@ _KNOWN_Q = [  # (вопрос ИИ, как понять, что ответ уж�
     (re.compile(r"адрес", re.I),
      lambda k, um, c: (_meaningful(k.get("адрес")) and len(str(k.get("адрес"))) >= 6) or _has_address(um)
      or k.get("получение") == "самовывоз"),
+    (re.compile(r"бюджет|на\s+какую\s+сумму|сколько\s+(?:готовы|планируете)", re.I),
+     lambda k, um, c: any(catalog_budget(m) for m in um)),
+    (re.compile(r"по\s+какому\s+поводу|какой\s+повод|для\s+какого\s+случая", re.I),
+     lambda k, um, c: any(OCCASION_RE.search(m) for m in um)),
     (re.compile(r"(?:имя|фамили|телефон|номер)", re.I),
      lambda k, um, c: len(PHONE_RE.findall(" ".join(um))) >= 2),
     (re.compile(r"нужн\w*\s+ли[^.?!]{0,20}открытк|открытк\w*[^.?!]{0,25}(?:нужн|добав|хотите)|"
@@ -1514,10 +1520,12 @@ def respond(client, incoming, from_staff=False, quote=""):
     detect = f"{incoming}\n{quote}" if quote else incoming
 
     city = db.get_city(client)
+    city_new = False                 # город стал известен именно сейчас — сразу покажем букеты
     if not city and not from_staff:  # клиент мог сам назвать город или прийти по ссылке с сайта города
         city = catalog.match_city(incoming) or _city_from_url(detect)
         if city:
             db.set_city(client, city)
+            city_new = True
 
     # Вопрос о недостающем (открытка и т.п.), который в прошлый раз задал КОД вместо ответа ИИ.
     last_q = "" if from_staff else (db.get_setting(f"lastq:{client}") or "")
@@ -1808,6 +1816,10 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.add_message(client, "assistant", text)
         return Reply(text=text, photos=fresh, city=city)
     wants_photos = (not from_staff) and (bool(SHOW_REQUEST_RE.search(incoming or "")) or new_order)
+    # Букет ещё не выбран, город известен, а клиент назвал бюджет или повод — сразу варианты (не «какой бюджет?» снова).
+    if not from_staff and city and not picked and not addons and not db.get_setting(f"chosen:{client}") \
+            and (catalog_budget(incoming or "") or OCCASION_RE.search(incoming or "")) and "?" not in (incoming or ""):
+        wants_photos = True
     # Бот спросил «скинуть сюда фото или ссылку на сайт?», клиент: «тут / сюда / фото» — показываем фото.
     if not from_staff and re.search(r"^\W*(?:тут|сюда|здесь|фото|давай\w*|скинь\w*|присыла\w*|да)\W*$", incoming or "", re.I) \
             and re.search(r"скину\s+сюда|фото\s+на\s+ваш\s+вкус|сюда[^.?!]{0,30}или[^.?!]{0,30}сайт",
@@ -1818,7 +1830,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff and city and not picked and not addons and not db.get_setting(f"chosen:{client}"):
         prev_bot = next((m["content"] for m in reversed(db.history(client, 4)) if m["role"] == "assistant"), "")
         # Короткая анкета: город известен — сразу показываем букеты (дату, если не сказали, спросим потом).
-        after_anketa = ANKETA_TAIL in prev_bot
+        # Город известен (в т.ч. только что назван) — сразу к выбору букета (Абдулле так нравится).
+        after_anketa = ANKETA_TAIL in prev_bot or city_new
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
     # Срабатывает и когда выбран букет (picked), и когда клиент пишет «этот/его/такой ... побольше» без reply.
     # НО не путаем с «покажи побольше ВАРИАНТОВ» — там как раз нужно показать.
@@ -2250,9 +2263,9 @@ def respond(client, incoming, from_staff=False, quote=""):
             and not reply.photos:
         # До выбора букета: ИИ переспрашивает уже сказанные доставку/дату — убираем этот вопрос из ответа.
         um = [m["content"] for m in history if m["role"] == "user"]
-        nq = _next_question(um, city, _known_order(client))
-        kw = not re.search(r"доставка или самовывоз", nq)
-        kd = not re.search(r"дату", nq)
+        known0 = _known_order(client)
+        kw = _KNOWN_Q[0][1](known0, um, client)    # доставка/самовывоз действительно уже известны
+        kd = _KNOWN_Q[1][1](known0, um, client)    # и дата со временем
         parts = re.split(r"(?<=[.?!])\s+", reply.text.strip())
         keep = [p for p in parts if not ((kw and re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|нужна\s+ли\s+доставк|"
                                                             r"доставка\s+нужна|заед\w*[^.?!]{0,40}магазин", p, re.I))
@@ -2260,11 +2273,22 @@ def respond(client, incoming, from_staff=False, quote=""):
                                                               r"к\s+какому\s+(?:часу|времени)|какое\s+время|какая\s+дата",
                                                               p, re.I)))]
         if len(keep) != len(parts):
-            reply.text = " ".join(keep).strip() if any("?" in p for p in keep) else (
-                (" ".join(keep).strip() + " " if keep else "") +
-                ("Какой бюджет и какие цветы любите? Или сразу показать варианты 🌸"
-                 if any(f.startswith("повод") for f in _known_facts(um)) else
-                 "Подскажите, по какому поводу букет и какой бюджет? Или сразу показать варианты 🌸")).strip()
+            if any("?" in p for p in keep):
+                reply.text = " ".join(keep).strip()
+            elif city and catalog.get_city(city):
+                # Переспрашивать нечего — не «какой повод и бюджет?» по кругу, а сразу варианты.
+                bud = next((catalog_budget(m) for m in reversed(um) if catalog_budget(m)), None)
+                opts = catalog.get_city(city).relevant_items(_catalog_query(history), limit=MIN_OPTIONS * 2,
+                                                             bouquets_only=True)
+                opts = [p for p in opts if not bud or p["price"] <= bud * 1.1][:MIN_OPTIONS] or opts[:MIN_OPTIONS]
+                reply.photos = opts
+                reply.text = f"Вот варианты{f' до {bud} ₽' if bud else ''} 🌸 Какой нравится? Ответьте «этот» на фото."
+                if not db.get_setting(f"site_sent:{client}") and config.cities().get(city):
+                    reply.text += f"\nВсе букеты на сайте: {config.cities()[city]}"
+                    db.set_setting(f"site_sent:{client}", "1")
+                db.set_setting(f"shown:{client}", ",".join(p["code"] for p in opts))
+            else:
+                reply.text = ((" ".join(keep).strip() + " ") if keep else "") + "В какой город нужны цветы?"
     if chosen and not order_text and not keep_photos and not reply.order and reply.text:
         user_msgs = [m["content"] for m in history if m["role"] == "user"]
         t = " ".join(user_msgs).lower()
