@@ -350,17 +350,17 @@ def _card_pick_turn(client, incoming, last_q=""):
 MORE_RE = re.compile(r"друг|ещ[её]|остальн|не нрав|не то\b|иные|\bвсе\s+(?:открыт|конверт)", re.I)
 
 
-def _more_cards_request(client, incoming, last_q=""):
+def _more_cards_request(client, incoming, last_q="", quote=""):
     """Клиент просит показать ДРУГИЕ открытки: «покажи ещё открытки», или «другие» сразу после показа открыток."""
     t = incoming or ""
     if not MORE_RE.search(t):
         return False
-    if re.search(r"открыт|конверт|карточ", t, re.I):
+    if re.search(r"открыт|конверт|карточ", t, re.I) or CARD_RE.search(quote or ""):
         return True
     if re.search(r"букет|цвет|роз", t, re.I):
         return False                       # «выбрал другие цветы» — это про букет, а не про открытки
     # «другие» без уточнения — про открытки, только если бот только что их и предлагал.
-    return bool(re.search(r"открытки у нас платные|выбер\w*[^.?!]*открытк|ещ[её] открытки|ответьте «эту»",
+    return bool(re.search(r"открытки у нас платные|выбер\w*[^.?!]*открытк|ещ[её] открытки|друг\w* открытк|ответьте «эту»",
                           _last_bot_text(client, last_q), re.I)) and len(t) < 60
 
 
@@ -816,9 +816,12 @@ def _card_text_q(title):
     return "Что написать на открытке? Пришлите текст одним сообщением. Если ничего — «без текста» 🌸"
 
 
+# В ответ на «что написать на открытке» клиент хочет ДРУГУЮ открытку / передумал — это не текст.
+OTHER_CARD_RE = re.compile(r"друг(?:ая|ую|ие|ой|их)\b|ещ[её]\s+(?:открыт|вариант)|есть\s+ещ[её]|другие\s+вариант|"
+                           r"не\s+(?:эт[уа]|ту|та)\b|передумал|покаж\w*\s+(?:друг|ещ|открыт)|не\s+та\s+открыт", re.I)
 CARD_TEXT_AGAIN_Q = "Хорошо, какой текст напишем?"
 QUESTION_LIKE_RE = re.compile(r"\?\s*$|^\W*(?:как|когда|сколько|можно|а\s+если|где|почему|зачем|есть\s+ли|что\s+(?:если|будет|можно))\b", re.I)
-NO_TEXT_RE = re.compile(r"^\W*(?:без\s+текст\w*|без\s+надпис\w*|текст\s+не\s+нуж\w*|ничего\s+не\s+пиш\w*|не\s+надо\s+пис\w*|ничего)\W*$", re.I)
+NO_TEXT_RE = re.compile(r"^\W*(?:без\s+текст\w*|без\s+надпис\w*|текст\s+не\s+нуж\w*|ничего\s+не\s+пиш\w*|не\s+надо\s+пис\w*|ничего|ни\s*какой(?:\s+пока)?|не\s+какой(?:\s+пока)?|никак\w*\s+не\s+надо)\W*$", re.I)
 NO_CARD_AT_ALL_RE = re.compile(r"без\s+открытк|открытк\w*\s+не\s+нуж|не\s+нужн\w*\s+открытк", re.I)
 CARD_PICK_Q = "Выберите открытку — ответьте «эту» на фото. Текст «{text}» напишем на ней 🌸"
 
@@ -1575,6 +1578,11 @@ def respond(client, incoming, from_staff=False, quote=""):
     ТОЛЬКО для распознавания (какой букет), но НЕ подмешивается в сам текст для ИИ, чтобы его не путать."""
     content = f"{STAFF_PREFIX} {incoming}" if from_staff else incoming
 
+    # Ответ на фото со словами «есть ещё варианты / другие» — это НЕ выбор этого товара, а просьба показать другие.
+    quote_more = ""
+    if quote and MORE_RE.search(incoming or "") and not re.search(
+            r"\bэт(?:от|у|о|а)\b|беру|возьм|хочу\s+(?:эт|так)", incoming or "", re.I):
+        quote_more, quote = quote, ""
     # Для распознавания букета/города учитываем и цитату (на что ответил клиент).
     detect = f"{incoming}\n{quote}" if quote else incoming
 
@@ -1718,7 +1726,18 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
         go_on = None                        # текст решён — продолжаем оформление как обычно
-        if NO_CARD_AT_ALL_RE.search(t):
+        if OTHER_CARD_RE.search(t) and not NO_CARD_AT_ALL_RE.search(t):
+            # «Нет, нужна другая открытка» / «есть другие варианты?» / «передумал» — это НЕ текст открытки:
+            # выбранную открытку убираем и показываем другие (или спрашиваем, нужна ли открытка вообще).
+            saved = [c for c in (db.get_setting(f"addons:{client}") or "").split(",")
+                     if c and not (catalog.get(c) and CARD_RE.search(catalog.get(c)["title"]))]
+            db.set_setting(f"addons:{client}", ",".join(saved))
+            for k in ("cardstep", "cardtext"):
+                db.del_setting(f"{k}:{client}")
+            if not re.search(r"друг|ещ[её]|вариант|открыт|покаж", t, re.I):
+                return _card_say("Хорошо 🌸 Показать другие открытки или оформим без открытки?", "")
+            incoming = "покажи другие открытки"
+        elif NO_CARD_AT_ALL_RE.search(t):
             saved = [c for c in (db.get_setting(f"addons:{client}") or "").split(",")
                      if c and not (catalog.get(c) and CARD_RE.search(catalog.get(c)["title"]))]
             db.set_setting(f"addons:{client}", ",".join(saved))
@@ -1881,7 +1900,13 @@ def respond(client, incoming, from_staff=False, quote=""):
     if new_order:
         db.del_setting(f"chosen:{client}")
     # «Покажи другие открытки» — показываем те, что ещё НЕ показывали (а не те же самые).
-    if not from_staff and not picked and not addons and _more_cards_request(client, incoming, last_q):
+    if not from_staff and not picked and not addons and _more_cards_request(client, incoming, last_q, quote_more):
+        if OTHER_CARD_RE.search(incoming or ""):     # «нужна другая / не эта» — прежнюю открытку убираем из заказа
+            db.set_setting(f"addons:{client}", ",".join(
+                c for c in (db.get_setting(f"addons:{client}") or "").split(",")
+                if c and not (catalog.get(c) and CARD_RE.search(catalog.get(c)["title"]))))
+            for k in ("cardstep", "cardtext"):
+                db.del_setting(f"{k}:{client}")
         shown = [c for c in (db.get_setting(f"cards_shown:{client}") or "").split(",") if c]
         fresh = [c for c in catalog.cards(city, limit=1000) if c["code"] not in shown][:MIN_OPTIONS + 1]
         if fresh:
