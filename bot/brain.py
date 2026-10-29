@@ -893,7 +893,7 @@ def _phone_was_given(order_value, client_text):
     return digits[-7:] in client_digits
 
 
-PACK_Q = ("Упаковка: бесплатная ({free}) или пышная красивая — +{price} ₽? Ответьте «обычная» или «пышная» 🎀")
+PACK_Q = ("Упаковка: простая (бесплатная {free}) или пышная красивая — от {price} ₽? Ответьте «обычная» или «пышная» 🎀")
 
 
 def _pack_cfg():
@@ -1039,7 +1039,7 @@ def _order_missing(o, client_text):
     # Поштучные цветы — спрашиваем упаковку (бесплатная или пышная за доплату). Траур — не спрашиваем.
     pieces = _pieces_total(o)
     if pieces and not o.get("_упаковка_выбрана") and not re.search(r"похорон|траур|помин|кладбищ", client_text or "", re.I):
-        return PACK_Q.format(free=_pack_free(), price=_lush_price(pieces))
+        return PACK_Q.format(free=_pack_free(), price=min(int(p) for _l, p in (_pack_cfg().get("lush") or [[None, 0]])))
     return None
 
 # ИИ иногда «доигрывает» диалог за клиента. Обрезаем ответ на первой выдуманной реплике клиента.
@@ -2718,7 +2718,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                 opts = [p for p in opts if not bud or p["price"] <= bud * 1.1][:MIN_OPTIONS] or opts[:MIN_OPTIONS]
                 reply.photos = opts
                 reply.text = f"Вот варианты{f' до {bud} ₽' if bud else ''} 🌸 Какой нравится? Ответьте «этот» на фото."
-                if not db.get_setting(f"site_sent:{client}") and config.cities().get(city):
+                if not db.get_setting(f"site_sent:{client}") and config.cities().get(city) \
+                        and not re.search(r"Упаковка:|Открытку добавим|Что написать", reply.text or ""):
                     reply.text += f"\nВсе букеты на сайте: {config.cities()[city]}"
                     db.set_setting(f"site_sent:{client}", "1")
                 db.set_setting(f"shown:{client}", ",".join(p["code"] for p in opts))
@@ -2778,7 +2779,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Первый показ букетов — сразу и ссылка на сайт магазина этого города: пусть выбирает, как удобно.
     site = config.cities().get(city, "") if city else ""
     if not from_staff and site and len(reply.photos) >= 2 and not keep_photos \
-            and not db.get_setting(f"site_sent:{client}") and site not in (reply.text or ""):
+            and not db.get_setting(f"site_sent:{client}") and site not in (reply.text or "") \
+            and not re.search(r"Упаковка:|Открытку добавим|Что написать", reply.text or ""):
         reply.text = ((reply.text or "").rstrip() + f"\nВсе букеты на сайте: {site}").strip()
         db.set_setting(f"site_sent:{client}", "1")
     if count_text and len(reply.photos) >= 2:
