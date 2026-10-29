@@ -784,7 +784,7 @@ CONTACT_Q_RE = re.compile(r"имя\s+и\s+телефон|ваш\s+(?:номер\
                           r"телефон\w*\s+получател", re.I)
 _NAME_STOP = set("имя имени фамилия заказчик заказчика заказчику получатель получателя получателю мой моё мое моя "
                  "меня зовут номер телефон телефона тел это вот и а да нет мне я её ее его ей ему кому для от "
-                 "ваш ваше спасибо пожалуйста".split())
+                 "ваш ваше спасибо пожалуйста было был была будет есть такое тоже же сейчас".split())
 
 
 def _name_from(text):
@@ -1875,16 +1875,21 @@ def _order_summary(o):
         cost = "бесплатно" if price == "0" else (_rub(price) if price.isdigit() else
                                                  "стоимость доставки сообщит флорист при подтверждении")
         how = f"Доставка {when}, {o.get('адрес') or ''} — {cost}".strip()
-    who = str(o.get("получатель") or "").split(",")[0].strip()
+    def person(v):                                 # «Мария, 89911110018» — имя и телефон, чтобы клиент проверил
+        parts = [x.strip() for x in str(v or "").split(",") if x.strip()]
+        return ", ".join(parts[:2])
+    who = person(o.get("получатель"))
+    me = person(o.get("заказчик"))
     card = str(o.get("открытка") or "").strip()
     extra = []
+    if me:
+        extra.append(f"заказчик — {me}")
     if who:
         extra.append(f"получатель — {who}")
     if card and card.lower() not in ("нет", "не нужна", "-", "—"):
         extra.append("открытка без текста" if card.lower() == "без текста" else f"текст на открытке «{card}»")
     lines = ["Отлично, всё записала 🌸", ", ".join(items), how]
-    if extra:
-        t = ", ".join(extra)
+    for t in extra:                                # каждое — отдельной строкой, так легче проверить
         lines.append(t[:1].upper() + t[1:])
     try:
         total = int(o.get("сумма_товаров") or 0) + (int(price) if price.isdigit() else 0)
