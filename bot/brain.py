@@ -2193,6 +2193,14 @@ def respond(client, incoming, from_staff=False, quote=""):
             advance()
         reply.photos, reply.question = [], ""
         order_text = True
+    # Про скидки отвечаем сразу сами: сейчас скидок нет (коллег не беспокоим).
+    if not from_staff and re.search(r"скидк|скидоч|промокод|акци[яию]", incoming or "", re.I):
+        no_disc = "Сейчас скидок у нас, к сожалению, нет 🌸"
+        if reply.question and re.search(r"скидк|промокод|акци", reply.question, re.I):
+            reply.question = ""
+        if re.search(r"уточн|секунд|спрошу|узна", reply.text or "", re.I) or not re.search(r"скидок\s+нет|нет\s+скидок", reply.text or "", re.I):
+            rest = "" if re.search(r"уточн|секунд|спрошу|узна", reply.text or "", re.I) else (reply.text or "").strip()
+            reply.text = (no_disc + (" " + rest if rest else " Помогу подобрать букет под ваш бюджет — подскажите, на какую сумму ориентируетесь?")).strip()
     # «Вопрос флористу», который на самом деле про подбор букетов — не беспокоим коллег, показываем сами.
     force_options = refused_offer
     # ИИ пообещал «сейчас подберу и отправлю фото», а фото не приложил — прикладываем сами, иначе клиент ждёт впустую.
