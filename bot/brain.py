@@ -767,9 +767,12 @@ CONTACTS_Q = "Ваше имя и телефон, и имя и телефон п�
 # Клиент возмущается, что его переспрашивают: «я уже ответил / уже писал».
 CARD_TEXT_PREFIX_RE = re.compile(r"^\W*(?:текст(?:\s+(?:для|на)\s+открытк\w*)?|на\s+открытк\w*(?:\s+(?:напиш\w*|текст))?)"
                                  r"\s*[:—–-]?\s+(.+)$", re.I | re.S)
+# Текст для открытки, названный заранее: «открытка с текстом «Люблю»», «открытку, напишите: С днём рождения».
+CARD_TEXT_IN_RE = re.compile(r"открытк\w*[^«\"“]{0,40}[«\"“](.+?)[»\"”]|"
+                             r"(?:текст\w*|напиш\w*|надпис\w*)\s*(?:на\s+открытк\w*\s*)?[:—–-]\s*(.+?)(?:$|\n)", re.I)
 CARD_WANT_RE = re.compile(r"(?<!не\s)(?<!не)нужн\w*\s+(?:всё\s*же\s+|все\s*таки\s+|всё-таки\s+)?открытк|"
                           r"открытк\w*\s+(?:всё\s*же\s+|все\s*таки\s+|всё-таки\s+|тоже\s+)?нужн|хочу\s+(?:\w+\s+)?открытк|"
-                          r"давай\w*\s+(?:[\w-]+\s+)?открытк|добав\w*\s+(?:[\w-]+\s+)?открытк", re.I)
+                          r"давай\w*\s+(?:[\w-]+\s+)?открытк|добав\w*\s+(?:[\w-]+\s+)?открытк|(?:\bи|\bс|плюс|\+)\s+открытк", re.I)
 REASK_RE = re.compile(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|адрес|телефон|имя|фамили|открытк|дат[уа]|"
                       r"во\s+сколько|к\s+какому", re.I)
 FAKE_SENT_RE = re.compile(r"передал\w*\s+(?:заказ\w*\s+)?флорист\w*\s+на\s+проверк|флорист\w*\s+проверит\s+наличие|заказ\w*\s+(?:уже\s+)?(?:принят|подтвержд[её]н|оформлен)",
@@ -1088,7 +1091,8 @@ def _remember_sent_items(order, client):
 
 
 def _clear_client_state(client):
-    for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep"):
+    for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep",
+              "wantcard", "wantcard_text"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -1467,6 +1471,13 @@ def respond(client, incoming, from_staff=False, quote=""):
         it0 = (picked or addons)[0]
         content = f"{incoming} — про «{it0['title']}» ({it0['price']} ₽)"
     db.add_message(client, "user", content)
+    # Клиент сам сказал «нужна открытка» (хоть в первом сообщении) — запоминаем, чтобы потом не спрашивать
+    # «открытку добавим?», а сразу предложить выбрать. Текст для неё, если назвал, — тоже.
+    if not from_staff and CARD_WANT_RE.search(incoming or "") and not NO_CARD_AT_ALL_RE.search(incoming or ""):
+        db.set_setting(f"wantcard:{client}", "1")
+        m_in = CARD_TEXT_IN_RE.search(incoming or "")
+        if m_in and _meaningful(next(g for g in m_in.groups() if g)):
+            db.set_setting(f"wantcard_text:{client}", next(g for g in m_in.groups() if g).strip())
     # Первое сообщение клиента — отвечаем анкетой: сразу все главные вопросы, чтобы потом не переспрашивать.
     if not from_staff and "?" not in (incoming or "") and not picked and not addons \
             and not any(m["role"] == "assistant" for m in db.history(client, 6)):
@@ -1568,8 +1579,9 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.add_message(client, "assistant", text)
         return Reply(text=text, photos=photos, city=city)
     # Клиент передумал: «всё-таки нужна открытка» после «без открытки» — снимаем отказ и показываем открытки.
+    # Сразу показываем открытки, только если букет уже выбран; иначе просто запомнили желание (выше).
     want_card = (not from_staff and not addons and not NO_CARD_AT_ALL_RE.search(incoming or "")
-                 and bool(CARD_WANT_RE.search(incoming or "")))
+                 and bool(CARD_WANT_RE.search(incoming or "")) and bool(db.get_setting(f"chosen:{client}")))
     if want_card and db.get_setting(f"nocard:{client}"):
         db.del_setting(f"nocard:{client}")
         db.clear_pending_order(client)
@@ -1785,7 +1797,14 @@ def respond(client, incoming, from_staff=False, quote=""):
         if not miss:
             return False
         card_photos = []
-        if miss == CARD_ASK_Q:
+        if miss == CARD_ASK_Q and not from_staff and db.get_setting(f"wantcard:{client}"):
+            # Клиент уже сказал, что открытка нужна, — не спрашиваем «добавим?», а сразу выбор.
+            txt = db.get_setting(f"wantcard_text:{client}") or ""
+            card_photos = catalog.cards(city, limit=5, text=txt or None)
+            _remember_cards(client, card_photos)
+            db.set_setting(f"shown:{client}", ",".join(c["code"] for c in card_photos))
+            miss = CARD_PICK_Q.format(text=txt) if txt else "Вы хотели открытку — выберите, ответьте «эту» на фото 🌸"
+        elif miss == CARD_ASK_Q:
             card_photos = catalog.cards(city, limit=5)       # сразу показываем разные варианты, а не одну
             if not from_staff:
                 _remember_cards(client, card_photos)
@@ -2095,7 +2114,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                              r"(?:имя|фамили|телефон|номер)[^.?!]{0,40}(?:получател|заказчик|ваш)", reply.text, re.I)
         asks_card = re.search(r"открытк", reply.text, re.I) and "?" in reply.text \
             and not SUMMARY_RE.search(reply.text) and (
-            db.get_setting(f"nocard:{client}") or db.get_setting(f"cardtext:{client}"))
+            db.get_setting(f"nocard:{client}") or db.get_setting(f"cardtext:{client}")
+            or (db.get_setting(f"wantcard:{client}")      # сам просил открытку, а ИИ спрашивает «нужна ли»
+                and re.search(r"нужн\w*\s+ли[^.?!]{0,20}открытк|открытк\w*[^.?!]{0,20}(?:нужн|добав|хотите)", reply.text, re.I)))
         reask = ((asks_who and len(PHONE_RE.findall(t)) >= 2) or asks_card
                  or (asks_addr and _has_address(user_msgs) and not (asks_way and not known_way)
                      and not (asks_when and not known_when))
