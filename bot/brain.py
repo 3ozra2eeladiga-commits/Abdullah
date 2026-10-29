@@ -933,6 +933,9 @@ CARD_WANT_RE = re.compile(r"(?<!не\s)(?<!не)нужн\w*\s+(?:всё\s*же\s
                           r"давай\w*\s+(?:[\w-]+\s+)?открытк|добав\w*\s+(?:[\w-]+\s+)?открытк|(?:\bи|\bс|плюс|\+)\s+открытк|"
                           r"открытк\w*\s+(?:у\s+вас\s+)?есть|есть\s+(?:ли\s+)?(?:у\s+вас\s+)?открытк|какие\s+(?:есть\s+)?открытк|"
                           r"покаж\w*\s+открытк|скин\w*\s+открытк", re.I)
+# «Можно заменить подсолнух на розы?», «поменяйте хризантемы на гвоздики», «вместо лилий — розы»
+REPLACE_RE = re.compile(r"(?:замен|поменя)\w*\s+(?:\w+\s+)?([а-яё]+)\s+на\s+([а-яё]+(?:\s+[а-яё]+)?)|"
+                        r"вместо\s+([а-яё]+)\s*[—–-]?\s*(?:поставить|сделать|добавить|положить)?\s*([а-яё]+)", re.I)
 # «Хочу поменять открытку», «другую открытку», «замените открытку»
 CHANGE_CARD_RE = re.compile(r"(?:помен|смен|замен|друг)\w*\s+(?:\w+\s+)?(?:открытк|конверт)|"
                             r"(?:открытк|конверт)\w*\s+(?:\w+\s+)?(?:помен|смен|замен|друг)", re.I)
@@ -1233,6 +1236,11 @@ def _apply_client_state(order, client, city):
             order["адрес"] = shops[0][0]
             order["город"] = city
             order["_магазин_выбран"] = True
+    rn = db.get_setting(f"replace_note:{client}") or ""
+    if rn:
+        c1 = str(order.get("комментарий") or "").strip()
+        if rn not in c1:
+            order["комментарий"] = (c1 + "; " if c1 else "") + rn
     note = db.get_setting(f"florist_note:{client}") or ""
     if note:
         order["_время_уточнит_флорист"] = True
@@ -1539,7 +1547,7 @@ def _finish_addon(client, city, order_id):
 
 def _clear_client_state(client):
     for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep",
-              "wantcard", "wantcard_text", "photo_item", "pack", "asap", "lateask", "florist_note", "pickup_shop"):
+              "wantcard", "wantcard_text", "photo_item", "pack", "asap", "lateask", "florist_note", "pickup_shop", "replace_note"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -2749,6 +2757,29 @@ def respond(client, incoming, from_staff=False, quote=""):
         # ИИ сам назвал цену доставки («бесплатно от 1500», «250 ₽») — убираем: цену называет флорист.
         reply.text = re.sub(r"[^.!?\n]*доставк[^.!?\n]*(?:бесплат|\d+\s*(?:₽|руб))[^.!?\n]*[.!?]?\s*", "",
                             reply.text, flags=re.I).strip() or reply.text
+    # «Можно заменить подсолнух на розы?» — если нужные цветы есть в каталоге, соглашаемся сами (флористу — пометка
+    # в заказ). Если таких цветов в каталоге нет — спрашиваем флориста (вопрос с кнопками «Да / Нет / Другое»).
+    m_rep = None if from_staff else REPLACE_RE.search(incoming or "")
+    if m_rep:
+        old_w = (m_rep.group(1) or m_rep.group(3) or "").strip()
+        new_w = (m_rep.group(2) or m_rep.group(4) or "").strip()
+        canon = next((k for k, pat in FLOWERS.items() if pat.search(new_w)), None)
+        old_is_flower = any(pat.search(old_w) for pat in FLOWERS.values())
+        if old_w and len(new_w) >= 3 and (old_is_flower or canon) \
+                and not re.search(r"адрес|врем|дат|открытк|букет|телефон|получател|упаковк", old_w + " " + new_w, re.I):
+            pieces, bouq = catalog.find_by_flower(FLOWERS[canon], city, limit=3) if canon else ([], [])
+            if pieces or bouq:
+                note = f"Замена: {old_w} → {new_w}"
+                notes = [n for n in (db.get_setting(f"replace_note:{client}") or "").split("; ") if n]
+                if note not in notes:
+                    notes.append(note)
+                db.set_setting(f"replace_note:{client}", "; ".join(notes))
+                reply.text = f"Да, можно 🌸 Заменим {old_w} на {new_w} — флорист учтёт при сборке."
+                reply.question = ""
+            else:
+                reply.text = f"Уточню у флориста, можно ли заменить {old_w} на {new_w}, — она скоро ответит 🌸"
+                reply.question = f"Клиент просит заменить {old_w} на {new_w}. Можно?"
+            reply.photos = [] if not keep_photos else reply.photos
     # Про скидки отвечаем сразу сами: сейчас скидок нет (коллег не беспокоим).
     if not from_staff and re.search(r"скидк|скидоч|промокод|акци[яию]", incoming or "", re.I):
         no_disc = "Сейчас скидок у нас, к сожалению, нет 🌸"
@@ -3006,7 +3037,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                 reply.photos = opts
                 reply.text = f"Вот варианты{f' до {bud} ₽' if bud else ''} 🌸 Какой нравится? Ответьте «этот» на фото."
                 if not db.get_setting(f"site_sent:{client}") and config.cities().get(city) \
-                        and not re.search(r"Упаковка:|Открытку добавим|Что написать", reply.text or ""):
+                        and not re.search(r"Упаковка:|Открытку добавим|Что написать|Заменим|Уточню у флориста", reply.text or ""):
                     reply.text += f"\nВсе букеты на сайте: {config.cities()[city]}"
                     db.set_setting(f"site_sent:{client}", "1")
                 db.set_setting(f"shown:{client}", ",".join(p["code"] for p in opts))
@@ -3067,7 +3098,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     site = config.cities().get(city, "") if city else ""
     if not from_staff and site and len(reply.photos) >= 2 and not keep_photos \
             and not db.get_setting(f"site_sent:{client}") and site not in (reply.text or "") \
-            and not re.search(r"Упаковка:|Открытку добавим|Что написать", reply.text or ""):
+            and not re.search(r"Упаковка:|Открытку добавим|Что написать|Заменим|Уточню у флориста", reply.text or ""):
         reply.text = ((reply.text or "").rstrip() + f"\nВсе букеты на сайте: {site}").strip()
         db.set_setting(f"site_sent:{client}", "1")
     if count_text and len(reply.photos) >= 2:

@@ -169,7 +169,7 @@ def clear_history(client):
     _exec("DELETE FROM settings WHERE key IN (?,?)", (f"rude:{client}", f"pack:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?)", (f"seen:{client}", f"asap:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?)", (f"lateask:{client}", f"florist_note:{client}"))
-    _exec("DELETE FROM settings WHERE key=?", (f"pickup_shop:{client}",))
+    _exec("DELETE FROM settings WHERE key IN (?,?)", (f"pickup_shop:{client}", f"replace_note:{client}"))
 
 
 def set_city(client, city):

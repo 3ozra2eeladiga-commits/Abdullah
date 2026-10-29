@@ -203,8 +203,19 @@ def deliver(client, text, from_staff=False, quote=""):
         if reply.staff_note:                     # дополнение к отправленному заказу, отмена и т.п.
             telegram_bot.notify_staff_order(client, reply.staff_photos, f"{reply.staff_note}\n{_label(client)}")
         if reply.question:
-            telegram_bot.notify_staff(client, f"❓ ВОПРОС ОТ БОТА\n{_label(client)}\n\n{reply.question}\n\n"
-                                              "Ответьте на это сообщение — бот передаст ответ клиенту.")
+            if reply.question.rstrip().endswith("?"):
+                # Вопрос флористу — с кнопками «Да / Нет / Другое», чтобы ответить в одно касание.
+                qid = int(db.get_setting("q_seq") or 0) + 1
+                db.set_setting("q_seq", qid)
+                db.set_setting(f"q:{qid}", json.dumps({"client": client, "q": reply.question}, ensure_ascii=False))
+                telegram_bot.notify_staff(client, f"❓ ВОПРОС ОТ БОТА\n{_label(client)}\n\n{reply.question}\n\n"
+                                                  "Нажмите кнопку или ответьте на это сообщение — бот передаст клиенту.",
+                                          buttons=[[{"text": QUESTION_ACTIONS["yes"], "callback_data": f"q:yes:{qid}"},
+                                                    {"text": QUESTION_ACTIONS["no"], "callback_data": f"q:no:{qid}"}],
+                                                   [{"text": QUESTION_ACTIONS["other"], "callback_data": f"q:other:{qid}"}]])
+            else:
+                telegram_bot.notify_staff(client, f"❓ ВОПРОС ОТ БОТА\n{_label(client)}\n\n{reply.question}\n\n"
+                                                  "Ответьте на это сообщение — бот передаст ответ клиенту.")
         if reply.handoff:
             db.pause(client, 24)
             telegram_bot.notify_staff(client, f"🙋 Клиент просит живого сотрудника ({_label(client)}).\n"
@@ -224,6 +235,35 @@ CHECK_ACTIONS = {
 
 def _check_buttons(order_id, actions=("ok", "no", "other")):
     return [[{"text": CHECK_ACTIONS[a][0], "callback_data": f"chk:{a}:{order_id}"}] for a in actions]
+
+
+QUESTION_ACTIONS = {"yes": "✅ Да", "no": "❌ Нет", "other": "✍️ Другое — отвечу сам"}
+
+
+def on_question(qid, action):
+    """Флорист нажал кнопку под вопросом бота. Передаём ответ клиенту. Возвращает текст для флориста."""
+    try:
+        data = json.loads(db.get_setting(f"q:{qid}") or "{}")
+    except ValueError:
+        data = {}
+    client, q = data.get("client"), (data.get("q") or "").strip()
+    if not client or action not in QUESTION_ACTIONS:
+        return "Вопрос не найден."
+    if db.get_setting(f"q_done:{qid}"):
+        return "На этот вопрос уже ответили."
+    db.set_setting(f"q_done:{qid}", action)
+    if action == "yes":
+        text = f"Уточнила у флориста: «{q}» — да, можно ✅🌸"
+    elif action == "no":
+        text = f"Уточнила у флориста: «{q}» — к сожалению, нет 🙏 Можем подобрать другой вариант."
+    else:
+        text = "Флорист посмотрит и скоро напишет вам сама 🌸"
+    with _client_locks[client]:
+        _send_text(client, text)
+        db.add_message(client, "assistant", text)
+    if action == "other":
+        telegram_bot.notify_staff(client, f"✍️ Напишите клиенту ответ на вопрос «{q}» — ответом на это сообщение.")
+    return f"{QUESTION_ACTIONS[action]} — клиенту отправлено."
 
 
 def on_check(order_id, action):
@@ -497,7 +537,8 @@ def _disable_windows_quick_edit():
 def main():
     _disable_windows_quick_edit()
     catalog.refresh()
-    telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button)
+    telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button,
+                       on_question=on_question)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
 

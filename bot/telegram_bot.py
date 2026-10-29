@@ -327,13 +327,15 @@ def _handle_business(update, deliver):
 
 
 def _handle_callback(cq, on_check):
-    """Сотрудник нажал кнопку: под заявкой (chk:<действие>:<номер заказа>) или под фото клиента (ph:…:<номер>)."""
+    """Сотрудник нажал кнопку: под заявкой (chk:<действие>:<номер заказа>), под фото клиента (ph:…:<номер>)
+    или под вопросом бота (q:yes|no|other:<номер вопроса>)."""
     user_id = cq.get("from", {}).get("id")
     if not config.is_staff(user_id):
         call("answerCallbackQuery", callback_query_id=cq["id"], text="Нет доступа")
         return
     parts = (cq.get("data") or "").split(":")
-    handler = {"chk": on_check, "ph": _hooks.get("on_photo_button")}.get(parts[0]) if len(parts) == 3 else None
+    handler = {"chk": on_check, "ph": _hooks.get("on_photo_button"),
+               "q": _hooks.get("on_question")}.get(parts[0]) if len(parts) == 3 else None
     if not handler or not parts[2].isdigit():
         call("answerCallbackQuery", callback_query_id=cq["id"])
         return
@@ -372,8 +374,8 @@ def run_polling(deliver, on_check):
             time.sleep(5)
 
 
-def start(deliver, on_check, on_photo=None, on_photo_button=None):
-    _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button)
+def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None):
+    _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return
