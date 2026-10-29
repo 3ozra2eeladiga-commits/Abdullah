@@ -781,6 +781,8 @@ CONTACTS_Q = ("Напишите, пожалуйста, одним сообщен
               "• имя и телефон получателя\n"
               "Например: Иван, 8 928 111-22-33; получатель Анна, 8 928 444-55-66")
 # Клиент возмущается, что его переспрашивают: «я уже ответил / уже писал».
+CARD_TEXT_PREFIX_RE = re.compile(r"^\W*(?:текст(?:\s+(?:для|на)\s+открытк\w*)?|на\s+открытк\w*(?:\s+(?:напиш\w*|текст))?)"
+                                 r"\s*[:—–-]?\s+(.+)$", re.I | re.S)
 FAKE_SENT_RE = re.compile(r"передал\w*\s+(?:заказ\w*\s+)?флорист\w*\s+на\s+проверк|заказ\w*\s+(?:уже\s+)?(?:принят|подтвержд[её]н|оформлен)",
                           re.I)
 ALREADY_RE = re.compile(r"уже\s+(?:вам\s+)?(?:ответил|написал|писал|говорил|сказал|отправил|скинул|присылал|указал)", re.I)
@@ -1438,6 +1440,9 @@ def respond(client, incoming, from_staff=False, quote=""):
     card_remind = False
     if card_step:
         t = (incoming or "").strip()
+        m0 = CARD_TEXT_PREFIX_RE.search(t)
+        if m0 and not re.match(r"не\s+(?:нуж|надо)|без\b", m0.group(1).strip(), re.I):
+            t = m0.group(1).strip()             # «Текст: …» — сам текст без слова «текст»
         def _card_say(text, step):
             db.set_setting(f"cardstep:{client}", step)
             db.set_setting(f"lastq:{client}", text)
@@ -1473,6 +1478,24 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.del_setting(f"cardstep:{client}")
             db.clear_pending_order(client)  # итог покажем заново — уже с открыткой
             incoming = go_on
+    # «Текст: ты крутой» / «на открытке напишите …» — это текст открытки, а не болтовня.
+    m_ct = None if (from_staff or picked or addons) else CARD_TEXT_PREFIX_RE.search(incoming or "")
+    if m_ct and m_ct.group(1).strip() and not re.match(r"не\s+(?:нуж|надо)|без\b", m_ct.group(1).strip(), re.I):
+        txt = m_ct.group(1).strip()
+        has_card0 = any(catalog.get(c) and CARD_RE.search(catalog.get(c)["title"])
+                        for c in (db.get_setting(f"addons:{client}") or "").split(",") if c)
+        if has_card0:
+            text = CARD_TEXT_CONFIRM_Q.format(text=txt)
+            db.set_setting(f"cardstep:{client}", "confirm:" + txt)
+            photos = []
+        else:                                    # открытку ещё не выбрали — сначала выбор, текст запомним
+            photos = catalog.cards(city, limit=5, text=txt)
+            _remember_cards(client, photos)
+            db.set_setting(f"shown:{client}", ",".join(c["code"] for c in photos))
+            text = CARD_PICK_Q.format(text=txt)
+        db.set_setting(f"lastq:{client}", text)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, photos=photos, city=city)
     # «Да, нужна открытка / нужен текст», а открытка ещё не выбрана — сначала выбор открытки (с фото), потом текст.
     has_card = any(catalog.get(c) and CARD_RE.search(catalog.get(c)["title"])
                    for c in (db.get_setting(f"addons:{client}") or "").split(",") if c)
