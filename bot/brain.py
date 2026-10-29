@@ -356,7 +356,11 @@ def _more_cards_request(client, incoming, last_q=""):
         return False
     if re.search(r"открыт|конверт|карточ", t, re.I):
         return True
-    return bool(re.search(r"открыт", _last_bot_text(client, last_q), re.I)) and len(t) < 60
+    if re.search(r"букет|цвет|роз", t, re.I):
+        return False                       # «выбрал другие цветы» — это про букет, а не про открытки
+    # «другие» без уточнения — про открытки, только если бот только что их и предлагал.
+    return bool(re.search(r"открытки у нас платные|выбер\w*[^.?!]*открытк|ещ[её] открытки|ответьте «эту»",
+                          _last_bot_text(client, last_q), re.I)) and len(t) < 60
 
 
 def _remember_cards(client, cards):
@@ -699,6 +703,9 @@ CONFIRM_YES_RE = re.compile(r"\b(да|ага|угу|верно|правильн\
 # Клиент ответил на итог просто «нет» — не повторяем тот же итог, а спрашиваем, что исправить.
 BARE_NO_RE = re.compile(r"^\W*(?:нет|не\s*верно|неверно|неправильно|не\s+так|не\s+совсем|не\s+то)\W*$", re.I)
 # Клиент после оформленного заказа хочет ЕЩЁ один, новый заказ.
+# Клиент передумал: хочет ДРУГОЙ букет вместо выбранного («я выбрал другие цветы», «поменяйте букет»).
+CHANGE_BOUQUET_RE = re.compile(r"(?:друг|ин)\w*\s+(?:\w+\s+)?(?:букет|цвет)|(?:поменя|замен|смен)\w*\s+(?:\w+\s+)?букет|"
+                               r"не\s+(?:тот|этот)\s+букет|выбрал\w*\s+друг", re.I)
 NEW_ORDER_RE = re.compile(r"ещ[её]\s+(?:\w+\s+)?(?:купить|заказать|букет|заказ|цвет)|нов\w+\s+заказ|"
                           r"хочу\s+ещ[её]|друг\w+\s+букет|ещ[её]\s+один", re.I)
 CORRECTION_RE = re.compile(r"\bнет\b|\bне\b|поменя|измен|друг|ошиб|неправильн|не так|а не", re.I)
@@ -1329,6 +1336,26 @@ def respond(client, incoming, from_staff=False, quote=""):
     # После оформленного заказа клиент хочет ещё один — это НОВЫЙ заказ: старый букет не держим, показываем варианты.
     new_order = (not from_staff and not picked and not addons and db.has_order(client)
                  and bool(NEW_ORDER_RE.search(incoming or "")))
+    # Передумал насчёт букета (до или после итога) — прежний букет из заказа убираем, показываем другие.
+    change = (not from_staff and not picked and not addons and not new_order
+              and bool(db.get_pending_order(client) or db.get_setting(f"chosen:{client}"))
+              and bool(CHANGE_BOUQUET_RE.search(incoming or "")))
+    if change:
+        pend = db.get_pending_order(client) or {}
+        old = [it for it in pend.get("товары") or [] if isinstance(it, dict)
+               and not catalog.is_addon(catalog.get(str(it.get("код") or "").lower(), city) or {"code": "", "title": str(it.get("название") or "")}, city)]
+        ch = db.get_setting(f"chosen:{client}")
+        if ch and not any(str(it.get("код") or "").lower() == ch for it in old):
+            old.append({"код": ch})
+        try:
+            prev = json.loads(db.get_setting(f"prev_items:{client}") or "[]")
+        except ValueError:
+            prev = []
+        prev += [{"code": str(it.get("код") or "").strip().lower(), "title": str(it.get("название") or "").strip().lower()}
+                 for it in old]
+        db.set_setting(f"prev_items:{client}", json.dumps(prev, ensure_ascii=False))
+        db.clear_pending_order(client)
+        new_order = True
     if new_order:
         db.del_setting(f"chosen:{client}")
     # «Покажи другие открытки» — показываем те, что ещё НЕ показывали (а не те же самые).
@@ -1616,7 +1643,7 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     # Если бот перечислил товары с ценами (есть «₽») и это не этап заказа — это показ вариантов.
     # Тогда код сам прикладывает фото (минимум 5), даже если модель забыла метки [ФОТО] или прислала только текст.
-    offering = after_anketa or (("₽" in (reply.text or "")) or force_options or wants_photos) \
+    offering = after_anketa or new_order or (("₽" in (reply.text or "")) or force_options or wants_photos) \
         and not is_order_step and not picked and not size_change and not order_text and not up_turn \
         and not keep_photos and not addons
     city_cat = catalog.get_city(city)
@@ -1648,6 +1675,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                     if m["role"] == "user" and catalog_budget(m["content"])), None)
         reply.text = (f"Спасибо, всё записала 🌸 Вот варианты{f' до {bud} ₽' if bud else ''} — какой нравится? "
                       "Можно ответить на фото «этот» или написать цену.")
+    elif new_order and len(reply.photos) >= 2:
+        reply.text = ("Конечно 🌸 Вот другие варианты — какой нравится? Можно ответить на фото «этот». "
+                      "Если хочется другого — подскажите цвет или бюджет.")
     elif wants_photos and not picked and len(reply.photos) >= 2 and "₽" not in (reply.text or "") \
             and not keep_photos and not order_text:
         # Клиент просил «предложите / не знаю что выбрать» — текст про показанные фото, а не новые вопросы.
