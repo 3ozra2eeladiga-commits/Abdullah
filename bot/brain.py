@@ -378,13 +378,13 @@ ORDINALS = [(r"предпоследн", -2), (r"последн", -1), (r"пер�
 ORDINAL_RE = re.compile(
     r"\b(предпоследн(?:ий|яя|ее|юю|его)|последн(?:ий|яя|ее|юю|его)|перв(?:ый|ая|ое|ую|ого)|втор(?:ой|ая|ое|ую|ого)|"
     r"трет(?:ий|ья|ье|ью|ьего)|четв[её]рт(?:ый|ая|ое|ую|ого)|пят(?:ый|ая|ое|ую|ого)|шест(?:ой|ая|ое|ую|ого))\b"
-    r"(?!\s+(?:раз|половин|числ|день|дня|час|мая|неделе|недел))", re.I)
+    r"(?!\s+(?:раз|половин|числ|день|дня|час|мая|неделе|недел|этаж|подъезд|дом|кварт|кв|корпус|строен|улиц|переул))", re.I)
 
 
 def _picked_by_ordinal(client, incoming, city):
     t = incoming or ""
     m = ORDINAL_RE.search(t)
-    if not m or not (len(t) < 50 or re.search(r"вариант|букет|фото|композиц|открытк|давай|беру|хочу|нрав", t, re.I)):
+    if not m or _has_address([t]) or not (len(t) < 50 or re.search(r"вариант|букет|фото|композиц|открытк|давай|беру|хочу|нрав", t, re.I)):
         return []
     shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
     word = m.group(1).lower()
@@ -781,6 +781,8 @@ CONTACTS_Q = ("Напишите, пожалуйста, одним сообщен
               "• имя и телефон получателя\n"
               "Например: Иван, 8 928 111-22-33; получатель Анна, 8 928 444-55-66")
 # Клиент возмущается, что его переспрашивают: «я уже ответил / уже писал».
+FAKE_SENT_RE = re.compile(r"передал\w*\s+(?:заказ\w*\s+)?флорист\w*\s+на\s+проверк|заказ\w*\s+(?:уже\s+)?(?:принят|подтвержд[её]н|оформлен)",
+                          re.I)
 ALREADY_RE = re.compile(r"уже\s+(?:вам\s+)?(?:ответил|написал|писал|говорил|сказал|отправил|скинул|присылал|указал)", re.I)
 
 
@@ -1471,6 +1473,22 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.del_setting(f"cardstep:{client}")
             db.clear_pending_order(client)  # итог покажем заново — уже с открыткой
             incoming = go_on
+    # «Да, нужна открытка / нужен текст», а открытка ещё не выбрана — сначала выбор открытки (с фото), потом текст.
+    has_card = any(catalog.get(c) and CARD_RE.search(catalog.get(c)["title"])
+                   for c in (db.get_setting(f"addons:{client}") or "").split(",") if c)
+    if not from_staff and not picked and not addons and not has_card and not card_step \
+            and re.search(r"открытк", _last_bot_text(client, last_q), re.I) \
+            and re.search(r"^\W*да\b|нуж\w*\s+(?:и\s+)?(?:текст|открытк)|(?:текст|открытк)\w*\s+нуж|хочу\s+открытк", incoming or "", re.I) \
+            and not NO_CARD_RE.search(incoming or ""):
+        cards = catalog.cards(city, limit=5)
+        if cards:
+            _remember_cards(client, cards)
+            db.set_setting(f"shown:{client}", ",".join(c["code"] for c in cards))
+            text = ("Отлично 🌸 Выберите открытку — нажмите на фото и ответьте «эту». "
+                    "После этого напишем на ней ваш текст.")
+            db.set_setting(f"lastq:{client}", text)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, photos=cards, city=city)
     # Клиент ответил «нет» на итог «Всё верно?» — не повторяем итог, спрашиваем, что поправить.
     if not from_staff and db.get_pending_order(client) and BARE_NO_RE.search(incoming or ""):
         text = "Хорошо, поправим 🌸 Напишите, пожалуйста, что изменить — букет, дату и время, адрес или получателя?"
@@ -1784,6 +1802,15 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.photos = []
             order_text = True
 
+    # ИИ сам написал «передала флористу / заказ принят», хотя заказ в этот раз НЕ уходил — это неправда клиенту.
+    # Ведём оформление кодом: итог или вопрос о недостающем.
+    if not from_staff and not reply.order and not order_text and FAKE_SENT_RE.search(reply.text or ""):
+        if db.get_setting(f"ocheck:{client}"):
+            reply.text = "Заказ сейчас на проверке у флориста — как только проверит наличие, сразу напишу 🌸"
+        else:
+            advance()
+        reply.photos, reply.question = [], ""
+        order_text = True
     # «Вопрос флористу», который на самом деле про подбор букетов — не беспокоим коллег, показываем сами.
     force_options = refused_offer
     if reply.question and FAKE_QUESTION_RE.search(reply.question):
