@@ -217,10 +217,11 @@ def deliver(client, text, from_staff=False, quote=""):
 CHECK_ACTIONS = {
     "ok": ("✅ Всё верно", "Всё в наличии, заказ подтверждён 🌸 Сейчас пришлём ссылку на оплату."),
     "no": ("❌ Что-то не в наличии", "Кое-чего из заказа сейчас нет 🙏 Флорист скоро напишет и предложит замену."),
+    "other": ("✍️ Другое — отвечу сам", "Флорист ответит вам в ближайшее время 🌸"),
 }
 
 
-def _check_buttons(order_id, actions=("ok", "no")):
+def _check_buttons(order_id, actions=("ok", "no", "other")):
     return [[{"text": CHECK_ACTIONS[a][0], "callback_data": f"chk:{a}:{order_id}"}] for a in actions]
 
 
@@ -239,11 +240,16 @@ def on_check(order_id, action):
         db.add_message(client, "assistant", text)
         db.set_setting(f"ostatus:{order_id}", action)
         db.del_setting(f"ocheck:{client}")
-        if action == "no":
+        if action in ("no", "other"):
             db.pause(client, config.HUMAN_PAUSE_HOURS)    # дальше с клиентом говорит флорист, бот не мешает
     if action == "ok":
         telegram_bot.notify_staff(client, f"✅ Заявка №{order_id} подтверждена, клиенту написали.\n"
                                           "Отправьте ссылку на оплату — ответом на это сообщение.")
+    elif action == "other":
+        telegram_bot.notify_staff(client, f"✍️ Заявка №{order_id}: клиенту написали, что вы скоро ответите.\n"
+                                          "Напишите клиенту сами (в чате или ответом на это сообщение). "
+                                          f"Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; "
+                                          "/resume ответом на это сообщение — включить бота.")
     else:
         telegram_bot.notify_staff(client, f"❌ Заявка №{order_id}: клиенту написали, что чего-то нет в наличии и "
                                           "флорист скоро свяжется.\nНапишите клиенту сами (в чате или ответом на это "
