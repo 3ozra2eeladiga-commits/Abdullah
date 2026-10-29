@@ -932,6 +932,11 @@ def _fill_order(order, city):
         order["сумма_товаров"] = sum(int(x.get("сумма") or 0) for x in order["товары"]) + extra
     except (TypeError, ValueError):
         pass
+    if not _meaningful(order.get("город")) and city:
+        order["город"] = city                    # город клиента известен — иначе доставка вышла бы «уточнят»
+    if order.get("адрес"):                       # «подъезд —, этаж —» — заглушки ИИ клиенту не показываем
+        a = re.sub(r",?\s*(?:подъезд|под\.|этаж|эт\.|кв\.?|квартира)\s*[—–-]+\s*(?=,|$)", "", str(order["адрес"]), flags=re.I)
+        order["адрес"] = a.strip(" ,")
     order["доставка_цена"] = _delivery_price(order)
     return order
 
@@ -1581,7 +1586,10 @@ def respond(client, incoming, from_staff=False, quote=""):
     has_card = any(catalog.get(c) and CARD_RE.search(catalog.get(c)["title"])
                    for c in (db.get_setting(f"addons:{client}") or "").split(",") if c)
     if not from_staff and not picked and not addons and not has_card and not card_step and not card_done \
-            and re.search(r"открытк", _last_bot_text(client, last_q), re.I) \
+            and not db.get_pending_order(client) and not db.get_setting(f"nocard:{client}") \
+            and not db.get_setting(f"cardtext:{client}") \
+            and re.search(r"нужн\w*\s+(?:ли\s+)?(?:\w+\s+)?(?:открытк|текст)|открытк\w*\s+нужн|хотите[^.?!]{0,30}открытк",
+                          _last_bot_text(client, last_q), re.I) \
             and re.search(r"^\W*да\b|нуж\w*\s+(?:и\s+)?(?:текст|открытк)|(?:текст|открытк)\w*\s+нуж|хочу\s+открытк", incoming or "", re.I) \
             and not NO_CARD_RE.search(incoming or ""):
         cards = catalog.cards(city, limit=5)
