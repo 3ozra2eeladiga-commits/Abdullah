@@ -135,12 +135,61 @@ HISTORY_LIMIT = int(os.getenv("HISTORY_LIMIT", "20"))
 # Если сотрудник сам ответил клиенту в Директе, бот молчит с этим клиентом N часов.
 HUMAN_PAUSE_HOURS = float(os.getenv("HUMAN_PAUSE_HOURS", "6"))
 
-# --- Секретный код: написал боту ровно это (регистр/пробелы/знаки не важны) — бот отвечает SECRET_REPLY.
-# Хранится ТОЛЬКО в .env на сервере (не в GitHub). В SECRET_REPLY перенос строки — «\n».
+# --- Секретный код: написал боту ровно это (регистр/пробелы/знаки не важны) — бот отвечает секретным текстом.
+# Вариант 1 — в .env на сервере: SECRET_CODE и SECRET_REPLY (перенос строки — «\n»).
+# Вариант 2 — без доступа к серверу: в <папка магазина>/secret.json лежит ЗАШИФРОВАННЫЙ ответ (репозиторий
+# публичный!). Ключ — сам код, его в репозитории нет; расшифровать ответ можно только зная код.
 SECRET_CODE = os.getenv("SECRET_CODE", "")
 SECRET_REPLY = os.getenv("SECRET_REPLY", "").replace("\\n", "\n")
+SECRET_ITER = 300_000                      # медленный ключ — чтобы код было долго подбирать перебором
+
+
+def _secret_norm(t):
+    return "".join(ch for ch in (t or "").lower().replace("ё", "е") if ch.isalnum())
+
+
+def _secret_keys(code, salt):
+    import hashlib
+    raw = hashlib.pbkdf2_hmac("sha256", _secret_norm(code).encode(), bytes.fromhex(salt), SECRET_ITER, 64)
+    return raw[:32], raw[32:]              # ключ шифра, ключ проверки
+
+
+def _xor_stream(key, data):
+    import hashlib
+    out = bytearray()
+    for i in range(0, len(data), 32):
+        block = hashlib.sha256(key + i.to_bytes(8, "big")).digest()
+        out += bytes(a ^ b for a, b in zip(data[i:i + 32], block))
+    return bytes(out)
+
+
+def secret_encrypt(code, reply):
+    """Для подготовки secret.json (запускается вручную): возвращает словарь для файла."""
+    import hashlib
+    salt = os.urandom(16).hex()
+    k_enc, k_chk = _secret_keys(code, salt)
+    return {"salt": salt, "check": hashlib.sha256(k_chk).hexdigest(),
+            "data": _xor_stream(k_enc, reply.encode()).hex()}
+
+
+def secret_reply_for(text):
+    """Ответ на секретный код или None. Быстрый отсев: код длинный и без пробелов-слов не бывает пустым."""
+    n = _secret_norm(text)
+    if not n or len(n) < 8 or len(n) > 40:
+        return None
+    if SECRET_CODE and SECRET_REPLY:
+        return SECRET_REPLY if n == _secret_norm(SECRET_CODE) else None
+    try:
+        with open(os.path.join(SHOP_DIR, "secret.json"), encoding="utf-8") as f:
+            box = json.load(f)
+    except (OSError, ValueError):
+        return None
+    import hashlib
+    k_enc, k_chk = _secret_keys(text, box["salt"])
+    if hashlib.sha256(k_chk).hexdigest() != box.get("check"):
+        return None
+    return _xor_stream(k_enc, bytes.fromhex(box["data"])).decode("utf-8", "replace")
 
 
 def is_secret_code(text):
-    norm = lambda t: "".join(ch for ch in (t or "").lower().replace("ё", "е") if ch.isalnum())
-    return bool(SECRET_CODE and SECRET_REPLY and norm(text) and norm(text) == norm(SECRET_CODE))
+    return secret_reply_for(text) is not None

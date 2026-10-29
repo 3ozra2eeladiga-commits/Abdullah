@@ -193,8 +193,9 @@ def _handle(msg, deliver):
     user_id = msg.get("from", {}).get("id")
     text = (msg.get("text") or "").strip()
 
-    if config.is_secret_code(text):                    # секретный код — отвечаем и больше ничего не делаем
-        send(chat_id, config.SECRET_REPLY)
+    secret = config.secret_reply_for(text)              # секретный код — отвечаем и больше ничего не делаем
+    if secret:
+        send(chat_id, secret)
         return
     if not config.is_staff(user_id):
         if text.startswith("/start") or text.startswith("/myid"):
