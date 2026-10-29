@@ -941,7 +941,8 @@ RECORDED_Q_RE = re.compile(r"(?:записали|запомнили|учли|з�
                            r"(?:дат|врем|адрес|телефон|имя|имен|заказ|открыт|данн|вс[её])|что\s+(?:вы\s+)?записал|"
                            r"правильно\s+записал", re.I)
 # «Открытки есть?», «какие есть открытки?», «покажите открытки» — сразу показываем открытки с фото и ценами.
-CARDS_ASK_RE = re.compile(r"открытк\w*\s+(?:у\s+вас\s+)?есть|есть\s+(?:ли\s+)?(?:у\s+вас\s+)?открытк|"
+CARDS_ASK_RE = re.compile(r"фото\w*\s+(?:\w+\s+)?(?:для\s+|у\s+)?открыт|открытк\w*\s+(?:с\s+|на\s+)?фото|"
+                          r"посмотреть\s+(?:\w+\s+)?открыт|открытк\w*\s+(?:у\s+вас\s+)?есть|есть\s+(?:ли\s+)?(?:у\s+вас\s+)?открытк|"
                           r"какие\s+(?:у\s+вас\s+)?(?:есть\s+)?открытк|покаж\w*\s+(?:\w+\s+)?открытк|"
                           r"скин\w*\s+(?:\w+\s+)?открытк|можно\s+(?:\w+\s+)?открытк", re.I)
 REASK_RE = re.compile(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|адрес|телефон|имя|фамили|открытк|дат[уа]|"
@@ -1962,6 +1963,23 @@ def respond(client, incoming, from_staff=False, quote=""):
         m_in = CARD_TEXT_IN_RE.search(incoming or "")
         if m_in and _meaningful(next(g for g in m_in.groups() if g)):
             db.set_setting(f"wantcard_text:{client}", next(g for g in m_in.groups() if g).strip())
+    # Имена и телефоны клиент присылает ПО ОДНОМУ: прислал только свои — спрашиваем получателя (и наоборот),
+    # дальше не идём, пока не будет обоих.
+    if not from_staff and re.search(r"имя\s+и\s+телефон", _last_bot_text(client, last_q), re.I):
+        phones_now = PHONE_RE.findall(incoming or "")
+        phones_all = PHONE_RE.findall(" ".join(m["content"] for m in db.history(client, 1000) if m["role"] == "user"))
+        text = ""
+        if phones_now and len(set(re.sub(r"\D", "", p) for p in phones_all)) < 2:
+            rec = re.search(r"получател", incoming or "", re.I)
+            text = ("Спасибо 🌸 А ваше имя и телефон?" if rec else
+                    "Спасибо 🌸 А имя и телефон получателя? (кому дарим)")
+        elif not phones_now and re.search(r"[А-ЯЁ][а-яё]+", incoming or "") and not re.search(r"\?", incoming or "") \
+                and len(phones_all) < 2 and len((incoming or "").split()) <= 4:
+            text = "Спасибо 🌸 И номер телефона, пожалуйста 📞"
+        if text:
+            db.set_setting(f"lastq:{client}", "Имя и телефон: " + text)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
     # «Да» на «Открытку добавим?» — не переспрашиваем, а сразу показываем открытки с фото и ценами.
     if not from_staff and last_q.startswith(CARD_ASK_Q.split("{")[0]) and CONFIRM_YES_RE.search(incoming or "") \
             and not CORRECTION_RE.search(incoming or "") and not addons:
@@ -2510,6 +2528,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         keep = [p for p in parts if not re.search(r"открытк", p, re.I)]
         if keep and len(keep) != len(parts):
             reply.text = " ".join(keep)
+        elif not keep and parts and not db.get_setting(f"cardtext:{client}") and not db.get_setting(f"nocard:{client}"):
+            # ИИ целиком «про открытки» (список текстом, «фото показать не могу») — задаём наш короткий вопрос.
+            reply.text = CARD_ASK_Q.format(min=min((c["price"] for c in catalog.cards(city)), default=50))
+            reply.photos = []
+            db.set_setting(f"lastq:{client}", reply.text)
     ai_text = reply.text                          # что написал ИИ (если код потом заменит текст — фильтр не нужен)
     if reply.city and reply.city in catalog.city_names and reply.city != city:
         db.set_city(client, reply.city)
