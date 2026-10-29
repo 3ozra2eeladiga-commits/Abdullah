@@ -530,6 +530,38 @@ def _delivery_window(date_s, time_s):
 ANKETA_TAIL = "пришлю варианты 💐"
 
 
+NOW_Q_RE = re.compile(r"сейчас|щас|работаете|открыт[ыо]|круглосуточ|можно\s+(?:ли\s+)?заказать|принимаете|"
+                      r"в\s+такое\s+время|ночью|поздно", re.I)
+
+
+def _closed_now_note(client, city, asked=False):
+    """Магазины сейчас закрыты (ночь) — один раз в день честно предупреждаем: заказ оформим, привезём завтра.
+    asked=True (клиент сам спросил «сейчас можно?») — и когда до закрытия меньше 2 часов: сегодня не успеем."""
+    now = datetime.datetime.now(_MSK)
+    cities = [c.get("name") for c in config.city_list() if c.get("name")]
+    hours = {c: _shop_hours(c) for c in ([city] if city else cities)}
+    h = now.hour + now.minute / 60
+    if any(st <= h < en for st, en in hours.values()):
+        if asked and all(h + URGENT_MIN_HOURS > en for st, en in hours.values()) \
+                and db.get_setting(f"closed_note:{client}") != now.strftime("%Y-%m-%d"):
+            db.set_setting(f"closed_note:{client}", now.strftime("%Y-%m-%d"))
+            en = max(en for _st, en in hours.values())
+            return (f"Сегодня доставить уже не успеем 🙏 Магазин работает до {en:02d}:00, а на сборку и доставку нужно "
+                    f"около {URGENT_MIN_HOURS} часов. Заказ можно оформить сейчас — на завтра, с 08:00 или к удобному времени.")
+        return ""
+    if db.get_setting(f"closed_note:{client}") == now.strftime("%Y-%m-%d"):
+        return ""
+    db.set_setting(f"closed_note:{client}", now.strftime("%Y-%m-%d"))
+    parts = []
+    for c in cities:
+        st, en = _shop_hours(c)
+        parts.append(f"{c} — с {st:02d}:00 до {en:02d}:00")
+    start = min(st for st, _ in hours.values())
+    when = "утром" if h < start else "завтра"
+    return (f"Сейчас магазины закрыты 🌙 Работаем ежедневно: {'; '.join(parts)}. Заказ можно оформить прямо сейчас — "
+            f"привезём {when} с {start:02d}:00 или к удобному времени, а флорист подтвердит его утром.")
+
+
 def _anketa(incoming, city):
     """Приветствие + минимум вопросов: город (с какого сайта показывать) и когда нужны цветы. Остальное
     (доставка, адрес, имена, телефоны) — после выбора букета. Очень коротко."""
@@ -2059,6 +2091,9 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff and "?" not in (incoming or "") and not picked and not addons and not first_closed \
             and not any(m["role"] == "assistant" for m in db.history(client, 6)):
         text = _anketa(incoming, city)
+        note = _closed_now_note(client, city)
+        if note:
+            text = note + "\n\n" + text
         db.add_message(client, "assistant", text)
         return Reply(text=text, city=city)
     # ОТМЕНА заказа: «хочу отменить» → «Отменить заказ №N (…)? да / нет» → «да» → отменён, флористу — уведомление.
@@ -2770,7 +2805,11 @@ def respond(client, incoming, from_staff=False, quote=""):
             _remember_sent_items(reply.order, client)
             db.clear_pending_order(client)
             _clear_client_state(client)
-            reply.text = CHECK_SENT_TEXT
+            now_h = datetime.datetime.now(_MSK).hour + datetime.datetime.now(_MSK).minute / 60
+            st, en = _shop_hours(city or "")
+            reply.text = CHECK_SENT_TEXT if st <= now_h < en else (
+                "Спасибо! Заказ записан 🌸 Сейчас магазин закрыт — флорист проверит наличие и подтвердит его утром, "
+                f"с {st:02d}:00.")
             reply.photos = []
             order_text = True
 
@@ -3049,6 +3088,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         only_b = [p for p in reply.photos if not CARD_RE.search(p["title"])]
         if only_b or not any(not CARD_RE.search(p["title"]) for p in reply.photos):
             reply.photos = only_b
+    # «Сейчас можно заказать?», «вы работаете?» ночью — сначала честно: магазины закрыты, привезём завтра.
+    if not from_staff and NOW_Q_RE.search(incoming or "") and not order_text:
+        note = _closed_now_note(client, city, asked=True)
+        if note:
+            reply.text = (note + ("\n\n" + reply.text if reply.text else "")).strip()
     # Клиент назвал бюджет (хоть в первом сообщении) — дороже не показываем (кроме уже выбранного/открыток).
     if not from_staff and reply.photos and not keep_photos and not picked:
         bud = next((catalog_budget(m["content"]) for m in reversed(history)
