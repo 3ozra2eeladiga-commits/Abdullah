@@ -1780,6 +1780,13 @@ def respond(client, incoming, from_staff=False, quote=""):
     if new_order and reply.photos:
         bought = {p["code"] for p in json.loads(db.get_setting(f"prev_items:{client}") or "[]")}
         reply.photos = [p for p in reply.photos if p["code"] not in bought] or reply.photos
+    # Первый показ букетов — сразу и ссылка на сайт магазина этого города: пусть выбирает, как удобно.
+    site = config.cities().get(city, "") if city else ""
+    if not from_staff and site and len(reply.photos) >= 2 and not keep_photos \
+            and not db.get_setting(f"site_sent:{client}") and site not in (reply.text or ""):
+        reply.text = ((reply.text or "").rstrip() + f"\n\nВсе букеты — на нашем сайте: {site}\n"
+                      "Выбирайте, как удобно: здесь по фото или на сайте (пришлите номер или ссылку) 🌸").strip()
+        db.set_setting(f"site_sent:{client}", "1")
     # Запоминаем, что показали (по порядку) — чтобы понять «давайте последний / второй вариант».
     if not from_staff and (len(reply.photos) >= 2 or (keep_photos and reply.photos)):
         db.set_setting(f"shown:{client}", ",".join(p["code"] for p in reply.photos))
