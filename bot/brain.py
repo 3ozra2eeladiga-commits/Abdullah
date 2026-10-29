@@ -857,6 +857,10 @@ def _card_text_q(title):
     return "Что написать на открытке? Пришлите текст одним сообщением. Если ничего — «без текста» 🌸"
 
 
+# Мат и грубость в адрес магазина («идите на…», «пошли в…») — предупреждаем, потом прекращаем переписку.
+RUDE_RE = re.compile(r"ху[йяеёи]|пизд|\bеб(?:а[нтл]|у[тчщ]|ну|л[аио])|\bёб|\bбля|\bсук[аи]\b|мудак|мудил|долбо[её]б|"
+                     r"г[ао]ндон|шлюх|\bжоп[аеуы]|\bнахер|\bнахрен|\bнаф[иы][гк]|\bпош[её]л\s+(?:ты|вон)|"
+                     r"\bидите\s+вы\b|\bпошли\s+вы\b|\bдебил|\bидиот|\bуро[дт]\b|\bтварь", re.I)
 # «Сколько стоит доставка?», «доставка платная?»
 DELIV_PRICE_RE = re.compile(r"(?:сколько|стоимост|цен[аы]|почём|почем)\w*[^.?!]{0,25}доставк|"
                             r"доставк\w*[^.?!]{0,20}(?:сколько|стоит|стоимост|цен[аы]|платн|бесплат)", re.I)
@@ -1698,8 +1702,25 @@ def respond(client, incoming, from_staff=False, quote=""):
         m_in = CARD_TEXT_IN_RE.search(incoming or "")
         if m_in and _meaningful(next(g for g in m_in.groups() if g)):
             db.set_setting(f"wantcard_text:{client}", next(g for g in m_in.groups() if g).strip())
+    # Грубость/мат: первый раз — предупреждение, второй — бот прекращает переписку (сотруднику — уведомление).
+    if not from_staff and RUDE_RE.search(incoming or ""):
+        n = int(db.get_setting(f"rude:{client}") or 0) + 1
+        db.set_setting(f"rude:{client}", n)
+        if n == 1:
+            text = ("Давайте общаться уважительно 🙏 Если грубость повторится, переписку придётся остановить. "
+                    "Если хотите заказать цветы — с радостью помогу.")
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
+        text = "Переписка остановлена из-за грубых сообщений."
+        db.add_message(client, "assistant", text)
+        db.pause(client, 24)
+        return Reply(text=text, city=city,
+                     question=f"🚫 Клиент грубит — бот прекратил переписку на сутки. Последнее сообщение: «{incoming}». "
+                              "/resume — включить бота обратно.")
     # Первое сообщение клиента — отвечаем анкетой: сразу все главные вопросы, чтобы потом не переспрашивать.
-    if not from_staff and "?" not in (incoming or "") and not picked and not addons \
+    first_closed = _closed_hours_msg(_hour_from_text(incoming), catalog.match_city(incoming or "") or city) \
+        if not from_staff and re.search(r"\d|ночью", incoming or "") else ""
+    if not from_staff and "?" not in (incoming or "") and not picked and not addons and not first_closed \
             and not any(m["role"] == "assistant" for m in db.history(client, 6)):
         text = _anketa(incoming, city)
         db.add_message(client, "assistant", text)
