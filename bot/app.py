@@ -81,7 +81,7 @@ def _format_order(order_id, client, reply):
     o = reply.order
     if not o:
         # JSON не распознался — показываем аккуратно, без «сырого кода»
-        return (f"🌸 НОВЫЙ ЗАКАЗ №{order_id}\n{_label(client)}\n\n"
+        return (f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{order_id}\n{_label(client)}\n\n"
                 "⚠️ Заказ не распознался автоматически. Детали — в переписке с клиентом.\n"
                 "Ответьте на это сообщение, чтобы написать клиенту.")
 
@@ -89,7 +89,7 @@ def _format_order(order_id, client, reply):
         return str(x).strip() if x not in (None, "", "—") else "—"
 
     pickup = o.get("получение") == "самовывоз"
-    lines = [f"🌸 НОВЫЙ ЗАКАЗ №{order_id}", _label(client), "━━━━━━━━━━━━━━", "🛍 ТОВАР:"]
+    lines = [f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{order_id}", _label(client), "━━━━━━━━━━━━━━", "🛍 ТОВАР:"]
     for it in o.get("товары", []):
         qty = it.get("кол-во", 1)
         each = it.get("цена_за_шт") or it.get("цена")
@@ -125,7 +125,7 @@ def _format_order(order_id, client, reply):
     if o.get("комментарий"):
         lines.append(f"📝 Комментарий: {val(o['комментарий'])}")
     lines += ["━━━━━━━━━━━━━━",
-              "👉 Отправьте клиенту ссылку на оплату и подтвердите заказ.",
+              "👉 Клиенту НЕ подтверждали заказ: проверьте, есть ли букет/цветы и свежие ли они, и нажмите кнопку.",
               "Ответьте на это сообщение — текст уйдёт клиенту."]
     return "\n".join(lines)
 
@@ -175,7 +175,9 @@ def deliver(client, text, from_staff=False, quote=""):
             if not _order_ready(reply.order):
                 log.warning("Неполный заказ отправлен флористу с пометкой (%s): %s", client, reply.order)
                 card = "⚠️ В ЗАКАЗЕ НЕ ХВАТАЕТ ДАННЫХ — уточните у клиента (см. прочерки «—»)\n\n" + card
-            telegram_bot.notify_staff_order(client, items, card)
+            db.set_setting(f"ostatus:{order_id}", "check")
+            db.set_setting(f"ocheck:{client}", order_id)
+            telegram_bot.notify_staff_order(client, items, card, buttons=_check_buttons(order_id))
         elif reply.order_raw:
             log.warning("Заказ не распознан (%s): %s", client, reply.order_raw)
         if reply.question:
@@ -187,6 +189,54 @@ def deliver(client, text, from_staff=False, quote=""):
                                               f"Последнее сообщение: {text}\n"
                                               "Бот замолчал с ним на сутки. Ответьте клиенту в Директе "
                                               "или ответом на это сообщение. /resume — включить бота обратно.")
+
+
+# ---------- Проверка наличия флористом (кнопки под заявкой) ----------
+
+CHECK_ACTIONS = {
+    "ok": ("✅ Всё есть", "Флорист проверил — всё в наличии, цветы свежие 🌸 Заказ подтверждён! "
+                          "Сейчас пришлём ссылку на оплату."),
+    "swap": ("🔁 Нужна замена", "Флорист проверил наличие: некоторых цветов из состава сейчас нет, нужна небольшая "
+                               "замена 🌸 Сейчас подскажу, на что заменим — или можно выбрать другой букет."),
+    "no": ("❌ Нет в наличии", "К сожалению, этого букета сейчас нет в наличии 😔 Давайте подберу похожий — "
+                              "показать варианты?"),
+}
+
+
+def _check_buttons(order_id, actions=("ok", "swap", "no")):
+    return [[{"text": CHECK_ACTIONS[a][0], "callback_data": f"chk:{a}:{order_id}"}] for a in actions]
+
+
+def on_check(order_id, action):
+    """Флорист нажал кнопку под заявкой. Сообщаем клиенту результат проверки. Возвращает текст для флориста."""
+    row = db.get_order(order_id)
+    if not row or action not in CHECK_ACTIONS:
+        return "Заявка не найдена."
+    client, _ = row
+    status = db.get_setting(f"ostatus:{order_id}")
+    # После «замены» ещё можно подтвердить (клиент согласился), остальное — один раз.
+    if status not in ("check", "swap") or (status == "swap" and action != "ok"):
+        return f"По заявке №{order_id} уже отмечено, повторно не отправляю."
+    label, text = CHECK_ACTIONS[action]
+    with _client_locks[client]:
+        _send_text(client, text)
+        db.add_message(client, "assistant", text)
+        db.set_setting(f"ostatus:{order_id}", action)
+        if action == "swap":
+            db.set_setting(f"ocheck:{client}", order_id)   # заказ всё ещё не подтверждён
+        else:
+            db.del_setting(f"ocheck:{client}")
+    if action == "ok":
+        telegram_bot.notify_staff(client, f"✅ Заявка №{order_id} подтверждена, клиенту написали.\n"
+                                          "Отправьте ссылку на оплату — ответом на это сообщение.")
+    elif action == "swap":
+        telegram_bot.notify_staff(client, f"🔁 Заявка №{order_id}: клиенту сказали, что нужна замена.\n"
+                                          "Напишите ответом на это сообщение, на что заменить — бот передаст клиенту. "
+                                          "Когда клиент согласится — нажмите кнопку.",
+                                  buttons=_check_buttons(order_id, ("ok",)))
+    else:
+        telegram_bot.notify_staff(client, f"❌ Заявка №{order_id}: клиенту предложили выбрать другой букет.")
+    return f"{label} — клиенту отправлено."
 
 
 def _handle_client_photos(client, image_urls, caption=""):
@@ -283,7 +333,7 @@ def _disable_windows_quick_edit():
 def main():
     _disable_windows_quick_edit()
     catalog.refresh()
-    telegram_bot.start(deliver)
+    telegram_bot.start(deliver, on_check)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
 

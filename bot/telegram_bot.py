@@ -129,15 +129,19 @@ def staff_chats():
     return [str(i) for i in config.TELEGRAM_STAFF_IDS]
 
 
-def notify_staff(client, text):
-    """Сообщение сотрудникам. Ответ на него уйдёт этому клиенту."""
+def _keyboard(buttons):
+    return {"reply_markup": {"inline_keyboard": buttons}} if buttons else {}
+
+
+def notify_staff(client, text, buttons=None):
+    """Сообщение сотрудникам (buttons — inline-кнопки). Ответ на него уйдёт этому клиенту."""
     for chat in staff_chats():
-        msg = send(chat, text)
+        msg = send(chat, text, **_keyboard(buttons))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
 
 
-def notify_staff_order(client, items, text):
+def notify_staff_order(client, items, text, buttons=None):
     """Новый заказ сотрудникам: сначала ФОТО заказанных товаров (что собирать), потом карточка заказа.
     Отвечают именно на карточку — текст уйдёт клиенту."""
     for chat in staff_chats():
@@ -145,7 +149,7 @@ def notify_staff_order(client, items, text):
             # Подпись «В заказ:» и без привязки к товару: в режиме /test это фото видно в том же чате,
             # и ответ на него не должен считаться выбором клиента.
             send_photo(chat, it, caption=f"{STAFF_PHOTO_MARK} {it['title']} — {it['price']} ₽", link=False)
-        msg = send(chat, text)
+        msg = send(chat, text, **_keyboard(buttons))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
 
@@ -321,11 +325,30 @@ def _handle_business(update, deliver):
         deliver(client, text, quote=_quoted_ref(msg, chat_id))
 
 
-def run_polling(deliver):
+def _handle_callback(cq, on_check):
+    """Сотрудник нажал кнопку под заявкой (chk:<действие>:<номер заказа>)."""
+    user_id = cq.get("from", {}).get("id")
+    if not config.is_staff(user_id):
+        call("answerCallbackQuery", callback_query_id=cq["id"], text="Нет доступа")
+        return
+    parts = (cq.get("data") or "").split(":")
+    if len(parts) != 3 or parts[0] != "chk" or not parts[2].isdigit():
+        call("answerCallbackQuery", callback_query_id=cq["id"])
+        return
+    result = on_check(int(parts[2]), parts[1])
+    call("answerCallbackQuery", callback_query_id=cq["id"], text=result[:200])
+    m = cq.get("message") or {}
+    if m:
+        # Кнопки убираем, чтобы не нажали второй раз (что отмечено — видно в следующем сообщении бота).
+        call("editMessageReplyMarkup", chat_id=m["chat"]["id"], message_id=m["message_id"],
+             reply_markup={"inline_keyboard": []})
+
+
+def run_polling(deliver, on_check):
     """Получает сообщения из Telegram (в отдельном потоке)."""
     offset = None
     call("deleteWebhook")
-    allowed = ["message", "business_connection", "business_message"]
+    allowed = ["message", "callback_query", "business_connection", "business_message"]
     while True:
         try:
             updates = call("getUpdates", timeout=50, offset=offset, allowed_updates=allowed) or []
@@ -334,6 +357,8 @@ def run_polling(deliver):
                 try:
                     if "message" in u:
                         _handle(u["message"], deliver)
+                    elif "callback_query" in u:
+                        _handle_callback(u["callback_query"], on_check)
                     elif "business_message" in u:
                         _handle_business(u, deliver)
                     elif "business_connection" in u:
@@ -345,8 +370,8 @@ def run_polling(deliver):
             time.sleep(5)
 
 
-def start(deliver):
+def start(deliver, on_check):
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return
-    threading.Thread(target=run_polling, args=(deliver,), daemon=True).start()
+    threading.Thread(target=run_polling, args=(deliver, on_check), daemon=True).start()

@@ -88,6 +88,12 @@ def save_order(client, data):
     return cur.lastrowid
 
 
+def get_order(order_id):
+    """(клиент, данные заказа) по номеру — или None."""
+    row = _exec("SELECT client, data FROM orders WHERE id=?", (order_id,)).fetchone()
+    return (row["client"], json.loads(row["data"])) if row else None
+
+
 def has_order(client):
     """Был ли заказ в текущей переписке (после /reset старые заказы не считаются)."""
     return _exec("SELECT 1 FROM orders o WHERE client=? AND created >= "
@@ -144,7 +150,8 @@ def clear_history(client):
     _exec("DELETE FROM pending_orders WHERE client=?", (client,))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?)",
           tuple(f"{k}:{client}" for k in ("upsize", "addons", "lastq", "cards_shown")))
-    _exec("DELETE FROM settings WHERE key IN (?,?,?)", (f"nocard:{client}", f"shown:{client}", f"chosen:{client}"))
+    _exec("DELETE FROM settings WHERE key IN (?,?,?,?)",
+          (f"nocard:{client}", f"shown:{client}", f"chosen:{client}", f"ocheck:{client}"))
 
 
 def set_city(client, city):
