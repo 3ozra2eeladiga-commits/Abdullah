@@ -1548,6 +1548,10 @@ def parse(raw, city=None):
     text = re.sub(r"\[/?\s*ВОПРОС\s*\]", "", text)  # одиночная метка [ВОПРОС] без пары — не показываем клиенту
     text = CITY_RE.sub("", text)
     text = PHOTO_RE.sub(lambda m: "" if catalog.get(m.group(1) or m.group(2), city) else m.group(0), text)
+    # Выдуманные ИИ метки фото ([ФОТО e9876g] с несуществующим кодом) клиенту не показываем.
+    text = re.sub(r"\[\s*(?:фото|photo)\b[^\]]*\]", "", text, flags=re.I)
+    text = re.sub(r"<(https?://[^>\s]+)>", r"\1", text)          # «<https://сайт>» → «https://сайт»
+    text = re.sub(r"[ \t]+([.,:!?])", r"\1", text)
     text = HANDOFF_RE.sub("", text)
     text = FOREIGN_LINK_RE.sub("", text)  # чужие ссылки убираем, а ссылку на наш каталог оставляем
     text = re.sub(r"[ \t]+([,.!?])", r"\1", text)      # пробел перед знаком препинания
@@ -2202,7 +2206,8 @@ def respond(client, incoming, from_staff=False, quote=""):
             rest = "" if re.search(r"уточн|секунд|спрошу|узна", reply.text or "", re.I) else (reply.text or "").strip()
             reply.text = (no_disc + (" " + rest if rest else " Помогу подобрать букет под ваш бюджет — подскажите, на какую сумму ориентируетесь?")).strip()
     # «Вопрос флористу», который на самом деле про подбор букетов — не беспокоим коллег, показываем сами.
-    force_options = refused_offer
+    # ИИ хотел показать фото, но коды выдумал — фото подберёт код (с учётом бюджета).
+    force_options = refused_offer or (bool(re.search(r"\[\s*(?:фото|photo)\b", raw, re.I)) and not reply.photos)
     # ИИ пообещал «сейчас подберу и отправлю фото», а фото не приложил — прикладываем сами, иначе клиент ждёт впустую.
     if not from_staff and not reply.photos and not reply.order and not order_text and city \
             and PROMISE_PHOTOS_RE.search(reply.text or ""):
