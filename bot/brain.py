@@ -539,7 +539,7 @@ def shops_closed_now(city=None):
     cities = [city] if city else [c.get("name") for c in config.city_list() if c.get("name")]
     now = datetime.datetime.now(_MSK)
     h = now.hour + now.minute / 60
-    return not any(st <= h < en for st, en in (_shop_hours(c) for c in cities))
+    return not any(st <= h < en for st, en in (_open_window(c) for c in cities))
 
 
 def opening_text(city=None):
@@ -578,14 +578,14 @@ def _closed_now_note(client, city, asked=False):
     asked=True (клиент сам спросил «сейчас можно?») — и когда до закрытия меньше 2 часов: сегодня не успеем."""
     now = datetime.datetime.now(_MSK)
     cities = [c.get("name") for c in config.city_list() if c.get("name")]
-    hours = {c: _shop_hours(c) for c in ([city] if city else cities)}
+    hours = {c: _open_window(c) for c in ([city] if city else cities)}
     h = now.hour + now.minute / 60
     if any(st <= h < en for st, en in hours.values()):
         if asked and all(h + URGENT_MIN_HOURS > en for st, en in hours.values()) \
                 and db.get_setting(f"closed_note:{client}") != now.strftime("%Y-%m-%d"):
             db.set_setting(f"closed_note:{client}", now.strftime("%Y-%m-%d"))
             en = max(en for _st, en in hours.values())
-            return (f"Сегодня доставить уже не успеем 🙏 Магазин работает до {en:02d}:00, а на сборку и доставку нужно "
+            return (f"Сегодня доставить уже не успеем 🙏 Магазин работает до {int(en):02d}:{int(round(en % 1 * 60)):02d}, а на сборку и доставку нужно "
                     f"около {URGENT_MIN_HOURS} часов. Заказ можно оформить сейчас — на завтра, с 08:00 или к удобному времени.")
         return ""
     if db.get_setting(f"closed_note:{client}") == now.strftime("%Y-%m-%d"):
@@ -619,6 +619,21 @@ def _anketa(incoming, city):
         return f"{head} На когда нужны цветы? Сразу {ANKETA_TAIL}"
     ask = "Повод?" if catalog_budget(t) else "Повод и бюджет?"
     return f"{head} {ask} Или сразу {ANKETA_TAIL}"
+
+
+def _open_window(city):
+    """Когда магазины города открыты (часы, дробные): от самого раннего открытия до самого позднего закрытия
+    по адресам магазинов (Орджоникидзе — с 07:30). «Таймер»: с закрытия до открытия — ночной режим."""
+    def hh(x):
+        m = re.match(r"\s*(\d{1,2})[:.](\d{2})", x or "")
+        return int(m.group(1)) + int(m.group(2)) / 60 if m else None
+    shops = _city_shops(city)
+    opens = [hh(h.split("–")[0]) for _a, h in shops]
+    closes = [hh(h.split("–")[-1]) for _a, h in shops]
+    opens = [x for x in opens if x is not None]
+    closes = [x for x in closes if x is not None]
+    st, en = _shop_hours(city)
+    return (min(opens) if opens else st), (max(closes) if closes else en)
 
 
 def _shop_hours(city):
