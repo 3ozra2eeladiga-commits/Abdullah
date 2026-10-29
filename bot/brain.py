@@ -867,6 +867,44 @@ def _phone_was_given(order_value, client_text):
     return digits[-7:] in client_digits
 
 
+PACK_Q = ("Упаковка: бесплатная ({free}) или пышная красивая — +{price} ₽? Ответьте «обычная» или «пышная» 🎀")
+
+
+def _pack_cfg():
+    return config.SHOP.get("packaging") or {}
+
+
+def _pack_free():
+    return _pack_cfg().get("free") or "прозрачная плёнка"
+
+
+def _lush_price(total):
+    """Цена пышной упаковки по сумме цветов (сетка из shop.json)."""
+    for limit, price in _pack_cfg().get("lush") or [[None, 0]]:
+        if limit is None or total < limit:
+            return int(price)
+    return 0
+
+
+def _pieces_total(o):
+    """Сумма ПОШТУЧНЫХ цветов в заказе (раздел «поштучно» каталога). 0 — если поштучных нет."""
+    total = 0
+    cc = catalog.get_city(o.get("город")) if o.get("город") else None
+    for it in o.get("товары") or []:
+        code = str((it or {}).get("код") or "").strip().lower()
+        sec = ""
+        for c in ([cc] if cc else list(catalog.by_city.values())):
+            sec = c.section_of(code) or "" if code else ""
+            if sec:
+                break
+        if "поштучно" in sec.lower():
+            try:
+                total += int(it.get("сумма") or 0)
+            except (TypeError, ValueError):
+                pass
+    return total
+
+
 CARD_ASK_Q = "Открытку добавим? От {min} ₽ — ответьте «да» или «нет» 🌸"
 CARD_ONE_Q = "Подойдёт {title} — {price} ₽, напишем «{text}». Берём?"
 # Текст открытки: спрашиваем ОТДЕЛЬНО (название открытки — это не текст), показываем и подтверждаем, пишем как есть.
@@ -964,11 +1002,18 @@ def _order_missing(o, client_text):
             not re.sub(r"[\W_]+", "", card) or card.lower() in ("текст", "текст открытки")
             or re.sub(r"[\W_]+", "", card.lower()) not in re.sub(r"[\W_]+", "", (client_text or "").lower())):
         card = ""
+    if card.lower() in ("нет", "не нужна", "не надо", "-", "—") and not re.search(
+            r"\bнет\b|не\s*нуж|не\s*надо|без\s+открыт|без\s+текст|не\s*хочу", client_text or "", re.I):
+        card = ""                               # «нет» придумал ИИ — клиент на вопрос про открытку не ответил
     if not card:
         return CARD_ASK_Q
     if card.lower() not in ("нет", "не нужна", "не надо", "-", "—") and catalog.cards(o.get("город")) and not any(
             CARD_RE.search(str(it.get("название") or "")) for it in o.get("товары") or []):
         return CARD_PICK_Q
+    # Поштучные цветы — спрашиваем упаковку (бесплатная или пышная за доплату). Траур — не спрашиваем.
+    pieces = _pieces_total(o)
+    if pieces and not o.get("_упаковка_выбрана") and not re.search(r"похорон|траур|помин|кладбищ", client_text or "", re.I):
+        return PACK_Q.format(free=_pack_free(), price=_lush_price(pieces))
     return None
 
 # ИИ иногда «доигрывает» диалог за клиента. Обрезаем ответ на первой выдуманной реплике клиента.
@@ -1037,6 +1082,18 @@ def _apply_client_state(order, client, city):
     ct = db.get_setting(f"cardtext:{client}")
     if ct:
         order["открытка"] = ct              # текст, который клиент подтвердил — как есть, без правок
+    pack = db.get_setting(f"pack:{client}") or ""
+    order["товары"] = [it for it in order["товары"] if not (isinstance(it, dict) and not it.get("код")
+                                                            and re.search(r"упаковк", str(it.get("название") or ""), re.I))]
+    if pack:
+        order["_упаковка_выбрана"] = True
+        if pack == "lush":
+            _fill_order(order, city)
+            price = _lush_price(_pieces_total(order))
+            order["упаковка"] = f"пышная (+{price} ₽)"
+            order["товары"].append({"название": "Пышная упаковка", "кол-во": 1, "цена_за_шт": price, "сумма": price})
+        else:
+            order["упаковка"] = f"бесплатная ({_pack_free()})"
     up = db.get_setting(f"upsize:{client}") or ""
     if up:
         _code, sign, amount = (up.split("|") + ["", "", ""])[:3]
@@ -1324,7 +1381,7 @@ def _finish_addon(client, city, order_id):
 
 def _clear_client_state(client):
     for k in ("upsize", "addons", "nocard", "shown", "cards_shown", "chosen", "cardtext", "cardstep",
-              "wantcard", "wantcard_text", "photo_item"):
+              "wantcard", "wantcard_text", "photo_item", "pack"):
         db.del_setting(f"{k}:{client}")
 
 
@@ -1856,6 +1913,16 @@ def respond(client, incoming, from_staff=False, quote=""):
             card_pend = db.get_pending_order(client)
             db.clear_pending_order(client)  # итог покажем заново — уже с открыткой
             incoming = go_on
+            card_done = True
+    # Ответ на вопрос об упаковке («обычная» / «пышная») — запоминаем и сразу дальше: итог или недостающее.
+    if not from_staff and not card_done and last_q.startswith(PACK_Q.split("{")[0]):
+        lush = re.search(r"пышн|красив|нарядн|\bда\b|дорог", incoming or "", re.I)
+        free = re.search(r"обычн|бесплат|пл[её]нк|лент|прозрач|\bнет\b|не\s*нуж|\bбез\b|прост", incoming or "", re.I)
+        if lush or free:
+            db.set_setting(f"pack:{client}", "lush" if lush and not free else "free")
+            card_pend = db.get_pending_order(client)
+            db.clear_pending_order(client)
+            incoming = "Упаковка выбрана, продолжаем оформление."
             card_done = True
     # ---- ИЗМЕНЕНИЕ уже отправленного заказа («поменять адрес / время / получателя») — не новый заказ! ----
     # (идёт новый заказ — выбран новый букет — тогда правки относятся к нему, а не к старому)
