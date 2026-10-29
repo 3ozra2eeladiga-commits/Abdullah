@@ -8,6 +8,7 @@
 Клиент эти метки не видит.
 """
 import datetime
+import difflib
 import json
 import logging
 import re
@@ -657,6 +658,27 @@ def _closed_hours_msg(hour, city):
         return ""
     return (f"К сожалению, в {hour:02d}:00 доставить не получится 🙏 Магазин ({city}) работает с {start:02d}:00 до "
             f"{end:02d}:00 — доставляем в это время. Подскажите, к какому часу удобно?")
+
+
+def _fix_way_typos(client, text):
+    """Опечатки в ответе на «доставка или самовывоз?» («саморезов», «самовызов», «дастафка») — исправляем,
+    чтобы бот понял ответ, а не задавал странные вопросы. Только для коротких ответов на этот вопрос."""
+    words = (text or "").split()
+    if not words or len(words) > 3:
+        return text
+    last = next((m["content"] for m in reversed(db.history(client, 4)) if m["role"] == "assistant"), "")
+    last = (db.get_setting(f"lastq:{client}") or "") + " " + last
+    if not re.search(r"самовывоз|доставк", last, re.I) or re.search(r"самовывоз|доставк", text, re.I):
+        return text
+    out = []
+    for w in words:
+        lw = re.sub(r"[^а-яё]", "", w.lower())
+        if lw.startswith(("сам", "сом")) and difflib.SequenceMatcher(None, lw, "самовывоз").ratio() >= 0.5:
+            w = "самовывоз"
+        elif lw.startswith(("дос", "дас", "даст")) and difflib.SequenceMatcher(None, lw, "доставка").ratio() >= 0.6:
+            w = "доставка"
+        out.append(w)
+    return " ".join(out)
 
 
 def _rude_reply(client, incoming, city):
@@ -1886,6 +1908,8 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     quote — текст сообщения, на которое клиент ответил (reply): подпись фото букета и т.п. Используется
     ТОЛЬКО для распознавания (какой букет), но НЕ подмешивается в сам текст для ИИ, чтобы его не путать."""
+    if not from_staff:
+        incoming = _fix_way_typos(client, incoming)    # «саморезов» → «самовывоз», «дастафка» → «доставка»
     content = f"{STAFF_PREFIX} {incoming}" if from_staff else incoming
 
     # Ответ на фото со словами «есть ещё варианты / другие» — это НЕ выбор этого товара, а просьба показать другие.
@@ -1982,6 +2006,8 @@ def respond(client, incoming, from_staff=False, quote=""):
             text = ("Спасибо 🌸 А ваше имя и телефон?" if rec else
                     "Спасибо 🌸 А имя и телефон получателя? (кому дарим)")
         elif not phones_now and re.search(r"[А-ЯЁ][а-яё]+", incoming or "") and not re.search(r"\?", incoming or "") \
+                and not re.search(r"самовыв|достав|забер|завтра|сегодня|\d|адрес|\bул\b|улиц|открыт|да\b|нет\b",
+                                  incoming or "", re.I) \
                 and len(phones_all) < 2 and len((incoming or "").split()) <= 4:
             text = "Спасибо 🌸 И номер телефона, пожалуйста 📞"
         if text:
