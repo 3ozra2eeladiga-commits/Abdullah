@@ -282,6 +282,21 @@ class Reply:
 CANCEL_RE = re.compile(r"\bотмен\w*|\bотмет\w*\s+(?:это|его|заказ)|передумал", re.I)
 CODE_RE = re.compile(r"\b([0-9a-f]{6})\b")
 MIN_OPTIONS = 5  # сколько минимум букетов показывать, когда бот предлагает варианты
+MAX_OPTIONS = 10  # «скинь 15 вариантов» — больше 10 за раз не присылаем
+_NUM_WORDS = {"два": 2, "две": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "семь": 7, "восемь": 8,
+              "девять": 9, "десять": 10, "пятнадцать": 15, "двадцать": 20}
+
+
+def _wanted_count(text, cap=True):
+    """Сколько вариантов просит клиент: «скинь 10 вариантов», «покажи семь букетов» → 10 / 7 (не больше 10)."""
+    t = (text or "").lower()
+    m = re.search(r"\b(\d{1,2}|" + "|".join(_NUM_WORDS) + r")\s*(?:-?ть\s+)?(?:вариант|букет|фото|штук|шт\b|композиц)", t)
+    if not m:
+        return None
+    n = int(m.group(1)) if m.group(1).isdigit() else _NUM_WORDS[m.group(1)]
+    if n < 2:
+        return None
+    return min(n, MAX_OPTIONS) if cap else n
 # Клиент называет букет его номером с сайта: «№600», «номер 600», «букет №740».
 NUM_STRONG_RE = re.compile(r"(?:№|#|\bномер\w*)\s*№?\s*(\d{2,4})", re.I)
 # Кнопка «Купить в TELEGRAM» на сайте присылает «…со страницы https://…/item?bukid=item-<uuid>».
@@ -2475,8 +2490,19 @@ def respond(client, incoming, from_staff=False, quote=""):
         and not is_order_step and not picked and not size_change and not order_text and not up_turn \
         and not keep_photos and not addons
     city_cat = catalog.get_city(city)
+    # «Скинь 10 вариантов» — столько и показываем (максимум MAX_OPTIONS), иначе по умолчанию 5.
+    want_n = None if from_staff else _wanted_count(incoming)
+    n_show = want_n or MIN_OPTIONS
+    if want_n and not picked and not order_text and not keep_photos and not size_change:
+        offering = True
+    # Короткое «ещё» / «другие» / «больше вариантов» после показа букетов — показываем новые.
+    if not from_staff and not picked and not addons and not order_text and not keep_photos and not size_change \
+            and re.match(r"^\W*(?:а\s+)?(?:ещ[её]|больше|другие|ещ[её]\s+вариант\w*|друг\w+\s+вариант\w*|"
+                         r"давай\w*\s+ещ[её]|ещ[её]\s+покаж\w*|покаж\w*\s+ещ[её])\W*$", incoming or "", re.I) \
+            and db.get_setting(f"seen:{client}"):
+        offering = True
     # Для режима «конкретный цветок» и «сделать больше/меньше» общий добор фото не нужен.
-    if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < MIN_OPTIONS \
+    if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < n_show \
             and not flowers and not size_change and not order_text and not up_turn and not keep_photos:
         query = _catalog_query(history)
         # Добираем ТОЛЬКО букеты (не поштучные розы по 250₽, не открытки с котиками), кроме случая,
@@ -2491,25 +2517,30 @@ def respond(client, incoming, from_staff=False, quote=""):
             # «Ещё варианты» — только те, что клиент ещё НЕ видел.
             shown |= set(c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c)
             shown |= set(c for c in (db.get_setting(f"seen:{client}") or "").split(",") if c)
-        for it in city_cat.relevant_items(query, shown, limit=MIN_OPTIONS * 2, bouquets_only=bouquets_only):
+        for it in city_cat.relevant_items(query, shown, limit=n_show * 2, bouquets_only=bouquets_only):
             if it["code"] not in shown:
                 reply.photos.append(it)
                 shown.add(it["code"])
-                if len(reply.photos) >= MIN_OPTIONS:
+                if len(reply.photos) >= n_show:
                     break
-        if len(reply.photos) < MIN_OPTIONS and re.search(r"ещ[её]|больше|друг|закид|кида|мало|остальн", incoming or "", re.I):
+        if len(reply.photos) < n_show and re.search(r"ещ[её]|больше|друг|закид|кида|мало|остальн", incoming or "", re.I):
             # Подходящие по запросу кончились — добираем любые букеты в наличии, которые клиент ещё не видел
             # (ближе к его бюджету, если он известен).
             bud = catalog_budget(query) or 0
             pool = [it for it in city_cat.relevant_items("букет", shown, limit=200, bouquets_only=True)
                     if it["code"] not in shown and it.get("images")]
             pool.sort(key=lambda it: abs(it["price"] - bud) if bud else 0)
-            for it in pool[:MIN_OPTIONS - len(reply.photos)]:
+            for it in pool[:n_show - len(reply.photos)]:
                 reply.photos.append(it)
                 shown.add(it["code"])
     # Показ вариантов — максимум 5 фото за раз, чтобы не заваливать клиента.
-    if offering and len(reply.photos) > MIN_OPTIONS:
-        reply.photos = reply.photos[:MIN_OPTIONS]
+    if offering and len(reply.photos) > n_show:
+        reply.photos = reply.photos[:n_show]
+    count_text = ""
+    if want_n and offering and len(reply.photos) >= 2:
+        count_text = (f"Вот {len(reply.photos)} вариантов 🌸" + (f" (больше {MAX_OPTIONS} за раз не присылаю — так удобнее "
+                      "смотреть)" if _wanted_count(incoming, cap=False) > MAX_OPTIONS else "")
+                      + " Какой нравится? Ответьте «этот» на фото.")
 
     # Если перехватили «вопрос о подборе» и сами приложили фото — заменяем «уточню…» на нормальный показ.
     if after_anketa and len(reply.photos) >= 2:
@@ -2684,6 +2715,8 @@ def respond(client, incoming, from_staff=False, quote=""):
             and not db.get_setting(f"site_sent:{client}") and site not in (reply.text or ""):
         reply.text = ((reply.text or "").rstrip() + f"\nВсе букеты на сайте: {site}").strip()
         db.set_setting(f"site_sent:{client}", "1")
+    if count_text and len(reply.photos) >= 2:
+        reply.text = count_text               # «скинь 10 вариантов» — честно говорим, сколько прислали
     # Всё, что клиент уже видел, — чтобы «ещё варианты» не повторяли показанное.
     if not from_staff and reply.photos:
         seen = [c for c in (db.get_setting(f"seen:{client}") or "").split(",") if c]
