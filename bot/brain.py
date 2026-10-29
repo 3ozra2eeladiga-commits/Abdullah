@@ -1149,6 +1149,61 @@ def _polish_ai_text(text, client, city, user_msgs):
     return out or text, False
 
 
+ORDER_CHANGE_RE = re.compile(r"помен|измен|исправ|перенес|друг\w*\s+(?:адрес|время|дат|получател|номер|телефон)|"
+                             r"(?:адрес|время|дата|получател)\w*\s+(?:друг|нов|не\s+тот)|не\s+тот\s+адрес", re.I)
+EDIT_ASK = {"адрес": "новый адрес (улица, дом, кв.)", "время": "новые дату и время", "получатель": "имя и телефон получателя",
+            "заказчик": "ваше имя и телефон", "комментарий": "что изменить"}
+ACTIVE_ORDER_HOURS = 72                           # заказ «активный» (правки идут в него) — 3 дня после оформления
+
+
+def _active_order(client):
+    """Последний отправленный заказ клиента, если он ещё в работе (не отменён и оформлен недавно)."""
+    oid = db.last_order_id(client)
+    if not oid or db.get_setting(f"ostatus:{oid}") == "cancel":
+        return None
+    import time as _t
+    return oid if _t.time() - db.order_created(oid) < ACTIVE_ORDER_HOURS * 3600 else None
+
+
+def _edit_field(text):
+    t = (text or "").lower()
+    if re.search(r"адрес|улиц|дом\b|квартир|подъезд", t):
+        return "адрес"
+    if re.search(r"время|дат|перенес|завтра|сегодня|час", t):
+        return "время"
+    if re.search(r"получател", t):
+        return "получатель"
+    if re.search(r"телефон|номер", t):
+        return "заказчик"
+    return "комментарий"
+
+
+def _edit_value(field, text):
+    """Если новое значение уже в сообщении («поменяйте адрес на Пролетарская 4») — достаём его."""
+    m = re.search(r"\bна\s+(.{4,})$", text or "", re.I)
+    if field == "адрес" and m and _has_address([m.group(1)]) or (field == "адрес" and m and re.search(r"\d", m.group(1))):
+        return m.group(1).strip()
+    if field == "время" and m and re.search(r"\d|завтра|сегодня|послезавтра", m.group(1), re.I):
+        return m.group(1).strip()
+    return ""
+
+
+def _apply_order_edit(client, city, order_id, field, value):
+    """Изменение в отправленном заказе: правим заказ, флористу — уведомление, клиенту — короткое «передала»."""
+    row = db.get_order(order_id)
+    if row and field in ("адрес", "получатель", "заказчик"):
+        data = row[1]
+        data[field] = value.strip()
+        db.update_order(order_id, data)
+    names = {"адрес": "Новый адрес", "время": "Новые дата/время", "получатель": "Новый получатель",
+             "заказчик": "Новые данные заказчика", "комментарий": "Клиент просит изменить"}
+    text = f"Готово 🌸 Передала флористу изменение в заказе №{order_id}: «{value.strip()}»."
+    db.add_message(client, "assistant", text)
+    note = (f"✏️ ИЗМЕНЕНИЕ В ЗАКАЗЕ №{order_id}\n{names.get(field, 'Изменение')}: {value.strip()}\n"
+            "Ответьте на это сообщение — текст уйдёт клиенту.")
+    return Reply(text=text, city=city, staff_note=note)
+
+
 def _clear_addon(client):
     for k in ("addto", "addons", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text"):
         db.del_setting(f"{k}:{client}")
@@ -1690,14 +1745,33 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.clear_pending_order(client)  # итог покажем заново — уже с открыткой
             incoming = go_on
             card_done = True
+    # ---- ИЗМЕНЕНИЕ уже отправленного заказа («поменять адрес / время / получателя») — не новый заказ! ----
+    # (идёт новый заказ — выбран новый букет — тогда правки относятся к нему, а не к старому)
+    active = None if (from_staff or NEW_ORDER_RE.search(incoming or "") or db.get_setting(f"chosen:{client}")) \
+        else _active_order(client)
+    edit = "" if from_staff else (db.get_setting(f"editorder:{client}") or "")
+    if edit and active and not CARD_WANT_RE.search(incoming or ""):
+        db.del_setting(f"editorder:{client}")
+        return _apply_order_edit(client, city, int(edit.split("|")[0]), edit.split("|")[1], incoming)
+    if active and not picked and not addons and ORDER_CHANGE_RE.search(incoming or ""):
+        field = _edit_field(incoming)
+        value = _edit_value(field, incoming)
+        if value:                                   # новое значение уже в этом же сообщении
+            return _apply_order_edit(client, city, active, field, value)
+        db.set_setting(f"editorder:{client}", f"{active}|{field}")
+        text = f"Напишите {EDIT_ASK.get(field, 'что изменить')} — передам флористу 🌸"
+        db.set_setting(f"lastq:{client}", text)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # ---- Открытка к УЖЕ отправленному заказу («забыл открытку») — не новый заказ, цветы заново НЕ выбираем ----
     addto = "" if from_staff else (db.get_setting(f"addto:{client}") or "")
     if card_done and addto:
         return _finish_addon(client, city, int(addto))
     if not from_staff and not addto and not picked and not addons and db.has_order(client) \
-            and not db.get_pending_order(client) and not db.get_setting(f"chosen:{client}") \
+            and (active or (not db.get_pending_order(client) and not db.get_setting(f"chosen:{client}"))) \
             and CARD_WANT_RE.search(incoming or "") and not NO_CARD_AT_ALL_RE.search(incoming or ""):
-        oid = db.last_order_id(client)
+        oid = active or db.last_order_id(client)
+        db.clear_pending_order(client)              # итог «нового заказа» тут не нужен — дополняем отправленный
         db.set_setting(f"addto:{client}", oid)
         for k in ("nocard", "cardtext", "cardstep"):
             db.del_setting(f"{k}:{client}")

@@ -99,6 +99,11 @@ def last_order_id(client):
     return row["id"] if row else None
 
 
+def order_created(order_id):
+    row = _exec("SELECT created FROM orders WHERE id=?", (order_id,)).fetchone()
+    return row["created"] if row else 0
+
+
 def update_order(order_id, data):
     _exec("UPDATE orders SET data=? WHERE id=?", (json.dumps(data, ensure_ascii=False), order_id))
 
@@ -159,8 +164,8 @@ def clear_history(client):
     _exec("DELETE FROM pending_orders WHERE client=?", (client,))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?)",
           tuple(f"{k}:{client}" for k in ("upsize", "addons", "lastq", "cards_shown")))
-    _exec("DELETE FROM settings WHERE key IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-          (f"photo_item:{client}", f"cphotos:{client}", f"addto:{client}", f"wantcard:{client}", f"wantcard_text:{client}", f"draft:{client}", f"cardtext:{client}", f"cardstep:{client}", f"site_sent:{client}", f"prev_items:{client}", f"nocard:{client}", f"shown:{client}", f"chosen:{client}", f"ocheck:{client}"))
+    _exec("DELETE FROM settings WHERE key IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+          (f"editorder:{client}", f"photo_item:{client}", f"cphotos:{client}", f"addto:{client}", f"wantcard:{client}", f"wantcard_text:{client}", f"draft:{client}", f"cardtext:{client}", f"cardstep:{client}", f"site_sent:{client}", f"prev_items:{client}", f"nocard:{client}", f"shown:{client}", f"chosen:{client}", f"ocheck:{client}"))
 
 
 def set_city(client, city):
