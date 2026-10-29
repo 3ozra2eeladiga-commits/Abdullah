@@ -779,8 +779,8 @@ def _phone_was_given(order_value, client_text):
     return digits[-7:] in client_digits
 
 
-CARD_ASK_Q = ("Нужна ли открытка к букету? Открытки платные — от {min} ₽. Если нужна — напишите текст для неё, "
-              "если нет — так и скажите 🌸")
+CARD_ASK_Q = ("Нужна ли открытка к букету? Открытки у нас платные — от {min} ₽, вот несколько вариантов 🌸 "
+              "Понравится — ответьте на фото «эту» и напишите текст; если открытка не нужна — так и скажите.")
 CARD_ONE_Q = ("Открытки у нас платные 🌸 Подойдёт {title} — {price} ₽, на ней напишем "
               "«{text}». Берём её? (Если открытка не нужна — так и скажите.)")
 CARD_PICK_Q = ("Открытки у нас платные 🌸 Выберите, пожалуйста, один из вариантов ниже — нажмите на фото и "
@@ -1503,7 +1503,10 @@ def respond(client, incoming, from_staff=False, quote=""):
             return False
         card_photos = []
         if miss == CARD_ASK_Q:
-            miss = CARD_ASK_Q.format(min=min((c["price"] for c in catalog.cards(city)), default=50))
+            card_photos = catalog.cards(city, limit=5)       # сразу показываем разные варианты, а не одну
+            if not from_staff:
+                _remember_cards(client, card_photos)
+            miss = CARD_ASK_Q.format(min=min((c["price"] for c in card_photos), default=50))
         elif miss == CARD_PICK_Q:
             card_text = str(order.get("открытка") or "").strip()
             card_photos = catalog.cards(city, text=card_text)

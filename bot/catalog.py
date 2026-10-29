@@ -408,7 +408,7 @@ class Catalogs:
         cats = [c] if c else list(self.by_city.values())
         out = []
         for c in cats:
-            out += c.cards(1000 if text is not None else limit)
+            out += c.cards(1000)
         if text is not None:
             t = text.lower().replace("ё", "е")
             hit = [(title_re, holiday) for text_re, title_re, holiday in CARD_THEMES if re.search(text_re, t)]
@@ -423,10 +423,25 @@ class Catalogs:
                 if any(re.search(r, title) for r in CARD_RECIPIENTS if r not in whom):
                     return False
                 return any(re.search(w, title) for w in want)
-            out = [x for x in out if fits(x)] or out   # подходящих нет — показываем те, что есть
+            other_theme = [tr for _, tr, _h in CARD_THEMES if tr not in want and tr not in CARD_RECIPIENTS]
+
+            def neutral(x):  # не к другому празднику и не другому человеку — подходит к любому тексту
+                title = x["title"].lower().replace("ё", "е")
+                return not any(re.search(r, title) for r in CARD_RECIPIENTS if r not in whom) \
+                    and not any(re.search(w, title) for w in other_theme)
+            good = [x for x in out if fits(x)]
+            # Выбор должен быть: подходящих мало — добавляем нейтральные открытки.
+            if len(good) < 4:
+                good += [x for x in out if x not in good and neutral(x)]
+            out = good or out   # подходящих нет — показываем те, что есть
+            rank = lambda x: ("запис" not in x["title"].lower(), not fits(x), x["price"])  # к месту — первыми
+        else:
+            # Текст неизвестен — сначала открытки «для всех», а не «маме»/«папе»/«бабушке».
+            rank = lambda x: ("запис" not in x["title"].lower(),
+                              any(re.search(r, x["title"].lower()) for r in CARD_RECIPIENTS), x["price"])
         seen = set()
         out = [x for x in out if not (x["title"] in seen or seen.add(x["title"]))]
-        return sorted(out, key=lambda x: ("запис" not in x["title"].lower(), x["price"]))[:limit]
+        return sorted(out, key=rank)[:limit]
 
     def is_addon(self, item, city=None):
         """Дополнение к букету (открытка, шар, игрушка…), а не сам букет — его добавляют к заказу, а не меняют букет."""
