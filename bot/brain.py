@@ -158,7 +158,8 @@ RULES = """Ты — флорист цветочного магазина и пе
 - Код — 6 символов в скобках в начале строки каталога. В тексте коды не пиши, только в метках [ФОТО].
 - Если только собираешь информацию (город, дата, пожелания) и ещё НЕ называешь товары с ценами — фото не нужны.
 
-ОФОРМЛЕНИЕ ЗАКАЗА — узнавай по очереди (не всё сразу), в таком порядке:
+ОФОРМЛЕНИЕ ЗАКАЗА — в начале нужен только город и (если клиент знает) дата. Остальное спрашивай ПОСЛЕ выбора
+букета: всё недостающее ОДНИМ коротким сообщением списком, уже сказанное не переспрашивай. Что нужно знать:
 1) что именно и сколько (и упаковка, если поштучно);
 2) фамилия и имя ЗАКАЗЧИКА;
 3) фамилия и имя ПОЛУЧАТЕЛЯ (кому дарим);
@@ -501,23 +502,15 @@ def _delivery_window(date_s, time_s):
     return f"с {hh:02d}:{mm:02d} до {end:02d}:{mm:02d}"
 
 
+ANKETA_TAIL = "сразу пришлю варианты 💐"
+
+
 def _anketa(incoming, city):
-    """Приветствие + все главные вопросы одним сообщением (то, что клиент уже написал, не спрашиваем)."""
+    """Приветствие + минимум вопросов: город (с какого сайта показывать) и когда нужны цветы. Остальное
+    (доставка, адрес, имена, телефоны) — после выбора букета, одним коротким сообщением."""
     t = incoming or ""
     facts = _known_facts([t])
     has = lambda key: any(f.startswith(key) for f in facts)
-    qs = []
-    if not city:
-        qs.append(f"Город — {', '.join(catalog.city_names)} или посёлок рядом")
-    if not has("способ"):
-        qs.append("Доставка или самовывоз")
-    if not has("дата"):
-        hours = config.WINDOW_HOURS
-        qs.append(f"Дата и время (привезём в течение {'часа' if hours == 1 else f'{hours} часов'} от названного времени)")
-    qs.append("Адрес, если доставка — улица, дом, подъезд, этаж, квартира")
-    if not has("повод") or not has("бюджет"):
-        qs.append("Повод" + ("" if has("бюджет") else " и бюджет"))
-    qs.append("Ваше имя и телефон, имя и телефон получателя")
     name = f" Меня зовут {config.FLORIST_NAME}." if config.FLORIST_NAME else ""
     noted = []
     bud = catalog_budget(t)
@@ -526,9 +519,16 @@ def _anketa(incoming, city):
     if city:
         noted.append(city)
     head = f"Здравствуйте! 🌸{name}" + (f" Записала: {', '.join(noted)} 👍" if noted else "")
-    lines = "\n".join(f"{i}) {q}" for i, q in enumerate(qs, 1))
-    return (f"{head}\nЧтобы быстро всё оформить, напишите, пожалуйста, одним сообщением:\n{lines}\n"
-            "Если что-то пока не знаете — не страшно, уточним по ходу 💐")
+    qs = []
+    if not city:
+        qs.append(f"в какой город нужны цветы — {', '.join(catalog.city_names)} или посёлок рядом?")
+    if not has("дата"):
+        qs.append("на когда — дата и время?")
+    if not qs:
+        ask = "По какому поводу букет?" if bud or has("бюджет") else "По какому поводу букет и какой бюджет?"
+        return f"{head}\n{ask} Или {ANKETA_TAIL}"
+    ask = qs[0] if len(qs) == 1 else f"{qs[0]} И {qs[1]}"
+    return f"{head}\nПодскажите, пожалуйста, {ask}\nКак ответите — {ANKETA_TAIL}"
 
 
 def _next_question(user_msgs, city):
@@ -541,17 +541,30 @@ def _next_question(user_msgs, city):
                          r"июн|июл|август|сентябр|октябр|ноябр|декабр)|понедельник|вторник|сред[уа]|четверг|пятниц|"
                          r"суббот|воскресень", t)
     has_time = re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\bв\s*\d{1,2}\b|утр|вечер|обед", t)
-    if not has_way and not (has_date and has_time):
-        return "Подскажите, пожалуйста: доставка или самовывоз, и на какую дату и к какому часу?"
+    pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
+    has_addr = _has_address(user_msgs)
+    phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
+    # Не хватает нескольких данных — спрашиваем всё недостающее ОДНИМ коротким сообщением, а не по одному.
+    miss = []
+    if not has_way:
+        miss.append("доставка или самовывоз")
+    if not (has_date and has_time):
+        miss.append("на какую дату и к какому часу")
+    if not pickup and not has_addr:
+        miss.append("адрес" + (" (если доставка)" if not has_way else "") + " — улица, дом, подъезд, этаж, кв.")
+    if len(phones) < 1:
+        miss.append("ваше имя и телефон")
+    if len(phones) < 2:
+        miss.append("имя и телефон получателя")
+    if len(miss) >= 2:
+        return ("Напишите, пожалуйста, одним сообщением:\n"
+                + "\n".join(f"• {m}" for m in miss))
     if not has_way:
         return "Подскажите, пожалуйста: доставка или самовывоз?"
     if not (has_date and has_time):
         return "Подскажите, пожалуйста, на какую дату и к какому часу нужен букет?"
-    pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
-    has_addr = _has_address(user_msgs)
     if not pickup and not has_addr:
         return ADDRESS_Q
-    phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
     if len(phones) < 1:
         return "Как вас зовут (фамилия и имя) и ваш телефон для связи?"
     if len(phones) < 2:
@@ -1372,13 +1385,12 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.add_message(client, "assistant", text)
         return Reply(text=text, photos=fresh, city=city)
     wants_photos = (not from_staff) and (bool(SHOW_REQUEST_RE.search(incoming or "")) or new_order)
-    # Клиент ответил на анкету и главное известно (город, доставка/самовывоз, дата+время) — сразу к выбору букета.
+    # Клиент ответил на анкету и город известен — сразу к выбору букета.
     after_anketa = False
     if not from_staff and city and not picked and not addons and not db.get_setting(f"chosen:{client}"):
         prev_bot = next((m["content"] for m in reversed(db.history(client, 4)) if m["role"] == "assistant"), "")
-        if "одним сообщением" in prev_bot:
-            nq = _next_question([m["content"] for m in db.history(client) if m["role"] == "user"], city)
-            after_anketa = not re.search(r"самовывоз|дату|город", nq)
+        # Короткая анкета: город известен — сразу показываем букеты (дату, если не сказали, спросим потом).
+        after_anketa = ANKETA_TAIL in prev_bot
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
     # Срабатывает и когда выбран букет (picked), и когда клиент пишет «этот/его/такой ... побольше» без reply.
     # НО не путаем с «покажи побольше ВАРИАНТОВ» — там как раз нужно показать.
@@ -1688,11 +1700,14 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     # Букет уже выбран (по фото/номеру/ссылке), а ИИ всё равно переспрашивает «какой букет / номер» —
     # не даём ему это сделать: подтверждаем выбор и идём к оформлению.
-    if picked and not size_change and not from_staff and ASK_WHICH_RE.search(reply.text or ""):
+    # Клиент просто выбрал (без вопроса) — тоже кодом: подтверждаем и ОДНИМ сообщением спрашиваем всё недостающее.
+    nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city) if picked else ""
+    if picked and not size_change and not from_staff and not reply.order and not order_text and not keep_photos \
+            and (ASK_WHICH_RE.search(reply.text or "") or ("?" not in (incoming or "") and nxt != ALMOST_DONE_Q)):
         it = picked[0]
-        nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city)
         reply.text = f"Отличный выбор 🌸 {it['title']} — {it['price']} ₽. Оформляем его! {nxt}"
         reply.photos = []
+        db.set_setting(f"lastq:{client}", nxt)
 
     # Режим «пышнее/скромнее»: никаких других букетов и вопросов коллегам — флорист получит доплату в заказе.
     if up_target and not from_staff:
