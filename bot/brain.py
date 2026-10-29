@@ -913,6 +913,10 @@ CARD_WANT_RE = re.compile(r"(?<!не\s)(?<!не)нужн\w*\s+(?:всё\s*же\s
                           r"давай\w*\s+(?:[\w-]+\s+)?открытк|добав\w*\s+(?:[\w-]+\s+)?открытк|(?:\bи|\bс|плюс|\+)\s+открытк|"
                           r"открытк\w*\s+(?:у\s+вас\s+)?есть|есть\s+(?:ли\s+)?(?:у\s+вас\s+)?открытк|какие\s+(?:есть\s+)?открытк|"
                           r"покаж\w*\s+открытк|скин\w*\s+открытк", re.I)
+# «Вы записали дату и время?», «что вы записали?», «правильно записали адрес?»
+RECORDED_Q_RE = re.compile(r"(?:записали|запомнили|учли|зафиксировали|занесли|записала\s+ли|ты\s+записала)\s+(?:ли\s+)?(?:\w+\s+)?"
+                           r"(?:дат|врем|адрес|телефон|имя|имен|заказ|открыт|данн|вс[её])|что\s+(?:вы\s+)?записал|"
+                           r"правильно\s+записал", re.I)
 # «Открытки есть?», «какие есть открытки?», «покажите открытки» — сразу показываем открытки с фото и ценами.
 CARDS_ASK_RE = re.compile(r"открытк\w*\s+(?:у\s+вас\s+)?есть|есть\s+(?:ли\s+)?(?:у\s+вас\s+)?открытк|"
                           r"какие\s+(?:у\s+вас\s+)?(?:есть\s+)?открытк|покаж\w*\s+(?:\w+\s+)?открытк|"
@@ -2213,6 +2217,31 @@ def respond(client, incoming, from_staff=False, quote=""):
         new_order = True
     if new_order:
         db.del_setting(f"chosen:{client}")
+    # «Вы записали дату и время?» — отвечаем, ЧТО записано (из черновика заказа), и повторяем текущий вопрос.
+    if not from_staff and RECORDED_Q_RE.search(incoming or ""):
+        k = _known_order(client)
+        um = [m["content"] for m in db.history(client) if m["role"] == "user"]
+        d_ = _latest_date(um) or str(k.get("дата") or "").strip()
+        t_ = _latest_time(um) or str(k.get("время") or "").strip()
+        win = _delivery_window(d_, t_) if t_ else ""
+        got = []
+        if d_ or t_:
+            got.append("📅 " + " ".join(x for x in (d_, win or (f"к {t_}" if t_ else "")) if x))
+        if _meaningful(k.get("адрес")):
+            got.append(f"📍 {k['адрес']}")
+        for key, lab in (("заказчик", "👤 "), ("получатель", "🎁 ")):
+            if _meaningful(k.get(key)):
+                got.append(lab + str(k[key]).split(",")[0].strip())
+        if _meaningful(k.get("открытка")):
+            got.append("💌 " + ("без открытки" if str(k["открытка"]).lower() == "нет" else f"открытка «{k['открытка']}»"))
+        if got:
+            text = "Да, записала ✅\n" + "\n".join(got)
+        else:
+            text = "Пока ничего не записала — подскажите, пожалуйста, дату и время 🌸"
+        if last_q and got:
+            text += "\n\n" + last_q
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # «Открытки есть?» — не спрашиваем текст, а сразу показываем открытки (с фото и ценами), потом спросим текст.
     if not from_staff and not picked and not addons and CARDS_ASK_RE.search(incoming or "") \
             and not _more_cards_request(client, incoming, last_q, quote_more):
