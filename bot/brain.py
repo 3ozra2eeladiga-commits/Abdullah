@@ -561,9 +561,9 @@ def _next_question(user_msgs, city, order=None):
     if not pickup and not has_addr:
         return ADDRESS_Q
     if len(phones) < 1:
-        return "Как вас зовут (фамилия и имя) и ваш телефон для связи?"
+        return CONTACTS_Q
     if len(phones) < 2:
-        return "Кому дарим? Напишите фамилию, имя и телефон получателя."
+        return "Напишите, пожалуйста, имя и телефон получателя — на случай, если курьеру нужно будет созвониться 🌸"
     if not re.search(r"открытк", t):
         return "Нужна ли открытка к букету? Если да — напишите текст для неё 💌"
     return ALMOST_DONE_Q
@@ -775,6 +775,24 @@ def _past_time_mention(text):
     return False
 
 
+PHONE_RE = re.compile(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}")
+CONTACTS_Q = ("Напишите, пожалуйста, одним сообщением 🌸\n"
+              "• ваше имя и телефон\n"
+              "• имя и телефон получателя\n"
+              "Например: Иван, 8 928 111-22-33; получатель Анна, 8 928 444-55-66")
+# Клиент возмущается, что его переспрашивают: «я уже ответил / уже писал».
+ALREADY_RE = re.compile(r"уже\s+(?:вам\s+)?(?:ответил|написал|писал|говорил|сказал|отправил|скинул|присылал|указал)", re.I)
+
+
+def _fill_phones(order, client_text):
+    """ИИ потерял телефон, а клиент его писал — берём из переписки (первый — заказчик, второй — получатель)."""
+    phones = PHONE_RE.findall(client_text or "")
+    for key, idx in (("заказчик", 0), ("получатель", 1)):
+        val = str(order.get(key) or "").strip()
+        if len(phones) > idx and val and not _phone_was_given(val, client_text):
+            order[key] = f"{val}, {phones[idx].strip()}"
+
+
 def _phone_was_given(order_value, client_text):
     """Телефон из заказа должен реально встречаться в сообщениях клиента (а не быть выдуман ИИ)."""
     digits = _phone_digits(order_value)
@@ -864,14 +882,15 @@ def _order_missing(o, client_text):
     if _time_already_passed(o.get("дата"), o.get("время")):
         return ("Кажется, это время сегодня уже прошло 🕒 Подскажите, пожалуйста, актуальное время "
                 "(или другую дату доставки).")
-    if not (o.get("заказчик") or "").strip():
-        return "Как вас зовут (фамилия и имя)? И ваш телефон для связи."
-    if not _phone_was_given(o.get("заказчик"), client_text):
-        return "Оставьте, пожалуйста, ваш номер телефона для связи."
-    if not (o.get("получатель") or "").strip():
-        return "Кому дарим? Напишите фамилию, имя и телефон получателя."
-    if not _phone_was_given(o.get("получатель"), client_text):
-        return "Подскажите номер телефона получателя — на случай, если нужно согласовать доставку."
+    # Имена и телефоны — ОДНИМ вопросом (Абдулла: не тянуть по одному), спрашиваем только недостающее.
+    need_me = not (o.get("заказчик") or "").strip() or not _phone_was_given(o.get("заказчик"), client_text)
+    need_to = not (o.get("получатель") or "").strip() or not _phone_was_given(o.get("получатель"), client_text)
+    if need_me and need_to:
+        return CONTACTS_Q
+    if need_me:
+        return "Напишите, пожалуйста, ваше имя и телефон для связи 🌸"
+    if need_to:
+        return "Напишите, пожалуйста, имя и телефон получателя — на случай, если курьеру нужно будет созвониться 🌸"
     card = (o.get("открытка") or "").strip()
     # Заглушка ИИ («...», «текст») или текст, которого клиент НЕ писал, — это не ответ клиента про открытку.
     if card.lower() not in ("нет", "не нужна", "не надо", "-", "—", "без текста") and (
@@ -1404,6 +1423,13 @@ def respond(client, incoming, from_staff=False, quote=""):
         text = "Поняла 🌸 Передала флористу — она свяжется с вами по заказу в ближайшее время."
         db.add_message(client, "assistant", text)
         return Reply(text=text, question=f"Клиент просит отменить/изменить заказ: «{incoming}»", city=city)
+    # Клиент прислал номер без нескольких цифр (8990019) — сразу просим полный, а не гадаем, чей он.
+    digits_only = re.sub(r"[\s()+-]", "", incoming or "")
+    if not from_staff and digits_only.isdigit() and 6 <= len(digits_only) <= 10 and digits_only[0] in "789":
+        text = (f"Кажется, в номере {incoming.strip()} не хватает цифр 🙏 Пришлите, пожалуйста, номер полностью — "
+                "11 цифр, например 8 928 111-22-33.")
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # Текст открытки (бот спросил его после выбора открытки): вопрос — отвечает ИИ, потом снова просим текст;
     # иначе это ТЕКСТ (хоть смайлик) — показываем и ждём «да». В заказ — только подтверждённый, как есть.
     card_step = "" if (from_staff or picked or addons) else (db.get_setting(f"cardstep:{client}") or "")
@@ -1631,6 +1657,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.order, reply.order_raw, reply.photos, reply.question = None, "", [], ""
             keep_photos = True              # не подмешивать букеты к вопросу о тексте
             return True
+        _fill_phones(order, client_text)
         miss = _order_missing(order, client_text)
         if not miss:
             return False
@@ -1677,8 +1704,17 @@ def respond(client, incoming, from_staff=False, quote=""):
             if not from_staff:
                 db.set_setting(f"lastq:{client}", nq)
 
+    already = not from_staff and bool(ALREADY_RE.search(incoming or "")) and not reply.order
     if reply.order:
         ask_missing(reply.order)
+    elif already and (db.get_setting(f"chosen:{client}") or db.get_pending_order(client)):
+        # «Я уже ответил» — не спорим и не переспрашиваем: собираем заказ из переписки КОДОМ.
+        pend = db.get_pending_order(client)
+        if pend and not ask_missing(_apply_client_state(pend, client, city)):
+            reply.text, reply.photos = "Извините, вижу 🌸\n\n" + _order_summary(pend), []
+            db.set_pending_order(client, pend)
+        elif not pend:
+            advance("Извините, вижу 🌸 ")
     elif refused_in_order:
         advance("Спасибо, записала 🌸 ")
     elif not from_staff and addons and any(CARD_RE.search(a["title"]) for a in addons):
