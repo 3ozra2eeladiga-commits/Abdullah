@@ -595,6 +595,23 @@ def _latest_date(user_msgs):
     return ""
 
 
+def _latest_time(user_msgs):
+    """Последнее время, которое назвал клиент: «в 09:00» → «ладно в 12:00» → «12:00». Пусто, если не называл."""
+    for m in reversed(user_msgs):
+        if re.search(r"\d{5,}", re.sub(r"[\s()+-]", "", m or "")) and not re.search(r"\b\d{1,2}[:.]\d{2}\b", m or ""):
+            continue                               # сообщение с телефоном
+        found = re.findall(r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b", m or "")
+        found = [f for f in found if not re.search(rf"\b{f[0]}\.{f[1]}\b(?!\s*(?:утра|вечера|ч))", m) or
+                 re.search(rf"(?:\bв|\bк|\bс|\bдо)\s*{f[0]}\.{f[1]}", m, re.I)]   # «08.03» — дата, не время
+        if found:
+            h, mm = found[-1]
+            return f"{int(h):02d}:{mm}"
+        h = _hour_from_text(m)
+        if h is not None and re.search(r"\b(?:в|к|на|до|около)\s*\d", m or "", re.I):
+            return f"{h:02d}:00"
+    return ""
+
+
 def _too_late_today_msg(text, city):
     """«Сегодня / срочно / пока не закроется магазин», а до закрытия меньше 2 часов — честно: сегодня не успеем."""
     t = (text or "").lower()
@@ -1151,9 +1168,13 @@ def _apply_client_state(order, client, city):
     if ct:
         order["открытка"] = ct              # текст, который клиент подтвердил — как есть, без правок
     # Дата — по ПОСЛЕДНЕМУ, что сказал клиент («сегодня» → потом «ладно, завтра» → значит завтра).
-    latest = _latest_date([m["content"] for m in db.history(client) if m["role"] == "user"])
+    user_msgs = [m["content"] for m in db.history(client) if m["role"] == "user"]
+    latest = _latest_date(user_msgs)
     if latest and not db.get_setting(f"asap:{client}"):
         order["дата"] = latest
+    latest_t = _latest_time(user_msgs)            # и время — последнее названное («в 9:00» → «ладно, в 12:00»)
+    if latest_t and not db.get_setting(f"asap:{client}"):
+        order["время"] = latest_t
     if db.get_setting(f"asap:{client}"):
         soon = datetime.datetime.now(_MSK) + datetime.timedelta(hours=URGENT_MIN_HOURS)
         order["дата"] = "сегодня"
