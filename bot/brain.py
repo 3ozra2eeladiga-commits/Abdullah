@@ -93,7 +93,7 @@ RULES = """Ты — флорист цветочного магазина и пе
 3) ДАТА И ТОЧНОЕ ВРЕМЯ. Узнай дату и ТОЧНОЕ время. Если клиент ответил размыто («после обеда», «вечером»,
    «днём») — вежливо уточни конкретный час или интервал: «А к какому часу удобно? Например, к 14:00 🕒».
    «Как можно скорее / срочно» — это нормально, уточнять не нужно.
-4) ПОЖЕЛАНИЯ. НЕ спрашивай повод, бюджет и цвета: как только известны город и день — сразу показывай букеты.
+4) ПОЖЕЛАНИЯ. НЕ спрашивай повод, бюджет, цвета и состав: как только известны город и день — сразу показывай букеты.
    Если клиент сам назвал повод, бюджет, цвета или цветы — учитывай при подборе, не переспрашивай.
 (Имена и телефоны могли прийти в анкете — тогда не переспрашивай. Открытку спрашивай ПОЗЖЕ, после выбора букета.)
 
@@ -439,6 +439,8 @@ def _picked_by_price(client, incoming, city):
              for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
     shown = [x for x in shown if x]
     exact = [x for x in shown if x["price"] == n]
+    if not exact and n % 500 == 0 and not re.search(r"\bза\b", t, re.I):
+        return []                            # просто «4000» — круглая сумма: это скорее бюджет, а не цена букета
     near = exact or [x for x in shown if abs(x["price"] - n) <= max(100, n * 0.03)]
     return near if len(near) == 1 else []
 
@@ -845,6 +847,20 @@ ANYTIME_RE = re.compile(r"в\s+любое\s+время|когда\s+угодно
                         r"не\s+важно\s+когда|когда\s+удобно\s+(?:вам|будет)|в\s+течени[ие]\s+дня", re.I)
 ANYTIME_Q = ("Хорошо 🌸 А примерно с какого времени? Чтобы букет был готов к вашему приходу. "
              "Например: после 14:00")
+
+
+def _fix_budget_answer(client, text, last_q=""):
+    """Голое «4000» / «на 4000» до выбора букета — это бюджет («до 4000 ₽»), если бот не спрашивал
+    время, дату, адрес, телефон или сумму «собрать пышнее»."""
+    t = (text or "").strip()
+    m = re.fullmatch(r"(?:на|около|примерно)?\s*(\d{1,3}(?:[\s.]?\d{3})|\d{3,6})\s*(?:₽|р\.?|руб\w*)?", t, re.I)
+    if not m or db.get_setting(f"chosen:{client}"):
+        return text
+    n = int(re.sub(r"\D", "", m.group(1)))
+    last_bot = last_q or next((x["content"] for x in reversed(db.history(client, 4)) if x["role"] == "assistant"), "")
+    if not 500 <= n <= 200000 or re.search(r"врем|дат|адрес|телефон|номер|сумм|цифр|1 —", last_bot, re.I):
+        return text
+    return f"до {n} ₽"
 
 
 def _fix_time_answer(client, text, last_q=""):
@@ -2401,7 +2417,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     ТОЛЬКО для распознавания (какой букет), но НЕ подмешивается в сам текст для ИИ, чтобы его не путать."""
     if not from_staff:
         incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(incoming)),
-                                    db.get_setting(f"lastq:{client}") or "")    # «саморезов» → «самовывоз», «дастафка» → «доставка»
+                                    db.get_setting(f"lastq:{client}") or "")
+        incoming = _fix_budget_answer(client, incoming, db.get_setting(f"lastq:{client}") or "")    # «саморезов» → «самовывоз», «дастафка» → «доставка»
     content = f"{STAFF_PREFIX} {incoming}" if from_staff else incoming
 
     # Ответ на фото со словами «есть ещё варианты / другие» — это НЕ выбор этого товара, а просьба показать другие.
@@ -3548,10 +3565,13 @@ def respond(client, incoming, from_staff=False, quote=""):
         wants_photos = True
     # ИИ спрашивает «какой повод? / бюджет? / гамма?» — сами не спрашиваем (Абдулла), сразу показываем варианты.
     if not from_staff and not reply.photos and not reply.order and not order_text and city \
-            and not db.get_setting(f"chosen:{client}") and re.search(r"\bповод|\bбюджет|цветов\w*\s+гамм|какие\s+цвет",
+            and not db.get_setting(f"chosen:{client}") and re.search(r"\bповод|\bбюджет|цветов\w*\s+гамм|какие\s+цвет|\bсостав|какой\s+стиль|предпочтени|"
+                                                                    r"какие\s+цветы\s+(?:любит|нравятся|предпочита)",
                                                                     reply.text or "", re.I) \
             and "?" in (reply.text or ""):
-        if db.get_setting(f"shown:{client}"):        # букеты уже показаны — просим выбрать, новые не шлём
+        if db.get_setting(f"shown:{client}") and not catalog_budget(incoming or "") \
+                and not re.search(r"роз|пион|тюльпан|хризантем|гортенз|эустом|лили|ромаш|экзот|микс|ярк|нежн|бел|красн|розов",
+                                  incoming or "", re.I):     # букеты уже показаны, нового пожелания нет — просим выбрать
             reply.text = "Хорошо 🌸 Какой букет нравится? Ответьте «этот» на фото — или напишите «ещё»."
         else:
             force_options = True
