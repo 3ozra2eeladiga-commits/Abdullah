@@ -431,7 +431,8 @@ def on_report(kind):
         for c, since in sorted(telegram_bot.waiting_clients(), key=lambda x: x[1]):
             name = telegram_bot.client_name(c).split(" @")[0] or c.split(":", 1)[-1]
             lines.append(f"🙋 {name} ждёт ответа {max(1, int((now - since) // 60))} мин")
-        return ("📭 Без ответа:\n" + "\n".join(lines[-25:])) if lines else "📭 Все разобраны 👍"
+        ids = [oid for oid, c, o, _t in rows if db.get_setting(f"ostatus:{oid}") == "check"][-24:]
+        return (("📭 Без ответа:\n" + "\n".join(lines[-25:])) if lines else "📭 Все разобраны 👍"), ids
     today = datetime.datetime.now(_MSK_TZ).date()
     marks = {"check": "⏳ ждёт ответа", "ok": "✅ подтверждён", "no": "❌ нет в наличии", "other": "✍️ флорист отвечает сама"}
     items = []
@@ -443,9 +444,28 @@ def on_report(kind):
         items.append((str(o.get("время") or "99"), f"• {_short_line(oid, c, o)}\n   {marks.get(st, '')}"
                       + (f" — {who.split(' @')[0]}" if who and st != "check" else "")))
     if not items:
-        return "📋 На сегодня заказов нет."
+        return "📋 На сегодня заказов нет.", []
     items.sort()
-    return f"📋 Заказы на сегодня ({len(items)}):\n" + "\n".join(x for _k, x in items[:30])
+    ids = [int(re.search(r"№(\d+)", x).group(1)) for _k, x in items[:24]]
+    return f"📋 Заказы на сегодня ({len(items)}):\n" + "\n".join(x for _k, x in items[:30]), ids
+
+
+def on_show(chat, order_id):
+    """Кнопка «№17» под списком — присылаем эту заявку целиком; не разобрана — снова с кнопками."""
+    row = db.get_order(order_id)
+    if not row:
+        telegram_bot.send(chat, "Заявка не найдена.")
+        return
+    client, o = row
+    card = _format_order(order_id, client, type("R", (), {"order": o})())
+    st = db.get_setting(f"ostatus:{order_id}") or ""
+    if st and st != "check":
+        who = db.get_setting(f"owho:{order_id}") or ""
+        card += f"\n\n✅ Уже отмечено: {CHECK_ACTIONS.get(st, (st,))[0]}" + (f" — {who}" if who else "")
+    msg = telegram_bot.send(chat, card, **({"reply_markup": {"inline_keyboard": _check_buttons(order_id)}}
+                                           if st == "check" else {}))
+    if msg:
+        db.link_staff_message(chat, msg["message_id"], client)
 
 
 # ---------- Оплата через СБП Точки: кнопка «💳 Оплата» → QR и ссылка ИМЕННО этому клиенту ----------
@@ -775,7 +795,7 @@ def main():
     _disable_windows_quick_edit()
     catalog.refresh()
     telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
-                       on_pay=on_pay, on_report=on_report,
+                       on_pay=on_pay, on_report=on_report, on_show=on_show,
                        on_question=on_question)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
