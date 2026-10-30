@@ -137,6 +137,11 @@ DB_PATH = os.getenv("DB_PATH", "flowerbot.db")
 HISTORY_LIMIT = int(os.getenv("HISTORY_LIMIT", "20"))
 # Если сотрудник сам ответил клиенту в Директе, бот молчит с этим клиентом N часов.
 HUMAN_PAUSE_HOURS = float(os.getenv("HUMAN_PAUSE_HOURS", "6"))
+# «Звонок» о новой заявке: сколько раз подряд прозвенеть (каждый раз — мелодия уведомления), и напоминания,
+# пока никто не нажал кнопку под заявкой (каждые RING_REMIND_MIN минут, не больше RING_REMIND_TIMES раз).
+RING_TIMES = int(os.getenv("RING_TIMES", "3"))
+RING_REMIND_MIN = float(os.getenv("RING_REMIND_MIN", "2"))
+RING_REMIND_TIMES = int(os.getenv("RING_REMIND_TIMES", "5"))
 
 # --- Секретный код: написал боту ровно это (регистр/пробелы/знаки не важны) — бот отвечает секретным текстом.
 # Вариант 1 — в .env на сервере: SECRET_CODE и SECRET_REPLY (перенос строки — «\n»).

@@ -159,6 +159,31 @@ def notify_staff(client, text, buttons=None):
             db.link_staff_message(chat, msg["message_id"], client)
 
 
+def ring(order_id, still_waiting):
+    """«Звонок» о новой заявке: несколько коротких сообщений подряд — каждое играет мелодию уведомления
+    (Telegram даёт мелодию не длиннее 5 с, так звучит дольше). Сообщения сразу удаляются — чат остаётся чистым.
+    Потом напоминаем, пока под заявкой не нажали кнопку (still_waiting() == False)."""
+    def burst(text):
+        for _ in range(config.RING_TIMES):
+            sent = [(chat, send(chat, text)) for chat in staff_chats()]
+            time.sleep(5.5)                                  # дать мелодии доиграть
+            for chat, msg in sent:
+                if msg:
+                    call("deleteMessage", chat_id=chat, message_id=msg["message_id"])
+
+    def run():
+        try:
+            burst(f"🔔 Новая заявка №{order_id}!")
+            for n in range(config.RING_REMIND_TIMES):
+                time.sleep(config.RING_REMIND_MIN * 60)
+                if not still_waiting():
+                    return
+                burst(f"⏰ Заявка №{order_id} ждёт ответа! Нажмите кнопку под заявкой.")
+        except Exception as e:                               # звонок не должен ронять бота
+            log.warning("Звонок о заявке №%s не удался: %s", order_id, e)
+    threading.Thread(target=run, daemon=True).start()
+
+
 def notify_staff_order(client, items, text, buttons=None):
     """Новый заказ сотрудникам: сначала ФОТО заказанных товаров (что собирать), потом карточка заказа.
     Отвечают именно на карточку — текст уйдёт клиенту."""
