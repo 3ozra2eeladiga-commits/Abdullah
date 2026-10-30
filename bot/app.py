@@ -377,22 +377,26 @@ def _photo_nudge(client):
 def _photo_question(client, buf):
     """Есть фото и слова клиента. Нужен город — потом каждое фото флористу с кнопками. Вызывать под блокировкой."""
     texts = buf.get("texts", [])
+    names = list(catalog.city_names)
     city = db.get_city(client) or next((catalog.match_city(t) for t in texts if catalog.match_city(t)), None)
+    if not city and buf.get("asked_city"):         # ответ цифрой на «1 — Пятигорск, 2 — …»
+        num = next((t.strip() for t in reversed(texts) if re.fullmatch(r"\s*\d\s*", t)), "")
+        if num and 1 <= int(num) <= len(names):
+            city = names[int(num) - 1]
     if not city:
         if not buf.get("asked_city"):
-            text = (f"В какой город нужны цветы — {', '.join(catalog.city_names)} или рядом? "
-                    "Сразу спрошу флориста про фото 🌸")
+            opts = "\n".join(f"{i} — {n}" for i, n in enumerate(names, 1))
+            text = f"Сейчас спрошу флориста про фото 🌸 Из какого города заказ?\n{opts}\nОтветьте цифрой"
             _send_text(client, text)
             db.add_message(client, "assistant", text)
             buf["asked_city"] = True
             _save_photo_buf(client, buf)
             return
-        text = "Подскажите город — и сразу спрошу флориста 🌸"
-        _send_text(client, text)
-        db.add_message(client, "assistant", text)
-        return
-    db.set_city(client, city)
-    question = " ".join(t for t in texts if not (catalog.match_city(t) and len(t) < 30)) or "есть такой?"
+        city = "город не указан"                   # второй раз не переспрашиваем — флорист уточнит сам
+    if city in names:
+        db.set_city(client, city)
+    question = " ".join(t for t in texts if not (catalog.match_city(t) and len(t) < 30)
+                        and not re.fullmatch(r"\s*\d\s*", t)) or "есть такой?"
     card = bool(re.search(r"открытк|конверт", " ".join(texts), re.I))
     # Смотрим, что на фото: селфи / еда / вещи — флористу не шлём (это не букет); открытка — спрашиваем про открытку.
     kinds = [llm.classify_image(telegram_bot.photo_bytes(p)) for p in buf["photos"]]
