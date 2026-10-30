@@ -433,20 +433,19 @@ def on_report(kind):
             lines.append(f"🙋 {name} ждёт ответа {max(1, int((now - since) // 60))} мин")
         return ("📭 Без ответа:\n" + "\n".join(lines[-25:])) if lines else "📭 Все разобраны 👍"
     today = datetime.datetime.now(_MSK_TZ).date()
-    marks = {"check": "⏳", "ok": "✅", "no": "❌", "other": "✍️"}
+    marks = {"check": "⏳ ждёт ответа", "ok": "✅ подтверждён", "no": "❌ нет в наличии", "other": "✍️ флорист отвечает сама"}
     items = []
     for oid, c, o, created in rows:
         if _order_day(o, created) != today:
             continue
         st = db.get_setting(f"ostatus:{oid}") or ""
         who = db.get_setting(f"owho:{oid}") or ""
-        items.append((str(o.get("время") or "99"), f"{marks.get(st, '•')} {_short_line(oid, c, o)}"
-                      + (f" (отметила: {who.split(' @')[0]})" if who and st != "check" else "")))
+        items.append((str(o.get("время") or "99"), f"• {_short_line(oid, c, o)}\n   {marks.get(st, '')}"
+                      + (f" — {who.split(' @')[0]}" if who and st != "check" else "")))
     if not items:
         return "📋 На сегодня заказов нет."
     items.sort()
-    return (f"📋 Заказы на сегодня ({len(items)}):\n" + "\n".join(x for _k, x in items[:30])
-            + "\n\n⏳ ждёт ответа · ✅ подтверждён · ❌ нет в наличии · ✍️ флорист отвечает сам")
+    return f"📋 Заказы на сегодня ({len(items)}):\n" + "\n".join(x for _k, x in items[:30])
 
 
 # ---------- Оплата через СБП Точки: кнопка «💳 Оплата» → QR и ссылка ИМЕННО этому клиенту ----------
