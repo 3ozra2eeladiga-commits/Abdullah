@@ -633,9 +633,22 @@ def _closed_now_note(client, city, asked=False):
             opens += [f"{c}, {a} — с {hrs.split('–')[0]}" for a, hrs in shops]
         else:
             opens.append(f"{c} — с {_shop_hours(c)[0]:02d}:00")
+    day = "на сегодня" if when == "утром" else "на завтра"
     return (f"Сейчас магазины закрыты 🌙 Откроемся {when}:\n" + "\n".join(opens) +
-            "\nЗаказ можно оформить сейчас — флорист подтвердит его при открытии.\n"
-            "1 — оформить сейчас\n2 — напишу позже")
+            f"\nЗаказ {day} можно оформить уже сейчас — флорист подтвердит его при открытии.\n"
+            f"1 — оформить заказ {day}\n2 — напишу позже")
+
+
+def _night_target(client):
+    """Ночной заказ («1 — оформить на завтра»): на какую дату — «31.10» (после полуночи — на сегодня)."""
+    return db.get_setting(f"nightorder:{client}") or ""
+
+
+def _set_night_target():
+    now = datetime.datetime.now(_MSK)
+    st = min(_open_window(c)[0] for c in catalog.city_names) if catalog.city_names else 8
+    day = now.date() if now.hour + now.minute / 60 < st else now.date() + datetime.timedelta(days=1)
+    return day.strftime("%d.%m")
 
 
 def _anketa(incoming, city):
@@ -1068,7 +1081,8 @@ def _next_question(user_msgs, city, order=None):
     has_date = re.search(r"сегодня|завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|"
                          r"июн|июл|август|сентябр|октябр|ноябр|декабр)|понедельник|вторник|сред[уа]|четверг|пятниц|"
                          r"суббот|воскресень", t)
-    has_time = re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\bв\s*\d{1,2}\b|\b(?:после|с|около)\s*\d{1,2}\b|утр|вечер|обед|узнать у получателя", t)
+    t_time = re.sub(r"\b\d{1,2}\.(?:0[1-9]|1[0-2])\b(?!:)", " ", t)    # «31.10» — это дата, не время
+    has_time = re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\bв\s*\d{1,2}\b|\b(?:после|с|около)\s*\d{1,2}\b|утр|вечер|обед|узнать у получателя", t_time)
     pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
     has_addr = _has_address(user_msgs) or "адрес_есть" in t
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
@@ -1079,6 +1093,8 @@ def _next_question(user_msgs, city, order=None):
         return WAY_Q
     if not has_date and has_time:
         return "На какую дату? 📅 Например: завтра"
+    if has_date and not has_time:
+        return TIME_Q
     if not (has_date and has_time):
         return NIGHT_DATE_Q if not has_date and shops_closed_now(city) else DATE_Q
     if not pickup and not has_addr:
@@ -1343,6 +1359,7 @@ SURPRISE_Q1 = "Хорошо 🌸 Имя и телефон получателя? 
 SURPRISE_Q2 = "Хорошо 🌸 Напишите имя получателя и где её найти: адрес, место (магазин, аптека, офис), как узнать."
 # По одному вопросу за раз (два вопроса в одном сообщении клиенты путают), с ответами цифрами.
 WAY_Q = "Доставка или самовывоз? 🚗\n1 — доставка\n2 — самовывоз"
+TIME_Q = "К какому времени? 🕒 Например: к 14:00"
 NIGHT_DATE_Q = "Оформим на завтра 🌸 К какому времени? Например: завтра к 10:00"
 DATE_Q = "На какую дату и к какому времени? 📅 Например: завтра к 15:00"
 PICKUP_CONTACT_Q = ("Ваше имя и телефон? 🌸\n(номер — только чтобы быстро связаться с вами по заказу, "
@@ -1523,7 +1540,7 @@ def _order_missing(o, client_text):
     if not str(o.get("дата") or "").strip() or str(o.get("дата")).strip() in ("—", "-", "...") or not re.search(
             r"сегодня|завтра|послезавтра|\d{1,2}[./]\d{1,2}|\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|"
             r"сентябр|октябр|ноябр|декабр)|понедельник|вторник|сред[уа]|четверг|пятниц|суббот|воскресень|сейчас|срочно",
-            cl):
+            cl) and not o.get("_ночной_заказ"):
         if shops_closed_now(city_o):            # ночью — оформляем на завтра, без «к сожалению»
             return NIGHT_DATE_Q
         return "На какую дату нужен букет? 📅"
@@ -1713,6 +1730,11 @@ def _apply_client_state(order, client, city):
         order["заказчик"] = f"{ct_['me_name']}, {ct_['me_phone']}"
     if ct_.get("to_name") and ct_.get("to_phone"):
         order["получатель"] = f"{ct_['to_name']}, {ct_['to_phone']}"
+    nt = _night_target(client)
+    if nt:                                     # ночной заказ: дата — день открытия, если клиент не назвал другую
+        if not re.search(r"\d{1,2}[./]\d{1,2}|послезавтра", str(order.get("дата") or "")):
+            order["дата"] = nt
+        order["_ночной_заказ"] = True
     extra = db.get_setting(f"addr_extra:{client}") or ""
     if extra and not (order.get("получение") or "").lower().startswith("самовывоз"):
         base = str(order.get("адрес") or "").strip() or db.get_setting(f"addr_base:{client}") or ""
@@ -1858,6 +1880,9 @@ def _known_order(client):
         d["открытка"] = db.get_setting(f"cardtext:{client}")
     elif db.get_setting(f"nocard:{client}"):
         d["открытка"] = "нет"
+    nt = _night_target(client)
+    if nt and not re.search(r"\d{1,2}[./]\d{1,2}|завтра|послезавтра", str(d.get("дата") or "")):
+        d["дата"] = nt
     if db.get_setting(f"noaddr:{client}") and len(str(d.get("адрес") or "").strip()) < 6:
         d["адрес"] = "узнать у получателя"
         d["получение"] = d.get("получение") or "доставка"
@@ -2709,7 +2734,19 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff and last_q.startswith("Сейчас магазины закрыты"):
         t = (incoming or "").strip().lower()
         if re.match(r"^\W*(?:1|да|оформ\w*|давай\w*|хорошо|ок)\b", t):
-            text = "Отлично 🌸 " + _anketa("", city).split("\n", 1)[-1]
+            # Дальше — ровно как днём, только дата уже известна: заказ на завтра (или на сегодня после полуночи).
+            target = _set_night_target()
+            db.set_setting(f"nightorder:{client}", target)
+            if city:
+                cc = catalog.get_city(city)
+                photos = cc.relevant_items("популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True)[:MIN_OPTIONS] \
+                    if cc else []
+                text = f"Отлично 🌸 Оформляем на {target}. Вот варианты — какой нравится? Ответьте «этот» на фото."
+                db.set_setting(f"shown:{client}", ",".join(p["code"] for p in photos))
+                db.del_setting(f"lastq:{client}")
+                db.add_message(client, "assistant", text)
+                return Reply(text=text, city=city, photos=photos)
+            text = f"Отлично 🌸 Оформляем на {target}. " + _anketa("", city).split("\n", 1)[-1]
             db.set_setting(f"lastq:{client}", text)
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
