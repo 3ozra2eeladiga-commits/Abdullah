@@ -1003,7 +1003,7 @@ def _next_question(user_msgs, city, order=None):
     has_date = re.search(r"сегодня|завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|"
                          r"июн|июл|август|сентябр|октябр|ноябр|декабр)|понедельник|вторник|сред[уа]|четверг|пятниц|"
                          r"суббот|воскресень", t)
-    has_time = re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\bв\s*\d{1,2}\b|утр|вечер|обед", t)
+    has_time = re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\bв\s*\d{1,2}\b|утр|вечер|обед|узнать у получателя", t)
     pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
     has_addr = _has_address(user_msgs) or "адрес_есть" in t
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
@@ -1012,6 +1012,8 @@ def _next_question(user_msgs, city, order=None):
         return WAY_Q
     if not has_way:
         return WAY_Q
+    if not has_date and has_time:
+        return "На какую дату? 📅 Например: завтра"
     if not (has_date and has_time):
         return DATE_Q
     if not pickup and not has_addr:
@@ -1269,7 +1271,9 @@ NO_TO_PHONE_RE = re.compile(r"нет\s+(?:номера|телефона)\s+по�
                             r"(?:не\s+знаю|нет)|только\s+адрес", re.I)
 NO_ADDR_RE = re.compile(r"нет\s+(?:е[её]\s+|его\s+)?адреса|не\s+знаю\s+(?:е[её]\s+|его\s+)?адрес|адрес\w*\s+(?:не\s+знаю|нет)|"
                         r"без\s+адреса|только\s+(?:номер|телефон)", re.I)
-NO_ADDR_TEXT = "Хорошо 🌸 Позвоним получателю и сами уточним адрес и удобное время. Пришлите имя и телефон получателя 📞"
+# «Нет адреса и времени, только телефон» / «можете узнать время и адрес у получателя?»
+NO_ADDR_TIME_RE = re.compile(r"нет\s+(?:ни\s+)?адреса\s*,?\s*(?:и|ни)\s+врем|нет\s+(?:ни\s+)?времени\s*,?\s*(?:и|ни)\s+адрес|"
+                             r"(?:узна|спрос|уточн)\w*[^.?!]{0,30}(?:врем\w*\s+и\s+адрес|адрес\w*\s+и\s+врем)", re.I)
 SURPRISE_Q1 = "Хорошо 🌸 Имя и телефон получателя? Позвоним сами, от кого — не скажем."
 SURPRISE_Q2 = "Хорошо 🌸 Напишите имя получателя и где её найти: адрес, место (магазин, аптека, офис), как узнать."
 # По одному вопросу за раз (два вопроса в одном сообщении клиенты путают), с ответами цифрами.
@@ -1448,7 +1452,7 @@ def _order_missing(o, client_text):
         return "На какую дату нужен букет? 📅"
     if o.get("получение") == "доставка" and len((o.get("адрес") or "").strip()) < 6:
         return ADDRESS_Q
-    if _time_is_vague(o.get("время")):
+    if _time_is_vague(o.get("время")) and not o.get("_время_у_получателя"):
         return "Подскажите, пожалуйста, точное время — к которому часу нужен букет? (например, к 14:00) 🕒"
     # Самовывоз — из КАКОГО магазина (в городе их может быть несколько). Даём готовые ответы «1» / «2».
     if (o.get("получение") or "").lower().startswith("самовывоз") and not o.get("_магазин_выбран"):
@@ -1456,7 +1460,8 @@ def _order_missing(o, client_text):
         if len(shops) > 1 and not _shop_in(str(o.get("адрес") or ""), shops):
             return PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {_shop_label(a, h)}" for i, (a, h) in enumerate(shops, 1)) \
                 + "\nОтветьте цифрой 🌸"
-    if _time_already_passed(o.get("дата"), o.get("время")) and not o.get("_время_уточнит_флорист"):
+    if _time_already_passed(o.get("дата"), o.get("время")) and not o.get("_время_уточнит_флорист") \
+            and not o.get("_время_у_получателя"):
         city_o = catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or ""))
         late = _too_late_today_msg("сегодня", city_o)
         if late:
@@ -1464,7 +1469,7 @@ def _order_missing(o, client_text):
         soon = datetime.datetime.now(_MSK) + datetime.timedelta(hours=URGENT_MIN_HOURS)
         return (f"Это время сегодня уже прошло 🕒 Можем привезти сегодня как можно скорее — примерно с {soon:%H:%M}. "
                 "Подходит? Или напишите другое время/дату.")
-    closed = "" if o.get("_время_уточнит_флорист") else _closed_hours_msg(
+    closed = "" if (o.get("_время_уточнит_флорист") or o.get("_время_у_получателя")) else _closed_hours_msg(
         _hour_from_text(o.get("время")), catalog.match_city(str(o.get("город") or "")) or
                                catalog.match_city(str(o.get("адрес") or "")))
     if closed:
@@ -1620,9 +1625,17 @@ def _apply_client_state(order, client, city):
         order["заказчик"] = f"{ct_['me_name']}, {ct_['me_phone']}"
     if ct_.get("to_name") and ct_.get("to_phone"):
         order["получатель"] = f"{ct_['to_name']}, {ct_['to_phone']}"
-    if db.get_setting(f"noaddr:{client}") and len(str(order.get("адрес") or "").strip()) < 6 \
-            and not (order.get("получение") or "").lower().startswith("самовывоз"):
-        order["адрес"] = "уточнить у получателя по телефону (клиент адрес не знает)"
+    if db.get_setting(f"noaddr:{client}") and not (order.get("получение") or "").lower().startswith("самовывоз"):
+        if len(str(order.get("адрес") or "").strip()) < 6 or re.search(r"узна|уточн", str(order.get("адрес") or ""), re.I):
+            order["адрес"] = "узнать у получателя"
+        notime = bool(db.get_setting(f"notime:{client}"))
+        if notime:
+            order["время"] = "узнать у получателя"
+            order["_время_у_получателя"] = True
+        note = ("Время и адрес" if notime else "Адрес") + " узнать у получателя"
+        c = str(order.get("комментарий") or "").strip()
+        if note not in c:
+            order["комментарий"] = (c + "; " if c else "") + note
     if (order.get("получение") or "").lower().startswith("самовывоз"):
         if ct_.get("me_name") and ct_.get("nophone"):
             order["заказчик"] = f"{ct_['me_name']} (телефон не дал — выдать по имени)"
@@ -1753,8 +1766,10 @@ def _known_order(client):
     elif db.get_setting(f"nocard:{client}"):
         d["открытка"] = "нет"
     if db.get_setting(f"noaddr:{client}") and len(str(d.get("адрес") or "").strip()) < 6:
-        d["адрес"] = "уточнить у получателя по телефону"
+        d["адрес"] = "узнать у получателя"
         d["получение"] = d.get("получение") or "доставка"
+    if db.get_setting(f"notime:{client}"):
+        d["время"] = "узнать у получателя"
     ct0 = _contacts(client)
     if ct0.get("pickup") and ct0.get("me_name") and (ct0.get("me_phone") or ct0.get("nophone")):
         d["_самовывоз_контакт"] = True
@@ -2081,6 +2096,10 @@ def _order_summary(o):
         cost = "бесплатно" if price == "0" else (_rub(price) if price.isdigit() else
                                                  "стоимость доставки сообщит флорист при подтверждении")
         how = f"Доставка {when}, {o.get('адрес') or ''} — {cost}".strip()
+        if o.get("_время_у_получателя") or str(o.get("адрес") or "") == "узнать у получателя":
+            what = "Время и адрес" if o.get("_время_у_получателя") else "Адрес"
+            day = str(o.get("дата") or "").strip() if o.get("_время_у_получателя") else when
+            how = f"Доставка {day}, {cost}\n📞 {what} узнать у получателя"
     def person(v):                                 # «Мария, 89911110018» — имя и телефон, чтобы клиент проверил
         parts = [x.strip() for x in str(v or "").split(",") if x.strip()]
         return ", ".join(parts[:2])
@@ -2438,11 +2457,20 @@ def respond(client, incoming, from_staff=False, quote=""):
             return Reply(text=text, city=city)
         delivery = not _is_pickup(client)
         # «Адреса нет, есть только телефон» — позвоним получателю и узнаем адрес сами.
-        if delivery and not sur and NO_ADDR_RE.search(t_in) and re.search(r"адрес", _last_bot_text(client, last_q), re.I):
+        both = delivery and NO_ADDR_TIME_RE.search(t_in)
+        if delivery and not sur and not PHONE_RE.search(t_in) and (both or (
+                NO_ADDR_RE.search(t_in) and re.search(r"адрес", _last_bot_text(client, last_q), re.I))):
             db.set_setting(f"noaddr:{client}", "1")
-            db.set_setting(f"lastq:{client}", "Имя и телефон получателя?")
-            db.add_message(client, "assistant", NO_ADDR_TEXT)
-            return Reply(text=NO_ADDR_TEXT, city=city)
+            if both:
+                db.set_setting(f"notime:{client}", "1")
+            nxt = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"],
+                                 city, _known_order(client))
+            if nxt == ALMOST_DONE_Q or not nxt:
+                nxt = "Имя и телефон получателя? 📞"
+            text = f"Хорошо 🌸 {'Время и адрес' if both else 'Адрес'} узнаем у получателя. {nxt}"
+            db.set_setting(f"lastq:{client}", nxt)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
         # «Свой номер не дам» / «нет телефона получателя, только адрес» — сразу нужный вариант + предупреждение.
         if delivery and not sur and not PHONE_RE.search(t_in) and (OWN_PHONE_REFUSE_RE.search(t_in) or NO_TO_PHONE_RE.search(t_in)):
             sur = "2" if NO_TO_PHONE_RE.search(t_in) else "1"
