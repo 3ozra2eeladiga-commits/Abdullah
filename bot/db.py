@@ -94,6 +94,18 @@ def get_order(order_id):
     return (row["client"], json.loads(row["data"])) if row else None
 
 
+def recent_orders(since_ts):
+    """Заказы, созданные после since_ts: [(id, client, data, created)], старые сначала."""
+    rows = _exec("SELECT id, client, data, created FROM orders WHERE created>=? ORDER BY id", (since_ts,)).fetchall()
+    out = []
+    for r in rows:
+        try:
+            out.append((r["id"], r["client"], json.loads(r["data"]), r["created"]))
+        except ValueError:
+            continue
+    return out
+
+
 def last_order_id(client):
     row = _exec("SELECT id FROM orders WHERE client=? ORDER BY id DESC LIMIT 1", (client,)).fetchone()
     return row["id"] if row else None

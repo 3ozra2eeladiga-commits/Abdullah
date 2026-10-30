@@ -260,8 +260,10 @@ def notify_staff(client, text, buttons=None):
 
 
 RING_BTN, STOP_BTN = "🔔 Позвонить всем", "🔕 Выключить звонок"
+NOANSWER_BTN, TODAY_BTN = "📭 Без ответа", "📋 Заказы на сегодня"
 # Кнопки внизу чата у каждого сотрудника: позвать всех / выключить звонок.
-STAFF_KB = {"keyboard": [[{"text": RING_BTN}]], "resize_keyboard": True, "is_persistent": True}
+STAFF_KB = {"keyboard": [[{"text": NOANSWER_BTN}, {"text": TODAY_BTN}], [{"text": RING_BTN}]],
+            "resize_keyboard": True, "is_persistent": True}
 _ring_stopped_at = [0.0]          # когда кто-то нажал «Выключить звонок» — все звонки, начатые раньше, замолкают
 
 
@@ -271,10 +273,11 @@ def stop_rings():
 
 def ensure_staff_keyboard(chat):
     """Один раз присылаем сотруднику кнопки звонка внизу чата."""
-    if not db.get_setting(f"kb_sent3:{chat}"):
-        if send(chat, "Кнопка внизу ⬇️ «🔔 Позвонить всем» — позвать всех к заявкам (звонок ~15 секунд).",
+    if not db.get_setting(f"kb_sent4:{chat}"):
+        if send(chat, "Кнопки внизу ⬇️ «📭 Без ответа» — заявки, по которым никто не нажал кнопку; "
+                      "«📋 Заказы на сегодня» — список на сегодня; «🔔 Позвонить всем» — позвать всех.",
                 reply_markup=STAFF_KB):
-            db.set_setting(f"kb_sent3:{chat}", "1")
+            db.set_setting(f"kb_sent4:{chat}", "1")
 
 
 def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
@@ -427,6 +430,9 @@ def _handle(msg, deliver):
     if text == RING_BTN:
         ring_all(_staff_name(msg.get("from")))
         send(chat_id, "🔔 Звоню всем ~15 секунд.", reply_markup=STAFF_KB)
+        return
+    if text in (NOANSWER_BTN, TODAY_BTN) and _hooks.get("on_report"):
+        send(chat_id, _hooks["on_report"]("noanswer" if text == NOANSWER_BTN else "today"), reply_markup=STAFF_KB)
         return
     if text == STOP_BTN:
         stop_rings()
@@ -661,6 +667,8 @@ def _handle_callback(cq, on_check):
     if not handler or not parts[2].isdigit():
         call("answerCallbackQuery", callback_query_id=cq["id"])
         return
+    if parts[0] == "chk":
+        db.set_setting(f"owho:{parts[2]}", _staff_name(cq.get("from")))
     result = handler(int(parts[2]), parts[1])
     call("answerCallbackQuery", callback_query_id=cq["id"], text=result[:200])
     if m:
@@ -749,9 +757,10 @@ def run_polling(deliver, on_check):
             time.sleep(5)
 
 
-def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None, on_pay=None):
+def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None, on_pay=None,
+          on_report=None):
     _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question, on_more=on_more,
-                  on_pay=on_pay)
+                  on_pay=on_pay, on_report=on_report)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return

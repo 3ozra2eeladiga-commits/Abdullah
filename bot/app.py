@@ -2,6 +2,7 @@
 
 Запуск:  python -m bot.app
 """
+import datetime
 import json
 import logging
 import os
@@ -396,6 +397,55 @@ def on_check(order_id, action):
     return f"№{order_id}{f' ({name})' if name else ''}: {label} — клиенту отправлено."
 
 
+# ---------- Кнопки внизу у сотрудников: «📭 Без ответа», «📋 Заказы на сегодня» — коротко, без долгой прокрутки ----------
+
+_MSK_TZ = datetime.timezone(datetime.timedelta(hours=3))
+
+
+def _order_day(o, created):
+    """На какой день заказ: «сегодня/завтра» считаем от дня оформления, «02.11» — как есть."""
+    d = str(o.get("дата") or "").lower()
+    base = datetime.datetime.fromtimestamp(created, _MSK_TZ).date()
+    for word, add in (("послезавтра", 2), ("завтра", 1), ("сегодня", 0)):
+        if word in d:
+            return base + datetime.timedelta(days=add)
+    return brain._resolve_date(d)
+
+
+def _short_line(oid, client, o):
+    """«№12 · 14:00 · Крайнего 90 · Иван» — одна строка на заказ."""
+    when = str(o.get("время") or "").strip()
+    where = "самовывоз " + str(o.get("адрес") or "").replace("ул. ", "") \
+        if (o.get("получение") or "").lower().startswith("самовывоз") else str(o.get("адрес") or "").replace("ул. ", "")
+    who = str(o.get("заказчик") or "").split(",")[0].strip() or telegram_bot.client_name(client).split(" @")[0]
+    parts = [f"№{oid}", when, where[:40], who[:20]]
+    return " · ".join(p for p in parts if p and p not in ("—", "..."))
+
+
+def on_report(kind):
+    now = time.time()
+    rows = db.recent_orders(now - 7 * 86400)
+    if kind == "noanswer":
+        lines = [f"⏳ {_short_line(oid, c, o)}" for oid, c, o, _t in rows if db.get_setting(f"ostatus:{oid}") == "check"]
+        return ("📭 Без ответа (никто не нажал кнопку):\n" + "\n".join(lines[-25:])) if lines \
+            else "📭 Все заявки разобраны 👍"
+    today = datetime.datetime.now(_MSK_TZ).date()
+    marks = {"check": "⏳", "ok": "✅", "no": "❌", "other": "✍️"}
+    items = []
+    for oid, c, o, created in rows:
+        if _order_day(o, created) != today:
+            continue
+        st = db.get_setting(f"ostatus:{oid}") or ""
+        who = db.get_setting(f"owho:{oid}") or ""
+        items.append((str(o.get("время") or "99"), f"{marks.get(st, '•')} {_short_line(oid, c, o)}"
+                      + (f" (отметила: {who.split(' @')[0]})" if who and st != "check" else "")))
+    if not items:
+        return "📋 На сегодня заказов нет."
+    items.sort()
+    return (f"📋 Заказы на сегодня ({len(items)}):\n" + "\n".join(x for _k, x in items[:30])
+            + "\n\n⏳ ждёт ответа · ✅ подтверждён · ❌ нет в наличии · ✍️ флорист отвечает сам")
+
+
 # ---------- Оплата через СБП Точки: кнопка «💳 Оплата» → QR и ссылка ИМЕННО этому клиенту ----------
 
 def _order_total(o):
@@ -723,7 +773,7 @@ def main():
     _disable_windows_quick_edit()
     catalog.refresh()
     telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
-                       on_pay=on_pay,
+                       on_pay=on_pay, on_report=on_report,
                        on_question=on_question)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
