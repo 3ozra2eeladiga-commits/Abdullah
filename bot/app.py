@@ -450,15 +450,24 @@ def on_report(kind):
     if kind == "noanswer":
         rows = [r for r in rows if r[3] >= _day_start(now)]          # только сегодняшние заявки
         left = [(oid, c, o) for oid, c, o, _t in rows if not _answered(oid)]       # по порядку номеров
-        lines = [f"• {_short_line(oid, c, o)}\n   {_status_line(oid)}" for oid, c, o in left]
+        unchecked = [x for x in left if db.get_setting(f"ostatus:{x[0]}") == "check"]
+        checked = [x for x in left if db.get_setting(f"ostatus:{x[0]}") != "check"]
+        lines = []
+        if unchecked:                                   # самое срочное — никто даже не нажал кнопку
+            lines.append("⏳ Не проверены (никто не нажал кнопку):")
+            lines += [f"• {_short_line(oid, c, o)}" for oid, c, o in unchecked]
+        if checked:
+            lines.append(("\n" if lines else "") + "💬 Проверены, но клиенту не написали:")
+            lines += [f"• {_short_line(oid, c, o)}\n   {_status_line(oid).split(' · ')[0]}" for oid, c, o in checked]
         # Клиенты, которым флорист должен ответить сама (просил сотрудника, вопрос, «Другое»), а ответа ещё нет.
-        for c, since in sorted([w for w in telegram_bot.waiting_clients() if w[1] >= _day_start(now)],
-                               key=lambda x: x[1]):
+        waiting = sorted([w for w in telegram_bot.waiting_clients() if w[1] >= _day_start(now)], key=lambda x: x[1])
+        if waiting:
+            lines.append(("\n" if lines else "") + "🙋 Клиент ждёт ответа:")
+        for c, since in waiting:
             name = telegram_bot.client_name(c).split(" @")[0] or c.split(":", 1)[-1]
-            lines.append(f"🙋 {name} ждёт ответа {max(1, int((now - since) // 60))} мин")
-        ids = [oid for oid, _c, _o in left][:24]
-        return (("📭 Без ответа (клиенту ещё никто не написал):\n" + "\n".join(lines[:30])) if lines
-                else "📭 Всем ответили 👍"), ids
+            lines.append(f"• {name} — {max(1, int((now - since) // 60))} мин")
+        ids = [oid for oid, _c, _o in unchecked + checked][:24]
+        return (("📭 Без ответа:\n\n" + "\n".join(lines[:40])) if lines else "📭 Всем ответили 👍"), ids
     today = datetime.datetime.now(_MSK_TZ).date()
     out, ids = [], []
     for title, day in (("📋 Заказы на сегодня", today), ("📅 На завтра", today + datetime.timedelta(days=1))):
@@ -495,6 +504,24 @@ def _send_to_staff(text, ids):
                           **({"disable_notification": True} if telegram_bot.quiet_now() else {}))
 
 
+def _remind_unchecked():
+    """Заявку никто не проверил (не нажал кнопку) 15 минут — напоминаем со звонком; потом ещё раз через 15 и 30 мин.
+    Ночью (тихие часы) не напоминаем — утром она будет в «📭 Без ответа»."""
+    if telegram_bot.quiet_now():
+        return
+    now = time.time()
+    for oid, client, _o, created in db.recent_orders(now - 2 * 3600):
+        if db.get_setting(f"ostatus:{oid}") != "check":
+            continue
+        n = int(db.get_setting(f"oremind:{oid}") or 0)
+        mins = int((now - created) // 60)
+        if n < 3 and mins >= config.REMIND_MIN * (n + 1):
+            db.set_setting(f"oremind:{oid}", n + 1)
+            telegram_bot.notify_staff(client, f"⏰ Заявка №{oid} не проверена уже {mins} мин! Нажмите номер и проверьте.",
+                                      buttons=[[{"text": f"№{oid}", "callback_data": f"show:x:{oid}"}]])
+            telegram_bot.ring(oid, lambda o=oid: db.get_setting(f"ostatus:{o}") == "check", client)
+
+
 def _daily_loop():
     """Каждый день: в DAY_CLOSE — итоги дня; утром в MORNING_AT — свежий список «Заказы на сегодня»."""
     while True:
@@ -508,6 +535,7 @@ def _daily_loop():
                 db.set_setting("daily_morning", day)
                 text, ids = on_report("today")
                 _send_to_staff("☀️ Доброе утро! " + text, ids)
+            _remind_unchecked()
         except Exception as e:                                      # отчёт не должен ронять бота
             log.warning("Ежедневный отчёт не удался: %s", e)
         time.sleep(60)

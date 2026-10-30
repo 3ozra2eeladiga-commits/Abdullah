@@ -169,7 +169,8 @@ TOCHKA_MERCHANT_ID = os.getenv("TOCHKA_MERCHANT_ID", "")
 TOCHKA_ACCOUNT_ID = os.getenv("TOCHKA_ACCOUNT_ID", "")            # «номер счёта/БИК»
 TOCHKA_AMOUNT_IN_KOPECKS = os.getenv("TOCHKA_AMOUNT_IN_KOPECKS", "1") == "1"
 TOCHKA_QR_TTL_MIN = int(os.getenv("TOCHKA_QR_TTL_MIN", "4320"))   # срок QR — 3 дня
-RING_SECONDS = float(os.getenv("RING_SECONDS", "10"))     # звонок о новой заявке — ~10 секунд, потом тишина
+RING_SECONDS = float(os.getenv("RING_SECONDS", "10"))
+REMIND_MIN = int(os.getenv("REMIND_MIN", "15"))            # заявку не проверили N минут — напоминание со звонком     # звонок о новой заявке — ~10 секунд, потом тишина
 # Тихие часы по Москве: с QUIET_FROM до QUIET_TO сотрудникам всё приходит без звука и без звонков.
 # Ежедневно: утром (MORNING_AT) — список заказов на сегодня, в DAY_CLOSE — итоги дня (по Москве).
 DAY_OPEN = os.getenv("DAY_OPEN", "07:30")
