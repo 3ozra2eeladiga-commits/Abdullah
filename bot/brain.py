@@ -3948,6 +3948,12 @@ def respond(client, incoming, from_staff=False, quote=""):
             # (спросил контакты, не узнав время) — задаём наш недостающий вопрос.
             reply.text = f"{'Отличный выбор' if picked else 'Хорошо'} 🌸 {nxt}"
             db.set_setting(f"lastq:{client}", nxt)
+        elif nxt and "?" not in reply.text and not re.search(r"\n1 — ", reply.text) \
+                and not SUMMARY_RE.search(reply.text):
+            # ИИ ответил утверждением («букет будет готов к 14:00») и не спросил дальше — разговор бы встал.
+            # Добавляем следующий недостающий вопрос (или «Почти всё — напишите «да»»).
+            reply.text = f"{reply.text.rstrip()}\n\n{nxt}"
+            db.set_setting(f"lastq:{client}", nxt)
     if chosen and reply.photos and not keep_photos and not re.search(
             r"друг|ещ[её]|вариант|покаж|скин|кинь|кида|закид|больше|мало|поменя|замен|не нрав|передумал", incoming or "", re.I):
         reply.photos = [p for p in reply.photos if p["code"] == chosen and p in picked]
