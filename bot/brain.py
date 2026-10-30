@@ -456,6 +456,33 @@ def _has_address(user_msgs):
                for m in user_msgs)
 
 
+# Адрес — не квартира, а место: «Крайнего 90, там аптека / отель / офис». Уточняем, КАК найти получателя.
+PLACES = [
+    (r"отел|гостиниц|хостел|апарт", "отель", "Как называется отель и номер комнаты? 🏨"),
+    (r"больниц|роддом|госпитал|клиник|поликлиник|санатор", "больница",
+     "Какое отделение и номер палаты (или кабинета)? 🏥"),
+    (r"офис|бизнес[\s-]*центр|\bбц\b|компани|фирм|организац", "офис",
+     "Как называется компания и какой офис/этаж? 🏢"),
+    (r"школ|садик|детск\w+\s+сад|колледж|университет|институт", "учебное заведение",
+     "Какой номер или название, и кабинет/группа? 🏫"),
+    (r"аптек|магазин|салон|кафе|ресторан|\bтц\b|торгов\w+\s+центр|парикмахер|банк|студи|бутик", "место",
+     "Как называется {w}? И как найти получателя — имя, если она там работает 🌸"),
+]
+
+
+def _place_in_address(text):
+    """«Крайнего 90, там аптека» → ("аптека", вопрос). Название уже есть («аптека Апрель») — уточнять нечего."""
+    t = text or ""
+    for rx, _kind, q in PLACES:
+        m = re.search(rf"\b(\w*(?:{rx})\w*)", t, re.I)
+        if m:
+            after = t[m.end():].strip(" ,.-—")
+            if re.match(r"[«\"']|[А-ЯЁA-Z0-9]", after) or re.search(r"номер|палат|кабинет|комнат|этаж|офис\s*\d", t, re.I):
+                return None                     # название/номер уже написал
+            return m.group(1).lower(), q.format(w=m.group(1).lower())
+    return None
+
+
 def _known_facts(user_msgs):
     """Что клиент УЖЕ сказал (по его же сообщениям) — чтобы ИИ это не переспрашивал."""
     out = []
@@ -1622,6 +1649,11 @@ def _apply_client_state(order, client, city):
         order["заказчик"] = f"{ct_['me_name']}, {ct_['me_phone']}"
     if ct_.get("to_name") and ct_.get("to_phone"):
         order["получатель"] = f"{ct_['to_name']}, {ct_['to_phone']}"
+    extra = db.get_setting(f"addr_extra:{client}") or ""
+    if extra and not (order.get("получение") or "").lower().startswith("самовывоз"):
+        base = str(order.get("адрес") or "").strip() or db.get_setting(f"addr_base:{client}") or ""
+        if extra.split(": ", 1)[-1][:15].lower() not in base.lower():
+            order["адрес"] = f"{base} — {extra}".strip(" —")
     if db.get_setting(f"noaddr:{client}") and not (order.get("получение") or "").lower().startswith("самовывоз"):
         if len(str(order.get("адрес") or "").strip()) < 6 or re.search(r"узна|уточн", str(order.get("адрес") or ""), re.I):
             order["адрес"] = "узнать у получателя"
@@ -2434,6 +2466,25 @@ def respond(client, incoming, from_staff=False, quote=""):
             st = _contacts(client)
             st.update({k: v for k, v in both.items() if v})
             db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+    # Адрес-место («Крайнего 90, там аптека») — спрашиваем, как называется и как найти получателя; ответ дописываем к адресу.
+    if not from_staff:
+        pq = db.get_setting(f"placeq:{client}") or ""
+        if pq and last_q.startswith(pq.split("|", 1)[1][:20]):
+            word = pq.split("|", 1)[0]
+            db.set_setting(f"addr_extra:{client}", f"{word}: {(incoming or '').strip()}")
+            db.del_setting(f"placeq:{client}")
+            db.del_setting(f"lastq:{client}")
+            incoming = f"Уточнение к адресу доставки — {word}: {(incoming or '').strip()}."
+        elif re.search(r"адрес", _last_bot_text(client, last_q), re.I) and _has_address([incoming or ""]) \
+                and not _is_pickup(client):
+            place = _place_in_address(incoming)
+            if place:
+                db.set_setting(f"placeq:{client}", f"{place[0]}|{place[1]}")
+                db.set_setting(f"addr_base:{client}", (incoming or "").strip())
+                text = f"Спасибо 🌸 {place[1]}"
+                db.set_setting(f"lastq:{client}", place[1])
+                db.add_message(client, "assistant", text)
+                return Reply(text=text, city=city)
     # «Сюрприз» / «не хочу давать свой номер» / «не знаю её номер» — не настаиваем, даём варианты цифрами.
     if not from_staff:
         sur = db.get_setting(f"surprise:{client}") or ""
@@ -3715,7 +3766,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                 advance("Спасибо 🌸 ")
                 if answer:
                     reply.text = f"{answer}\n\n{reply.text.replace('Спасибо 🌸 ', '', 1)}"
-        elif nxt in (WAY_Q, DATE_Q) and ((asks_way and nxt == WAY_Q) or (asks_when and nxt == DATE_Q)) \
+        elif nxt in (WAY_Q, DATE_Q, ADDRESS_Q) and ((asks_way and nxt == WAY_Q) or (asks_when and nxt == DATE_Q)
+                                                     or (asks_addr and nxt == ADDRESS_Q)) \
                 and "?" not in (incoming or ""):
             # ИИ спрашивает то же, что и код, но многословно («Хорошо, доставка. Подскажите дату и точное время,
             # когда удобно доставить…») — заменяем нашим коротким вопросом с примером/цифрами.
