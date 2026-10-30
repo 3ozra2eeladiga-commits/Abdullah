@@ -240,10 +240,10 @@ def stop_rings():
 
 def ensure_staff_keyboard(chat):
     """Один раз присылаем сотруднику кнопки звонка внизу чата."""
-    if not db.get_setting(f"kb_sent:{chat}"):
+    if not db.get_setting(f"kb_sent2:{chat}"):
         if send(chat, "Кнопки звонка внизу ⬇️ «🔔 Позвонить всем» — позвать всех к заявкам, "
                       "«🔕 Выключить звонок» — остановить звонок.", reply_markup=STAFF_KB):
-            db.set_setting(f"kb_sent:{chat}", "1")
+            db.set_setting(f"kb_sent2:{chat}", "1")
 
 
 def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
@@ -365,6 +365,9 @@ def _handle(msg, deliver):
         if text.startswith("/start") or text.startswith("/myid"):
             send(chat_id, f"Ваш ID: {user_id}\nДоступ к боту закрыт. Передайте этот номер администратору.")
         return
+    ensure_staff_keyboard(chat_id)          # кнопки «🔔 Позвонить всем / 🔕 Выключить звонок» внизу — один раз
+    if text in ("/zvonok", "/ring", "/звонок"):
+        text = RING_BTN
 
     if msg.get("voice") and not text:
         text, err = _recognize_voice(msg["voice"])
