@@ -218,30 +218,60 @@ def notify_staff(client, text, buttons=None):
             db.link_staff_message(chat, msg["message_id"], client)
 
 
-def ring(order_id, still_waiting, client=None, quiet=False):
-    """«Звонок» о новой заявке: короткие сообщения одно за другим — каждое играет мелодию уведомления
-    (Telegram даёт мелодию не длиннее 5 с, так она звучит НЕПРЕРЫВНО). Сообщения сразу удаляются — чат чистый.
-    Звенит, пока под заявкой не нажали кнопку (still_waiting() == False), но не дольше RING_MAX_MIN минут.
-    quiet — магазины закрыты (ночь): звеним коротко один раз, никого не будим."""
-    def ping(text):
-        sent = [(chat, send(chat, text)) for chat in staff_chats(client)]
-        time.sleep(5.5)                                      # дать мелодии доиграть
+RING_BTN, STOP_BTN = "🔔 Позвонить всем", "🔕 Выключить звонок"
+# Кнопки внизу чата у каждого сотрудника: позвать всех / выключить звонок.
+STAFF_KB = {"keyboard": [[{"text": RING_BTN}, {"text": STOP_BTN}]], "resize_keyboard": True, "is_persistent": True}
+_ring_stopped_at = [0.0]          # когда кто-то нажал «Выключить звонок» — все звонки, начатые раньше, замолкают
+
+
+def stop_rings():
+    _ring_stopped_at[0] = time.time()
+
+
+def ensure_staff_keyboard(chat):
+    """Один раз присылаем сотруднику кнопки звонка внизу чата."""
+    if not db.get_setting(f"kb_sent:{chat}"):
+        if send(chat, "Кнопки звонка внизу ⬇️ «🔔 Позвонить всем» — позвать всех к заявкам, "
+                      "«🔕 Выключить звонок» — остановить звонок.", reply_markup=STAFF_KB):
+            db.set_setting(f"kb_sent:{chat}", "1")
+
+
+def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
+    """Звенит у всех сотрудников: сообщение за сообщением (каждое — мелодия ≤5 с), чтобы звук шёл без перерыва.
+    Останавливается: время вышло / still_waiting() == False / нажали «Выключить звонок»."""
+    started = time.time()
+    end = started + (seconds if seconds is not None else config.RING_MAX_MIN * 60)
+    stop_kb = {"inline_keyboard": [[{"text": STOP_BTN, "callback_data": "stopring:x:0"}]]}
+    while time.time() < end and still_waiting() and _ring_stopped_at[0] < started:
+        sent = [(chat, send(chat, text, reply_markup=stop_kb)) for chat in staff_chats(client)]
+        time.sleep(5)                                        # дать мелодии доиграть
         for chat, msg in sent:
             if msg:
                 call("deleteMessage", chat_id=chat, message_id=msg["message_id"])
 
+
+def ring(order_id, still_waiting, client=None, quiet=False):
+    """«Звонок» о новой заявке: звенит без перерыва, пока под заявкой не нажали кнопку или «Выключить звонок»
+    (не дольше RING_MAX_MIN минут). Ночью (quiet) — один короткий звонок, никого не будим."""
     def run():
         try:
+            for chat in staff_chats(client):
+                ensure_staff_keyboard(chat)
             tag = city_tag(client).replace("📍 ", "") if client else ""
             text = f"🔔 Новая заявка №{order_id}{' — ' + tag if tag else ''}! Нажмите кнопку под заявкой."
-            if quiet:
-                ping(text)
-                return
-            end = time.time() + config.RING_MAX_MIN * 60
-            while time.time() < end and still_waiting():
-                ping(text)
+            _ring_loop(text, client, seconds=5 if quiet else None, still_waiting=still_waiting)
         except Exception as e:                               # звонок не должен ронять бота
             log.warning("Звонок о заявке №%s не удался: %s", order_id, e)
+    threading.Thread(target=run, daemon=True).start()
+
+
+def ring_all(who):
+    """Кнопка «🔔 Позвонить всем» (например, хозяйка видит, что никто не отвечает): звонок у всех ~15 секунд."""
+    def run():
+        try:
+            _ring_loop(f"🔔 {who} зовёт: загляните в заявки!", seconds=15)
+        except Exception as e:
+            log.warning("Звонок всем не удался: %s", e)
     threading.Thread(target=run, daemon=True).start()
 
 
@@ -346,6 +376,14 @@ def _handle(msg, deliver):
                  "document": "файл", "video_note": "видео-кружок"}
         text = f"[Клиент прислал {names.get(kind, kind)}, без текста]"
 
+    if text == RING_BTN:
+        ring_all(_staff_name(msg.get("from")))
+        send(chat_id, "🔔 Звоню всем ~15 секунд. Остановить — «🔕 Выключить звонок».", reply_markup=STAFF_KB)
+        return
+    if text == STOP_BTN:
+        stop_rings()
+        send(chat_id, "🔕 Звонок выключен.", reply_markup=STAFF_KB)
+        return
     if text.startswith("/start") or text.startswith("/help"):
         send(chat_id, "Здравствуйте! Сюда будут приходить заказы и вопросы из Инстаграма.\n\n"
                       "• Ответить клиенту: нажмите «Ответить» на сообщении бота и напишите текст.\n"
@@ -356,7 +394,8 @@ def _handle(msg, deliver):
                       "(и здесь, и в Telegram магазина).\n"
                       "• /biz — кому бот отвечает в Telegram магазина.\n"
                       "• /city — заявки какого города получать на этом телефоне.\n"
-                      f"• /myid — ваш ID ({user_id}).")
+                      "• 🔔 Позвонить всем / 🔕 Выключить звонок — кнопки внизу.\n"
+                      f"• /myid — ваш ID ({user_id}).", reply_markup=STAFF_KB)
         return
     if text.startswith("/myid"):
         send(chat_id, f"Ваш ID: {user_id}, ID этого чата: {chat_id}")
@@ -545,6 +584,10 @@ def _handle_callback(cq, on_check):
     parts = (cq.get("data") or "").split(":")
     m = cq.get("message") or {}
     who = cq.get("from", {}).get("first_name") or "сотрудник"
+    if parts[0] == "stopring":
+        stop_rings()
+        call("answerCallbackQuery", callback_query_id=cq["id"], text="Звонок выключен 🔕")
+        return
     if parts[0] == "seen":
         # Всплывающее окно: КТО этот клиент (имя в Telegram, город, контакты) — чтобы сразу понять, о ком речь.
         client = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id")) if m else None
