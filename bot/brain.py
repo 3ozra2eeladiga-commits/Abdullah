@@ -843,6 +843,12 @@ TIME_Q_RE = re.compile(r"к\s+какому\s+(?:времени|часу)|во\s+
 ABOUT_TIME_RE = re.compile(r"(?:я\s+)?(?:про|о|об|это)\s+врем|это\s+(?:время|час)|не\s+(?:дата|число)|в\s+смысле\s+врем", re.I)
 
 
+ANYTIME_RE = re.compile(r"в\s+любое\s+время|когда\s+угодно|в\s+любой\s+момент|без\s+разницы\s+когда|"
+                        r"не\s+важно\s+когда|когда\s+удобно\s+(?:вам|будет)|в\s+течени[ие]\s+дня", re.I)
+ANYTIME_Q = ("Хорошо 🌸 А примерно с какого времени? Чтобы букет был готов к вашему приходу. "
+             "Например: после 14:00")
+
+
 def _fix_time_answer(client, text, last_q=""):
     """Бот спросил время («к какому времени?»), клиент ответил «14» / «в 3» — это ЧАС, а не число месяца.
     И «я про время» после «14 октября или ноября?» — берём прошлое число как время."""
@@ -1048,7 +1054,7 @@ def _next_question(user_msgs, city, order=None):
     has_date = re.search(r"сегодня|завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|"
                          r"июн|июл|август|сентябр|октябр|ноябр|декабр)|понедельник|вторник|сред[уа]|четверг|пятниц|"
                          r"суббот|воскресень", t)
-    has_time = re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\bв\s*\d{1,2}\b|утр|вечер|обед|узнать у получателя", t)
+    has_time = re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\bв\s*\d{1,2}\b|\b(?:после|с|около)\s*\d{1,2}\b|утр|вечер|обед|узнать у получателя", t)
     pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
     has_addr = _has_address(user_msgs) or "адрес_есть" in t
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
@@ -2510,6 +2516,18 @@ def respond(client, incoming, from_staff=False, quote=""):
             st = _contacts(client)
             st.update({k: v for k, v in both.items() if v})
             db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+    # «Завтра в любое время» — нужно хотя бы примерно «с какого времени», чтобы букет был готов.
+    if not from_staff and ANYTIME_RE.search(incoming or "") and not re.search(r"\d{1,2}[:.]\d{2}|\b(?:с|после|к|в)\s*\d{1,2}\b",
+                                                                         incoming or "") and last_q != ANYTIME_Q:
+        day = re.search(r"сегодня|завтра|послезавтра|\d{1,2}[./]\d{1,2}", incoming or "", re.I)
+        if day:
+            db.set_setting(f"anyday:{client}", day.group(0))
+        db.set_setting(f"lastq:{client}", ANYTIME_Q)
+        db.add_message(client, "assistant", ANYTIME_Q)
+        return Reply(text=ANYTIME_Q, city=city)
+    if not from_staff and last_q == ANYTIME_Q and db.get_setting(f"anyday:{client}") \
+            and not re.search(r"сегодня|завтра|послезавтра|\d{1,2}[./]\d{1,2}", incoming or "", re.I):
+        incoming = f"{db.get_setting(f'anyday:{client}')} {incoming}"      # «после 14» → «завтра после 14»
     # Адрес-место («Крайнего 90, там аптека») — спрашиваем, как называется и как найти получателя; ответ дописываем к адресу.
     if not from_staff:
         pq = db.get_setting(f"placeq:{client}") or ""

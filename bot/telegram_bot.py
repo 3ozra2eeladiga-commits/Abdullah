@@ -248,7 +248,7 @@ def notify_staff(client, text, buttons=None):
 
 RING_BTN, STOP_BTN = "🔔 Позвонить всем", "🔕 Выключить звонок"
 # Кнопки внизу чата у каждого сотрудника: позвать всех / выключить звонок.
-STAFF_KB = {"keyboard": [[{"text": RING_BTN}, {"text": STOP_BTN}]], "resize_keyboard": True, "is_persistent": True}
+STAFF_KB = {"keyboard": [[{"text": RING_BTN}]], "resize_keyboard": True, "is_persistent": True}
 _ring_stopped_at = [0.0]          # когда кто-то нажал «Выключить звонок» — все звонки, начатые раньше, замолкают
 
 
@@ -258,10 +258,10 @@ def stop_rings():
 
 def ensure_staff_keyboard(chat):
     """Один раз присылаем сотруднику кнопки звонка внизу чата."""
-    if not db.get_setting(f"kb_sent2:{chat}"):
-        if send(chat, "Кнопки звонка внизу ⬇️ «🔔 Позвонить всем» — позвать всех к заявкам, "
-                      "«🔕 Выключить звонок» — остановить звонок.", reply_markup=STAFF_KB):
-            db.set_setting(f"kb_sent2:{chat}", "1")
+    if not db.get_setting(f"kb_sent3:{chat}"):
+        if send(chat, "Кнопка внизу ⬇️ «🔔 Позвонить всем» — позвать всех к заявкам (звонок ~15 секунд).",
+                reply_markup=STAFF_KB):
+            db.set_setting(f"kb_sent3:{chat}", "1")
 
 
 def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
@@ -269,9 +269,8 @@ def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
     Останавливается: время вышло / still_waiting() == False / нажали «Выключить звонок»."""
     started = time.time()
     end = started + (seconds if seconds is not None else config.RING_MAX_MIN * 60)
-    stop_kb = {"inline_keyboard": [[{"text": STOP_BTN, "callback_data": "stopring:x:0"}]]}
     while time.time() < end and still_waiting() and _ring_stopped_at[0] < started:
-        sent = [(chat, send(chat, text, reply_markup=stop_kb)) for chat in staff_chats(client)]
+        sent = [(chat, send(chat, text)) for chat in staff_chats(client)]
         time.sleep(5)                                        # дать мелодии доиграть
         for chat, msg in sent:
             if msg:
@@ -279,8 +278,7 @@ def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
 
 
 def ring(order_id, still_waiting, client=None, quiet=False):
-    """«Звонок» о новой заявке: звенит без перерыва, пока под заявкой не нажали кнопку или «Выключить звонок»
-    (не дольше RING_MAX_MIN минут). Ночью (quiet) — один короткий звонок, никого не будим."""
+    """«Звонок» о новой заявке: ~RING_SECONDS секунд (по умолчанию 10), потом тишина. В тихие часы — без звонка."""
     if quiet_now():
         return                                  # тихие часы — никакого звонка
     def run():
@@ -288,8 +286,8 @@ def ring(order_id, still_waiting, client=None, quiet=False):
             for chat in staff_chats(client):
                 ensure_staff_keyboard(chat)
             tag = city_tag(client).replace("📍 ", "") if client else ""
-            text = f"🔔 Новая заявка №{order_id}{' — ' + tag if tag else ''}! Нажмите кнопку под заявкой."
-            _ring_loop(text, client, seconds=5 if quiet else None, still_waiting=still_waiting)
+            text = f"🔔 Новая заявка №{order_id}{' — ' + tag if tag else ''}!"
+            _ring_loop(text, client, seconds=config.RING_SECONDS, still_waiting=still_waiting)
         except Exception as e:                               # звонок не должен ронять бота
             log.warning("Звонок о заявке №%s не удался: %s", order_id, e)
     threading.Thread(target=run, daemon=True).start()
@@ -415,7 +413,7 @@ def _handle(msg, deliver):
 
     if text == RING_BTN:
         ring_all(_staff_name(msg.get("from")))
-        send(chat_id, "🔔 Звоню всем ~15 секунд. Остановить — «🔕 Выключить звонок».", reply_markup=STAFF_KB)
+        send(chat_id, "🔔 Звоню всем ~15 секунд.", reply_markup=STAFF_KB)
         return
     if text == STOP_BTN:
         stop_rings()
@@ -431,7 +429,7 @@ def _handle(msg, deliver):
                       "(и здесь, и в Telegram магазина).\n"
                       "• /biz — кому бот отвечает в Telegram магазина.\n"
                       "• /city — заявки какого города получать на этом телефоне.\n"
-                      "• 🔔 Позвонить всем / 🔕 Выключить звонок — кнопки внизу.\n"
+                      "• 🔔 Позвонить всем — кнопка внизу.\n"
                       f"• /myid — ваш ID ({user_id}).", reply_markup=STAFF_KB)
         return
     if text.startswith("/myid"):
