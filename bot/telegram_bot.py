@@ -10,6 +10,7 @@
 - /test — режим проверки: сотрудник сам пишет боту как клиент (без Инстаграма). /test ещё раз — выключить.
 """
 import logging
+import re
 import threading
 import time
 
@@ -151,6 +152,10 @@ def _city_command(chat_id, user_id, text):
     """/city — выбрать, заявки какого города получать: /city 1, /city 2…, /city 0 — все, /city off — не получать."""
     names = list(catalog.city_names)
     arg = text.partition(" ")[2].strip().lower()
+    # «/city 5295345349 2» — назначить город ДРУГОМУ сотруднику по его ID (например, телефону магазина).
+    m_id = re.match(r"^(\d{6,})\s+(.+)$", arg)
+    if m_id:
+        user_id, arg = int(m_id.group(1)), m_id.group(2).strip()
     if arg:
         if arg in ("0", "все", "all"):
             val = "all"
@@ -162,13 +167,15 @@ def _city_command(chat_id, user_id, text):
             val = catalog.match_city(arg)
         if val:
             db.set_setting(f"staffcity:{user_id}", val)
-            send(chat_id, {"all": "✅ Теперь вам приходят заявки ВСЕХ городов.",
-                           "off": "🔕 Заявки вам больше не приходят."}.get(val, f"✅ Теперь вам приходят только заявки: {val.upper()}"))
+            who = "вам" if not m_id else f"сотруднику {user_id}"
+            send(chat_id, {"all": f"✅ Теперь {who} приходят заявки ВСЕХ городов.",
+                           "off": f"🔕 Заявки {who} больше не приходят."}.get(val, f"✅ Теперь {who} приходят только заявки: {val.upper()}"))
             return
     cur = staff_city(user_id)
     opts = "\n".join(f"/city {i} — {n}" for i, n in enumerate(names, 1))
     send(chat_id, f"Сейчас вы получаете: {'все города' if cur == 'all' else 'ничего' if cur == 'off' else cur}\n\n"
-                  f"Какие заявки получать на этом телефоне?\n{opts}\n/city 0 — все города\n/city off — не получать")
+                  f"Какие заявки получать на этом телефоне?\n{opts}\n/city 0 — все города\n/city off — не получать\n\n"
+                  f"Назначить другому: /city ID цифра (например /city 5295345349 2)")
 
 
 # Под каждым сообщением сотрудникам без своих кнопок — «👁 Просмотрено»: нажали — видно, что уже разобрались.
@@ -537,8 +544,12 @@ def _handle_callback(cq, on_check):
     m = cq.get("message") or {}
     who = cq.get("from", {}).get("first_name") or "сотрудник"
     if parts[0] == "seen":
-        call("answerCallbackQuery", callback_query_id=cq["id"], text="Отмечено ✅")
-        _mark_done(m, f"👁 Просмотрено — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
+        # Всплывающее окно: КТО этот клиент (имя в Telegram, город, контакты) — чтобы сразу понять, о ком речь.
+        client = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id")) if m else None
+        call("answerCallbackQuery", callback_query_id=cq["id"], show_alert=True,
+             text=(client_card(client) if client else "Отмечено ✅")[:200])
+        _mark_done(m, f"👁 Просмотрено — {_staff_name(cq.get('from'))}, "
+                      f"{time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
         return
     handler = {"chk": on_check, "ph": _hooks.get("on_photo_button"),
                "q": _hooks.get("on_question")}.get(parts[0]) if len(parts) == 3 else None
@@ -549,7 +560,32 @@ def _handle_callback(cq, on_check):
     call("answerCallbackQuery", callback_query_id=cq["id"], text=result[:200])
     if m:
         # Кнопки убираем (чтобы не нажали второй раз) и дописываем в само сообщение, кто и что отметил.
-        _mark_done(m, f"✅ Отмечено — {who}: {result.split(' — ')[0].split(': ', 1)[-1]}")
+        _mark_done(m, f"✅ Отмечено — {_staff_name(cq.get('from'))}: {result.split(' — ')[0].split(': ', 1)[-1]}")
+
+
+def _staff_name(user):
+    """Кто из сотрудников нажал: имя + @ник (если есть)."""
+    u = user or {}
+    name = " ".join(x for x in (u.get("first_name"), u.get("last_name")) if x) or "сотрудник"
+    return f"{name} @{u['username']}" if u.get("username") else name
+
+
+def client_card(client):
+    """Коротко о клиенте для всплывающего окна: имя в Telegram, город, имя/телефон из заказа."""
+    import json as _json
+    lines = [f"👤 {client_name(client) or 'Клиент ' + client.split(':', 1)[-1]}"]
+    city = db.get_city(client)
+    if city:
+        lines.append(f"📍 {city}")
+    try:
+        ct = _json.loads(db.get_setting(f"contacts:{client}") or "{}")
+    except ValueError:
+        ct = {}
+    if ct.get("me_name") or ct.get("me_phone"):
+        lines.append(f"Заказчик: {ct.get('me_name', '')} {ct.get('me_phone', '')}".strip())
+    if ct.get("to_name") or ct.get("to_phone"):
+        lines.append(f"Получатель: {ct.get('to_name', '')} {ct.get('to_phone', '')}".strip())
+    return "\n".join(lines)
 
 
 def _mark_done(m, note):
