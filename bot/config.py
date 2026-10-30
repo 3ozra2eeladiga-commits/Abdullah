@@ -153,6 +153,9 @@ HISTORY_LIMIT = int(os.getenv("HISTORY_LIMIT", "20"))
 HUMAN_PAUSE_HOURS = float(os.getenv("HUMAN_PAUSE_HOURS", "6"))
 # «Звонок» о новой заявке: звенит без перерыва, пока под заявкой не нажали кнопку, но не дольше RING_MAX_MIN минут.
 RING_MAX_MIN = float(os.getenv("RING_MAX_MIN", "10"))
+# Тихие часы по Москве: с QUIET_FROM до QUIET_TO сотрудникам всё приходит без звука и без звонков.
+QUIET_FROM = int(os.getenv("QUIET_FROM", "22"))
+QUIET_TO = int(os.getenv("QUIET_TO", "7"))
 
 # --- Секретный код: написал боту ровно это (регистр/пробелы/знаки не важны) — бот отвечает секретным текстом.
 # Вариант 1 — в .env на сервере: SECRET_CODE и SECRET_REPLY (перенос строки — «\n»).

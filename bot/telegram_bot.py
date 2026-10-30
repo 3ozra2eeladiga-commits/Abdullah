@@ -183,8 +183,18 @@ MORE_BUTTON = [{"text": "💐 Ещё варианты клиенту", "callback
 SEEN_BUTTON = [[{"text": "👁 Просмотрено", "callback_data": "seen:x:0"}]]   # «Ещё варианты» убрали (Абдулла)
 
 
+def quiet_now():
+    """Тихие часы (по Москве, с QUIET_FROM до QUIET_TO, по умолчанию 22:00–07:00): сотрудникам всё приходит БЕЗ звука."""
+    h = time.gmtime(time.time() + 3 * 3600).tm_hour
+    a, b = config.QUIET_FROM, config.QUIET_TO
+    return (h >= a or h < b) if a > b else (a <= h < b)
+
+
 def _keyboard(buttons):
-    return {"reply_markup": {"inline_keyboard": buttons}} if buttons else {}
+    kb = {"reply_markup": {"inline_keyboard": buttons}} if buttons else {}
+    if quiet_now():
+        kb["disable_notification"] = True       # ночью — без звука
+    return kb
 
 
 def remember_name(client, user):
@@ -253,6 +263,8 @@ def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
 def ring(order_id, still_waiting, client=None, quiet=False):
     """«Звонок» о новой заявке: звенит без перерыва, пока под заявкой не нажали кнопку или «Выключить звонок»
     (не дольше RING_MAX_MIN минут). Ночью (quiet) — один короткий звонок, никого не будим."""
+    if quiet_now():
+        return                                  # тихие часы — никакого звонка
     def run():
         try:
             for chat in staff_chats(client):
@@ -282,7 +294,8 @@ def notify_staff_order(client, items, text, buttons=None):
         for it in items:
             # Подпись «В заказ:» и без привязки к товару: в режиме /test это фото видно в том же чате,
             # и ответ на него не должен считаться выбором клиента.
-            send_photo(chat, it, caption=f"{STAFF_PHOTO_MARK} {it['title']} — {it['price']} ₽", link=False)
+            send_photo(chat, it, caption=f"{STAFF_PHOTO_MARK} {it['title']} — {it['price']} ₽", link=False,
+                       **({"disable_notification": True} if quiet_now() else {}))
         msg = send(chat, text, **_keyboard(buttons or SEEN_BUTTON))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
