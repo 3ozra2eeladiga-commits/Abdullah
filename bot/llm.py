@@ -144,6 +144,14 @@ def complete(system, messages, attempts=3):
 
 IMAGE_KINDS = ("букет", "открытка", "цветы", "другое")
 
+# Последний результат распознавания (фото, голосовые) — показываем на странице статуса, чтобы видеть причину сбоя.
+DIAG = {}
+
+
+def note_diag(kind, ok, detail=""):
+    detail = re.sub(r"b1g\w+|aje\w+", "…", str(detail))[:120]      # id папки/ключа не светим
+    DIAG[kind] = f"{time.strftime('%d.%m %H:%M')} — " + ("работает" if ok else f"ОШИБКА: {detail}")
+
 
 def classify_image(data):
     """Что на фото клиента: «букет», «открытка», «цветы» (поштучно/в горшке) или «другое» (селфи, еда, документы…).
@@ -169,9 +177,12 @@ def classify_image(data):
         )
         if r.status_code != 200:
             log.warning("Распознавание фото: ошибка %s %s", r.status_code, r.text[:300])
+            note_diag("Фото", False, f"{r.status_code} {r.text[:100]}")
             return None
         ans = (r.json()["choices"][0]["message"]["content"] or "").strip().lower()
+        note_diag("Фото", True)
         return next((k for k in IMAGE_KINDS if k[:5] in ans), None)
     except Exception as e:
         log.warning("Распознавание фото не удалось: %s", e)
+        note_diag("Фото", False, e)
         return None

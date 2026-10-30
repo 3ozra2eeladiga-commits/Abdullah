@@ -529,7 +529,8 @@ def image(code):
 @app.get("/")
 def health():
     by_city = ", ".join(f"{name}: {len(c.by_code)}" for name, c in catalog.by_city.items())
-    return f"Бот работает. Версия: {VERSION}\nТоваров в каталоге — {by_city}"
+    diag = "".join(f"\n{k}: {v}" for k, v in llm.DIAG.items())
+    return f"Бот работает. Версия: {VERSION}\nТоваров в каталоге — {by_city}{diag}"
 
 
 def _disable_windows_quick_edit():

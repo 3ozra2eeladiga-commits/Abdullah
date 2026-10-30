@@ -15,7 +15,7 @@ import time
 
 import requests
 
-from . import config, db, images, speech
+from . import config, db, images, llm, speech
 from .catalog import catalog
 
 log = logging.getLogger(__name__)
@@ -175,7 +175,9 @@ def _recognize_voice(voice):
         text = speech.recognize_ogg(audio)
     except Exception as e:
         log.warning("Не удалось распознать голосовое: %s", e)
+        llm.note_diag("Голосовые", False, e)
         return "", "Не получилось разобрать голосовое 😔 Напишите, пожалуйста, текстом."
+    llm.note_diag("Голосовые", True)
     if not text:
         return "", "Не расслышал 🙈 Повторите, пожалуйста, или напишите текстом."
     return text, ""
@@ -407,7 +409,8 @@ def _handle_business(update, deliver):
     if msg.get("voice") and not text:
         text, err = _recognize_voice(msg["voice"])
         if err:
-            send_client(client, err)
+            if not db.is_paused(client):       # бот на паузе (отвечает флорист) — не вмешиваемся
+                send_client(client, err)
             return
         if not text:
             return
