@@ -645,15 +645,15 @@ def _anketa(incoming, city):
     # Честно и коротко: это онлайн-помощник (отвечает сразу), а не живой флорист — но без слова «бот».
     who = f"Я {config.FLORIST_NAME}, онлайн-помощник" if config.FLORIST_NAME else "Я онлайн-помощник"
     shop = f" {config.SHOP_NAME}" if config.SHOP_NAME else ""
-    head = f"Здравствуйте! 🌸 {who}{shop} — отвечаю сразу и оформлю заказ за пару минут."
+    head = f"Здравствуйте! 🌸 {who}{shop}."
+    # Первая строка — приветствие, дальше — ОДИН понятный вопрос с примером ответа.
     if not city:
         opts = "\n".join(f"{i} — {n}" for i, n in enumerate(catalog.city_names, 1))
-        return (f"{head}\nВ какой город нужны цветы? Ответьте цифрой:\n{opts}\n"
-                f"Или напишите ваш посёлок — сразу {ANKETA_TAIL}")
+        return f"{head}\nВ какой город нужны цветы? Ответьте цифрой:\n{opts}\nИли напишите ваш посёлок."
     if not has_date:
-        return f"{head} На когда нужны цветы? Сразу {ANKETA_TAIL}"
-    ask = "Повод?" if catalog_budget(t) else "Повод и бюджет?"
-    return f"{head} {ask} Или сразу {ANKETA_TAIL}"
+        return f"{head}\nНа какой день нужны цветы? Например: завтра"
+    ask = "Какой повод?" if catalog_budget(t) else "Какой повод и бюджет?"
+    return f"{head}\n{ask} Например: день рождения, до 3000 ₽"
 
 
 def _open_window(city):
@@ -2420,7 +2420,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         city = catalog.match_city(incoming) or _city_from_url(detect)
         # Ответ цифрой на «В какой город? 1 — Пятигорск, 2 — …»
         m_num = re.fullmatch(r"\W*(\d)\W*", incoming or "")
-        if not city and m_num and re.search(r"1 — ", _last_bot_text(client, "")) \
+        if not city and m_num and re.search(r"какой\s+город", _last_bot_text(client, "")) \
                 and 1 <= int(m_num.group(1)) <= len(catalog.city_names):
             city = list(catalog.city_names)[int(m_num.group(1)) - 1]
         # Город, где нас нет («Сочи», «Москва») — сразу честно говорим и предлагаем наши города цифрами.
@@ -3105,7 +3105,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         prev_bot = next((m["content"] for m in reversed(db.history(client, 4)) if m["role"] == "assistant"), "")
         # Короткая анкета: город известен — сразу показываем букеты (дату, если не сказали, спросим потом).
         # Город известен (в т.ч. только что назван) — сразу к выбору букета (Абдулле так нравится).
-        after_anketa = ANKETA_TAIL in prev_bot or city_new
+        after_anketa = ANKETA_TAIL in prev_bot or "онлайн-помощник" in prev_bot or city_new
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
     # Срабатывает и когда выбран букет (picked), и когда клиент пишет «этот/его/такой ... побольше» без reply.
     # НО не путаем с «покажи побольше ВАРИАНТОВ» — там как раз нужно показать.
