@@ -243,6 +243,8 @@ def _handle(msg, deliver):
                       "• /pause — ответом на сообщение: бот замолчит с этим клиентом.\n"
                       "• /resume — ответом на сообщение: бот снова отвечает.\n"
                       "• /test — проверить бота: пишите сюда как клиент. /reset — начать проверку заново.\n"
+                      "• /resume или /reset без ответа на сообщение — снять паузу/начать заново ВАШ разговор "
+                      "(и здесь, и в Telegram магазина).\n"
                       "• /biz — кому бот отвечает в Telegram магазина.\n"
                       f"• /myid — ваш ID ({user_id}).")
         return
@@ -262,11 +264,20 @@ def _handle(msg, deliver):
             send(chat_id, "🧪 Режим проверки включён. Пишите как клиент, например: «Здравствуйте, сколько стоят розы?»\n"
                           "/reset — начать разговор заново. Выключить — снова /test")
         return
-    if db.is_test_mode(chat_id) and not msg.get("reply_to_message") and text.startswith(("/resume", "/reset")):
-        # Команды для своего тестового разговора (без ответа на сообщение)
-        db.resume(f"tg:{chat_id}")
+    if not msg.get("reply_to_message") and text.startswith(("/resume", "/reset")):
+        # Команды для СВОЕГО разговора с ботом (без ответа на сообщение): и в режиме /test,
+        # и в Telegram магазина (сотрудник проверяет бота как клиент) — снимаем паузу, «обиду» и счётчики.
+        for own in (f"tg:{chat_id}", f"tgb:{user_id}"):
+            db.resume(own)
+            for k in ("rude", "offtopic"):
+                db.del_setting(f"{k}:{own}")
+            if text.startswith("/reset"):
+                db.clear_history(own)
+        if not db.is_test_mode(chat_id):
+            send(chat_id, "🔄 Ваш разговор с ботом в Telegram магазина начат заново."
+                 if text.startswith("/reset") else "▶️ Бот снова отвечает вам в Telegram магазина.")
+            return
         if text.startswith("/reset"):
-            db.clear_history(f"tg:{chat_id}")
             send(chat_id, "🔄 Начали заново: бот забыл тестовый разговор. Пишите как новый клиент.")
         else:
             send(chat_id, "▶️ Бот снова отвечает в режиме проверки.")

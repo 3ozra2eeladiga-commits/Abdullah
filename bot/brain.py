@@ -2310,7 +2310,9 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Грубость/мат: первый раз — предупреждение, второй — бот прекращает переписку (сотруднику — уведомление).
     if not from_staff and RUDE_RE.search(PRAISE_RE.sub(" ", incoming or "")):
         return _rude_reply(client, incoming, city)
-    if not from_staff and not client.startswith("tg:"):     # в режиме /test лимиты не мешают проверкам
+    # В режиме /test и когда сотрудник проверяет бота через Telegram магазина — лимиты не мешают проверкам.
+    if not from_staff and not client.startswith("tg:") and not (
+            client.startswith("tgb:") and config.is_staff(int(client[4:]) if client[4:].lstrip("-").isdigit() else 0)):
         stop = _abuse_check(client, city)
         if stop:
             return stop
