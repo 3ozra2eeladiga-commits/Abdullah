@@ -721,9 +721,27 @@ def _city_shops(city):
     return [tuple(x) for x in (c or {}).get("shops") or []]
 
 
+def _shop_aliases(addr):
+    """Как клиенты называют магазин («Квартал», «Ромашка») — shop_aliases в shop.json: [название, части слов…]."""
+    for c in config.city_list():
+        al = (c.get("shop_aliases") or {}).get(addr)
+        if al:
+            return al
+    return []
+
+
+def _shop_label(addr, hours):
+    """«ул. Украинская, 47 «Квартал» (08:00–22:00)» — для вопроса «из какого магазина заберёте»."""
+    al = _shop_aliases(addr)
+    return f"{addr}{f' «{al[0]}»' if al else ''} ({hours})"
+
+
 def _shop_in(text, shops):
-    """Какой магазин из списка упомянут в тексте (по названию улицы) — (адрес, часы) или None."""
+    """Какой магазин из списка упомянут в тексте (по улице или как его называют: «квартал») — (адрес, часы) или None."""
     t = (text or "").lower()
+    for a, h in shops:
+        if any(x.lower() in t for x in _shop_aliases(a)):
+            return (a, h)
     for a, h in shops:
         street = re.sub(r"^(?:ул\.?|улица|пр\.?|проспект)\s*", "", a.lower()).split(",")[0].strip()
         if street and street[:6] in t:
@@ -1359,7 +1377,7 @@ def _order_missing(o, client_text):
     if (o.get("получение") or "").lower().startswith("самовывоз") and not o.get("_магазин_выбран"):
         shops = _city_shops(catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or "")))
         if len(shops) > 1 and not _shop_in(str(o.get("адрес") or ""), shops):
-            return PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {a} ({h})" for i, (a, h) in enumerate(shops, 1)) \
+            return PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {_shop_label(a, h)}" for i, (a, h) in enumerate(shops, 1)) \
                 + "\nОтветьте цифрой 🌸"
     if _time_already_passed(o.get("дата"), o.get("время")) and not o.get("_время_уточнит_флорист"):
         city_o = catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or ""))
@@ -3456,7 +3474,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             and (re.search(r"самовывоз|заберу|забер[её]м", incoming or "", re.I)
                  or re.search(r"из\s+какого\s+магазин|какой\s+магазин|орджоникидзе[^.?!]{0,40}украинск", reply.text or "", re.I)):
         shops = _city_shops(city)
-        reply.text = PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {a} ({h})" for i, (a, h) in enumerate(shops, 1)) \
+        reply.text = PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {_shop_label(a, h)}" for i, (a, h) in enumerate(shops, 1)) \
             + "\nОтветьте цифрой 🌸"
         reply.photos, reply.question = [], ""
         db.set_setting(f"lastq:{client}", reply.text)
