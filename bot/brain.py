@@ -2646,8 +2646,17 @@ def respond(client, incoming, from_staff=False, quote=""):
                 return Reply(text=q, city=city)
             # Все данные есть — дальше обычное оформление с полными данными.
             if st.get("pickup"):
+                # Самовывоз: данные собраны — подтверждаем кодом и задаём следующий вопрос (без «получателя»).
+                nxt = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"],
+                                     city, _known_order(client))
+                head = (f"Хорошо 🌸 Выдадим заказ на имя {st['me_name']}"
+                        + ("" if st.get("me_phone") else " — мы на связи здесь, в чате") + ".")
+                if nxt and nxt != ALMOST_DONE_Q:
+                    db.set_setting(f"lastq:{client}", nxt)
+                    db.add_message(client, "assistant", f"{head} {nxt}")
+                    return Reply(text=f"{head} {nxt}", city=city)
                 incoming = (f"Самовывоз. Заберёт: {st['me_name']}, {st.get('me_phone') or 'телефон не дал'}. "
-                            "Получатель — он сам.")
+                            "Получателя нет — забирает сам.")
             else:
                 incoming = (f"Заказчик: {st['me_name']}, {st['me_phone']}. "
                             f"Получатель: {st['to_name']}, {st['to_phone']}.")
@@ -3840,6 +3849,12 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = [p for p in reply.photos if p["code"] == chosen and p in picked]
     elif chosen and reply.photos and not keep_photos:
         db.del_setting(f"chosen:{client}")    # клиент сам попросил другие — снимаем «замок»
+    # Самовывоз: клиент забирает сам — никаких «имя и телефон получателя» от ИИ.
+    if not from_staff and reply.text and not reply.order and re.search(r"получател", reply.text, re.I) \
+            and _is_pickup(client):
+        parts = [p for p in _SENT_SPLIT_RE.split(reply.text.strip()) if p and not re.search(r"получател", p, re.I)]
+        reply.text = " ".join(parts).strip() or _next_question(
+            [m["content"] for m in db.history(client, 60) if m["role"] == "user"], city, _known_order(client))
     # Заказ ещё на проверке у флориста — ИИ не должен сам объявлять его принятым/подтверждённым.
     if not from_staff and not reply.order and db.get_setting(f"ocheck:{client}") and re.search(
             r"заказ\w*\s+(?:уже\s+)?(?:принят|подтвержд|оформлен)", reply.text or "", re.I):
