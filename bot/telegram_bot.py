@@ -243,10 +243,14 @@ def _handle(msg, deliver):
                       "• /pause — ответом на сообщение: бот замолчит с этим клиентом.\n"
                       "• /resume — ответом на сообщение: бот снова отвечает.\n"
                       "• /test — проверить бота: пишите сюда как клиент. /reset — начать проверку заново.\n"
+                      "• /biz — кому бот отвечает в Telegram магазина.\n"
                       f"• /myid — ваш ID ({user_id}).")
         return
     if text.startswith("/myid"):
         send(chat_id, f"Ваш ID: {user_id}, ID этого чата: {chat_id}")
+        return
+    if text.startswith("/biz"):
+        _biz_command(chat_id, text)
         return
     if text.startswith("/test"):
         if db.is_test_mode(chat_id):
@@ -301,6 +305,65 @@ def _handle_business_connection(update):
         log.info("Telegram Business: подключение %s (включено=%s)", conn, bc.get("is_enabled"))
 
 
+def biz_open():
+    """True — бот отвечает всем клиентам бизнес-аккаунта; по умолчанию — только разрешённым."""
+    return db.get_setting("biz_mode") == "all"
+
+
+def biz_allowed_ids():
+    ids = {int(x) for x in (db.get_setting("biz_allow") or "").split(",") if x.strip().lstrip("-").isdigit()}
+    return ids | set(config.TELEGRAM_STAFF_IDS)
+
+
+def biz_allowed(user_id):
+    return biz_open() or user_id in biz_allowed_ids() or config.is_staff(user_id)
+
+
+def _biz_remember(user):
+    """Запоминаем последних писавших (чтобы сотрудник мог добавить нужного по /biz)."""
+    uid = user.get("id")
+    name = " ".join(x for x in (user.get("first_name"), user.get("last_name")) if x) or "без имени"
+    if user.get("username"):
+        name += f" @{user['username']}"
+    seen = [x for x in (db.get_setting("biz_seen") or "").split("\n") if x and not x.startswith(f"{uid}|")]
+    seen.insert(0, f"{uid}|{name}")
+    db.set_setting("biz_seen", "\n".join(seen[:10]))
+
+
+def _biz_command(chat_id, text):
+    """/biz — кому бот отвечает в бизнес-аккаунте; /biz_add ID, /biz_del ID, /biz_all, /biz_only."""
+    cmd, _, arg = text.partition(" ")
+    arg = arg.strip()
+    allow = [x for x in (db.get_setting("biz_allow") or "").split(",") if x.strip()]
+    if cmd == "/biz_add" and arg.lstrip("-").isdigit():
+        if arg not in allow:
+            allow.append(arg)
+        db.set_setting("biz_allow", ",".join(allow))
+        send(chat_id, f"✅ Добавил {arg}: бот будет ему отвечать.")
+        return
+    if cmd == "/biz_del" and arg.lstrip("-").isdigit():
+        db.set_setting("biz_allow", ",".join(x for x in allow if x != arg))
+        send(chat_id, f"🗑 Убрал {arg}.")
+        return
+    if cmd == "/biz_all":
+        db.set_setting("biz_mode", "all")
+        send(chat_id, "🌸 Бот теперь отвечает ВСЕМ клиентам. Вернуть «только свои» — /biz_only")
+        return
+    if cmd == "/biz_only":
+        db.set_setting("biz_mode", "only")
+        send(chat_id, "🔒 Бот отвечает только разрешённым. Список — /biz")
+        return
+    seen = [x.split("|", 1) for x in (db.get_setting("biz_seen") or "").split("\n") if "|" in x]
+    lines = ["🌸 Бот отвечает ВСЕМ клиентам." if biz_open() else
+             "🔒 Бот отвечает только разрешённым (остальным молчит):",
+             "Разрешены: " + (", ".join(str(x) for x in sorted(biz_allowed_ids())) or "никто")]
+    if seen:
+        lines.append("\nНедавно писали магазину (бот им молчал):")
+        lines += [f"• {name} — /biz_add {uid}" for uid, name in seen]
+    lines.append("\n/biz_add ID — добавить, /biz_del ID — убрать, /biz_all — отвечать всем, /biz_only — только своим")
+    send(chat_id, "\n".join(lines))
+
+
 def _handle_business(update, deliver):
     """Сообщение в личных чатах бизнес-аккаунта магазина. Клиент -> бот отвечает; сотрудник сам -> бот молчит."""
     msg = update.get("business_message")
@@ -314,6 +377,12 @@ def _handle_business(update, deliver):
     if chat_id is None:
         return
     client = f"tgb:{chat_id}"
+
+    # Режим «только свои»: пока бот не готов, отвечает лишь разрешённым (Абдулла, хозяйка);
+    # остальным клиентам молчит — им отвечают флористы сами.
+    if from_id == chat_id and not biz_allowed(chat_id):
+        _biz_remember(msg.get("from", {}))
+        return
 
     # В личном чате id чата == id собеседника-клиента. Если отправитель НЕ клиент — это владелец аккаунта:
     # либо наш собственный ответ (вернулся обновлением), либо живой сотрудник ответил сам.
