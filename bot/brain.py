@@ -810,6 +810,32 @@ def _round_budget(n):
     return max(500, int(-(-n // 500) * 500))
 
 
+TIME_Q_RE = re.compile(r"к\s+какому\s+(?:времени|часу)|во\s+сколько|точное\s+время|какое\s+время|ко\s+скольки", re.I)
+ABOUT_TIME_RE = re.compile(r"(?:я\s+)?(?:про|о|об|это)\s+врем|это\s+(?:время|час)|не\s+(?:дата|число)|в\s+смысле\s+врем", re.I)
+
+
+def _fix_time_answer(client, text, last_q=""):
+    """Бот спросил время («к какому времени?»), клиент ответил «14» / «в 3» — это ЧАС, а не число месяца.
+    И «я про время» после «14 октября или ноября?» — берём прошлое число как время."""
+    t = (text or "").strip()
+    hist = db.history(client, 6)
+    last_bot = last_q or next((m["content"] for m in reversed(hist) if m["role"] == "assistant"), "")
+    m = re.fullmatch(r"(?:к|в|на|около)?\s*(\d{1,2})(?:[:.](\d{2}))?\s*(?:ч\w*|час\w*)?\.?", t, re.I)
+    if m and TIME_Q_RE.search(last_bot) and int(m.group(1)) <= 23:
+        h = int(m.group(1))
+        h = h + 12 if 1 <= h <= 7 else h          # «в 3» — это 15:00 (ночью магазины закрыты)
+        return f"к {h:02d}:{m.group(2) or '00'}"
+    if ABOUT_TIME_RE.search(t) and re.search(r"октябр|ноябр|январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|"
+                                            r"декабр|какое\s+число|какой\s+день|дат", last_bot, re.I):
+        prev = next((m2["content"] for m2 in reversed(hist[:-1] if hist and hist[-1]["role"] == "user" else hist)
+                     if m2["role"] == "user" and re.fullmatch(r"\D{0,4}\d{1,2}\D{0,6}", m2["content"].strip())), "")
+        n = re.search(r"\d{1,2}", prev)
+        if n and int(n.group(0)) <= 23:
+            h = int(n.group(0))
+            return f"к {h + 12 if 1 <= h <= 7 else h:02d}:00 (это время, не дата)"
+    return text
+
+
 def _fix_way_typos(client, text):
     """Опечатки в ответе на «доставка или самовывоз?» («саморезов», «самовызов», «дастафка») — исправляем,
     чтобы бот понял ответ, а не задавал странные вопросы. Только для коротких ответов на этот вопрос."""
@@ -2230,7 +2256,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     quote — текст сообщения, на которое клиент ответил (reply): подпись фото букета и т.п. Используется
     ТОЛЬКО для распознавания (какой букет), но НЕ подмешивается в сам текст для ИИ, чтобы его не путать."""
     if not from_staff:
-        incoming = _fix_way_typos(client, _fix_common_typos(incoming))    # «саморезов» → «самовывоз», «дастафка» → «доставка»
+        incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(incoming)),
+                                    db.get_setting(f"lastq:{client}") or "")    # «саморезов» → «самовывоз», «дастафка» → «доставка»
     content = f"{STAFF_PREFIX} {incoming}" if from_staff else incoming
 
     # Ответ на фото со словами «есть ещё варианты / другие» — это НЕ выбор этого товара, а просьба показать другие.
