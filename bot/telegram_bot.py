@@ -100,7 +100,7 @@ def notify_staff_photo(client, photo, caption, buttons=None):
     """Пересылает фото сотрудникам (photo — ссылка или file_id Telegram), можно с кнопками.
     Ответ сотрудника на это фото уйдёт данному клиенту. Если фото не ушло — шлём хотя бы текст."""
     caption = _with_name(client, caption)
-    for chat in staff_chats():
+    for chat in staff_chats(client):
         msg = call("sendPhoto", chat_id=chat, photo=photo, caption=caption[:1000], **_keyboard(buttons))
         if not msg:
             msg = send(chat, caption + "\n(фото клиента не удалось переслать — посмотрите в переписке)",
@@ -121,10 +121,54 @@ def _client_photo(client, msg):
         _hooks["on_photo"](client, file_id, caption)
 
 
-def staff_chats():
+def staff_city(user_id):
+    """Какие заявки получает сотрудник: город магазина, «all» (все) или «off» (не получает). Ставится /city."""
+    return db.get_setting(f"staffcity:{user_id}") or "all"
+
+
+def staff_chats(client=None):
+    """Кому слать заявки/вопросы по клиенту. Каждый сотрудник получает только свой город (/city);
+    город клиента неизвестен — получают все. Сотрудники с временным доступом — только если сами выбрали город."""
     if config.TELEGRAM_ORDERS_CHAT:
         return [config.TELEGRAM_ORDERS_CHAT]
-    return [str(i) for i in config.TELEGRAM_STAFF_IDS]
+    ids = list(config.TELEGRAM_STAFF_IDS)
+    for uid in config.temp_staff_ids():
+        if uid not in ids and db.get_setting(f"staffcity:{uid}") not in (None, "off"):
+            ids.append(uid)
+    city = db.get_city(client) if client else None
+    if city not in catalog.city_names:
+        city = None
+    return [str(i) for i in ids if staff_city(i) != "off" and (not city or staff_city(i) in ("all", city))]
+
+
+def city_tag(client):
+    """«📍 ПЯТИГОРСК» — крупно, чтобы магазин сразу видел, что заявка его."""
+    city = db.get_city(client) if client else None
+    return f"📍 {city.upper()}" if city else "📍 ГОРОД НЕ УКАЗАН"
+
+
+def _city_command(chat_id, user_id, text):
+    """/city — выбрать, заявки какого города получать: /city 1, /city 2…, /city 0 — все, /city off — не получать."""
+    names = list(catalog.city_names)
+    arg = text.partition(" ")[2].strip().lower()
+    if arg:
+        if arg in ("0", "все", "all"):
+            val = "all"
+        elif arg in ("off", "нет", "-"):
+            val = "off"
+        elif arg.isdigit() and 1 <= int(arg) <= len(names):
+            val = names[int(arg) - 1]
+        else:
+            val = catalog.match_city(arg)
+        if val:
+            db.set_setting(f"staffcity:{user_id}", val)
+            send(chat_id, {"all": "✅ Теперь вам приходят заявки ВСЕХ городов.",
+                           "off": "🔕 Заявки вам больше не приходят."}.get(val, f"✅ Теперь вам приходят только заявки: {val.upper()}"))
+            return
+    cur = staff_city(user_id)
+    opts = "\n".join(f"/city {i} — {n}" for i, n in enumerate(names, 1))
+    send(chat_id, f"Сейчас вы получаете: {'все города' if cur == 'all' else 'ничего' if cur == 'off' else cur}\n\n"
+                  f"Какие заявки получать на этом телефоне?\n{opts}\n/city 0 — все города\n/city off — не получать")
 
 
 def _keyboard(buttons):
@@ -147,25 +191,28 @@ def client_name(client):
 def _with_name(client, text):
     """Добавляет «👤 Имя в Telegram» в начало сообщения сотрудникам, если его там ещё нет."""
     name = client_name(client)
-    return text if not name or name in text else f"👤 {name}\n{text}"
+    head = city_tag(client) if config.many_cities() and "📍" not in text else ""
+    if name and name not in text:
+        head = f"{head}\n👤 {name}" if head else f"👤 {name}"
+    return f"{head}\n{text}" if head else text
 
 
 def notify_staff(client, text, buttons=None):
     """Сообщение сотрудникам (buttons — inline-кнопки). Ответ на него уйдёт этому клиенту."""
     text = _with_name(client, text)
-    for chat in staff_chats():
+    for chat in staff_chats(client):
         msg = send(chat, text, **_keyboard(buttons))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
 
 
-def ring(order_id, still_waiting):
+def ring(order_id, still_waiting, client=None):
     """«Звонок» о новой заявке: несколько коротких сообщений подряд — каждое играет мелодию уведомления
     (Telegram даёт мелодию не длиннее 5 с, так звучит дольше). Сообщения сразу удаляются — чат остаётся чистым.
     Потом напоминаем, пока под заявкой не нажали кнопку (still_waiting() == False)."""
     def burst(text):
         for _ in range(config.RING_TIMES):
-            sent = [(chat, send(chat, text)) for chat in staff_chats()]
+            sent = [(chat, send(chat, text)) for chat in staff_chats(client)]
             time.sleep(5.5)                                  # дать мелодии доиграть
             for chat, msg in sent:
                 if msg:
@@ -173,7 +220,8 @@ def ring(order_id, still_waiting):
 
     def run():
         try:
-            burst(f"🔔 Новая заявка №{order_id}!")
+            tag = city_tag(client).replace("📍 ", "") if client else ""
+            burst(f"🔔 Новая заявка №{order_id}{' — ' + tag if tag else ''}!")
             for n in range(config.RING_REMIND_TIMES):
                 time.sleep(config.RING_REMIND_MIN * 60)
                 if not still_waiting():
@@ -187,7 +235,7 @@ def ring(order_id, still_waiting):
 def notify_staff_order(client, items, text, buttons=None):
     """Новый заказ сотрудникам: сначала ФОТО заказанных товаров (что собирать), потом карточка заказа.
     Отвечают именно на карточку — текст уйдёт клиенту."""
-    for chat in staff_chats():
+    for chat in staff_chats(client):
         for it in items:
             # Подпись «В заказ:» и без привязки к товару: в режиме /test это фото видно в том же чате,
             # и ответ на него не должен считаться выбором клиента.
@@ -294,6 +342,7 @@ def _handle(msg, deliver):
                       "• /resume или /reset без ответа на сообщение — снять паузу/начать заново ВАШ разговор "
                       "(и здесь, и в Telegram магазина).\n"
                       "• /biz — кому бот отвечает в Telegram магазина.\n"
+                      "• /city — заявки какого города получать на этом телефоне.\n"
                       f"• /myid — ваш ID ({user_id}).")
         return
     if text.startswith("/myid"):
@@ -301,6 +350,9 @@ def _handle(msg, deliver):
         return
     if text.startswith("/biz"):
         _biz_command(chat_id, text)
+        return
+    if text.startswith("/city"):
+        _city_command(chat_id, user_id, text)
         return
     if text.startswith("/test"):
         if db.is_test_mode(chat_id):

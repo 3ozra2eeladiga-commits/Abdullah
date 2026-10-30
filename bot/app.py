@@ -95,7 +95,8 @@ def _format_order(order_id, client, reply):
         return val(x) != "—"
 
     pickup = o.get("получение") == "самовывоз"
-    lines = [f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{order_id}", _label(client), "━━━━━━━━━━━━━━", "🛍 ТОВАР:"]
+    lines = [telegram_bot.city_tag(client), f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{order_id}", _label(client), "━━━━━━━━━━━━━━",
+             "🛍 ТОВАР:"]
     for it in o.get("товары", []):
         qty = it.get("кол-во", 1)
         each = it.get("цена_за_шт") or it.get("цена")
@@ -231,7 +232,7 @@ def deliver(client, text, from_staff=False, quote=""):
             db.set_setting(f"ostatus:{order_id}", "check")
             db.set_setting(f"ocheck:{client}", order_id)
             telegram_bot.notify_staff_order(client, items, card, buttons=_check_buttons(order_id))
-            telegram_bot.ring(order_id, lambda oid=order_id: db.get_setting(f"ostatus:{oid}") == "check")
+            telegram_bot.ring(order_id, lambda oid=order_id: db.get_setting(f"ostatus:{oid}") == "check", client)
         elif reply.order_raw:
             log.warning("Заказ не распознан (%s): %s", client, reply.order_raw)
         if reply.staff_note:                     # дополнение к отправленному заказу, отмена и т.п.

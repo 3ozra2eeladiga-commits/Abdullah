@@ -128,6 +128,20 @@ def is_staff(user_id):
     return False
 
 
+def temp_staff_ids():
+    """ID сотрудников с действующим временным доступом (temp_staff.json)."""
+    from datetime import datetime, timezone
+    try:
+        with open("temp_staff.json", encoding="utf-8") as f:
+            return [int(g["id"]) for g in json.load(f) if datetime.now(timezone.utc) < datetime.fromisoformat(g["until"])]
+    except (OSError, ValueError, KeyError, TypeError):
+        return []
+
+
+def many_cities():
+    return len(cities()) > 1
+
+
 TELEGRAM_ORDERS_CHAT = os.getenv("TELEGRAM_ORDERS_CHAT", "")
 
 # --- Сервер ---
