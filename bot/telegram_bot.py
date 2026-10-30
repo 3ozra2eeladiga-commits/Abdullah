@@ -129,12 +129,12 @@ def staff_city(user_id):
 
 def staff_chats(client=None):
     """Кому слать заявки/вопросы по клиенту. Каждый сотрудник получает только свой город (/city);
-    город клиента неизвестен — получают все. Сотрудники с временным доступом — только если сами выбрали город."""
+    город клиента неизвестен — получают все. По умолчанию (город не выбран) каждый получает все заявки."""
     if config.TELEGRAM_ORDERS_CHAT:
         return [config.TELEGRAM_ORDERS_CHAT]
     ids = list(config.TELEGRAM_STAFF_IDS)
     for uid in config.temp_staff_ids():
-        if uid not in ids and db.get_setting(f"staffcity:{uid}") not in (None, "off"):
+        if uid not in ids:
             ids.append(uid)
     city = db.get_city(client) if client else None
     if city not in catalog.city_names:

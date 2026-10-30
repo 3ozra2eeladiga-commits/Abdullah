@@ -114,7 +114,7 @@ if len(TELEGRAM_STAFF_IDS) != len(_list("TELEGRAM_STAFF_IDS")):
 
 def is_staff(user_id):
     """Сотрудник из .env или временный доступ из temp_staff.json ([{"id": 123, "until": "2026-10-28T09:00+03:00"}]).
-    Временный доступ сам заканчивается в указанное время. Заказы/вопросы временным НЕ приходят — только /test."""
+    Временный доступ сам заканчивается в указанное время. Заявки им тоже приходят (отключить — /city off)."""
     if user_id in TELEGRAM_STAFF_IDS:
         return True
     from datetime import datetime, timezone
