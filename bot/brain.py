@@ -2743,6 +2743,22 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"lastq:{client}", text)
             db.add_message(client, "assistant", text)
             return Reply(text=text, photos=cards, city=city)
+    # Бот предложил «Оформим на завтра» — значит дата заказа уже известна: завтра (день открытия).
+    if not from_staff and not _night_target(client) and re.search(r"Оформим на завтра|ночью мы не доставляем",
+                                                                  _last_bot_text(client, last_q)):
+        db.set_setting(f"nightorder:{client}", _set_night_target())
+    # Ночью клиент хочет «через час / сейчас / срочно» или спрашивает «почему нельзя?» — честно объясняем один раз
+    # и предлагаем ближайшее время утром (а не повторяем тот же вопрос по кругу).
+    if not from_staff and shops_closed_now(city) and re.search(
+            r"через\s+(?:\w+\s+)?час|через\s+\d+\s*мин|сейчас|срочно|сегодня|как\s+можно\s+скорее|побыстрее|"
+            r"почему|не\s+получа|нельзя", incoming or "", re.I) \
+            and re.search(r"К какому времени|завтра", _last_bot_text(client, last_q)):
+        when = opening_text(city)
+        text = (f"Сейчас магазины закрыты 🌙 и ночью мы не доставляем. Откроемся {when} — букет приготовим "
+                f"к этому времени или позже 🌸 К какому времени удобно? Например: к 10:00")
+        db.set_setting(f"lastq:{client}", NIGHT_DATE_Q)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # Просто «Салам алейкум» посреди разговора — коротко отвечаем и не уводим разговор («вашими молитвами…» не надо).
     if not from_staff and re.fullmatch(r"\W*(?:(?:ас+)?салам\w*\s*(?:у|о)?\s*але[йи]?к[уи]м|салам|ассалам\w*)\W*",
                                        incoming or "", re.I) \
