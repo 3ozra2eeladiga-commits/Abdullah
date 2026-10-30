@@ -831,6 +831,7 @@ TYPO_STEMS = [
     (r"с[еи]в[оа]дн[яиа](?![а-яё])|с[еи]г[оа]дн[яиа](?![а-яё])", "сегодня"),
     (r"д[ао]ст[ао][вф]к", "доставк"),
     (r"с[ао]м[ао]в[ыи][вф][ао][зс]", "самовывоз"),
+    (r"саморез\w*(?![а-яё])|самовызов\w*", "самовывоз"),       # клавиатура: «саморезов», «самовызов»
     (r"[ао]тк?р[ыи]тк", "открытк"),
     (r"др[уо]г[ии]е(?![а-яё])|др[уо]гии(?![а-яё])", "другие"),
     (r"сп[ао]с[иы]б[оа]?(?![а-яё])", "спасибо"),
@@ -989,12 +990,17 @@ def _contacts(client):
 
 
 def _is_pickup(client):
-    """Клиент забирает сам (самовывоз) — тогда «получателя» нет: нужны только его имя (и телефон)."""
-    if (_known_order(client).get("получение") or "").lower().startswith("самовывоз"):
-        return True
-    return bool(re.search(r"самовывоз|заберу|забер[её]м", " ".join(
-        m["content"] for m in db.history(client, 30) if m["role"] == "user"), re.I)) and not re.search(
-        r"\bдоставк", " ".join(m["content"] for m in db.history(client, 6) if m["role"] == "user"), re.I)
+    """Клиент забирает сам (самовывоз) — тогда «получателя» и адреса нет. Последнее слово клиента главнее:
+    «1 — доставка», потом «нет, самовывоз» — это самовывоз."""
+    for m in reversed(db.history(client, 40)):
+        if m["role"] != "user":
+            continue
+        t = m["content"].lower()
+        last_pick = max((t.rfind(w) for w in ("самовывоз", "заберу", "заберём", "заберем")), default=-1)
+        last_deliv = t.rfind("доставк")
+        if last_pick >= 0 or last_deliv >= 0:
+            return last_pick > last_deliv
+    return (_known_order(client).get("получение") or "").lower().startswith("самовывоз")
 
 
 def _contacts_next_q(st):
@@ -3934,15 +3940,25 @@ def respond(client, incoming, from_staff=False, quote=""):
             # когда удобно доставить…») — заменяем нашим коротким вопросом с примером/цифрами.
             reply.text = f"{'Отличный выбор' if picked else 'Хорошо'} 🌸 {nxt}"
             db.set_setting(f"lastq:{client}", nxt)
+        elif nxt in (WAY_Q, DATE_Q, TIME_Q, NIGHT_DATE_Q, ADDRESS_Q) and "?" in reply.text \
+                and "?" not in (incoming or "") and not SUMMARY_RE.search(reply.text) \
+                and not re.search(r"\n1 — |магазина заберёте|Упаковка|открытк", reply.text):
+            # Порядок вопросов ведёт КОД: способ → день/время → адрес → контакты. ИИ забежал вперёд
+            # (спросил контакты, не узнав время) — задаём наш недостающий вопрос.
+            reply.text = f"{'Отличный выбор' if picked else 'Хорошо'} 🌸 {nxt}"
+            db.set_setting(f"lastq:{client}", nxt)
     if chosen and reply.photos and not keep_photos and not re.search(
             r"друг|ещ[её]|вариант|покаж|скин|кинь|кида|закид|больше|мало|поменя|замен|не нрав|передумал", incoming or "", re.I):
         reply.photos = [p for p in reply.photos if p["code"] == chosen and p in picked]
     elif chosen and reply.photos and not keep_photos:
         db.del_setting(f"chosen:{client}")    # клиент сам попросил другие — снимаем «замок»
-    # Самовывоз: клиент забирает сам — никаких «имя и телефон получателя» от ИИ.
-    if not from_staff and reply.text and not reply.order and re.search(r"получател", reply.text, re.I) \
+    # Самовывоз: клиент забирает сам — никаких «получателя» и «адреса доставки» от ИИ.
+    PICKUP_JUNK = r"получател|адрес|улиц|подъезд|квартир|этаж|кв\.|куда\s+(?:нужно\s+)?привезти"
+    if not from_staff and reply.text and not reply.order and re.search(PICKUP_JUNK, reply.text, re.I) \
             and _is_pickup(client):
-        parts = [p for p in _SENT_SPLIT_RE.split(reply.text.strip()) if p and not re.search(r"получател", p, re.I)]
+        parts = [p for p in _SENT_SPLIT_RE.split(reply.text.strip())
+                 if p and re.search(r"[а-яёА-ЯЁ]{3}", p)
+                 and (not re.search(PICKUP_JUNK, p, re.I) or re.search(r"магазин|заберёте|1 —", p))]
         reply.text = " ".join(parts).strip() or _next_question(
             [m["content"] for m in db.history(client, 60) if m["role"] == "user"], city, _known_order(client))
     # Заказ ещё на проверке у флориста — ИИ не должен сам объявлять его принятым/подтверждённым.
