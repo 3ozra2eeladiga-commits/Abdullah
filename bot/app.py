@@ -379,9 +379,9 @@ def on_check(order_id, action):
         if action in ("no", "other"):
             db.pause(client, config.HUMAN_PAUSE_HOURS)    # дальше с клиентом говорит флорист, бот не мешает
     if action == "ok":
+        # Кнопка «💳 Оплата» (QR Точки, on_pay) готова, но пока отключена — Абдулла: «пока отбой».
         telegram_bot.notify_staff(client, f"✅ Заявка №{order_id} подтверждена, клиенту написали.\n"
-                                          "Нажмите «💳 Оплата» — бот сам отправит клиенту QR-код и ссылку на сумму заказа.",
-                                  buttons=[[{"text": "💳 Оплата", "callback_data": f"pay:go:{order_id}"}]])
+                                          "Отправьте ссылку на оплату — ответом на это сообщение.")
     elif action == "other":
         telegram_bot.notify_staff(client, f"✍️ Заявка №{order_id}: клиенту написали, что вы скоро ответите.\n"
                                           "Напишите клиенту сами (в чате или ответом на это сообщение). "
