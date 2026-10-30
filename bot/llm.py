@@ -149,7 +149,7 @@ DIAG = {}
 
 
 def note_diag(kind, ok, detail=""):
-    detail = re.sub(r"b1g\w+|aje\w+", "…", str(detail))[:120]      # id папки/ключа не светим
+    detail = re.sub(r"b1g\w+|aje\w+", "…", str(detail))[:400]      # id папки/ключа не светим
     DIAG[kind] = f"{time.strftime('%d.%m %H:%M')} — " + ("работает" if ok else f"ОШИБКА: {detail}")
 
 
