@@ -173,7 +173,7 @@ def _to_human(client, text, saved=False):
         db.add_message(client, "user", text)
     city = db.get_city(client)
     closed = brain.shops_closed_now(city)
-    telegram_bot.notify_staff(client, f"🙋 Клиент просит живого сотрудника ({_label(client)}{', ' + city if city else ''}):\n"
+    telegram_bot.notify_staff_wait(client, f"🙋 Клиент просит живого сотрудника ({_label(client)}{', ' + city if city else ''}):\n"
                                       f"«{text}»\nНапишите клиенту в чате или ответом на это сообщение. "
                                       f"Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; /resume ответом — включить бота.")
     reply = ("Хорошо, передала флористу 🌸 Она напишет вам здесь "
@@ -213,7 +213,7 @@ def deliver(client, text, from_staff=False, quote=""):
             db.add_message(client, "user", text)
             # Бот молчит (клиента ведёт сотрудник), но вопрос о заказе/доставке не должен потеряться — флористу.
             if STATUS_RE.search(text or ""):
-                telegram_bot.notify_staff(client, f"📦 Клиент спрашивает о заказе/доставке ({_label(client)}):\n"
+                telegram_bot.notify_staff_wait(client, f"📦 Клиент спрашивает о заказе/доставке ({_label(client)}):\n"
                                                   f"«{text}»\nОтветьте клиенту в чате или ответом на это сообщение.")
             if client.startswith("tg:"):
                 # В режиме проверки «клиент» — сам сотрудник: подсказываем, почему бот молчит
@@ -287,7 +287,7 @@ def deliver(client, text, from_staff=False, quote=""):
                                                   "Ответьте на это сообщение — бот передаст ответ клиенту.")
         if reply.handoff:
             db.pause(client, 24)
-            telegram_bot.notify_staff(client, f"🙋 Клиент просит живого сотрудника ({_label(client)}).\n"
+            telegram_bot.notify_staff_wait(client, f"🙋 Клиент просит живого сотрудника ({_label(client)}).\n"
                                               f"Последнее сообщение: {text}\n"
                                               "Бот замолчал с ним на сутки. Ответьте клиенту в Директе "
                                               "или ответом на это сообщение. /resume — включить бота обратно.")
@@ -357,7 +357,7 @@ def on_question(qid, action):
         _send_text(client, text)
         db.add_message(client, "assistant", text)
     if action == "other":
-        telegram_bot.notify_staff(client, f"✍️ Напишите клиенту ответ на вопрос «{q}» — ответом на это сообщение.")
+        telegram_bot.notify_staff_wait(client, f"✍️ Напишите клиенту ответ на вопрос «{q}» — ответом на это сообщение.")
     return f"{QUESTION_ACTIONS[action]} — клиенту отправлено."
 
 
@@ -384,12 +384,12 @@ def on_check(order_id, action):
         telegram_bot.notify_staff(client, f"✅ Заявка №{order_id} подтверждена, клиенту написали.\n"
                                           "Отправьте ссылку на оплату — ответом на это сообщение.")
     elif action == "other":
-        telegram_bot.notify_staff(client, f"✍️ Заявка №{order_id}: клиенту написали, что вы скоро ответите.\n"
+        telegram_bot.notify_staff_wait(client, f"✍️ Заявка №{order_id}: клиенту написали, что вы скоро ответите.\n"
                                           "Напишите клиенту сами (в чате или ответом на это сообщение). "
                                           f"Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; "
                                           "/resume ответом на это сообщение — включить бота.")
     else:
-        telegram_bot.notify_staff(client, f"❌ Заявка №{order_id}: клиенту написали, что чего-то нет в наличии и "
+        telegram_bot.notify_staff_wait(client, f"❌ Заявка №{order_id}: клиенту написали, что чего-то нет в наличии и "
                                           "флорист скоро свяжется.\nНапишите клиенту сами (в чате или ответом на это "
                                           f"сообщение). Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; "
                                           "/resume ответом на это сообщение — включить бота.")
@@ -427,8 +427,11 @@ def on_report(kind):
     rows = db.recent_orders(now - 7 * 86400)
     if kind == "noanswer":
         lines = [f"⏳ {_short_line(oid, c, o)}" for oid, c, o, _t in rows if db.get_setting(f"ostatus:{oid}") == "check"]
-        return ("📭 Без ответа (никто не нажал кнопку):\n" + "\n".join(lines[-25:])) if lines \
-            else "📭 Все заявки разобраны 👍"
+        # Клиенты, которым флорист должен ответить сама (просил сотрудника, вопрос, «Другое»), а ответа ещё нет.
+        for c, since in sorted(telegram_bot.waiting_clients(), key=lambda x: x[1]):
+            name = telegram_bot.client_name(c).split(" @")[0] or c.split(":", 1)[-1]
+            lines.append(f"🙋 {name} ждёт ответа {max(1, int((now - since) // 60))} мин")
+        return ("📭 Без ответа:\n" + "\n".join(lines[-25:])) if lines else "📭 Все разобраны 👍"
     today = datetime.datetime.now(_MSK_TZ).date()
     marks = {"check": "⏳", "ok": "✅", "no": "❌", "other": "✍️"}
     items = []

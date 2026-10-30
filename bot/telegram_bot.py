@@ -259,6 +259,47 @@ def notify_staff(client, text, buttons=None):
     return [(c, m["message_id"]) for c, m, _t, _p in sent]
 
 
+# Сообщения, где КЛИЕНТ ЖДЁТ ОТВЕТА: кнопка «✅ Ответила клиенту». Бот сам проверяет, был ли реальный ответ
+# (в чате магазина или ответом через бота): нет ответа — отметиться нельзя; ответили — отметка ставится сама.
+ANSWER_BUTTON = [[{"text": "✅ Ответила клиенту", "callback_data": "ans:x:0"}]]
+
+
+def notify_staff_wait(client, text, buttons=None):
+    sent = notify_staff(client, text, buttons=buttons or ANSWER_BUTTON)
+    try:
+        msgs = json.loads(db.get_setting(f"awaitmsgs:{client}") or "[]")
+    except ValueError:
+        msgs = []
+    msgs += [{"c": str(c), "m": m, "t": _with_name(client, text)[:4000]} for c, m in sent or []]
+    db.set_setting(f"awaitmsgs:{client}", json.dumps(msgs[-30:], ensure_ascii=False))
+    if not db.get_setting(f"await:{client}"):
+        db.set_setting(f"await:{client}", str(int(time.time())))
+    return sent
+
+
+def staff_answered(client, who):
+    """Сотрудник реально написал клиенту — снимаем «ждёт ответа» и отмечаем у всех: «✅ Ответила — Имя, время»."""
+    if not db.get_setting(f"await:{client}"):
+        return
+    try:
+        msgs = json.loads(db.get_setting(f"awaitmsgs:{client}") or "[]")
+    except ValueError:
+        msgs = []
+    note = f"✅ Ответила клиенту — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}"
+    for x in msgs:
+        kw = dict(chat_id=x["c"], message_id=x["m"], reply_markup={"inline_keyboard": []})
+        if not call("editMessageText", text=(x["t"] + "\n\n" + note)[:4096], **kw):
+            call("editMessageReplyMarkup", **kw)
+    db.del_setting(f"await:{client}")
+    db.del_setting(f"awaitmsgs:{client}")
+
+
+def waiting_clients():
+    """[(client, с какого времени ждёт)] — клиенты, которым ещё никто не ответил."""
+    rows = db._exec("SELECT key, value FROM settings WHERE key LIKE 'await:%'").fetchall()
+    return [(r["key"][6:], int(r["value"])) for r in rows if str(r["value"]).isdigit()]
+
+
 RING_BTN, STOP_BTN = "🔔 Позвонить всем", "🔕 Выключить звонок"
 NOANSWER_BTN, TODAY_BTN = "📭 Без ответа", "📋 Заказы на сегодня"
 # Кнопки внизу чата у каждого сотрудника: позвать всех / выключить звонок.
@@ -507,6 +548,7 @@ def _handle(msg, deliver):
                 send(chat_id, "▶️ Бот снова отвечает этому клиенту.")
             elif text:
                 deliver(client, text, from_staff=True)
+                staff_answered(client, _staff_name(msg.get("from")))
                 send(chat_id, "✅ Передал клиенту.")
             return
 
@@ -616,6 +658,7 @@ def _handle_business(update, deliver):
         if db.was_sent_by_bot(f"biz:{chat_id}:{msg.get('message_id')}"):
             return  # это наш же ответ, не реагируем
         db.pause(client, config.HUMAN_PAUSE_HOURS)  # сотрудник вступил в разговор — бот умолкает
+        staff_answered(client, "в чате магазина")
         return
 
     text = (msg.get("text") or msg.get("caption") or "").strip()
@@ -644,6 +687,16 @@ def _handle_callback(cq, on_check):
     parts = (cq.get("data") or "").split(":")
     m = cq.get("message") or {}
     who = cq.get("from", {}).get("first_name") or "сотрудник"
+    if parts[0] == "ans":
+        client = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id")) if m else None
+        if client and db.get_setting(f"await:{client}"):
+            call("answerCallbackQuery", callback_query_id=cq["id"], show_alert=True,
+                 text="Не вижу вашего ответа клиенту 🙏 Сначала напишите ему (в чате магазина или ответом на это "
+                      "сообщение) — отметка поставится сама.")
+        else:
+            call("answerCallbackQuery", callback_query_id=cq["id"], text="Уже отмечено ✅")
+            _mark_done(m, "")
+        return
     if parts[0] == "stopring":
         stop_rings()
         call("answerCallbackQuery", callback_query_id=cq["id"], text="Звонок выключен 🔕")
@@ -706,6 +759,9 @@ def _mark_done(m, note):
     if not m:
         return
     kw = dict(chat_id=m["chat"]["id"], message_id=m["message_id"], reply_markup={"inline_keyboard": []})
+    if not note:
+        call("editMessageReplyMarkup", **kw)
+        return
     if m.get("text") is not None:
         ok = call("editMessageText", text=(m["text"] + "\n\n" + note)[:4096], **kw)
     elif m.get("caption") is not None or m.get("photo"):
