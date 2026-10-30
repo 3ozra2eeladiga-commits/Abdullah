@@ -2513,6 +2513,12 @@ def respond(client, incoming, from_staff=False, quote=""):
     last_q = "" if from_staff else (db.get_setting(f"lastq:{client}") or "")
     if last_q:
         db.del_setting(f"lastq:{client}")
+    # «Да» на «Оформим на завтра — к какому времени? Например: завтра к 10:00» — берём время из нашего примера.
+    if not from_staff and re.search(r"Например: (?:завтра )?к (\d{1,2}:\d{2})", _last_bot_text(client, last_q)) \
+            and CONFIRM_YES_RE.search(incoming or "") and not re.search(r"\d", incoming or "") \
+            and re.search(r"К какому времени", _last_bot_text(client, last_q)):
+        incoming = "к " + re.search(r"Например: (?:завтра )?к (\d{1,2}:\d{2})", _last_bot_text(client, last_q)).group(1)
+        content = incoming
     # Букет, выбранный клиентом: по номеру (№600), ссылке с сайта или ответу (reply) на фото букета.
     picked = ((_picked_by_number(detect, city) + _picked_from_site(detect, city)
                + _picked_from_caption(detect, city)
