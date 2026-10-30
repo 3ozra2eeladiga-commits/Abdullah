@@ -179,7 +179,8 @@ def _city_command(chat_id, user_id, text):
 
 
 # Под каждым сообщением сотрудникам без своих кнопок — «👁 Просмотрено»: нажали — видно, что уже разобрались.
-SEEN_BUTTON = [[{"text": "👁 Просмотрено", "callback_data": "seen:x:0"}]]
+MORE_BUTTON = [{"text": "💐 Ещё варианты клиенту", "callback_data": "more:x:0"}]
+SEEN_BUTTON = [[{"text": "👁 Просмотрено", "callback_data": "seen:x:0"}], MORE_BUTTON]
 
 
 def _keyboard(buttons):
@@ -551,6 +552,12 @@ def _handle_callback(cq, on_check):
         _mark_done(m, f"👁 Просмотрено — {_staff_name(cq.get('from'))}, "
                       f"{time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
         return
+    if parts[0] == "more":
+        # Флорист просит: «скинь клиенту ещё варианты» — бот сам отправляет новые букеты в чат этого клиента.
+        client = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id")) if m else None
+        res = _hooks["on_more"](client) if client and _hooks.get("on_more") else "Не нашла клиента для этого сообщения."
+        call("answerCallbackQuery", callback_query_id=cq["id"], text=res[:200])
+        return
     handler = {"chk": on_check, "ph": _hooks.get("on_photo_button"),
                "q": _hooks.get("on_question")}.get(parts[0]) if len(parts) == 3 else None
     if not handler or not parts[2].isdigit():
@@ -629,8 +636,8 @@ def run_polling(deliver, on_check):
             time.sleep(5)
 
 
-def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None):
-    _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question)
+def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None):
+    _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question, on_more=on_more)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return

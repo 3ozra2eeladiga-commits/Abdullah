@@ -300,7 +300,34 @@ CHECK_ACTIONS = {
 
 
 def _check_buttons(order_id, actions=("ok", "no", "other")):
-    return [[{"text": CHECK_ACTIONS[a][0], "callback_data": f"chk:{a}:{order_id}"}] for a in actions]
+    return [[{"text": CHECK_ACTIONS[a][0], "callback_data": f"chk:{a}:{order_id}"}] for a in actions] \
+        + [telegram_bot.MORE_BUTTON]
+
+
+def on_more(client):
+    """Кнопка «💐 Ещё варианты клиенту»: отправляем клиенту 5 букетов, которых он ещё не видел (его город,
+    по его запросу). Флористу не нужно идти на сайт. Возвращает текст для флориста."""
+    city = db.get_city(client) or next(iter(catalog.city_names), None)
+    cc = catalog.get_city(city) if city else None
+    if not cc:
+        return "Каталог города не загружен — попробуйте позже."
+    seen = set()
+    for k in ("shown", "seen"):
+        seen |= {c for c in (db.get_setting(f"{k}:{client}") or "").split(",") if c}
+    query = " ".join(m["content"] for m in db.history(client, 12) if m["role"] == "user") or "популярные букеты"
+    items = [it for it in cc.relevant_items(query, limit=60, bouquets_only=True) if it["code"] not in seen][:5] \
+        or [it for it in cc.relevant_items("популярные букеты", limit=60, bouquets_only=True) if it["code"] not in seen][:5]
+    if not items:
+        return "Новых вариантов не нашлось — клиенту уже показали всё подходящее."
+    with _client_locks[client]:
+        text = "Вот ещё варианты от флориста 🌸 Какой нравится? Ответьте «этот» на фото."
+        _send_text(client, text)
+        for it in items:
+            _send_photo(client, it)
+        db.add_message(client, "assistant", text)
+        db.set_setting(f"shown:{client}", ",".join(it["code"] for it in items))
+        db.set_setting(f"seen:{client}", ",".join((list(seen) + [it["code"] for it in items])[-200:]))
+    return f"Отправила клиенту {len(items)} новых вариантов 💐"
 
 
 QUESTION_ACTIONS = {"yes": "✅ Да", "no": "❌ Нет", "other": "✍️ Другое — отвечу сам"}
@@ -623,7 +650,7 @@ def _disable_windows_quick_edit():
 def main():
     _disable_windows_quick_edit()
     catalog.refresh()
-    telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button,
+    telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
                        on_question=on_question)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
