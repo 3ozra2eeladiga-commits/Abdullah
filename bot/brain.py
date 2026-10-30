@@ -1080,7 +1080,7 @@ def _next_question(user_msgs, city, order=None):
     if not has_date and has_time:
         return "На какую дату? 📅 Например: завтра"
     if not (has_date and has_time):
-        return DATE_Q
+        return NIGHT_DATE_Q if not has_date and shops_closed_now(city) else DATE_Q
     if not pickup and not has_addr:
         return ADDRESS_Q
     if pickup and not o.get("_сюрприз"):    # самовывоз: получателя нет — нужен только тот, кто заберёт
@@ -1343,6 +1343,7 @@ SURPRISE_Q1 = "Хорошо 🌸 Имя и телефон получателя? 
 SURPRISE_Q2 = "Хорошо 🌸 Напишите имя получателя и где её найти: адрес, место (магазин, аптека, офис), как узнать."
 # По одному вопросу за раз (два вопроса в одном сообщении клиенты путают), с ответами цифрами.
 WAY_Q = "Доставка или самовывоз? 🚗\n1 — доставка\n2 — самовывоз"
+NIGHT_DATE_Q = "Оформим на завтра 🌸 К какому времени? Например: завтра к 10:00"
 DATE_Q = "На какую дату и к какому времени? 📅 Например: завтра к 15:00"
 PICKUP_CONTACT_Q = ("Ваше имя и телефон? 🌸\n(номер — только чтобы быстро связаться с вами по заказу, "
                     "никому его не передаём)")
@@ -1513,10 +1514,24 @@ def _order_missing(o, client_text):
     if not any(not CARD_RE.search(str(it.get("название") or "")) and (it.get("код") or it.get("название"))
                for it in items):
         return "Какой букет оформляем? Нажмите на его фото и ответьте «этот» 🌸"
-    if o.get("получение") not in ("доставка", "самовывоз"):
+    cl = (client_text or "").lower()
+    city_o = catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or ""))
+    # Способ, дату и время берём только со слов КЛИЕНТА — ИИ мог «додумать» (доставка, сегодня, 23:00).
+    if o.get("получение") not in ("доставка", "самовывоз") or not re.search(
+            r"доставк|самовывоз|заберу|забер[её]м|привез|забрать", cl):
         return WAY_Q
-    if not str(o.get("дата") or "").strip() or str(o.get("дата")).strip() in ("—", "-", "..."):
+    if not str(o.get("дата") or "").strip() or str(o.get("дата")).strip() in ("—", "-", "...") or not re.search(
+            r"сегодня|завтра|послезавтра|\d{1,2}[./]\d{1,2}|\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|"
+            r"сентябр|октябр|ноябр|декабр)|понедельник|вторник|сред[уа]|четверг|пятниц|суббот|воскресень|сейчас|срочно",
+            cl):
+        if shops_closed_now(city_o):            # ночью — оформляем на завтра, без «к сожалению»
+            return NIGHT_DATE_Q
         return "На какую дату нужен букет? 📅"
+    hour_o = _hour_from_text(o.get("время"))
+    if hour_o is not None and not o.get("_время_у_получателя") and not o.get("_время_уточнит_флорист") \
+            and not re.search(rf"(?<!\d){hour_o}(?!\d)|(?<!\d){hour_o - 12}(?!\d)|как можно|скорее|срочно|"
+                              r"через\s+\w+\s+час|через\s+час|любое|утр|вечер|обед", cl):
+        return NIGHT_DATE_Q if shops_closed_now(city_o) else DATE_Q   # время придумал ИИ — спрашиваем
     if o.get("получение") == "доставка" and len((o.get("адрес") or "").strip()) < 6:
         return ADDRESS_Q
     if _time_is_vague(o.get("время")) and not o.get("_время_у_получателя"):
