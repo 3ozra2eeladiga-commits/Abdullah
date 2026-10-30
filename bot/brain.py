@@ -1258,6 +1258,18 @@ CONTACT_REFUSE_RE = re.compile(
     r"без\s+(?:этого|них|данных|номера|телефона|имени|моих|своих)|не\s+(?:хочу|буду|могу|стану)\b|"
     r"не\s+сообща|не\s+скажу|не\s+дам|не\s+давать|обязательно\s*\?|зачем\s+(?:вам\s+)?(?:мо[йиё]\s+)?"
     r"(?:номер|телефон|данн|имя)|можно\s+без|не\s+(?:называть|указывать|оставлять)", re.I)
+# Предупреждение, когда при доставке нет чьего-то телефона (текст магазина).
+DELIVERY_WARN = ("Хорошо 🌸 Но доставка может усложниться без номера телефона, поэтому оставайтесь, пожалуйста, "
+                 "на связи. Если получателя не найдём и букет вернётся в магазин, повторную доставку придётся оплатить.")
+OWN_PHONE_REFUSE_RE = re.compile(r"не\s+(?:хочу|буду|могу)\s+(?:да(?:ва)?ть|оставля\w*|отправля\w*|писать|сообщать|"
+                                 r"говорить|называть)\s+(?:свой|мой)\s+(?:номер|телефон)|без\s+моего\s+(?:номера|телефона)|"
+                                 r"сво[йе]\s+(?:номер|телефон)\s+не\s+(?:дам|скажу|хочу|буду)", re.I)
+NO_TO_PHONE_RE = re.compile(r"нет\s+(?:номера|телефона)\s+получател|нет\s+(?:е[её]|его)\s+(?:номера|телефона)|"
+                            r"не\s+знаю\s+(?:е[её]|его)?\s*(?:номер|телефон)|(?:номер|телефон)\w*\s+(?:е[её]|его|получател\w*)\s+"
+                            r"(?:не\s+знаю|нет)|только\s+адрес", re.I)
+NO_ADDR_RE = re.compile(r"нет\s+(?:е[её]\s+|его\s+)?адреса|не\s+знаю\s+(?:е[её]\s+|его\s+)?адрес|адрес\w*\s+(?:не\s+знаю|нет)|"
+                        r"без\s+адреса|только\s+(?:номер|телефон)", re.I)
+NO_ADDR_TEXT = "Хорошо 🌸 Позвоним получателю и сами уточним адрес и удобное время. Пришлите имя и телефон получателя 📞"
 SURPRISE_Q1 = "Хорошо 🌸 Имя и телефон получателя? Позвоним сами, от кого — не скажем."
 SURPRISE_Q2 = "Хорошо 🌸 Напишите имя получателя и где её найти: адрес, место (магазин, аптека, офис), как узнать."
 # По одному вопросу за раз (два вопроса в одном сообщении клиенты путают), с ответами цифрами.
@@ -1608,6 +1620,9 @@ def _apply_client_state(order, client, city):
         order["заказчик"] = f"{ct_['me_name']}, {ct_['me_phone']}"
     if ct_.get("to_name") and ct_.get("to_phone"):
         order["получатель"] = f"{ct_['to_name']}, {ct_['to_phone']}"
+    if db.get_setting(f"noaddr:{client}") and len(str(order.get("адрес") or "").strip()) < 6 \
+            and not (order.get("получение") or "").lower().startswith("самовывоз"):
+        order["адрес"] = "уточнить у получателя по телефону (клиент адрес не знает)"
     if (order.get("получение") or "").lower().startswith("самовывоз"):
         if ct_.get("me_name") and ct_.get("nophone"):
             order["заказчик"] = f"{ct_['me_name']} (телефон не дал — выдать по имени)"
@@ -1737,6 +1752,9 @@ def _known_order(client):
         d["открытка"] = db.get_setting(f"cardtext:{client}")
     elif db.get_setting(f"nocard:{client}"):
         d["открытка"] = "нет"
+    if db.get_setting(f"noaddr:{client}") and len(str(d.get("адрес") or "").strip()) < 6:
+        d["адрес"] = "уточнить у получателя по телефону"
+        d["получение"] = d.get("получение") or "доставка"
     ct0 = _contacts(client)
     if ct0.get("pickup") and ct0.get("me_name") and (ct0.get("me_phone") or ct0.get("nophone")):
         d["_самовывоз_контакт"] = True
@@ -2414,9 +2432,26 @@ def respond(client, incoming, from_staff=False, quote=""):
             sur = "1" if t_in.strip(" .!)")[0] == "2" else "2"   # 2 → позвоним получателю, 3 → найдём по адресу
             db.set_setting(f"surprise:{client}", sur)
             q = (SURPRISE_Q1 if sur == "1" else SURPRISE_Q2)
+            text = f"{DELIVERY_WARN}\n\n{q}"
             db.set_setting(f"lastq:{client}", q)
-            db.add_message(client, "assistant", q)
-            return Reply(text=q, city=city)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
+        delivery = not _is_pickup(client)
+        # «Адреса нет, есть только телефон» — позвоним получателю и узнаем адрес сами.
+        if delivery and not sur and NO_ADDR_RE.search(t_in) and re.search(r"адрес", _last_bot_text(client, last_q), re.I):
+            db.set_setting(f"noaddr:{client}", "1")
+            db.set_setting(f"lastq:{client}", "Имя и телефон получателя?")
+            db.add_message(client, "assistant", NO_ADDR_TEXT)
+            return Reply(text=NO_ADDR_TEXT, city=city)
+        # «Свой номер не дам» / «нет телефона получателя, только адрес» — сразу нужный вариант + предупреждение.
+        if delivery and not sur and not PHONE_RE.search(t_in) and (OWN_PHONE_REFUSE_RE.search(t_in) or NO_TO_PHONE_RE.search(t_in)):
+            sur = "2" if NO_TO_PHONE_RE.search(t_in) else "1"
+            db.set_setting(f"surprise:{client}", sur)
+            q = SURPRISE_Q1 if sur == "1" else SURPRISE_Q2
+            text = f"{DELIVERY_WARN}\n\n{q}"
+            db.set_setting(f"lastq:{client}", q)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
         if sur in ("1", "2") and last_q in (SURPRISE_Q1, SURPRISE_Q2):
             st = _contacts(client)
             phone = PHONE_RE.search(t_in)
@@ -2454,8 +2489,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         if st["pickup"] and CONTACT_REFUSE_RE.search(incoming or "") and not phone:
             st["nophone"] = True                # самовывоз без телефона — выдадим по имени
             name = ""
-        to_rec = (not st["pickup"]) and bool(re.search(r"получател|кому|ей\b|ему\b|мам[аеы]|пап[аеы]", incoming or "", re.I)) or \
-            (st.get("me_name") and st.get("me_phone"))
+        lb = _last_bot_text(client, last_q)
+        to_rec = (not st["pickup"]) and bool(
+            re.search(r"получател|кому|ей\b|ему\b|мам[аеы]|пап[аеы]", incoming or "", re.I)
+            or (st.get("me_name") and st.get("me_phone"))
+            or (re.search(r"получател", lb, re.I) and not re.search(r"\bваш", lb, re.I)))   # спросили именно получателя
         if phone or name or st.get("nophone"):
             key = "to" if to_rec else "me"
             if phone:
