@@ -2760,10 +2760,17 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.add_message(client, "assistant", text)
         return Reply(text=text, city=city)
     # Просто «Салам алейкум» посреди разговора — коротко отвечаем и не уводим разговор («вашими молитвами…» не надо).
+    # Ночью — сразу и про то, что магазины закрыты (со скольки работаем) и «1 — оформить на завтра».
     if not from_staff and re.fullmatch(r"\W*(?:(?:ас+)?салам\w*\s*(?:у|о)?\s*але[йи]?к[уи]м|салам|ассалам\w*)\W*",
                                        incoming or "", re.I) \
             and any(m["role"] == "assistant" for m in db.history(client, 6)):
         text = "Ва алейкум ассалам! 🤝 Чем могу помочь? 🌸"
+        if shops_closed_now(city) and not _night_target(client):
+            db.del_setting(f"closed_note:{client}")          # показываем ночное предупреждение заново
+            note = _closed_now_note(client, city)
+            if note:
+                db.set_setting(f"lastq:{client}", note)
+                text = f"Ва алейкум ассалам! 🤝\n{note}"
         db.add_message(client, "assistant", text)
         return Reply(text=text, city=city)
     # Ответ на «Сейчас магазины закрыты … 1 — оформить сейчас / 2 — напишу позже».
