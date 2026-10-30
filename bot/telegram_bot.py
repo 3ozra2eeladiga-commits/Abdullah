@@ -86,6 +86,18 @@ def send_client(client, text):
             db.remember_sent(f"biz:{cid}:{msg['message_id']}")  # чтобы не принять свой ответ за ответ сотрудника
 
 
+def send_client_photo_bytes(client, data, caption):
+    """Картинка (байты, например QR-код оплаты) клиенту. Не вышло — отправляем хотя бы текст."""
+    kind, cid = client.split(":", 1)
+    conn = _biz_conn_id() if kind == "tgb" else None
+    extra = {"business_connection_id": conn} if conn else {}
+    msg = call("sendPhoto", files={"photo": ("qr.png", data, "image/png")}, chat_id=cid, caption=caption[:1000], **extra)
+    if msg and kind == "tgb":
+        db.remember_sent(f"biz:{cid}:{msg['message_id']}")
+    if not msg:
+        send_client(client, caption)
+
+
 def send_client_photo(client, item):
     kind, cid = client.split(":", 1)
     if kind != "tgb":
@@ -244,6 +256,7 @@ def notify_staff(client, text, buttons=None):
             db.link_staff_message(chat, msg["message_id"], client)
             sent.append((chat, msg, text[:4000], False))
     _remember_copies(sent)
+    return [(c, m["message_id"]) for c, m, _t, _p in sent]
 
 
 RING_BTN, STOP_BTN = "🔔 Позвонить всем", "🔕 Выключить звонок"
@@ -472,6 +485,12 @@ def _handle(msg, deliver):
 
     reply_to = msg.get("reply_to_message")
     if reply_to:
+        # Ответ суммой на «Сумма к оплате заказа №… — ответьте итоговой суммой» → QR на эту сумму клиенту.
+        pay_oid = db.get_setting(f"payprompt:{chat_id}:{reply_to['message_id']}")
+        m_sum = re.fullmatch(r"\s*(\d[\d\s]{0,7})(?:[.,]\d{1,2})?\s*(?:₽|р\.?|руб\w*)?\s*", text or "")
+        if pay_oid and m_sum and _hooks.get("on_pay"):
+            send(chat_id, "💳 " + _hooks["on_pay"](int(pay_oid), re.sub(r"\s", "", m_sum.group(1))))
+            return
         client = db.client_for_staff_message(chat_id, reply_to["message_id"])
         if client:
             if text.startswith("/pause"):
@@ -637,8 +656,8 @@ def _handle_callback(cq, on_check):
         res = _hooks["on_more"](client) if client and _hooks.get("on_more") else "Не нашла клиента для этого сообщения."
         call("answerCallbackQuery", callback_query_id=cq["id"], text=res[:200])
         return
-    handler = {"chk": on_check, "ph": _hooks.get("on_photo_button"),
-               "q": _hooks.get("on_question")}.get(parts[0]) if len(parts) == 3 else None
+    handler = {"chk": on_check, "ph": _hooks.get("on_photo_button"), "q": _hooks.get("on_question"),
+               "pay": _hooks.get("on_pay")}.get(parts[0]) if len(parts) == 3 else None
     if not handler or not parts[2].isdigit():
         call("answerCallbackQuery", callback_query_id=cq["id"])
         return
@@ -730,8 +749,9 @@ def run_polling(deliver, on_check):
             time.sleep(5)
 
 
-def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None):
-    _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question, on_more=on_more)
+def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None, on_pay=None):
+    _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question, on_more=on_more,
+                  on_pay=on_pay)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return

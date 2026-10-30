@@ -9,12 +9,13 @@ import re
 import subprocess
 import sys
 import threading
+import time
 from collections import defaultdict
 
 from flask import Flask, Response, abort, request
 from waitress import serve
 
-from . import brain, config, db, images, instagram, llm, telegram_bot
+from . import brain, config, db, images, instagram, llm, payments, telegram_bot
 from .catalog import catalog
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -379,7 +380,8 @@ def on_check(order_id, action):
             db.pause(client, config.HUMAN_PAUSE_HOURS)    # дальше с клиентом говорит флорист, бот не мешает
     if action == "ok":
         telegram_bot.notify_staff(client, f"✅ Заявка №{order_id} подтверждена, клиенту написали.\n"
-                                          "Отправьте ссылку на оплату — ответом на это сообщение.")
+                                          "Нажмите «💳 Оплата» — бот сам отправит клиенту QR-код и ссылку на сумму заказа.",
+                                  buttons=[[{"text": "💳 Оплата", "callback_data": f"pay:go:{order_id}"}]])
     elif action == "other":
         telegram_bot.notify_staff(client, f"✍️ Заявка №{order_id}: клиенту написали, что вы скоро ответите.\n"
                                           "Напишите клиенту сами (в чате или ответом на это сообщение). "
@@ -392,6 +394,76 @@ def on_check(order_id, action):
                                           "/resume ответом на это сообщение — включить бота.")
     name = telegram_bot.client_name(client)
     return f"№{order_id}{f' ({name})' if name else ''}: {label} — клиенту отправлено."
+
+
+# ---------- Оплата через СБП Точки: кнопка «💳 Оплата» → QR и ссылка ИМЕННО этому клиенту ----------
+
+def _order_total(o):
+    """(сумма товаров, доставка или None, если доставку назначает флорист)."""
+    try:
+        goods = int(float(o.get("сумма_товаров") or 0))
+    except (TypeError, ValueError):
+        goods = 0
+    if (o.get("получение") or "").lower().startswith("самовывоз"):
+        return goods, 0
+    dp = str(o.get("доставка_цена") or "").strip()
+    return goods, (int(dp) if dp.isdigit() else None)
+
+
+def on_pay(order_id, action):
+    """«💳 Оплата» под подтверждённой заявкой (action = go) или сумма (action = число) → QR клиенту."""
+    row = db.get_order(order_id)
+    if not row:
+        return "Заявка не найдена."
+    client, o = row
+    if not payments.configured():
+        return "Оплата через Точку ещё не подключена (нужен ключ API Точки на сервере)."
+    if action == "go":
+        goods, delivery = _order_total(o)
+        if delivery is None:                       # доставку назначает флорист — спрашиваем итоговую сумму
+            sent = telegram_bot.notify_staff(
+                client, f"💳 Заказ №{order_id}: товары {goods} ₽ + доставка.\n"
+                        "Ответьте на это сообщение ИТОГОВОЙ суммой (например, 3143) — бот отправит клиенту QR и ссылку.",
+                buttons=[[{"text": f"💳 Отправить {goods} ₽ (без доставки)", "callback_data": f"pay:{goods}:{order_id}"}]])
+            for chat, mid in sent or []:
+                db.set_setting(f"payprompt:{chat}:{mid}", order_id)
+            return "Укажите итоговую сумму — ответом на сообщение бота."
+        amount = goods + delivery
+    elif str(action).isdigit():
+        amount = int(action)
+    else:
+        return "Не поняла сумму."
+    if amount <= 0:
+        return "Сумма заказа неизвестна — ответьте на сообщение бота итоговой суммой."
+    try:
+        link, png, qrc = payments.create_qr(amount, f"Заказ №{order_id}, {config.SHOP_NAME}".strip(", "))
+    except Exception as e:
+        log.warning("Точка: QR не создан: %s", e)
+        return f"Не получилось создать QR в Точке: {str(e)[:120]}"
+    text = (f"Оплата заказа №{order_id} — {amount} ₽ 🌸\nОткройте ссылку — откроется приложение вашего банка:\n{link}"
+            "\nИли отсканируйте QR-код. После оплаты мы сразу увидим её.")
+    with _client_locks[client]:
+        if png:
+            telegram_bot.send_client_photo_bytes(client, png, text)
+        else:
+            _send_text(client, text)
+        db.add_message(client, "assistant", text)
+    if qrc:
+        db.set_setting(f"payqr:{order_id}", qrc)
+        threading.Thread(target=_watch_payment, args=(order_id, client, qrc, amount), daemon=True).start()
+    return f"Отправила клиенту QR и ссылку на {amount} ₽ 💳"
+
+
+def _watch_payment(order_id, client, qrc, amount):
+    """Проверяем каждые 30 с (до 3 ч): оплатил — сообщаем флористу и благодарим клиента."""
+    for _ in range(360):
+        time.sleep(30)
+        if payments.is_paid(qrc):
+            telegram_bot.notify_staff(client, f"💰 Заказ №{order_id} ОПЛАЧЕН — {amount} ₽")
+            thanks = "Оплата получена, спасибо! 🌸"
+            _send_text(client, thanks)
+            db.add_message(client, "assistant", thanks)
+            return
 
 
 # ---------- Фото от клиента: ждём, что он хочет, потом каждое фото — флористу с кнопками ----------
@@ -651,6 +723,7 @@ def main():
     _disable_windows_quick_edit()
     catalog.refresh()
     telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
+                       on_pay=on_pay,
                        on_question=on_question)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)

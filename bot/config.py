@@ -163,6 +163,12 @@ HISTORY_LIMIT = int(os.getenv("HISTORY_LIMIT", "20"))
 HUMAN_PAUSE_HOURS = float(os.getenv("HUMAN_PAUSE_HOURS", "6"))
 # «Звонок» о новой заявке: звенит без перерыва, пока под заявкой не нажали кнопку, но не дольше RING_MAX_MIN минут.
 RING_MAX_MIN = float(os.getenv("RING_MAX_MIN", "10"))
+# Оплата через СБП банка Точка (bot/payments.py). Пусто — кнопка «Оплата» скажет, что не подключено.
+TOCHKA_JWT = os.getenv("TOCHKA_JWT", "")
+TOCHKA_MERCHANT_ID = os.getenv("TOCHKA_MERCHANT_ID", "")
+TOCHKA_ACCOUNT_ID = os.getenv("TOCHKA_ACCOUNT_ID", "")            # «номер счёта/БИК»
+TOCHKA_AMOUNT_IN_KOPECKS = os.getenv("TOCHKA_AMOUNT_IN_KOPECKS", "1") == "1"
+TOCHKA_QR_TTL_MIN = int(os.getenv("TOCHKA_QR_TTL_MIN", "4320"))   # срок QR — 3 дня
 RING_SECONDS = float(os.getenv("RING_SECONDS", "10"))     # звонок о новой заявке — ~10 секунд, потом тишина
 # Тихие часы по Москве: с QUIET_FROM до QUIET_TO сотрудникам всё приходит без звука и без звонков.
 QUIET_FROM = int(os.getenv("QUIET_FROM", "22"))
