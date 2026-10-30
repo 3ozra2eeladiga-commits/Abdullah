@@ -815,6 +815,11 @@ def _fix_way_typos(client, text):
     чтобы бот понял ответ, а не задавал странные вопросы. Только для коротких ответов на этот вопрос."""
     # «сама вызов», «само вывоз», «сам вывоз» — так клавиатура разбивает «самовывоз»
     text = re.sub(r"\bсам[аоы]?\s+вы[вз]?[оаы]?[зс]\w*", "самовывоз", text or "", flags=re.I)
+    # «1» / «2» на «Доставка или самовывоз? 1 — доставка, 2 — самовывоз»
+    if re.fullmatch(r"\W*[12]\W*", text or "") and "1 — доставка" in (
+            (db.get_setting(f"lastq:{client}") or "") + next((m["content"] for m in reversed(db.history(client, 4))
+                                                               if m["role"] == "assistant"), "")):
+        return "доставка" if "1" in text else "самовывоз"
     words = (text or "").split()
     if not words or len(words) > 3:
         return text
@@ -960,11 +965,11 @@ def _next_question(user_msgs, city, order=None):
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
     # Спрашиваем ПО ОДНОМУ коротко, как живой флорист, — не списком всё сразу (Абдулла просил так не писать).
     if not has_way and not (has_date and has_time):
-        return "Доставка или самовывоз? И на какую дату и время?"
+        return WAY_Q
     if not has_way:
-        return "Доставка или самовывоз?"
+        return WAY_Q
     if not (has_date and has_time):
-        return "На какую дату и время?"
+        return DATE_Q
     if not pickup and not has_addr:
         return ADDRESS_Q
     if o.get("_сюрприз"):                   # сюрприз: свой номер не нужен, получатель — телефон или «где найти»
@@ -1201,6 +1206,9 @@ SURPRISE_Q = ("Поняла, сделаем сюрпризом 🎁 Ваш но�
               "2 — телефона нет: найдём по адресу (имя и где её искать)\nОтветьте цифрой")
 SURPRISE_Q1 = "Хорошо 🌸 Имя и телефон получателя? Позвоним сами, от кого — не скажем."
 SURPRISE_Q2 = "Хорошо 🌸 Напишите имя получателя и где её найти: адрес, место (магазин, аптека, офис), как узнать."
+# По одному вопросу за раз (два вопроса в одном сообщении клиенты путают), с ответами цифрами.
+WAY_Q = "Доставка или самовывоз? 🚗\n1 — доставка\n2 — самовывоз"
+DATE_Q = "На какую дату и к какому времени? 📅 Например: завтра к 15:00"
 PHONE_NOTE = "(ваш номер — только для связи с вами по заказу, получателю мы его не сообщаем)"
 CONTACTS_Q = f"Ваше имя и телефон, и имя и телефон получателя? Можно одним сообщением 🌸\n{PHONE_NOTE}"
 # Клиент возмущается, что его переспрашивают: «я уже ответил / уже писал».
@@ -1366,7 +1374,7 @@ def _order_missing(o, client_text):
                for it in items):
         return "Какой букет оформляем? Нажмите на его фото и ответьте «этот» 🌸"
     if o.get("получение") not in ("доставка", "самовывоз"):
-        return "Доставка или самовывоз? 🚗"
+        return WAY_Q
     if not str(o.get("дата") or "").strip() or str(o.get("дата")).strip() in ("—", "-", "..."):
         return "На какую дату нужен букет? 📅"
     if o.get("получение") == "доставка" and len((o.get("адрес") or "").strip()) < 6:
@@ -3526,7 +3534,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         asks_way = re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк|заед\w*[^.?!]{0,40}магазин|"
                              r"нужна\s+ли\s+доставк|доставка\s+нужна", reply.text, re.I)
         asks_when = re.search(r"на\s+как\w+\s+(?:дату|день|число)|во\s+сколько|к\s+какому\s+(?:часу|времени)|"
-                              r"какое\s+время|какая\s+дата", reply.text, re.I)
+                              r"какое\s+время|какая\s+дата|\bдат[уыа]\b[^.!]{0,40}\?|точн\w*\s+время[^.!]{0,40}\?",
+                              reply.text, re.I)
         asks_addr = re.search(r"адрес", reply.text, re.I) and "?" in reply.text or re.search(
             r"(?:нужен|уточните|подскажите)[^.?!]{0,30}адрес", reply.text, re.I)
         nxt = _next_question(user_msgs, city, _known_order(client))
@@ -3555,6 +3564,12 @@ def respond(client, incoming, from_staff=False, quote=""):
                 advance("Спасибо 🌸 ")
                 if answer:
                     reply.text = f"{answer}\n\n{reply.text.replace('Спасибо 🌸 ', '', 1)}"
+        elif nxt in (WAY_Q, DATE_Q) and ((asks_way and nxt == WAY_Q) or (asks_when and nxt == DATE_Q)) \
+                and "?" not in (incoming or ""):
+            # ИИ спрашивает то же, что и код, но многословно («Хорошо, доставка. Подскажите дату и точное время,
+            # когда удобно доставить…») — заменяем нашим коротким вопросом с примером/цифрами.
+            reply.text = f"{'Отличный выбор' if picked else 'Хорошо'} 🌸 {nxt}"
+            db.set_setting(f"lastq:{client}", nxt)
     if chosen and reply.photos and not keep_photos and not re.search(
             r"друг|ещ[её]|вариант|покаж|скин|кинь|кида|закид|больше|мало|поменя|замен|не нрав|передумал", incoming or "", re.I):
         reply.photos = [p for p in reply.photos if p["code"] == chosen and p in picked]
