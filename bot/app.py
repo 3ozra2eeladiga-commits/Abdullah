@@ -263,7 +263,8 @@ def deliver(client, text, from_staff=False, quote=""):
             db.set_setting(f"ostatus:{order_id}", "check")
             db.set_setting(f"ocheck:{client}", order_id)
             telegram_bot.notify_staff_order(client, items, card, buttons=_check_buttons(order_id))
-            telegram_bot.ring(order_id, lambda oid=order_id: db.get_setting(f"ostatus:{oid}") == "check", client)
+            telegram_bot.ring(order_id, lambda oid=order_id: db.get_setting(f"ostatus:{oid}") == "check", client,
+                              quiet=brain.shops_closed_now(db.get_city(client)))
         elif reply.order_raw:
             log.warning("Заказ не распознан (%s): %s", client, reply.order_raw)
         if reply.staff_note:                     # дополнение к отправленному заказу, отмена и т.п.

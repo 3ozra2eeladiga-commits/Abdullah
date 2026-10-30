@@ -868,7 +868,7 @@ def _fix_way_typos(client, text):
 
 # Наши вопросы про имена/телефоны (и ИИ-шные «ваше имя и телефон»).
 CONTACT_Q_RE = re.compile(r"имя\s+и\s+телефон|ваш\s+(?:номер\s+)?телефон|как\s+вас\s+зовут|как\s+зовут\s+получател|"
-                          r"назовите\s+только\s+имя|"
+                          r"назовите\s+только\s+имя|на\s+ч[ьъ][её]\s+имя|"
                           r"телефон\w*\s+получател", re.I)
 _NAME_STOP = set("имя имени фамилия заказчик заказчика заказчику получатель получателя получателю мой моё мое моя "
                  "меня зовут номер телефон телефона тел это вот и а да нет мне я её ее его ей ему кому для от "
@@ -923,12 +923,8 @@ def _is_pickup(client):
 
 def _contacts_next_q(st):
     """Следующий вопрос о контактах — ровно о недостающем. Пусто, если все четыре есть."""
-    if st.get("pickup"):                    # самовывоз: только тот, кто заберёт
-        if not st.get("me_name"):
-            return PICKUP_NO_PHONE_Q if st.get("nophone") else PICKUP_CONTACT_Q
-        if not st.get("me_phone") and not st.get("nophone"):
-            return f"{st['me_name']}, а ваш номер телефона? 📞\n{PHONE_NOTE}"
-        return ""
+    if st.get("pickup"):                    # самовывоз: только имя и фамилия того, кто заберёт (телефон — не нужен)
+        return "" if st.get("me_name") else PICKUP_CONTACT_Q
     if not st.get("me_name") and not st.get("me_phone"):
         return f"Ваше имя и телефон? 🌸\n{PHONE_NOTE}"
     if not st.get("me_name"):
@@ -1279,7 +1275,7 @@ SURPRISE_Q2 = "Хорошо 🌸 Напишите имя получателя и
 # По одному вопросу за раз (два вопроса в одном сообщении клиенты путают), с ответами цифрами.
 WAY_Q = "Доставка или самовывоз? 🚗\n1 — доставка\n2 — самовывоз"
 DATE_Q = "На какую дату и к какому времени? 📅 Например: завтра к 15:00"
-PICKUP_CONTACT_Q = "Ваше имя и телефон? Заказ выдадим на это имя 🌸"
+PICKUP_CONTACT_Q = "На чьё имя оформить? Имя и фамилия — по ним выдадим заказ в магазине 🌸"
 PICKUP_NO_PHONE_Q = ("Хорошо 🌸 Телефон не обязателен — данные мы никому не передаём. Назовите только имя, "
                      "на которое выдать заказ в магазине.")
 PHONE_NOTE = "(ваш номер — только для связи с вами по заказу, получателю мы его не сообщаем)"
@@ -1479,12 +1475,13 @@ def _order_missing(o, client_text):
     need_to = not (o.get("получатель") or "").strip() or not _phone_was_given(o.get("получатель"), client_text)
     if (o.get("получение") or "").lower().startswith("самовывоз"):
         need_to = False                     # самовывоз: получатель — тот, кто заберёт (заказчик)
-        if o.get("_без_телефона") and (o.get("заказчик") or "").strip():
-            need_me = False
+        need_me = not (o.get("заказчик") or "").strip()    # достаточно имени — телефон при самовывозе не нужен
     if o.get("_сюрприз"):                   # сюрприз: заказчик может не называться — связь в этом чате
         need_me = False
         if o["_сюрприз"] == "2":            # телефона получателя нет — достаточно имени и где её найти
             need_to = not (o.get("получатель") or "").strip()
+    if need_me and (o.get("получение") or "").lower().startswith("самовывоз"):
+        return PICKUP_CONTACT_Q
     if need_me and need_to:
         return CONTACTS_Q
     if need_me:
@@ -1637,8 +1634,8 @@ def _apply_client_state(order, client, city):
         if note not in c:
             order["комментарий"] = (c + "; " if c else "") + note
     if (order.get("получение") or "").lower().startswith("самовывоз"):
-        if ct_.get("me_name") and ct_.get("nophone"):
-            order["заказчик"] = f"{ct_['me_name']} (телефон не дал — выдать по имени)"
+        if ct_.get("me_name") and not ct_.get("me_phone"):
+            order["заказчик"] = f"{ct_['me_name']} (выдать по имени)"
             order["_без_телефона"] = True
         if not str(order.get("получатель") or "").strip() or str(order.get("получатель")).strip() in ("—", "-"):
             order["получатель"] = "самовывоз — заберёт заказчик"
@@ -1771,7 +1768,7 @@ def _known_order(client):
     if db.get_setting(f"notime:{client}"):
         d["время"] = "узнать у получателя"
     ct0 = _contacts(client)
-    if ct0.get("pickup") and ct0.get("me_name") and (ct0.get("me_phone") or ct0.get("nophone")):
+    if ct0.get("pickup") and ct0.get("me_name"):
         d["_самовывоз_контакт"] = True
     sur = db.get_setting(f"surprise:{client}") or ""
     if sur in ("1", "2"):

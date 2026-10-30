@@ -218,27 +218,28 @@ def notify_staff(client, text, buttons=None):
             db.link_staff_message(chat, msg["message_id"], client)
 
 
-def ring(order_id, still_waiting, client=None):
-    """«Звонок» о новой заявке: несколько коротких сообщений подряд — каждое играет мелодию уведомления
-    (Telegram даёт мелодию не длиннее 5 с, так звучит дольше). Сообщения сразу удаляются — чат остаётся чистым.
-    Потом напоминаем, пока под заявкой не нажали кнопку (still_waiting() == False)."""
-    def burst(text):
-        for _ in range(config.RING_TIMES):
-            sent = [(chat, send(chat, text)) for chat in staff_chats(client)]
-            time.sleep(5.5)                                  # дать мелодии доиграть
-            for chat, msg in sent:
-                if msg:
-                    call("deleteMessage", chat_id=chat, message_id=msg["message_id"])
+def ring(order_id, still_waiting, client=None, quiet=False):
+    """«Звонок» о новой заявке: короткие сообщения одно за другим — каждое играет мелодию уведомления
+    (Telegram даёт мелодию не длиннее 5 с, так она звучит НЕПРЕРЫВНО). Сообщения сразу удаляются — чат чистый.
+    Звенит, пока под заявкой не нажали кнопку (still_waiting() == False), но не дольше RING_MAX_MIN минут.
+    quiet — магазины закрыты (ночь): звеним коротко один раз, никого не будим."""
+    def ping(text):
+        sent = [(chat, send(chat, text)) for chat in staff_chats(client)]
+        time.sleep(5.5)                                      # дать мелодии доиграть
+        for chat, msg in sent:
+            if msg:
+                call("deleteMessage", chat_id=chat, message_id=msg["message_id"])
 
     def run():
         try:
             tag = city_tag(client).replace("📍 ", "") if client else ""
-            burst(f"🔔 Новая заявка №{order_id}{' — ' + tag if tag else ''}!")
-            for n in range(config.RING_REMIND_TIMES):
-                time.sleep(config.RING_REMIND_MIN * 60)
-                if not still_waiting():
-                    return
-                burst(f"⏰ Заявка №{order_id} ждёт ответа! Нажмите кнопку под заявкой.")
+            text = f"🔔 Новая заявка №{order_id}{' — ' + tag if tag else ''}! Нажмите кнопку под заявкой."
+            if quiet:
+                ping(text)
+                return
+            end = time.time() + config.RING_MAX_MIN * 60
+            while time.time() < end and still_waiting():
+                ping(text)
         except Exception as e:                               # звонок не должен ронять бота
             log.warning("Звонок о заявке №%s не удался: %s", order_id, e)
     threading.Thread(target=run, daemon=True).start()
