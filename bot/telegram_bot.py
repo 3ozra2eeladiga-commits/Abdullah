@@ -279,6 +279,7 @@ def notify_staff_wait(client, text, buttons=None):
 
 def staff_answered(client, who):
     """Сотрудник реально написал клиенту — снимаем «ждёт ответа» и отмечаем у всех: «✅ Ответила — Имя, время»."""
+    db._exec("DELETE FROM settings WHERE key LIKE 'oawait:%' AND value=?", (client,))   # заявки этого клиента — отвечены
     if not db.get_setting(f"await:{client}"):
         return
     try:

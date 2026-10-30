@@ -263,6 +263,7 @@ def deliver(client, text, from_staff=False, quote=""):
                 log.warning("Неполный заказ отправлен флористу с пометкой (%s): %s", client, reply.order)
                 card = "⚠️ В ЗАКАЗЕ НЕ ХВАТАЕТ ДАННЫХ — уточните у клиента (см. прочерки «—»)\n\n" + card
             db.set_setting(f"ostatus:{order_id}", "check")
+            db.set_setting(f"oawait:{order_id}", client)      # пока флорист реально не напишет клиенту
             db.set_setting(f"ocheck:{client}", order_id)
             telegram_bot.notify_staff_order(client, items, card, buttons=_check_buttons(order_id))
             telegram_bot.ring(order_id, lambda oid=order_id: db.get_setting(f"ostatus:{oid}") == "check", client,
@@ -428,34 +429,47 @@ def _day_start(now=None):
     return d.timestamp()
 
 
+def _answered(oid):
+    """Флорист РЕАЛЬНО написал клиенту после заявки (в чате или через бота). Нажатие «Всё верно» — это лишь статус."""
+    return not db.get_setting(f"oawait:{oid}")
+
+
+_MARKS = {"check": "⏳ ждёт проверки", "ok": "✅ подтверждён", "no": "❌ нет в наличии", "other": "✍️ флорист отвечает сама"}
+
+
+def _status_line(oid):
+    st = db.get_setting(f"ostatus:{oid}") or ""
+    who = db.get_setting(f"owho:{oid}") or ""
+    line = _MARKS.get(st, "") + (f" — {who.split(' @')[0]}" if who and st != "check" else "")
+    return line + ("" if _answered(oid) else " · 💬 клиенту ещё не писали")
+
+
 def on_report(kind):
     now = time.time()
     rows = db.recent_orders(now - 7 * 86400)
     if kind == "noanswer":
         rows = [r for r in rows if r[3] >= _day_start(now)]          # только сегодняшние заявки
-        lines = [f"⏳ {_short_line(oid, c, o)}" for oid, c, o, _t in rows if db.get_setting(f"ostatus:{oid}") == "check"]
+        left = [(oid, c, o) for oid, c, o, _t in rows if not _answered(oid)]       # по порядку номеров
+        lines = [f"• {_short_line(oid, c, o)}\n   {_status_line(oid)}" for oid, c, o in left]
         # Клиенты, которым флорист должен ответить сама (просил сотрудника, вопрос, «Другое»), а ответа ещё нет.
         for c, since in sorted([w for w in telegram_bot.waiting_clients() if w[1] >= _day_start(now)],
                                key=lambda x: x[1]):
             name = telegram_bot.client_name(c).split(" @")[0] or c.split(":", 1)[-1]
             lines.append(f"🙋 {name} ждёт ответа {max(1, int((now - since) // 60))} мин")
-        ids = [oid for oid, c, o, _t in rows if db.get_setting(f"ostatus:{oid}") == "check"][-24:]
-        return (("📭 Без ответа:\n" + "\n".join(lines[-25:])) if lines else "📭 Все разобраны 👍"), ids
+        ids = [oid for oid, _c, _o in left][:24]
+        return (("📭 Без ответа (клиенту ещё никто не написал):\n" + "\n".join(lines[:30])) if lines
+                else "📭 Всем ответили 👍"), ids
     today = datetime.datetime.now(_MSK_TZ).date()
-    marks = {"check": "⏳ ждёт ответа", "ok": "✅ подтверждён", "no": "❌ нет в наличии", "other": "✍️ флорист отвечает сама"}
-    items = []
-    for oid, c, o, created in rows:
-        if _order_day(o, created) != today:
+    out, ids = [], []
+    for title, day in (("📋 Заказы на сегодня", today), ("📅 На завтра", today + datetime.timedelta(days=1))):
+        items = [(oid, c, o) for oid, c, o, created in rows if _order_day(o, created) == day]
+        if not items and day != today:
             continue
-        st = db.get_setting(f"ostatus:{oid}") or ""
-        who = db.get_setting(f"owho:{oid}") or ""
-        items.append((str(o.get("время") or "99"), f"• {_short_line(oid, c, o)}\n   {marks.get(st, '')}"
-                      + (f" — {who.split(' @')[0]}" if who and st != "check" else "")))
-    if not items:
-        return "📋 На сегодня заказов нет.", []
-    items.sort()
-    ids = [int(re.search(r"№(\d+)", x).group(1)) for _k, x in items[:24]]
-    return f"📋 Заказы на сегодня ({len(items)}):\n" + "\n".join(x for _k, x in items[:30]), ids
+        out.append(f"{title} ({len(items)}):" if items else f"{title}: заказов нет.")
+        out += [f"• {_short_line(oid, c, o)}\n   {_status_line(oid)}" for oid, c, o in items[:20]]   # по номерам
+        ids += [oid for oid, _c, _o in items]
+        out.append("")
+    return "\n".join(out).strip(), ids[:24]
 
 
 def day_summary():
@@ -463,13 +477,14 @@ def day_summary():
     now = time.time()
     rows = [r for r in db.recent_orders(_day_start(now)) if r[3] >= _day_start(now)]
     st = [db.get_setting(f"ostatus:{oid}") or "" for oid, _c, _o, _t in rows]
-    left = [oid for (oid, _c, _o, _t), x in zip(rows, st) if x == "check"]
+    left = [oid for (oid, _c, _o, _t) in rows if not _answered(oid)]
     o_, c_ = config.DAY_OPEN, config.DAY_CLOSE
     text = (f"📊 Итоги дня {datetime.datetime.now(_MSK_TZ):%d.%m} (с {o_} до {c_}):\n"
             f"Всего заявок: {len(rows)}\n✅ подтверждено: {st.count('ok')}\n❌ нет в наличии: {st.count('no')}\n"
-            f"✍️ флорист отвечает сама: {st.count('other')}\n⏳ без ответа: {len(left)}")
+            f"✍️ флорист отвечает сама: {st.count('other')}\n⏳ не проверено: {st.count('check')}\n"
+            f"💬 клиенту ещё не писали: {len(left)}")
     if left:
-        text += "\n\nБез ответа — нажмите номер, чтобы открыть заявку:"
+        text += "\n\nКлиенту не писали — нажмите номер, чтобы открыть заявку:"
     return text, left[-24:]
 
 
