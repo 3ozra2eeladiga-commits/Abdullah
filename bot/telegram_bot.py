@@ -99,6 +99,7 @@ def send_client_photo(client, item):
 def notify_staff_photo(client, photo, caption, buttons=None):
     """Пересылает фото сотрудникам (photo — ссылка или file_id Telegram), можно с кнопками.
     Ответ сотрудника на это фото уйдёт данному клиенту. Если фото не ушло — шлём хотя бы текст."""
+    caption = _with_name(client, caption)
     for chat in staff_chats():
         msg = call("sendPhoto", chat_id=chat, photo=photo, caption=caption[:1000], **_keyboard(buttons))
         if not msg:
@@ -130,8 +131,28 @@ def _keyboard(buttons):
     return {"reply_markup": {"inline_keyboard": buttons}} if buttons else {}
 
 
+def remember_name(client, user):
+    """Как клиент называется в Telegram (имя в профиле + @ник) — чтобы флорист видел, чья заявка/вопрос."""
+    name = " ".join(x for x in ((user or {}).get("first_name"), (user or {}).get("last_name")) if x).strip()
+    if (user or {}).get("username"):
+        name = f"{name} @{user['username']}".strip()
+    if name and db.get_setting(f"tgname:{client}") != name:
+        db.set_setting(f"tgname:{client}", name)
+
+
+def client_name(client):
+    return db.get_setting(f"tgname:{client}") or ""
+
+
+def _with_name(client, text):
+    """Добавляет «👤 Имя в Telegram» в начало сообщения сотрудникам, если его там ещё нет."""
+    name = client_name(client)
+    return text if not name or name in text else f"👤 {name}\n{text}"
+
+
 def notify_staff(client, text, buttons=None):
     """Сообщение сотрудникам (buttons — inline-кнопки). Ответ на него уйдёт этому клиенту."""
+    text = _with_name(client, text)
     for chat in staff_chats():
         msg = send(chat, text, **_keyboard(buttons))
         if msg:
@@ -301,6 +322,7 @@ def _handle(msg, deliver):
             return
 
     if db.is_test_mode(chat_id) and text:
+        remember_name(f"tg:{chat_id}", msg.get("from"))
         deliver(f"tg:{chat_id}", text, from_staff=False, quote=_quoted_ref(msg, chat_id))
         return
 
@@ -390,6 +412,8 @@ def _handle_business(update, deliver):
     if chat_id is None:
         return
     client = f"tgb:{chat_id}"
+    if from_id == chat_id:
+        remember_name(client, msg.get("from"))
 
     # Режим «только свои»: пока бот не готов, отвечает лишь разрешённым (Абдулла, хозяйка);
     # остальным клиентам молчит — им отвечают флористы сами.

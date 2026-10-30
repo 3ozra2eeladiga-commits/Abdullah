@@ -62,6 +62,9 @@ def _send_photo(client, item):
 
 def _label(client):
     kind, cid = client.split(":", 1)
+    name = telegram_bot.client_name(client)
+    if kind == "tgb" and name:
+        return f"👤 Клиент в Telegram: {name}"
     return {"ig": f"Инстаграм-клиент {cid}", "tgb": f"клиент Telegram {cid}",
             "tg": f"🧪 тестовый клиент (Telegram {cid})"}.get(kind, cid)
 
@@ -297,7 +300,8 @@ def on_check(order_id, action):
                                           "флорист скоро свяжется.\nНапишите клиенту сами (в чате или ответом на это "
                                           f"сообщение). Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; "
                                           "/resume ответом на это сообщение — включить бота.")
-    return f"{label} — клиенту отправлено."
+    name = telegram_bot.client_name(client)
+    return f"№{order_id}{f' ({name})' if name else ''}: {label} — клиенту отправлено."
 
 
 # ---------- Фото от клиента: ждём, что он хочет, потом каждое фото — флористу с кнопками ----------
