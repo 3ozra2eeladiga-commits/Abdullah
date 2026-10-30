@@ -785,6 +785,11 @@ def _fix_common_typos(text):
     return text
 
 
+def _round_budget(n):
+    """Красивая сумма для примера: 5399 → 5500, 2899 → 3000."""
+    return max(500, int(-(-n // 500) * 500))
+
+
 def _fix_way_typos(client, text):
     """Опечатки в ответе на «доставка или самовывоз?» («саморезов», «самовызов», «дастафка») — исправляем,
     чтобы бот понял ответ, а не задавал странные вопросы. Только для коротких ответов на этот вопрос."""
@@ -2760,10 +2765,21 @@ def respond(client, incoming, from_staff=False, quote=""):
             up_target = catalog.get(code, city) or catalog.get(code)
             if up_target and not up_amount and not size_change:
                 n = _money(incoming)
-                # «Да» на «На сколько добавить? Например, +1500 ₽» — берём сумму из нашего же примера.
+                # «Да» на «На какую сумму собрать? Например, 5 500 ₽» — берём сумму из нашего же примера.
                 if not n and CONFIRM_YES_RE.search(incoming or "") and not CORRECTION_RE.search(incoming or ""):
-                    n = 1500 if up_sign == "+" else 1000
+                    ex = _round_budget(up_target["price"] + (1500 if up_sign == "+" else -1000))
+                    n = abs(ex - up_target["price"])
+                # Клиент называет БЮДЖЕТ всего букета («на 5000», «до 6000», «за 5 тысяч») — это итог, а не доплата.
+                # Доплата — только явно: «+1500», «добавьте 1500», «на 1500 больше/дороже», «сверху».
                 if n:
+                    t = incoming or ""
+                    extra = re.search(r"\+\s*\d|добав|больше|дороже|дешевле|меньше|сверху|доплат|ещ[её]\s+на|убер|убав", t, re.I)
+                    base = up_target["price"]
+                    if not extra and up_sign == "+" and n > base:
+                        n = n - base
+                    elif not extra and up_sign == "-" and n < base:
+                        n = base - n
+                if n and n > 0:
                     up_amount = str(n)
                     db.set_setting(up_key, f"{code}|{up_sign}|{up_amount}")
                     up_turn = True
@@ -2773,8 +2789,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                     up_turn = True
                     up_block = (f"\n\n# КЛИЕНТ ХОЧЕТ СДЕЛАТЬ БУКЕТ «{up_target['title']}» ({up_target['price']} ₽) "
                                 f"{word}\nСпроси ОДНИМ коротким вопросом, на какую сумму "
-                                f"{'добавить' if up_sign == '+' else 'уменьшить'}, например: «На какую сумму добавить "
-                                "цветов? Например, +3000 ₽». НЕ предлагай другие букеты, НЕ спрашивай коллег.")
+                                f"собрать весь букет, например: «На какую сумму собрать весь букет? Например, "
+                                f"{_round_budget(up_target['price'] + (1500 if up_sign == '+' else -1000))} ₽». НЕ предлагай другие букеты, НЕ спрашивай коллег.")
                 else:
                     total = up_target["price"] + (int(up_amount) if up_sign == "+" else -int(up_amount))
                     up_block = (f"\n\n# РЕШЕНО: букет «{up_target['title']}» собрать {word.lower()}, "
@@ -3287,7 +3303,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                 total = up_target["price"] + (int(up_amount) if up_sign == "+" else -int(up_amount))
                 pend = db.get_pending_order(client)
                 nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
-                head = f"Хорошо, {'+' if up_sign == '+' else '−'}{_rub(int(up_amount))}, букет за {_rub(total)} 🌸"
+                head = (f"Хорошо, соберём букет на {_rub(total)} "
+                        f"({'+' if up_sign == '+' else '−'}{_rub(int(up_amount))} к цене) 🌸")
                 if pend and not _order_missing(_apply_client_state(pend, client, city), client_text):
                     db.set_pending_order(client, pend)     # итог уже был — показываем его заново, с доплатой
                     reply.text = head + "\n\n" + _order_summary(pend)
@@ -3295,8 +3312,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                     reply.text = f"{head} {nxt}"
                     db.set_setting(f"lastq:{client}", nxt)
             else:
-                reply.text = (f"Букет {_rub(up_target['price'])}. На сколько "
-                              f"{'добавить? Например, +1500 ₽' if up_sign == '+' else 'меньше? Например, −1000 ₽'}")
+                reply.text = (f"Сейчас букет {_rub(up_target['price'])}. На какую сумму собрать весь букет? "
+                              f"Например, {_rub(_round_budget(up_target['price'] + (1500 if up_sign == '+' else -1000)))}")
 
     # ИИ написал заглушку «[ссылка на каталог]» вместо настоящего адреса — подставляем реальный URL города.
     if reply.text and LINK_PLACEHOLDER_RE.search(reply.text):
@@ -3418,8 +3435,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         asks_addr = re.search(r"адрес", reply.text, re.I) and "?" in reply.text or re.search(
             r"(?:нужен|уточните|подскажите)[^.?!]{0,30}адрес", reply.text, re.I)
         nxt = _next_question(user_msgs, city, _known_order(client))
-        known_way = not re.search(r"доставка или самовывоз", nxt)
-        known_when = not re.search(r"дату", nxt)
+        known_way = not re.search(r"доставка или самовывоз", nxt, re.I)
+        known_when = not re.search(r"дату", nxt, re.I)
         # ИИ снова просит имена/телефоны, хотя клиент уже прислал оба номера — не переспрашиваем, идём дальше кодом.
         asks_who = re.search(r"(?:ваш\w*|получател\w*)[^.?!]{0,40}(?:имя|фамили|телефон|номер)|"
                              r"(?:имя|фамили|телефон|номер)[^.?!]{0,40}(?:получател|заказчик|ваш)", reply.text, re.I)
