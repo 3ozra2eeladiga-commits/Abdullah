@@ -319,3 +319,12 @@
 _known_order/_next_question/_order_missing/_apply_client_state/_fill_phones знают _сюрприз); STUCK_RE и _bot_stuck
 (3 одинаковых ответа) → app._to_human.
 Нужны ID телефонов магазинов (Минводы, Украинская) для /city.
+
+## НАПОМНИТЬ АБДУЛЛЕ, когда он напишет «привет» (просил сам, 30.10)
+Голосовые не работают: SpeechKit 401 PermissionDenied (видно на https://186-246-61-173.sslip.io/).
+Прислать ему инструкцию: console.yandex.cloud (аккаунт, вероятно, abdullah.bots.ai@gmail.com) → каталог бота (обычно
+default) → «Права доступа» → «Назначить роли» → сервисный аккаунт бота → «Добавить роль» `ai.speechkit-stt.user` →
+«Сохранить». Через 1–2 мин отправить магазину голосовое и проверить статус-страницу. Если снова ошибка — у API-ключа
+ограничена область: создать новый ключ с областями yc.ai.speechkitStt.execute + yc.ai.foundationModels.execute
+и заменить YANDEX_API_KEY в .env на сервере.
+Ещё ждём от него: ID телефонов флористов Украинской и Минвод (для /city).
