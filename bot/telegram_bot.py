@@ -180,7 +180,7 @@ def _city_command(chat_id, user_id, text):
 
 # Под каждым сообщением сотрудникам без своих кнопок — «👁 Просмотрено»: нажали — видно, что уже разобрались.
 MORE_BUTTON = [{"text": "💐 Ещё варианты клиенту", "callback_data": "more:x:0"}]
-SEEN_BUTTON = [[{"text": "👁 Просмотрено", "callback_data": "seen:x:0"}], MORE_BUTTON]
+SEEN_BUTTON = [[{"text": "👁 Просмотрено", "callback_data": "seen:x:0"}]]   # «Ещё варианты» убрали (Абдулла)
 
 
 def _keyboard(buttons):

@@ -301,8 +301,7 @@ CHECK_ACTIONS = {
 
 
 def _check_buttons(order_id, actions=("ok", "no", "other")):
-    return [[{"text": CHECK_ACTIONS[a][0], "callback_data": f"chk:{a}:{order_id}"}] for a in actions] \
-        + [telegram_bot.MORE_BUTTON]
+    return [[{"text": CHECK_ACTIONS[a][0], "callback_data": f"chk:{a}:{order_id}"}] for a in actions]
 
 
 def on_more(client):
