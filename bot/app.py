@@ -814,6 +814,7 @@ def _handle_instagram(payload):
         client = f"ig:{ev['client']}"
         if ev["type"] == "staff_reply":
             db.pause(client, config.HUMAN_PAUSE_HOURS)
+            telegram_bot.staff_answered(client, "в Инстаграме")    # флорист ответила в Директе — отметка «Ответила»
             continue
         if ev.get("image_urls"):
             # Фото букета отдаём флористу; остальной текст (если был) идёт отдельным сообщением.
