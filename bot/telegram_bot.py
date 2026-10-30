@@ -9,6 +9,7 @@
   /resume — бот снова отвечает этому клиенту;
 - /test — режим проверки: сотрудник сам пишет боту как клиент (без Инстаграма). /test ещё раз — выключить.
 """
+import json
 import logging
 import re
 import threading
@@ -97,17 +98,31 @@ def send_client_photo(client, item):
         db.remember_sent(f"biz:{cid}:{msg['message_id']}")
 
 
+def _remember_copies(sent):
+    """Одно и то же сообщение ушло нескольким сотрудникам: запоминаем все копии, чтобы отметка
+    («👁 Просмотрено — Маша», «✅ Отмечено…») появилась у ВСЕХ, а не только у того, кто нажал."""
+    if len(sent) < 2:
+        return
+    data = json.dumps([{"c": str(c), "m": m["message_id"], "t": t, "p": p} for c, m, t, p in sent], ensure_ascii=False)
+    for c, m, _t, _p in sent:
+        db.set_setting(f"copies:{c}:{m['message_id']}", data)
+
+
 def notify_staff_photo(client, photo, caption, buttons=None):
     """Пересылает фото сотрудникам (photo — ссылка или file_id Telegram), можно с кнопками.
     Ответ сотрудника на это фото уйдёт данному клиенту. Если фото не ушло — шлём хотя бы текст."""
     caption = _with_name(client, caption)
+    sent = []
     for chat in staff_chats(client):
         msg = call("sendPhoto", chat_id=chat, photo=photo, caption=caption[:1000], **_keyboard(buttons or SEEN_BUTTON))
+        is_photo = bool(msg)
         if not msg:
             msg = send(chat, caption + "\n(фото клиента не удалось переслать — посмотрите в переписке)",
                        **_keyboard(buttons))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
+            sent.append((chat, msg, caption[:1000] if is_photo else msg.get("text") or caption, is_photo))
+    _remember_copies(sent)
 
 
 _hooks = {}   # обработчики из app: on_photo (фото от клиента), on_check / on_photo_button (кнопки)
@@ -222,10 +237,13 @@ def _with_name(client, text):
 def notify_staff(client, text, buttons=None):
     """Сообщение сотрудникам (buttons — inline-кнопки). Ответ на него уйдёт этому клиенту."""
     text = _with_name(client, text)
+    sent = []
     for chat in staff_chats(client):
         msg = send(chat, text, **_keyboard(buttons or SEEN_BUTTON))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
+            sent.append((chat, msg, text[:4000], False))
+    _remember_copies(sent)
 
 
 RING_BTN, STOP_BTN = "🔔 Позвонить всем", "🔕 Выключить звонок"
@@ -290,6 +308,7 @@ def ring_all(who):
 def notify_staff_order(client, items, text, buttons=None):
     """Новый заказ сотрудникам: сначала ФОТО заказанных товаров (что собирать), потом карточка заказа.
     Отвечают именно на карточку — текст уйдёт клиенту."""
+    sent = []
     for chat in staff_chats(client):
         for it in items:
             # Подпись «В заказ:» и без привязки к товару: в режиме /test это фото видно в том же чате,
@@ -299,6 +318,8 @@ def notify_staff_order(client, items, text, buttons=None):
         msg = send(chat, text, **_keyboard(buttons or SEEN_BUTTON))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
+            sent.append((chat, msg, text[:4000], False))
+    _remember_copies(sent)
 
 
 def photo_bytes(photo):
@@ -668,6 +689,21 @@ def _mark_done(m, note):
         ok = None
     if not ok:
         call("editMessageReplyMarkup", **kw)
+    # Та же заявка/сообщение у ДРУГИХ сотрудников — ставим ту же отметку и убираем кнопки и у них.
+    try:
+        copies = json.loads(db.get_setting(f"copies:{m['chat']['id']}:{m['message_id']}") or "[]")
+    except ValueError:
+        copies = []
+    for cp in copies:
+        if str(cp["c"]) == str(m["chat"]["id"]) and cp["m"] == m["message_id"]:
+            continue
+        kw2 = dict(chat_id=cp["c"], message_id=cp["m"], reply_markup={"inline_keyboard": []})
+        if cp.get("p"):
+            ok2 = call("editMessageCaption", caption=(cp["t"] + "\n\n" + note)[:1024], **kw2)
+        else:
+            ok2 = call("editMessageText", text=(cp["t"] + "\n\n" + note)[:4096], **kw2)
+        if not ok2:
+            call("editMessageReplyMarkup", **kw2)
 
 
 def run_polling(deliver, on_check):
