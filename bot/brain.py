@@ -613,12 +613,14 @@ def _anketa(incoming, city):
     (доставка, адрес, имена, телефоны) — после выбора букета. Очень коротко."""
     t = incoming or ""
     has_date = any(f.startswith("дата") for f in _known_facts([t]))
-    name = f" Я {config.FLORIST_NAME}." if config.FLORIST_NAME else ""
-    head = f"Здравствуйте! 🌸{name}"
+    # Честно и коротко: это онлайн-помощник (отвечает сразу), а не живой флорист — но без слова «бот».
+    who = f"Я {config.FLORIST_NAME}, онлайн-помощник" if config.FLORIST_NAME else "Я онлайн-помощник"
+    shop = f" {config.SHOP_NAME}" if config.SHOP_NAME else ""
+    head = f"Здравствуйте! 🌸 {who}{shop} — отвечаю сразу и оформлю заказ за пару минут."
     if not city:
-        ask = f"В какой город — {', '.join(catalog.city_names)} или рядом?" \
-              + ("" if has_date else " И на когда?")
-        return f"{head}\n{ask} Сразу {ANKETA_TAIL}"
+        opts = "\n".join(f"{i} — {n}" for i, n in enumerate(catalog.city_names, 1))
+        return (f"{head}\nВ какой город нужны цветы? Ответьте цифрой:\n{opts}\n"
+                f"Или напишите ваш посёлок — сразу {ANKETA_TAIL}")
     if not has_date:
         return f"{head} На когда нужны цветы? Сразу {ANKETA_TAIL}"
     ask = "Повод?" if catalog_budget(t) else "Повод и бюджет?"
@@ -861,11 +863,11 @@ def _contacts(client):
 def _contacts_next_q(st):
     """Следующий вопрос о контактах — ровно о недостающем. Пусто, если все четыре есть."""
     if not st.get("me_name") and not st.get("me_phone"):
-        return "Ваше имя и телефон? 🌸"
+        return f"Ваше имя и телефон? 🌸\n{PHONE_NOTE}"
     if not st.get("me_name"):
         return "Спасибо 🌸 А как вас зовут? (имя и фамилия)"
     if not st.get("me_phone"):
-        return f"{st['me_name']}, а ваш номер телефона? 📞"
+        return f"{st['me_name']}, а ваш номер телефона? 📞\n{PHONE_NOTE}"
     if not st.get("to_name") and not st.get("to_phone"):
         return "Спасибо 🌸 А имя и телефон получателя? (кому дарим)"
     if not st.get("to_name"):
@@ -947,9 +949,12 @@ def _next_question(user_msgs, city, order=None):
         return "На какую дату и время?"
     if not pickup and not has_addr:
         return ADDRESS_Q
-    if len(phones) < 1:
+    if o.get("_сюрприз"):                   # сюрприз: свой номер не нужен, получатель — телефон или «где найти»
+        if not o.get("_получатель_есть"):
+            return SURPRISE_Q1 if o["_сюрприз"] == "1" else SURPRISE_Q2
+    elif len(phones) < 1:
         return CONTACTS_Q
-    if len(phones) < 2:
+    elif len(phones) < 2:
         return "Имя и телефон получателя?"
     if not re.search(r"открытк", t):
         return "Открытку добавим? Ответьте «да» или «нет» 🌸"
@@ -1168,7 +1173,18 @@ def _past_time_mention(text):
 
 
 PHONE_RE = re.compile(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}")
-CONTACTS_Q = "Ваше имя и телефон, и имя и телефон получателя? Можно одним сообщением 🌸"
+SURPRISE_RE = re.compile(
+    r"сюрприз|аноним|не\s+(?:хочу|буду|могу)\s+(?:да(?:ва)?ть|оставля\w*|писать|называть|отправля\w*|говорить)\s+"
+    r"(?:свой\s+|мой\s+|свое\s+|своё\s+)?(?:номер|телефон|имя)|без\s+(?:моего|моих)\s+(?:номер|имен|данн)|"
+    r"не\s+говорите[^.?!]{0,15}от\s+кого|не\s+знаю\s+(?:е[её]|его)?\s*(?:номер|телефон)|"
+    r"нет\s+(?:е[её]|его)\s+(?:номера|телефона)|позвоните\s+(?:ей|ему)\s+сами|сами\s+(?:ей|ему)?\s*позвоните", re.I)
+SURPRISE_Q = ("Поняла, сделаем сюрпризом 🎁 Ваш номер не обязателен — мы на связи здесь, в чате. "
+              "Как найдём получателя?\n1 — позвоним ей сами (нужны имя и телефон)\n"
+              "2 — телефона нет: найдём по адресу (имя и где её искать)\nОтветьте цифрой")
+SURPRISE_Q1 = "Хорошо 🌸 Имя и телефон получателя? Позвоним сами, от кого — не скажем."
+SURPRISE_Q2 = "Хорошо 🌸 Напишите имя получателя и где её найти: адрес, место (магазин, аптека, офис), как узнать."
+PHONE_NOTE = "(ваш номер — только для связи с вами по заказу, получателю мы его не сообщаем)"
+CONTACTS_Q = f"Ваше имя и телефон, и имя и телефон получателя? Можно одним сообщением 🌸\n{PHONE_NOTE}"
 # Клиент возмущается, что его переспрашивают: «я уже ответил / уже писал».
 CARD_TEXT_PREFIX_RE = re.compile(r"^\W*(?:текст(?:\s+(?:для|на)\s+открытк\w*)?|на\s+открытк\w*(?:\s+(?:напиш\w*|текст))?)"
                                  r"\s*[:—–-]?\s+(.+)$", re.I | re.S)
@@ -1208,6 +1224,8 @@ ALREADY_RE = re.compile(r"уже\s+(?:вам\s+)?(?:ответил|написа�
 def _fill_phones(order, client_text):
     """ИИ потерял телефон, а клиент его писал — берём из переписки (первый — заказчик, второй — получатель)."""
     phones = PHONE_RE.findall(client_text or "")
+    if order.get("_сюрприз"):               # сюрприз: единственный телефон в переписке — получателя
+        return
     for key, idx in (("заказчик", 0), ("получатель", 1)):
         val = str(order.get(key) or "").strip()
         if len(phones) > idx and val and not _phone_was_given(val, client_text):
@@ -1359,10 +1377,14 @@ def _order_missing(o, client_text):
     # Имена и телефоны — ОДНИМ вопросом (Абдулла: не тянуть по одному), спрашиваем только недостающее.
     need_me = not (o.get("заказчик") or "").strip() or not _phone_was_given(o.get("заказчик"), client_text)
     need_to = not (o.get("получатель") or "").strip() or not _phone_was_given(o.get("получатель"), client_text)
+    if o.get("_сюрприз"):                   # сюрприз: заказчик может не называться — связь в этом чате
+        need_me = False
+        if o["_сюрприз"] == "2":            # телефона получателя нет — достаточно имени и где её найти
+            need_to = not (o.get("получатель") or "").strip()
     if need_me and need_to:
         return CONTACTS_Q
     if need_me:
-        return "Ваше имя и телефон?"
+        return f"Ваше имя и телефон?\n{PHONE_NOTE}"
     if need_to:
         return "Имя и телефон получателя?"
     card = (o.get("открытка") or "").strip()
@@ -1499,6 +1521,17 @@ def _apply_client_state(order, client, city):
         order["заказчик"] = f"{ct_['me_name']}, {ct_['me_phone']}"
     if ct_.get("to_name") and ct_.get("to_phone"):
         order["получатель"] = f"{ct_['to_name']}, {ct_['to_phone']}"
+    sur = db.get_setting(f"surprise:{client}") or ""
+    if sur in ("1", "2"):
+        order["_сюрприз"] = sur
+        if not (ct_.get("me_name") and ct_.get("me_phone")):
+            order["заказчик"] = "🎁 сюрприз — заказчик не назвался, связь с ним в этом чате"
+        if sur == "2" and ct_.get("to_where"):
+            order["получатель"] = f"{ct_['to_where']} (телефона нет — найти по адресу/описанию)"
+        note = "🎁 СЮРПРИЗ: не говорить получателю, от кого" + (", позвонить получателю самим" if sur == "1" else "")
+        c = str(order.get("комментарий") or "").strip()
+        if note not in c:
+            order["комментарий"] = (c + "; " if c else "") + note
     shop = db.get_setting(f"pickup_shop:{client}") or ""
     if shop and (order.get("получение") or "").lower().startswith("самовывоз"):
         order["адрес"] = shop
@@ -1611,6 +1644,11 @@ def _known_order(client):
         d["открытка"] = db.get_setting(f"cardtext:{client}")
     elif db.get_setting(f"nocard:{client}"):
         d["открытка"] = "нет"
+    sur = db.get_setting(f"surprise:{client}") or ""
+    if sur in ("1", "2"):
+        d["_сюрприз"] = sur
+        ct = _contacts(client)
+        d["_получатель_есть"] = bool(ct.get("to_phone") or ct.get("to_where"))
     return d
 
 
@@ -2181,6 +2219,11 @@ def respond(client, incoming, from_staff=False, quote=""):
     city_new = False                 # город стал известен именно сейчас — сразу покажем букеты
     if not city and not from_staff:  # клиент мог сам назвать город или прийти по ссылке с сайта города
         city = catalog.match_city(incoming) or _city_from_url(detect)
+        # Ответ цифрой на «В какой город? 1 — Пятигорск, 2 — …»
+        m_num = re.fullmatch(r"\W*(\d)\W*", incoming or "")
+        if not city and m_num and re.search(r"1 — ", _last_bot_text(client, "")) \
+                and 1 <= int(m_num.group(1)) <= len(catalog.city_names):
+            city = list(catalog.city_names)[int(m_num.group(1)) - 1]
         if city:
             db.set_city(client, city)
             city_new = True
@@ -2260,10 +2303,44 @@ def respond(client, incoming, from_staff=False, quote=""):
             st = _contacts(client)
             st.update({k: v for k, v in both.items() if v})
             db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+    # «Сюрприз» / «не хочу давать свой номер» / «не знаю её номер» — не настаиваем, даём варианты цифрами.
+    if not from_staff:
+        sur = db.get_setting(f"surprise:{client}") or ""
+        t_in = (incoming or "").strip()
+        if sur == "ask" and re.match(r"^\W*[12]\b", t_in):
+            sur = t_in.strip(" .!)")[0]
+            db.set_setting(f"surprise:{client}", sur)
+            q = (SURPRISE_Q1 if sur == "1" else SURPRISE_Q2)
+            db.set_setting(f"lastq:{client}", q)
+            db.add_message(client, "assistant", q)
+            return Reply(text=q, city=city)
+        if sur in ("1", "2") and last_q in (SURPRISE_Q1, SURPRISE_Q2):
+            st = _contacts(client)
+            phone = PHONE_RE.search(t_in)
+            if sur == "1" and not phone:
+                q = "Пришлите, пожалуйста, телефон получателя — без него не сможем договориться о доставке 📞"
+                db.set_setting(f"lastq:{client}", SURPRISE_Q1)
+                db.add_message(client, "assistant", q)
+                return Reply(text=q, city=city)
+            if phone:
+                st["to_phone"] = phone.group(0).strip()
+                st["to_name"] = _name_from(PHONE_RE.sub(" ", t_in)) or st.get("to_name") or "получатель"
+            else:
+                st["to_where"] = t_in
+                st["to_name"] = st.get("to_name") or (_name_from(t_in.split(",")[0]) or "получатель")
+            db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+            db.del_setting(f"lastq:{client}")
+            incoming = (f"Сюрприз. Получатель: {st.get('to_name')}, {st.get('to_phone') or t_in}. "
+                        "Заказчик не называется — связь в этом чате.")
+        elif not sur and SURPRISE_RE.search(t_in):
+            db.set_setting(f"surprise:{client}", "ask")
+            db.set_setting(f"lastq:{client}", SURPRISE_Q)
+            db.add_message(client, "assistant", SURPRISE_Q)
+            return Reply(text=SURPRISE_Q, city=city)
     # Имена и телефоны — добиваемся ВСЕХ четырёх: имя и телефон заказчика, имя и телефон получателя. Клиент может
     # присылать по частям («мой телефон …», «Абдулла») — спрашиваем ровно недостающее, дальше не идём.
     if not from_staff and CONTACT_Q_RE.search(_last_bot_text(client, last_q)) and len(PHONE_RE.findall(incoming or "")) < 2 \
-            and not re.search(r"\?", incoming or ""):
+            and not re.search(r"\?", incoming or "") and not db.get_setting(f"surprise:{client}"):
         st = _contacts(client)
         phone = PHONE_RE.search(incoming or "")
         name = _name_from(incoming)

@@ -145,13 +145,28 @@ HUMAN_REQ_RE = re.compile(
     r"|^\W*(?:сотрудник|оператор|менеджер|человек|флорист)\W*$", re.I)
 
 
-def _to_human(client, text):
-    """Клиент просит сотрудника: всё, что он прислал (и фото), — флористу; бот замолкает. Под блокировкой."""
+# Клиент недоволен ботом / запутался — сразу к флористу, не мучаем.
+STUCK_RE = re.compile(r"не\s+понима\w*|не\s+понял\w*\s+(?:меня|вопрос)|ты\s+(?:бот|робот)|что\s+за\s+бот|"
+                      r"тупо\w*|бред|бесполезн|достал\w*|задолбал\w*|сколько\s+можно|я\s+же\s+(?:сказал|написал)\w*"
+                      r"|опять\s+то\s+же|по\s+кругу", re.I)
+
+
+def _bot_stuck(client, new_text):
+    """Бот в третий раз подряд пишет то же самое — значит, не понимает клиента."""
+    norm = lambda x: re.sub(r"\W+", "", (x or "").lower())[:120]
+    last = [norm(m["content"]) for m in db.history(client, 10) if m["role"] == "assistant"][-4:]
+    return bool(norm(new_text)) and last.count(norm(new_text)) >= 3
+
+
+def _to_human(client, text, saved=False):
+    """Клиент просит сотрудника: всё, что он прислал (и фото), — флористу; бот замолкает. Под блокировкой.
+    saved — сообщение клиента уже записано в историю."""
     buf = _photo_buf(client)
     for photo in buf.get("photos", []):
         telegram_bot.notify_staff_photo(client, photo, f"📸 Фото от клиента\n{_label(client)}")
     _save_photo_buf(client, {})
-    db.add_message(client, "user", text)
+    if not saved:
+        db.add_message(client, "user", text)
     city = db.get_city(client)
     closed = brain.shops_closed_now(city)
     telegram_bot.notify_staff(client, f"🙋 Клиент просит живого сотрудника ({_label(client)}{', ' + city if city else ''}):\n"
@@ -172,6 +187,10 @@ def deliver(client, text, from_staff=False, quote=""):
         _send_text(client, secret)
         return
     with _client_locks[client]:
+        if not from_staff and not db.is_paused(client) and STUCK_RE.search(text or "") \
+                and len(db.history(client, 6)) >= 4:       # недоволен ботом посреди разговора
+            _to_human(client, text)
+            return
         if not from_staff and not db.is_paused(client) and HUMAN_REQ_RE.search(text or "") \
                 and not re.search(r"\bдля\b|букет|цвет|роз|подар", text or "", re.I):   # «букет для менеджера» — не то
             _to_human(client, text)
@@ -200,6 +219,9 @@ def deliver(client, text, from_staff=False, quote=""):
             return
         try:
             reply = brain.respond(client, text, from_staff=from_staff, quote=quote)
+            if not from_staff and reply and reply.text and not reply.order and _bot_stuck(client, reply.text):
+                _to_human(client, f"(бот не понимает клиента — повторяет одно и то же) {text}", saved=True)
+                return
         except Exception:
             log.exception("Ошибка ИИ для %s", client)
             _send_text(client, SORRY)
