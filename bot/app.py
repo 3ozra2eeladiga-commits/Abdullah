@@ -138,6 +138,8 @@ def _format_order(order_id, client, reply):
     return "\n".join(lines)
 
 
+SALAM_RE = re.compile(r"сала[мн]\w*\s*(?:у|о)?\s*але[йи]?к[уи]м|ассалам|салам\b|salam", re.I)
+
 # Клиент просит живого человека: «свяжите с сотрудником», «хочу поговорить с менеджером», «позовите флориста».
 HUMAN_REQ_RE = re.compile(
     r"(?:свяж|соедин|позов|перевед|переключ|дайте|хочу|нужен|нужна|можно|пообщат|поговор|общат)\w*[^.?!]{0,30}"
@@ -232,6 +234,13 @@ def deliver(client, text, from_staff=False, quote=""):
         order_id = db.save_order(client, reply.order) if reply.order else None
         if order_id and reply.text:
             reply.text += f"\nНомер заказа: №{order_id}"   # по нему клиент может спросить или отменить
+        if reply.text and not from_staff and SALAM_RE.search(text or "") and not re.search(r"алейкум", reply.text, re.I):
+            # «Салам алейкум» — отвечаем тем же, с улыбкой, и продолжаем как обычно.
+            greet = "Ва алейкум ассалам! 🤝 Мир вашему дому — а цветы мы принесём 😊"
+            if re.match(r"\s*здравствуйте!?", reply.text, re.I):
+                reply.text = re.sub(r"^\s*здравствуйте!?\s*(?:🌸\s*)?", greet + " ", reply.text, count=1, flags=re.I)
+            else:
+                reply.text = f"Ва алейкум ассалам! 🤝\n{reply.text}"
         if reply.text:
             _send_text(client, brain.pretty(reply.text))  # короткими абзацами — легче читать
         for item in reply.photos:
