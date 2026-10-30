@@ -101,7 +101,7 @@ def notify_staff_photo(client, photo, caption, buttons=None):
     Ответ сотрудника на это фото уйдёт данному клиенту. Если фото не ушло — шлём хотя бы текст."""
     caption = _with_name(client, caption)
     for chat in staff_chats(client):
-        msg = call("sendPhoto", chat_id=chat, photo=photo, caption=caption[:1000], **_keyboard(buttons))
+        msg = call("sendPhoto", chat_id=chat, photo=photo, caption=caption[:1000], **_keyboard(buttons or SEEN_BUTTON))
         if not msg:
             msg = send(chat, caption + "\n(фото клиента не удалось переслать — посмотрите в переписке)",
                        **_keyboard(buttons))
@@ -171,6 +171,10 @@ def _city_command(chat_id, user_id, text):
                   f"Какие заявки получать на этом телефоне?\n{opts}\n/city 0 — все города\n/city off — не получать")
 
 
+# Под каждым сообщением сотрудникам без своих кнопок — «👁 Просмотрено»: нажали — видно, что уже разобрались.
+SEEN_BUTTON = [[{"text": "👁 Просмотрено", "callback_data": "seen:x:0"}]]
+
+
 def _keyboard(buttons):
     return {"reply_markup": {"inline_keyboard": buttons}} if buttons else {}
 
@@ -201,7 +205,7 @@ def notify_staff(client, text, buttons=None):
     """Сообщение сотрудникам (buttons — inline-кнопки). Ответ на него уйдёт этому клиенту."""
     text = _with_name(client, text)
     for chat in staff_chats(client):
-        msg = send(chat, text, **_keyboard(buttons))
+        msg = send(chat, text, **_keyboard(buttons or SEEN_BUTTON))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
 
@@ -240,7 +244,7 @@ def notify_staff_order(client, items, text, buttons=None):
             # Подпись «В заказ:» и без привязки к товару: в режиме /test это фото видно в том же чате,
             # и ответ на него не должен считаться выбором клиента.
             send_photo(chat, it, caption=f"{STAFF_PHOTO_MARK} {it['title']} — {it['price']} ₽", link=False)
-        msg = send(chat, text, **_keyboard(buttons))
+        msg = send(chat, text, **_keyboard(buttons or SEEN_BUTTON))
         if msg:
             db.link_staff_message(chat, msg["message_id"], client)
 
@@ -530,6 +534,12 @@ def _handle_callback(cq, on_check):
         call("answerCallbackQuery", callback_query_id=cq["id"], text="Нет доступа")
         return
     parts = (cq.get("data") or "").split(":")
+    m = cq.get("message") or {}
+    who = cq.get("from", {}).get("first_name") or "сотрудник"
+    if parts[0] == "seen":
+        call("answerCallbackQuery", callback_query_id=cq["id"], text="Отмечено ✅")
+        _mark_done(m, f"👁 Просмотрено — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
+        return
     handler = {"chk": on_check, "ph": _hooks.get("on_photo_button"),
                "q": _hooks.get("on_question")}.get(parts[0]) if len(parts) == 3 else None
     if not handler or not parts[2].isdigit():
@@ -537,11 +547,24 @@ def _handle_callback(cq, on_check):
         return
     result = handler(int(parts[2]), parts[1])
     call("answerCallbackQuery", callback_query_id=cq["id"], text=result[:200])
-    m = cq.get("message") or {}
     if m:
-        # Кнопки убираем, чтобы не нажали второй раз (что отмечено — видно в следующем сообщении бота).
-        call("editMessageReplyMarkup", chat_id=m["chat"]["id"], message_id=m["message_id"],
-             reply_markup={"inline_keyboard": []})
+        # Кнопки убираем (чтобы не нажали второй раз) и дописываем в само сообщение, кто и что отметил.
+        _mark_done(m, f"✅ Отмечено — {who}: {result.split(' — ')[0].split(': ', 1)[-1]}")
+
+
+def _mark_done(m, note):
+    """Дописывает в сообщение сотрудникам отметку («✅ Отмечено — Маша: Всё верно») и убирает кнопки."""
+    if not m:
+        return
+    kw = dict(chat_id=m["chat"]["id"], message_id=m["message_id"], reply_markup={"inline_keyboard": []})
+    if m.get("text") is not None:
+        ok = call("editMessageText", text=(m["text"] + "\n\n" + note)[:4096], **kw)
+    elif m.get("caption") is not None or m.get("photo"):
+        ok = call("editMessageCaption", caption=((m.get("caption") or "") + "\n\n" + note)[:1024], **kw)
+    else:
+        ok = None
+    if not ok:
+        call("editMessageReplyMarkup", **kw)
 
 
 def run_polling(deliver, on_check):
