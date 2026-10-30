@@ -422,13 +422,21 @@ def _short_line(oid, client, o):
     return " · ".join(p for p in parts if p and p not in ("—", "..."))
 
 
+def _day_start(now=None):
+    """Полночь сегодняшнего дня по Москве (timestamp) — списки «обнуляются» каждый день."""
+    d = datetime.datetime.fromtimestamp(now or time.time(), _MSK_TZ).replace(hour=0, minute=0, second=0, microsecond=0)
+    return d.timestamp()
+
+
 def on_report(kind):
     now = time.time()
     rows = db.recent_orders(now - 7 * 86400)
     if kind == "noanswer":
+        rows = [r for r in rows if r[3] >= _day_start(now)]          # только сегодняшние заявки
         lines = [f"⏳ {_short_line(oid, c, o)}" for oid, c, o, _t in rows if db.get_setting(f"ostatus:{oid}") == "check"]
         # Клиенты, которым флорист должен ответить сама (просил сотрудника, вопрос, «Другое»), а ответа ещё нет.
-        for c, since in sorted(telegram_bot.waiting_clients(), key=lambda x: x[1]):
+        for c, since in sorted([w for w in telegram_bot.waiting_clients() if w[1] >= _day_start(now)],
+                               key=lambda x: x[1]):
             name = telegram_bot.client_name(c).split(" @")[0] or c.split(":", 1)[-1]
             lines.append(f"🙋 {name} ждёт ответа {max(1, int((now - since) // 60))} мин")
         ids = [oid for oid, c, o, _t in rows if db.get_setting(f"ostatus:{oid}") == "check"][-24:]
@@ -448,6 +456,46 @@ def on_report(kind):
     items.sort()
     ids = [int(re.search(r"№(\d+)", x).group(1)) for _k, x in items[:24]]
     return f"📋 Заказы на сегодня ({len(items)}):\n" + "\n".join(x for _k, x in items[:30]), ids
+
+
+def day_summary():
+    """Итоги дня: сколько заявок с открытия до закрытия и что осталось без ответа (с кнопками «№…»)."""
+    now = time.time()
+    rows = [r for r in db.recent_orders(_day_start(now)) if r[3] >= _day_start(now)]
+    st = [db.get_setting(f"ostatus:{oid}") or "" for oid, _c, _o, _t in rows]
+    left = [oid for (oid, _c, _o, _t), x in zip(rows, st) if x == "check"]
+    o_, c_ = config.DAY_OPEN, config.DAY_CLOSE
+    text = (f"📊 Итоги дня {datetime.datetime.now(_MSK_TZ):%d.%m} (с {o_} до {c_}):\n"
+            f"Всего заявок: {len(rows)}\n✅ подтверждено: {st.count('ok')}\n❌ нет в наличии: {st.count('no')}\n"
+            f"✍️ флорист отвечает сама: {st.count('other')}\n⏳ без ответа: {len(left)}")
+    if left:
+        text += "\n\nБез ответа — нажмите номер, чтобы открыть заявку:"
+    return text, left[-24:]
+
+
+def _send_to_staff(text, ids):
+    rows = [[{"text": f"№{i}", "callback_data": f"show:x:{i}"} for i in ids[k:k + 4]] for k in range(0, len(ids), 4)]
+    for chat in telegram_bot.staff_chats():
+        telegram_bot.send(chat, text, **({"reply_markup": {"inline_keyboard": rows}} if rows else {}),
+                          **({"disable_notification": True} if telegram_bot.quiet_now() else {}))
+
+
+def _daily_loop():
+    """Каждый день: в DAY_CLOSE — итоги дня; утром в MORNING_AT — свежий список «Заказы на сегодня»."""
+    while True:
+        try:
+            now = datetime.datetime.now(_MSK_TZ)
+            hm, day = now.strftime("%H:%M"), now.strftime("%Y-%m-%d")
+            if hm >= config.DAY_CLOSE and db.get_setting("daily_sum") != day:
+                db.set_setting("daily_sum", day)
+                _send_to_staff(*day_summary())
+            if config.MORNING_AT <= hm < "11:00" and db.get_setting("daily_morning") != day:   # только утром
+                db.set_setting("daily_morning", day)
+                text, ids = on_report("today")
+                _send_to_staff("☀️ Доброе утро! " + text, ids)
+        except Exception as e:                                      # отчёт не должен ронять бота
+            log.warning("Ежедневный отчёт не удался: %s", e)
+        time.sleep(60)
 
 
 def on_show(chat, order_id):
@@ -794,6 +842,7 @@ def _disable_windows_quick_edit():
 def main():
     _disable_windows_quick_edit()
     catalog.refresh()
+    threading.Thread(target=_daily_loop, daemon=True).start()
     telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
                        on_pay=on_pay, on_report=on_report, on_show=on_show,
                        on_question=on_question)
