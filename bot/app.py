@@ -137,6 +137,32 @@ def _format_order(order_id, client, reply):
     return "\n".join(lines)
 
 
+# Клиент просит живого человека: «свяжите с сотрудником», «хочу поговорить с менеджером», «позовите флориста».
+HUMAN_REQ_RE = re.compile(
+    r"(?:свяж|соедин|позов|перевед|переключ|дайте|хочу|нужен|нужна|можно|пообщат|поговор|общат)\w*[^.?!]{0,30}"
+    r"(?:сотрудни|человек|оператор|менеджер|флорист|администратор|продавц|живы|живой|живому|хозяйк)"
+    r"|^\W*(?:сотрудник|оператор|менеджер|человек|флорист)\W*$", re.I)
+
+
+def _to_human(client, text):
+    """Клиент просит сотрудника: всё, что он прислал (и фото), — флористу; бот замолкает. Под блокировкой."""
+    buf = _photo_buf(client)
+    for photo in buf.get("photos", []):
+        telegram_bot.notify_staff_photo(client, photo, f"📸 Фото от клиента\n{_label(client)}")
+    _save_photo_buf(client, {})
+    db.add_message(client, "user", text)
+    city = db.get_city(client)
+    closed = brain.shops_closed_now(city)
+    telegram_bot.notify_staff(client, f"🙋 Клиент просит живого сотрудника ({_label(client)}{', ' + city if city else ''}):\n"
+                                      f"«{text}»\nНапишите клиенту в чате или ответом на это сообщение. "
+                                      f"Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; /resume ответом — включить бота.")
+    reply = ("Хорошо, передала флористу 🌸 Она напишет вам здесь "
+             + (f"{brain.opening_text(city)}, когда откроется магазин." if closed else "в ближайшее время."))
+    _send_text(client, reply)
+    db.add_message(client, "assistant", reply)
+    db.pause(client, config.HUMAN_PAUSE_HOURS)
+
+
 def deliver(client, text, from_staff=False, quote=""):
     """Главная функция: сообщение (от клиента или от сотрудника) -> ответ клиенту.
     quote — текст сообщения, на которое клиент ответил (reply), для распознавания букета."""
@@ -145,6 +171,10 @@ def deliver(client, text, from_staff=False, quote=""):
         _send_text(client, secret)
         return
     with _client_locks[client]:
+        if not from_staff and not db.is_paused(client) and HUMAN_REQ_RE.search(text or "") \
+                and not re.search(r"\bдля\b|букет|цвет|роз|подар", text or "", re.I):   # «букет для менеджера» — не то
+            _to_human(client, text)
+            return
         # Клиент прислал фото и теперь пишет, что хочет («у вас есть такой?») — фото с вопросом флористу.
         if not from_staff and not db.is_paused(client) and _photo_buf(client).get("photos"):
             old = _photo_timers.pop(client, None)
