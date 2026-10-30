@@ -138,6 +138,16 @@ def temp_staff_ids():
         return []
 
 
+def cities_nearby_sample(n=5):
+    """Несколько соседних городов/посёлков из shop.json — для ответа «туда не доставляем, а сюда — да»."""
+    if SHOP.get("area_examples"):
+        return SHOP["area_examples"][:n]
+    out = []
+    for c in city_list():
+        out += [x for x in (c.get("nearby") or []) if " " not in x][:3]
+    return out[:n]
+
+
 def many_cities():
     return len(cities()) > 1
 

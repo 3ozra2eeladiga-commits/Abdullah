@@ -849,7 +849,23 @@ def _fix_time_answer(client, text, last_q=""):
     t = (text or "").strip()
     hist = db.history(client, 6)
     last_bot = last_q or next((m["content"] for m in reversed(hist) if m["role"] == "assistant"), "")
-    m = re.fullmatch(r"(?:к|в|на|около)?\s*(\d{1,2})(?:[:.](\d{2}))?\s*(?:ч\w*|час\w*)?\.?", t, re.I)
+    # «к 14» — это 14:00 (не переспрашиваем «14:00 или 14:30?»)
+    def _hh(m):
+        h = int(m.group(2))
+        if h > 23:
+            return m.group(0)
+        return f"{m.group(1)} {h + 12 if 1 <= h <= 7 else h:02d}:00"   # «в 3» — 15:00 (ночью закрыто)
+    t2 = re.sub(r"\b([кв])\s*(\d{1,2})\b(?![:.]\d)(?!\s*(?:числ|чис|дн|янв|фев|мар|апр|ма[яй]|июн|июл|авг|сен|окт|ноя|дек|"
+                r"час\w*\s+дн|минут))(?:\s*час\w*)?", _hh, t, flags=re.I)
+    if t2 != t and re.search(r"\d{1,2}[./]\d{1,2}|сегодня|завтра|послезавтра|\d{1,2}\s+\w{3,}", t2, re.I) or \
+            (t2 != t and TIME_Q_RE.search(last_bot)):
+        return t2
+    # «00» / «30» в ответ на «к 14:00 или к 14:30?» — минуты к часу из нашего вопроса
+    m_min = re.fullmatch(r"\W*(00|15|30|45)\W*", t)
+    h_q = re.search(r"\b(\d{1,2}):00\b", last_bot)
+    if m_min and h_q:
+        return f"к {int(h_q.group(1)):02d}:{m_min.group(1)}"
+    m = re.fullmatch(r"(?:к|в|на|около)?\s*(\d{1,2})(?:[:.](\d{2}))?\s*(?:ч|час\w*)?\.?", t, re.I)
     if m and TIME_Q_RE.search(last_bot) and int(m.group(1)) <= 23:
         h = int(m.group(1))
         h = h + 12 if 1 <= h <= 7 else h          # «в 3» — это 15:00 (ночью магазины закрыты)
@@ -2387,6 +2403,20 @@ def respond(client, incoming, from_staff=False, quote=""):
         if not city and m_num and re.search(r"1 — ", _last_bot_text(client, "")) \
                 and 1 <= int(m_num.group(1)) <= len(catalog.city_names):
             city = list(catalog.city_names)[int(m_num.group(1)) - 1]
+        # Город, где нас нет («Сочи», «Москва») — сразу честно говорим и предлагаем наши города цифрами.
+        t_c = (incoming or "").strip(" .!?")
+        if not city and re.search(r"какой\s+город", _last_bot_text(client, "")) and not re.search(r"\d", t_c) \
+                and re.fullmatch(r"(?:(?:в|во|из|город)\s+)?[А-ЯЁ][а-яё-]+(?:[\s-][А-ЯЁ]?[а-яё-]+)?", t_c) \
+                and not re.search(r"^(?:привет|здравств|добр|да|нет|спасибо|хорош|ок|букет|роз|цвет|салам|ассалам|"
+                                  r"хочу|можно|подскаж|помогите|сколько|какие|есть)", t_c, re.I):
+            place = re.sub(r"^(?:в|во|из|город)\s+", "", t_c, flags=re.I)
+            near = ", ".join(config.cities_nearby_sample()) if hasattr(config, "cities_nearby_sample") else ""
+            opts = "\n".join(f"{i} — {n}" for i, n in enumerate(catalog.city_names, 1))
+            text = (f"К сожалению, в {place} мы не доставляем 😔 Работаем в городах Кавказских Минеральных Вод"
+                    f"{' (' + near + ')' if near else ''}. Если получатель здесь — выберите город:\n{opts}")
+            db.add_message(client, "user", incoming)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=None)
         if city:
             db.set_city(client, city)
             city_new = True
