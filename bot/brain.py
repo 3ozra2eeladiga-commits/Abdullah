@@ -585,7 +585,8 @@ def opening_text(city=None):
     return f"{'утром' if now.hour < 12 else 'завтра'}, с {first}"
 
 
-_REL_NUM = {"один": 1, "одну": 1, "два": 2, "две": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "пол": 0.5}
+_REL_NUM = {"один": 1, "одну": 1, "два": 2, "две": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "пол": 0.5,
+            "полтора": 1.5, "пару": 2, "десять": 10, "пятнадцать": 15, "двадцать": 20, "тридцать": 30, "сорок": 40}
 
 
 def _relative_dt(text):
@@ -878,6 +879,14 @@ def _fix_time_answer(client, text, last_q=""):
     """Бот спросил время («к какому времени?»), клиент ответил «14» / «в 3» — это ЧАС, а не число месяца.
     И «я про время» после «14 октября или ноября?» — берём прошлое число как время."""
     t = (text or "").strip()
+    # «через час / через полчаса / через 15 минут» → точное время от текущего (по Москве), округляем вверх до 5 мин.
+    rel = _relative_dt(t)
+    if rel and not shops_closed_now():
+        rel += datetime.timedelta(minutes=(-rel.minute) % 5)
+        word = "сегодня " if rel.date() == datetime.datetime.now(_MSK).date() else ""
+        t = re.sub(r"(?:сегодня\s+)?через\s+(?:(?:\d+|" + "|".join(_REL_NUM) + r")\s*)?(?:час\w*|минут\w*|полчаса)",
+                   f"{word}к {rel:%H:%M}", t, count=1, flags=re.I)
+        return t
     hist = db.history(client, 6)
     last_bot = last_q or next((m["content"] for m in reversed(hist) if m["role"] == "assistant"), "")
     # «к 14» — это 14:00 (не переспрашиваем «14:00 или 14:30?»)
