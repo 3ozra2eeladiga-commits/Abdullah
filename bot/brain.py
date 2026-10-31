@@ -1412,8 +1412,9 @@ CONTACT_REFUSE_RE = re.compile(
 # Предупреждение, когда при доставке нет чьего-то телефона (текст магазина).
 DELIVERY_WARN = ("Хорошо 🌸 Но доставка может усложниться без номера телефона, поэтому оставайтесь, пожалуйста, "
                  "на связи. Если получателя не найдём и букет вернётся в магазин, повторную доставку придётся оплатить.")
-OWN_PHONE_REFUSE_RE = re.compile(r"не\s+(?:хочу|буду|могу)\s+(?:да(?:ва)?ть|оставля\w*|отправля\w*|писать|сообщать|"
-                                 r"говорить|называть)\s+(?:свой|мой)\s+(?:номер|телефон)|без\s+моего\s+(?:номера|телефона)|"
+OWN_PHONE_REFUSE_RE = re.compile(r"не\s+(?:хочу|буду|могу)\s+(?:да(?:ва)?ть|оставл\w*|отправ\w*|писать|написать|сообщ\w*|"
+                                 r"говорить|сказать|называть|назвать|скидывать|скинуть)\s+(?:свой|мой|свои|мои)\s+"
+                                 r"(?:номер|телефон|данн|имя)|без\s+моего\s+(?:номера|телефона)|"
                                  r"сво[йе]\s+(?:номер|телефон)\s+не\s+(?:дам|скажу|хочу|буду)", re.I)
 NO_TO_PHONE_RE = re.compile(r"нет\s+(?:номера|телефона)\s+получател|нет\s+(?:е[её]|его)\s+(?:номера|телефона)|"
                             r"не\s+знаю\s+(?:е[её]|его)?\s*(?:номер|телефон)|(?:номер|телефон)\w*\s+(?:е[её]|его|получател\w*)\s+"
@@ -2694,6 +2695,17 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff:
         sur = db.get_setting(f"surprise:{client}") or ""
         t_in = (incoming or "").strip()
+        def _surprise_done(kind):
+            """Получатель уже известен — не переспрашиваем: предупреждение и сразу следующий вопрос."""
+            db.set_setting(f"surprise:{client}", kind)
+            nxt = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"],
+                                 city, _known_order(client))
+            nxt = "" if nxt == ALMOST_DONE_Q else nxt
+            text = f"{DELIVERY_WARN}" + (f"\n\n{nxt}" if nxt else "\n\nПочти всё 🌸 Напишите «да» — пришлю итог.")
+            db.set_setting(f"lastq:{client}", nxt or ALMOST_DONE_Q)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
+
         if sur == "ask" and re.match(r"^\W*1\b", t_in):        # 1 — всё же даст свой номер: обычный путь
             db.del_setting(f"surprise:{client}")
             q = CONTACTS_Q
@@ -2702,12 +2714,17 @@ def respond(client, incoming, from_staff=False, quote=""):
             return Reply(text=q, city=city)
         if sur == "ask" and re.match(r"^\W*[23]\b", t_in):
             sur = "1" if t_in.strip(" .!)")[0] == "2" else "2"   # 2 → позвоним получателю, 3 → найдём по адресу
+            _ct = _contacts(client)
+            if _ct.get("to_phone") or _ct.get("to_where"):
+                return _surprise_done(sur)
             db.set_setting(f"surprise:{client}", sur)
             q = (SURPRISE_Q1 if sur == "1" else SURPRISE_Q2)
             text = f"{DELIVERY_WARN}\n\n{q}"
             db.set_setting(f"lastq:{client}", q)
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
+        ct_known = _contacts(client)
+        to_known = bool(ct_known.get("to_phone") or ct_known.get("to_where"))
         delivery = not _is_pickup(client)
         # «Адреса нет, есть только телефон» — позвоним получателю и узнаем адрес сами.
         both = delivery and NO_ADDR_TIME_RE.search(t_in)
@@ -2725,6 +2742,8 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
         # «Свой номер не дам» / «нет телефона получателя, только адрес» — сразу нужный вариант + предупреждение.
+        if delivery and not sur and not PHONE_RE.search(t_in) and OWN_PHONE_REFUSE_RE.search(t_in) and to_known:
+            return _surprise_done("1")              # получатель уже известен — только предупреждение, без вопросов
         if delivery and not sur and not PHONE_RE.search(t_in) and (OWN_PHONE_REFUSE_RE.search(t_in) or NO_TO_PHONE_RE.search(t_in)):
             sur = "2" if NO_TO_PHONE_RE.search(t_in) else "1"
             db.set_setting(f"surprise:{client}", sur)
@@ -2751,6 +2770,9 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.del_setting(f"lastq:{client}")
             incoming = (f"Сюрприз. Получатель: {st.get('to_name')}, {st.get('to_phone') or t_in}. "
                         "Заказчик не называется — связь в этом чате.")
+        elif not sur and not _is_pickup(client) and to_known and (SURPRISE_RE.search(t_in) or
+                                                                  CONTACT_REFUSE_RE.search(t_in)) and not PHONE_RE.search(t_in):
+            return _surprise_done("1")
         elif not sur and not _is_pickup(client) and (SURPRISE_RE.search(t_in) or (
                 CONTACT_REFUSE_RE.search(t_in) and not PHONE_RE.search(t_in)
                 and re.search(r"имя\s+и\s+телефон|ваш\s+(?:номер\s+)?телефон|контактн", _last_bot_text(client, last_q), re.I))):
