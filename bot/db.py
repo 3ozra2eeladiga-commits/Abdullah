@@ -76,9 +76,12 @@ def add_message(client, role, content):
 
 
 def history(client, limit=None):
+    """Переписка клиента — только по ТЕКУЩЕМУ заказу: после отправленной заявки начинается новая
+    (иначе слова прошлого заказа — «доставка», «завтра» — путают новый)."""
     limit = limit or config.HISTORY_LIMIT
-    rows = _exec("SELECT role, content FROM messages WHERE client=? ORDER BY id DESC LIMIT ?",
-                 (client, limit)).fetchall()
+    start = int(get_setting(f"hist_from:{client}") or 0)
+    rows = _exec("SELECT role, content FROM messages WHERE client=? AND id>? ORDER BY id DESC LIMIT ?",
+                 (client, start, limit)).fetchall()
     return [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
 
 
@@ -196,8 +199,15 @@ def is_test_mode(chat):
     return _exec("SELECT 1 FROM test_chats WHERE chat=?", (str(chat),)).fetchone() is not None
 
 
+def new_conversation(client):
+    """Заявка отправлена — следующий заказ этого клиента начинаем с чистого листа."""
+    row = _exec("SELECT MAX(id) AS m FROM messages WHERE client=?", (client,)).fetchone()
+    set_setting(f"hist_from:{client}", (row["m"] if row and row["m"] else 0))
+
+
 def clear_history(client):
     _exec("DELETE FROM messages WHERE client=?", (client,))
+    _exec("DELETE FROM settings WHERE key=?", (f"hist_from:{client}",))
     _exec("DELETE FROM client_city WHERE client=?", (client,))
     _exec("DELETE FROM pending_orders WHERE client=?", (client,))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?)",

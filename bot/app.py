@@ -238,6 +238,8 @@ def deliver(client, text, from_staff=False, quote=""):
             return
 
         order_id = db.save_order(client, reply.order) if reply.order else None
+        if order_id:
+            brain.start_new_order(client)          # следующий заказ — с нуля (без «доставка/завтра» прошлого)
         if order_id and reply.text:
             reply.text += f"\nНомер заказа: №{db.order_no(order_id)}"   # по нему клиент может спросить или отменить
         if reply.text and not from_staff and re.search(r"шалом|shalom", text or "", re.I) \

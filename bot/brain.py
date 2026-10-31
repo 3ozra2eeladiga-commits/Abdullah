@@ -1017,6 +1017,22 @@ def _contacts(client):
         return {}
 
 
+# Состояние ОДНОГО заказа: после отправленной заявки — сбрасываем, следующий заказ с нуля.
+ORDER_STATE_KEYS = ("chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
+                    "pickup_shop", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
+                    "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item")
+
+
+def start_new_order(client):
+    """Заявка ушла флористу: новый заказ клиента — с чистого листа. Имя и телефон самого клиента оставляем."""
+    for k in ORDER_STATE_KEYS:
+        db.del_setting(f"{k}:{client}")
+    ct = _contacts(client)
+    keep = {k: v for k, v in ct.items() if k in ("me_name", "me_phone")}
+    db.set_setting(f"contacts:{client}", json.dumps(keep, ensure_ascii=False))
+    db.new_conversation(client)
+
+
 def _is_pickup(client):
     """Клиент забирает сам (самовывоз) — тогда «получателя» и адреса нет. Последнее слово клиента главнее:
     «1 — доставка», потом «нет, самовывоз» — это самовывоз."""
@@ -2868,6 +2884,16 @@ def respond(client, incoming, from_staff=False, quote=""):
         if note:
             db.set_setting(f"lastq:{client}", note)
         photos = []
+        # Клиент уже заказывал (новый заказ после отправленной заявки) — второй раз не здороваемся, сразу букеты.
+        if not note and db.get_setting(f"hist_from:{client}") and city:
+            cc = catalog.get_city(city)
+            photos = (cc.relevant_items(incoming or "популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True)
+                      [:MIN_OPTIONS] if cc else [])
+            if photos:
+                text = "Конечно 🌸 Вот варианты — какой нравится? Ответьте «этот» на фото."
+                db.set_setting(f"shown:{client}", ",".join(p["code"] for p in photos))
+                db.add_message(client, "assistant", text)
+                return Reply(text=text, city=city, photos=photos)
         # Город и день уже известны — повод не спрашиваем (Абдулла), сразу показываем букеты.
         if not note and city and any(f.startswith("дата") for f in _known_facts([incoming or ""])):
             cc = catalog.get_city(city)
