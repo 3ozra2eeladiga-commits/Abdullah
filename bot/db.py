@@ -98,7 +98,7 @@ def order_no(order_id):
     """Номер заказа «за день»: каждый рабочий день нумерация с №1. День заканчивается в DAY_CLOSE (22:00 МСК):
     заказы после закрытия — уже следующего дня. В базе номер остаётся сквозным (id) — для ссылок и кнопок."""
     cached = get_setting(f"dayno:{order_id}")
-    if cached:
+    if cached and get_setting(f"dayof:{order_id}"):
         return int(cached)
     row = _exec("SELECT created FROM orders WHERE id=?", (order_id,)).fetchone()
     if not row:
@@ -110,7 +110,14 @@ def order_no(order_id):
     start = day * 86400 - msk - shift
     n = _exec("SELECT COUNT(*) AS n FROM orders WHERE created>=? AND id<=?", (start, order_id)).fetchone()["n"]
     set_setting(f"dayno:{order_id}", n)
+    set_setting(f"dayof:{order_id}", time.strftime("%d.%m", time.gmtime(start + msk + shift)))
     return n
+
+
+def order_day(order_id):
+    """Рабочий день, к которому относится номер заказа («31.10»)."""
+    order_no(order_id)
+    return get_setting(f"dayof:{order_id}") or ""
 
 
 def recent_orders(since_ts):

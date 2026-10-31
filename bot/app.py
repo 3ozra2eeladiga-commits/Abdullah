@@ -421,13 +421,28 @@ def _order_day(o, created):
     return brain._resolve_date(d)
 
 
+def _num(oid):
+    """«№4» — номер за сегодня; заказ, оформленный в другой день, — «№4 от 30.10» (чтобы номера не путались)."""
+    today = datetime.datetime.now(_MSK_TZ) + datetime.timedelta(minutes=(24 * 60 - _close_minutes()))
+    day = db.order_day(oid)
+    return f"№{db.order_no(oid)}" + ("" if not day or day == today.strftime("%d.%m") else f" от {day}")
+
+
+def _close_minutes():
+    hh, mm = (int(x) for x in (config.DAY_CLOSE or "22:00").split(":"))
+    return hh * 60 + mm
+
+
 def _short_line(oid, client, o):
     """«№12 · 14:00 · Крайнего 90 · Иван» — одна строка на заказ."""
     when = str(o.get("время") or "").strip()
-    where = "самовывоз " + str(o.get("адрес") or "").replace("ул. ", "") \
-        if (o.get("получение") or "").lower().startswith("самовывоз") else str(o.get("адрес") or "").replace("ул. ", "")
-    who = str(o.get("заказчик") or "").split(",")[0].strip() or telegram_bot.client_name(client).split(" @")[0]
-    parts = [f"№{db.order_no(oid)}", when, where[:40], who[:20]]
+    pickup = (o.get("получение") or "").lower().startswith("самовывоз")
+    where = ("самовывоз " if pickup else "") + str(o.get("адрес") or "").replace("ул. ", "")
+    raw = str(o.get("заказчик") or "")
+    who = "🎁 сюрприз" if "сюрприз" in raw.lower() else re.split(r"[,(]", raw)[0].strip()
+    if not brain._meaningful(who) or brain._name_from(who) == "" and "сюрприз" not in who:
+        who = telegram_bot.client_name(client).split(" @")[0]             # «null», «Точно» → имя из Telegram
+    parts = [_num(oid), when if brain._meaningful(when) else "", where[:40], who[:20]]
     return " · ".join(p for p in parts if p and p not in ("—", "..."))
 
 
@@ -448,7 +463,7 @@ _MARKS = {"check": "⏳ ждёт проверки", "ok": "✅ подтверж�
 def _status_line(oid):
     st = db.get_setting(f"ostatus:{oid}") or ""
     who = db.get_setting(f"owho:{oid}") or ""
-    line = _MARKS.get(st, "") + (f" — {who.split(' @')[0]}" if who and st != "check" else "")
+    line = _MARKS.get(st, "• статус неизвестен") + (f" — {who.split(' @')[0]}" if who and st != "check" else "")
     return line + ("" if _answered(oid) else " · 💬 клиенту ещё не писали")
 
 
@@ -480,6 +495,8 @@ def on_report(kind):
     out, ids = [], []
     for title, day in (("📋 Заказы на сегодня", today), ("📅 На завтра", today + datetime.timedelta(days=1))):
         items = [(oid, c, o) for oid, c, o, created in rows if _order_day(o, created) == day]
+        items.sort(key=lambda x: (datetime.datetime.strptime(db.order_day(x[0]) or "01.01", "%d.%m").timetuple().tm_yday,
+                                  db.order_no(x[0])))
         if not items and day != today:
             continue
         out.append(f"{title} ({len(items)}):" if items else f"{title}: заказов нет.")
@@ -506,7 +523,7 @@ def day_summary():
 
 
 def _send_to_staff(text, ids):
-    rows = [[{"text": f"№{db.order_no(i)}", "callback_data": f"show:x:{i}"} for i in ids[k:k + 4]] for k in range(0, len(ids), 4)]
+    rows = [[{"text": _num(i), "callback_data": f"show:x:{i}"} for i in ids[k:k + 4]] for k in range(0, len(ids), 4)]
     for chat in telegram_bot.staff_chats():
         telegram_bot.send(chat, text, **({"reply_markup": {"inline_keyboard": rows}} if rows else {}),
                           **({"disable_notification": True} if telegram_bot.quiet_now() else {}))
