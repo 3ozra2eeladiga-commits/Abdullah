@@ -2086,9 +2086,9 @@ def _apply_order_edit(client, city, order_id, field, value):
         db.update_order(order_id, data)
     names = {"адрес": "Новый адрес", "время": "Новые дата/время", "получатель": "Новый получатель",
              "заказчик": "Новые данные заказчика", "комментарий": "Клиент просит изменить"}
-    text = f"Готово 🌸 Передала флористу изменение в заказе №{order_id}: «{value.strip()}»."
+    text = f"Готово 🌸 Передала флористу изменение в заказе №{db.order_no(order_id)}: «{value.strip()}»."
     db.add_message(client, "assistant", text)
-    note = (f"✏️ ИЗМЕНЕНИЕ В ЗАКАЗЕ №{order_id}\n{names.get(field, 'Изменение')}: {value.strip()}\n"
+    note = (f"✏️ ИЗМЕНЕНИЕ В ЗАКАЗЕ №{db.order_no(order_id)}\n{names.get(field, 'Изменение')}: {value.strip()}\n"
             "Ответьте на это сообщение — текст уйдёт клиенту.")
     return Reply(text=text, city=city, staff_note=note)
 
@@ -2124,7 +2124,7 @@ def _finish_addon(client, city, order_id):
     words = "без текста" if text_card == "без текста" else f"текст «{text_card}»"
     text = f"Готово 🌸 Открытку добавили к заказу (+{c0['price']} ₽), {words}."
     db.add_message(client, "assistant", text)
-    note = (f"➕ ДОПОЛНЕНИЕ К ЗАКАЗУ №{order_id}\nКлиент добавил открытку: {c0['title']} — {c0['price']} ₽\n"
+    note = (f"➕ ДОПОЛНЕНИЕ К ЗАКАЗУ №{db.order_no(order_id)}\nКлиент добавил открытку: {c0['title']} — {c0['price']} ₽\n"
             f"✉️ Текст (написать от руки): {text_card}\nОтветьте на это сообщение — текст уйдёт клиенту.")
     return Reply(text=text, city=city, staff_note=note, staff_photos=[c0])
 
@@ -2863,25 +2863,25 @@ def respond(client, incoming, from_staff=False, quote=""):
         if CONFIRM_YES_RE.search(incoming or "") and not CORRECTION_RE.search(incoming or ""):
             db.set_setting(f"ostatus:{oid}", "cancel")
             db.del_setting(f"ocheck:{client}")
-            text = f"Заказ №{oid} отменён 🌸 Если захотите — оформим новый."
+            text = f"Заказ №{db.order_no(oid)} отменён 🌸 Если захотите — оформим новый."
             db.add_message(client, "assistant", text)
-            return Reply(text=text, city=city, staff_note=f"🚫 КЛИЕНТ ОТМЕНИЛ ЗАКАЗ №{oid}\n"
+            return Reply(text=text, city=city, staff_note=f"🚫 КЛИЕНТ ОТМЕНИЛ ЗАКАЗ №{db.order_no(oid)}\n"
                                                          "Если уже оплачен — свяжитесь с клиентом по возврату.")
         if re.search(r"^\W*(?:нет|не\s+надо|не\s+отменя\w*)\b", incoming or "", re.I):
-            text = f"Хорошо, заказ №{oid} в силе 🌸"
+            text = f"Хорошо, заказ №{db.order_no(oid)} в силе 🌸"
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
     if not from_staff and re.search(r"\bотмен\w*", incoming or "", re.I) and db.has_order(client):
         oid = db.last_order_id(client)
         row = db.get_order(oid)
         if db.get_setting(f"ostatus:{oid}") == "cancel":
-            text = f"Заказ №{oid} уже отменён 🌸"
+            text = f"Заказ №{db.order_no(oid)} уже отменён 🌸"
         else:
             o = row[1] if row else {}
             item = next((str(it.get("название") or "") for it in o.get("товары") or []
                          if isinstance(it, dict) and not CARD_RE.search(str(it.get("название") or ""))), "")
             desc = ", ".join(x for x in (item, str(o.get("дата") or "").strip()) if x)
-            text = f"Отменить заказ №{oid}{f' ({desc})' if desc else ''}? Ответьте «да» или «нет»."
+            text = f"Отменить заказ №{db.order_no(oid)}{f' ({desc})' if desc else ''}? Ответьте «да» или «нет»."
             db.set_setting(f"cancelq:{client}", oid)
         db.add_message(client, "assistant", text)
         return Reply(text=text, city=city)

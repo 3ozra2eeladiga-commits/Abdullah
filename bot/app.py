@@ -86,7 +86,7 @@ def _format_order(order_id, client, reply):
     o = reply.order
     if not o:
         # JSON не распознался — показываем аккуратно, без «сырого кода»
-        return (f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{order_id}\n{_label(client)}\n\n"
+        return (f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)}\n{_label(client)}\n\n"
                 "⚠️ Заказ не распознался автоматически. Детали — в переписке с клиентом.\n"
                 "Ответьте на это сообщение, чтобы написать клиенту.")
 
@@ -97,7 +97,7 @@ def _format_order(order_id, client, reply):
         return val(x) != "—"
 
     pickup = o.get("получение") == "самовывоз"
-    lines = [telegram_bot.city_tag(client), f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{order_id}", _label(client), "━━━━━━━━━━━━━━",
+    lines = [telegram_bot.city_tag(client), f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)}", _label(client), "━━━━━━━━━━━━━━",
              "🛍 ТОВАР:"]
     for it in o.get("товары", []):
         qty = it.get("кол-во", 1)
@@ -235,7 +235,7 @@ def deliver(client, text, from_staff=False, quote=""):
 
         order_id = db.save_order(client, reply.order) if reply.order else None
         if order_id and reply.text:
-            reply.text += f"\nНомер заказа: №{order_id}"   # по нему клиент может спросить или отменить
+            reply.text += f"\nНомер заказа: №{db.order_no(order_id)}"   # по нему клиент может спросить или отменить
         if reply.text and not from_staff and re.search(r"шалом|shalom", text or "", re.I) \
                 and not re.search(r"шалом", reply.text, re.I):
             reply.text = re.sub(r"^\s*здравствуйте!?\s*(?:🌸\s*)?", "", reply.text, count=1, flags=re.I)
@@ -374,7 +374,7 @@ def on_check(order_id, action):
         return "Заявка не найдена."
     client, _ = row
     if db.get_setting(f"ostatus:{order_id}") != "check":
-        return f"По заявке №{order_id} уже отмечено, повторно не отправляю."
+        return f"По заявке №{db.order_no(order_id)} уже отмечено, повторно не отправляю."
     label, text = CHECK_ACTIONS[action]
     with _client_locks[client]:
         _send_text(client, text)
@@ -386,20 +386,20 @@ def on_check(order_id, action):
             db.pause(client, config.HUMAN_PAUSE_HOURS)    # дальше с клиентом говорит флорист, бот не мешает
     if action == "ok":
         # Кнопка «💳 Оплата» (QR Точки, on_pay) готова, но пока отключена — Абдулла: «пока отбой».
-        telegram_bot.notify_staff(client, f"✅ Заявка №{order_id} подтверждена, клиенту написали.\n"
+        telegram_bot.notify_staff(client, f"✅ Заявка №{db.order_no(order_id)} подтверждена, клиенту написали.\n"
                                           "Отправьте ссылку на оплату — ответом на это сообщение.")
     elif action == "other":
-        telegram_bot.notify_staff_wait(client, f"✍️ Заявка №{order_id}: клиенту написали, что вы скоро ответите.\n"
+        telegram_bot.notify_staff_wait(client, f"✍️ Заявка №{db.order_no(order_id)}: клиенту написали, что вы скоро ответите.\n"
                                           "Напишите клиенту сами (в чате или ответом на это сообщение). "
                                           f"Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; "
                                           "/resume ответом на это сообщение — включить бота.")
     else:
-        telegram_bot.notify_staff_wait(client, f"❌ Заявка №{order_id}: клиенту написали, что чего-то нет в наличии и "
+        telegram_bot.notify_staff_wait(client, f"❌ Заявка №{db.order_no(order_id)}: клиенту написали, что чего-то нет в наличии и "
                                           "флорист скоро свяжется.\nНапишите клиенту сами (в чате или ответом на это "
                                           f"сообщение). Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; "
                                           "/resume ответом на это сообщение — включить бота.")
     name = telegram_bot.client_name(client)
-    return f"№{order_id}{f' ({name})' if name else ''}: {label} — клиенту отправлено."
+    return f"№{db.order_no(order_id)}{f' ({name})' if name else ''}: {label} — клиенту отправлено."
 
 
 # ---------- Кнопки внизу у сотрудников: «📭 Без ответа», «📋 Заказы на сегодня» — коротко, без долгой прокрутки ----------
@@ -423,7 +423,7 @@ def _short_line(oid, client, o):
     where = "самовывоз " + str(o.get("адрес") or "").replace("ул. ", "") \
         if (o.get("получение") or "").lower().startswith("самовывоз") else str(o.get("адрес") or "").replace("ул. ", "")
     who = str(o.get("заказчик") or "").split(",")[0].strip() or telegram_bot.client_name(client).split(" @")[0]
-    parts = [f"№{oid}", when, where[:40], who[:20]]
+    parts = [f"№{db.order_no(oid)}", when, where[:40], who[:20]]
     return " · ".join(p for p in parts if p and p not in ("—", "..."))
 
 
@@ -502,7 +502,7 @@ def day_summary():
 
 
 def _send_to_staff(text, ids):
-    rows = [[{"text": f"№{i}", "callback_data": f"show:x:{i}"} for i in ids[k:k + 4]] for k in range(0, len(ids), 4)]
+    rows = [[{"text": f"№{db.order_no(i)}", "callback_data": f"show:x:{i}"} for i in ids[k:k + 4]] for k in range(0, len(ids), 4)]
     for chat in telegram_bot.staff_chats():
         telegram_bot.send(chat, text, **({"reply_markup": {"inline_keyboard": rows}} if rows else {}),
                           **({"disable_notification": True} if telegram_bot.quiet_now() else {}))
@@ -521,8 +521,8 @@ def _remind_unchecked():
         mins = int((now - created) // 60)
         if n < 3 and mins >= config.REMIND_MIN * (n + 1):
             db.set_setting(f"oremind:{oid}", n + 1)
-            telegram_bot.notify_staff(client, f"⏰ Заявка №{oid} не проверена уже {mins} мин! Нажмите номер и проверьте.",
-                                      buttons=[[{"text": f"№{oid}", "callback_data": f"show:x:{oid}"}]])
+            telegram_bot.notify_staff(client, f"⏰ Заявка №{db.order_no(oid)} не проверена уже {mins} мин! Нажмите номер и проверьте.",
+                                      buttons=[[{"text": f"№{db.order_no(oid)}", "callback_data": f"show:x:{oid}"}]])
             telegram_bot.ring(oid, lambda o=oid: db.get_setting(f"ostatus:{o}") == "check", client)
 
 
@@ -589,7 +589,7 @@ def on_pay(order_id, action):
         goods, delivery = _order_total(o)
         if delivery is None:                       # доставку назначает флорист — спрашиваем итоговую сумму
             sent = telegram_bot.notify_staff(
-                client, f"💳 Заказ №{order_id}: товары {goods} ₽ + доставка.\n"
+                client, f"💳 Заказ №{db.order_no(order_id)}: товары {goods} ₽ + доставка.\n"
                         "Ответьте на это сообщение ИТОГОВОЙ суммой (например, 3143) — бот отправит клиенту QR и ссылку.",
                 buttons=[[{"text": f"💳 Отправить {goods} ₽ (без доставки)", "callback_data": f"pay:{goods}:{order_id}"}]])
             for chat, mid in sent or []:
@@ -603,11 +603,11 @@ def on_pay(order_id, action):
     if amount <= 0:
         return "Сумма заказа неизвестна — ответьте на сообщение бота итоговой суммой."
     try:
-        link, png, qrc = payments.create_qr(amount, f"Заказ №{order_id}, {config.SHOP_NAME}".strip(", "))
+        link, png, qrc = payments.create_qr(amount, f"Заказ №{db.order_no(order_id)}, {config.SHOP_NAME}".strip(", "))
     except Exception as e:
         log.warning("Точка: QR не создан: %s", e)
         return f"Не получилось создать QR в Точке: {str(e)[:120]}"
-    text = (f"Оплата заказа №{order_id} — {amount} ₽ 🌸\nОткройте ссылку — откроется приложение вашего банка:\n{link}"
+    text = (f"Оплата заказа №{db.order_no(order_id)} — {amount} ₽ 🌸\nОткройте ссылку — откроется приложение вашего банка:\n{link}"
             "\nИли отсканируйте QR-код. После оплаты мы сразу увидим её.")
     with _client_locks[client]:
         if png:
@@ -626,7 +626,7 @@ def _watch_payment(order_id, client, qrc, amount):
     for _ in range(360):
         time.sleep(30)
         if payments.is_paid(qrc):
-            telegram_bot.notify_staff(client, f"💰 Заказ №{order_id} ОПЛАЧЕН — {amount} ₽")
+            telegram_bot.notify_staff(client, f"💰 Заказ №{db.order_no(order_id)} ОПЛАЧЕН — {amount} ₽")
             thanks = "Оплата получена, спасибо! 🌸"
             _send_text(client, thanks)
             db.add_message(client, "assistant", thanks)

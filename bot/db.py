@@ -94,6 +94,25 @@ def get_order(order_id):
     return (row["client"], json.loads(row["data"])) if row else None
 
 
+def order_no(order_id):
+    """Номер заказа «за день»: каждый рабочий день нумерация с №1. День заканчивается в DAY_CLOSE (22:00 МСК):
+    заказы после закрытия — уже следующего дня. В базе номер остаётся сквозным (id) — для ссылок и кнопок."""
+    cached = get_setting(f"dayno:{order_id}")
+    if cached:
+        return int(cached)
+    row = _exec("SELECT created FROM orders WHERE id=?", (order_id,)).fetchone()
+    if not row:
+        return order_id
+    hh, mm = (int(x) for x in (config.DAY_CLOSE or "22:00").split(":"))
+    shift = (24 * 60 - (hh * 60 + mm)) * 60            # после закрытия → следующий день
+    msk = 3 * 3600
+    day = int((row["created"] + msk + shift) // 86400)
+    start = day * 86400 - msk - shift
+    n = _exec("SELECT COUNT(*) AS n FROM orders WHERE created>=? AND id<=?", (start, order_id)).fetchone()["n"]
+    set_setting(f"dayno:{order_id}", n)
+    return n
+
+
 def recent_orders(since_ts):
     """Заказы, созданные после since_ts: [(id, client, data, created)], старые сначала."""
     rows = _exec("SELECT id, client, data, created FROM orders WHERE created>=? ORDER BY id", (since_ts,)).fetchall()

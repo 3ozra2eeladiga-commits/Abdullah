@@ -344,7 +344,7 @@ def ring(order_id, still_waiting, client=None, quiet=False):
             for chat in staff_chats(client):
                 ensure_staff_keyboard(chat)
             tag = city_tag(client).replace("📍 ", "") if client else ""
-            text = f"🔔 Новая заявка №{order_id}{' — ' + tag if tag else ''}!"
+            text = f"🔔 Новая заявка №{db.order_no(order_id)}{' — ' + tag if tag else ''}!"
             _ring_loop(text, client, seconds=config.RING_SECONDS, still_waiting=still_waiting)
         except Exception as e:                               # звонок не должен ронять бота
             log.warning("Звонок о заявке №%s не удался: %s", order_id, e)
@@ -476,7 +476,7 @@ def _handle(msg, deliver):
     if text in (NOANSWER_BTN, TODAY_BTN) and _hooks.get("on_report"):
         rep, ids = _hooks["on_report"]("noanswer" if text == NOANSWER_BTN else "today")
         # Под списком — кнопки «№17», «№19»…: нажал — бот присылает эту заявку целиком (с кнопками).
-        rows = [[{"text": f"№{i}", "callback_data": f"show:x:{i}"} for i in ids[k:k + 4]] for k in range(0, len(ids[:24]), 4)]
+        rows = [[{"text": f"№{db.order_no(i)}", "callback_data": f"show:x:{i}"} for i in ids[k:k + 4]] for k in range(0, len(ids[:24]), 4)]
         send(chat_id, rep, reply_markup={"inline_keyboard": rows} if rows else STAFF_KB)
         return
     if text == STOP_BTN:
