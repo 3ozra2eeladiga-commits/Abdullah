@@ -277,8 +277,17 @@ def notify_staff_wait(client, text, buttons=None):
     return sent
 
 
-def staff_answered(client, who):
-    """Сотрудник реально написал клиенту — снимаем «ждёт ответа» и отмечаем у всех: «✅ Ответила — Имя, время»."""
+def _edit_msgs(msgs, note, keyboard=None):
+    for x in msgs:
+        kw = dict(chat_id=x["c"], message_id=x["m"], reply_markup={"inline_keyboard": keyboard or []})
+        if not call("editMessageText", text=(x["t"] + "\n\n" + note)[:4096], **kw):
+            call("editMessageReplyMarkup", **kw)
+
+
+def staff_answered(client, who=None):
+    """Сотрудник реально написал клиенту — снимаем «ждёт ответа». Ответ через бота — сразу «✅ Ответила — Имя».
+    Ответ из чата магазина (аккаунт общий, кто писал — не видно) — просим нажать «✅ Это я ответила», и тогда
+    у всех будет видно имя того, кто ответил."""
     db._exec("DELETE FROM settings WHERE key LIKE 'oawait:%' AND value=?", (client,))   # заявки этого клиента — отвечены
     if not db.get_setting(f"await:{client}"):
         return
@@ -286,13 +295,14 @@ def staff_answered(client, who):
         msgs = json.loads(db.get_setting(f"awaitmsgs:{client}") or "[]")
     except ValueError:
         msgs = []
-    note = f"✅ Ответила клиенту — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}"
-    for x in msgs:
-        kw = dict(chat_id=x["c"], message_id=x["m"], reply_markup={"inline_keyboard": []})
-        if not call("editMessageText", text=(x["t"] + "\n\n" + note)[:4096], **kw):
-            call("editMessageReplyMarkup", **kw)
     db.del_setting(f"await:{client}")
     db.del_setting(f"awaitmsgs:{client}")
+    if who:
+        _edit_msgs(msgs, f"✅ Ответила клиенту — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
+        return
+    db.set_setting(f"claim:{client}", json.dumps(msgs, ensure_ascii=False))
+    _edit_msgs(msgs, "💬 Клиенту ответили в чате магазина. Кто ответил — нажмите кнопку:",
+               [[{"text": "✅ Это я ответила", "callback_data": "ans:x:0"}]])
 
 
 def waiting_clients():
@@ -662,7 +672,7 @@ def _handle_business(update, deliver):
         if db.was_sent_by_bot(f"biz:{chat_id}:{msg.get('message_id')}"):
             return  # это наш же ответ, не реагируем
         db.pause(client, config.HUMAN_PAUSE_HOURS)  # сотрудник вступил в разговор — бот умолкает
-        staff_answered(client, "в чате магазина")
+        staff_answered(client)
         return
 
     text = (msg.get("text") or msg.get("caption") or "").strip()
@@ -697,6 +707,16 @@ def _handle_callback(cq, on_check):
             call("answerCallbackQuery", callback_query_id=cq["id"], show_alert=True,
                  text="Не вижу вашего ответа клиенту 🙏 Сначала напишите ему (в чате магазина или ответом на это "
                       "сообщение) — отметка поставится сама.")
+        elif client and db.get_setting(f"claim:{client}"):
+            # Ответили из чата магазина — нажавший «Это я ответила» и есть тот, кто ответил: показываем всем.
+            try:
+                msgs = json.loads(db.get_setting(f"claim:{client}") or "[]")
+            except ValueError:
+                msgs = []
+            db.del_setting(f"claim:{client}")
+            _edit_msgs(msgs, f"✅ Ответила клиенту — {_staff_name(cq.get('from'))}, "
+                             f"{time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
+            call("answerCallbackQuery", callback_query_id=cq["id"], text="Отмечено ✅")
         else:
             call("answerCallbackQuery", callback_query_id=cq["id"], text="Уже отмечено ✅")
             _mark_done(m, "")
