@@ -423,9 +423,8 @@ def _order_day(o, created):
 
 def _num(oid):
     """«№4» — номер за сегодня; заказ, оформленный в другой день, — «№4 от 30.10» (чтобы номера не путались)."""
-    today = datetime.datetime.now(_MSK_TZ) + datetime.timedelta(minutes=(24 * 60 - _close_minutes()))
     day = db.order_day(oid)
-    return f"№{db.order_no(oid)}" + ("" if not day or day == today.strftime("%d.%m") else f" от {day}")
+    return f"№{db.order_no(oid)}" + ("" if not day or day == _biz_today().strftime("%d.%m") else f" от {day}")
 
 
 def _close_minutes():
@@ -447,9 +446,19 @@ def _short_line(oid, client, o):
 
 
 def _day_start(now=None):
-    """Полночь сегодняшнего дня по Москве (timestamp) — списки «обнуляются» каждый день."""
-    d = datetime.datetime.fromtimestamp(now or time.time(), _MSK_TZ).replace(hour=0, minute=0, second=0, microsecond=0)
-    return d.timestamp()
+    """Начало рабочего дня магазина: последнее закрытие (22:00 МСК). Заказы после закрытия — уже следующего дня."""
+    now = now or time.time()
+    d = datetime.datetime.fromtimestamp(now, _MSK_TZ)
+    close = d.replace(hour=_close_minutes() // 60, minute=_close_minutes() % 60, second=0, microsecond=0)
+    if close > d:
+        close -= datetime.timedelta(days=1)
+    return close.timestamp()
+
+
+def _biz_today(now=None):
+    """Какой день сейчас «рабочий»: после 22:00 — уже завтрашний (заказы принимаем на него)."""
+    return (datetime.datetime.fromtimestamp(now or time.time(), _MSK_TZ)
+            + datetime.timedelta(minutes=24 * 60 - _close_minutes())).date()
 
 
 def _answered(oid):
@@ -491,9 +500,13 @@ def on_report(kind):
             lines.append(f"• {name} — {max(1, int((now - since) // 60))} мин")
         ids = [oid for oid, _c, _o in unchecked + checked][:24]
         return (("📭 Без ответа:\n\n" + "\n".join(lines[:40])) if lines else "📭 Всем ответили 👍"), ids
-    today = datetime.datetime.now(_MSK_TZ).date()
+    today = _biz_today(now)
+    after_close = today != datetime.datetime.now(_MSK_TZ).date()   # после 22:00 — список уже на завтра
+    first = (f"📋 Магазин закрыт — заказы на завтра, {today:%d.%m}" if after_close
+             else f"📋 Заказы на сегодня, {today:%d.%m}")
     out, ids = [], []
-    for title, day in (("📋 Заказы на сегодня", today), ("📅 На завтра", today + datetime.timedelta(days=1))):
+    for title, day in ((first, today), (f"📅 На {today + datetime.timedelta(days=1):%d.%m}",
+                                        today + datetime.timedelta(days=1))):
         items = [(oid, c, o) for oid, c, o, created in rows if _order_day(o, created) == day]
         items.sort(key=lambda x: (datetime.datetime.strptime(db.order_day(x[0]) or "01.01", "%d.%m").timetuple().tm_yday,
                                   db.order_no(x[0])))
@@ -509,11 +522,12 @@ def on_report(kind):
 def day_summary():
     """Итоги дня: сколько заявок с открытия до закрытия и что осталось без ответа (с кнопками «№…»)."""
     now = time.time()
-    rows = [r for r in db.recent_orders(_day_start(now)) if r[3] >= _day_start(now)]
+    start = _day_start(now - 300)                       # итоги — за рабочий день, который только что закончился
+    rows = [r for r in db.recent_orders(start) if start <= r[3] <= now]
     st = [db.get_setting(f"ostatus:{oid}") or "" for oid, _c, _o, _t in rows]
     left = [oid for (oid, _c, _o, _t) in rows if not _answered(oid)]
     o_, c_ = config.DAY_OPEN, config.DAY_CLOSE
-    text = (f"📊 Итоги дня {datetime.datetime.now(_MSK_TZ):%d.%m} (с {o_} до {c_}):\n"
+    text = (f"📊 Итоги дня {_biz_today(now - 300):%d.%m} (с {o_} до {c_}):\n"
             f"Всего заявок: {len(rows)}\n✅ подтверждено: {st.count('ok')}\n❌ нет в наличии: {st.count('no')}\n"
             f"✍️ флорист отвечает сама: {st.count('other')}\n⏳ не проверено: {st.count('check')}\n"
             f"💬 клиенту ещё не писали: {len(left)}")
