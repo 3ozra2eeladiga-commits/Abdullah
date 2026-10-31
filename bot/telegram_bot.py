@@ -261,7 +261,8 @@ def notify_staff(client, text, buttons=None):
 
 # Сообщения, где КЛИЕНТ ЖДЁТ ОТВЕТА: кнопка «✅ Ответила клиенту». Бот сам проверяет, был ли реальный ответ
 # (в чате магазина или ответом через бота): нет ответа — отметиться нельзя; ответили — отметка ставится сама.
-ANSWER_BUTTON = [[{"text": "✅ Ответила клиенту", "callback_data": "ans:x:0"}]]
+ANSWER_BUTTON = [[{"text": "💬 Написать клиенту", "callback_data": "write:x:0"}],
+                 [{"text": "✅ Ответила клиенту", "callback_data": "ans:x:0"}]]
 
 
 def notify_staff_wait(client, text, buttons=None):
@@ -701,6 +702,19 @@ def _handle_callback(cq, on_check):
     parts = (cq.get("data") or "").split(":")
     m = cq.get("message") or {}
     who = cq.get("from", {}).get("first_name") or "сотрудник"
+    if parts[0] == "write":
+        # «💬 Написать клиенту»: бот открывает поле ответа — следующее сообщение флориста уйдёт этому клиенту
+        # (от имени магазина), а у всех появится «✅ Ответила клиенту — Имя».
+        client = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id")) if m else None
+        call("answerCallbackQuery", callback_query_id=cq["id"])
+        if not client:
+            return
+        name = client_name(client) or "клиенту"
+        msg = send(m["chat"]["id"], f"✍️ Напишите ответ {name} — просто отправьте сообщение сюда, оно уйдёт клиенту 🌸",
+                   reply_markup={"force_reply": True, "input_field_placeholder": "Сообщение клиенту…"})
+        if msg:
+            db.link_staff_message(m["chat"]["id"], msg["message_id"], client)
+        return
     if parts[0] == "ans":
         client = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id")) if m else None
         if client and db.get_setting(f"await:{client}"):
