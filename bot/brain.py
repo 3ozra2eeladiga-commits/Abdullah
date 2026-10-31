@@ -1894,6 +1894,9 @@ DATA_SIGNAL_RE = re.compile(r"\d{3,}|\b(?:ул|улиц\w*|дом|кв|подъ�
 
 def _meaningful(v):
     v = str(v if v is not None else "").strip()
+    # «null», «None», «не указано» — это ИИ так пишет «пусто», а не данные клиента.
+    if re.fullmatch(r"(?:null|none|nan|undefined|не\s*указан\w*|неизвестн\w*|нет\s+данных|уточнить|—|-)[\s,.]*", v, re.I):
+        return False
     return v not in ("", "—", "-", "...", "…", "нет данных") and bool(re.sub(r"[\W_]+", "", v))
 
 
@@ -2283,18 +2286,29 @@ def _order_summary(o):
     return "\n".join(lines)
 
 
+def _clean_nulls(o):
+    """ИИ пишет null / "null" / "None" вместо пустого поля — в заказе это должна быть пустая строка
+    (иначе клиент увидит «null, а ваш номер телефона?»)."""
+    if isinstance(o, dict):
+        return {k: ("" if v is None or (isinstance(v, str) and re.fullmatch(r"\s*(?:null|none|undefined)\s*", v, re.I))
+                    else _clean_nulls(v)) for k, v in o.items()}
+    if isinstance(o, list):
+        return [_clean_nulls(x) for x in o]
+    return o
+
+
 def _parse_order_json(s):
     """Разбирает JSON заказа, терпимо к типичным огрехам ИИ (лишние запятые, текст вокруг)."""
     for candidate in (s, s[s.find("{"): s.rfind("}") + 1] if "{" in s and "}" in s else s):
         try:
-            return json.loads(candidate)
+            return _clean_nulls(json.loads(candidate))
         except json.JSONDecodeError:
             pass
     s = re.sub(r'(["\d\]}])\s*\n(\s*["{])', r"\1,\n\2", s)  # ИИ забыл запятые между строками
     fixed = re.sub(r",\s*([}\]])", r"\1", s)  # убрать висящие запятые
     fixed = fixed[fixed.find("{"): fixed.rfind("}") + 1] if "{" in fixed else fixed
     try:
-        return json.loads(fixed)
+        return _clean_nulls(json.loads(fixed))
     except json.JSONDecodeError:
         log.warning("Не удалось разобрать заказ: %s", s[:300])
         return None
