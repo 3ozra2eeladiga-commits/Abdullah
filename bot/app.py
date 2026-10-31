@@ -86,7 +86,7 @@ def _format_order(order_id, client, reply):
     o = reply.order
     if not o:
         # JSON не распознался — показываем аккуратно, без «сырого кода»
-        return (f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)}\n{_label(client)}\n\n"
+        return (f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)} (за {db.order_day(order_id)})\n{_label(client)}\n\n"
                 "⚠️ Заказ не распознался автоматически. Детали — в переписке с клиентом.\n"
                 "Ответьте на это сообщение, чтобы написать клиенту.")
 
@@ -98,7 +98,7 @@ def _format_order(order_id, client, reply):
         return val(x) != "—"
 
     pickup = o.get("получение") == "самовывоз"
-    lines = [telegram_bot.city_tag(client), f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)}", _label(client), "━━━━━━━━━━━━━━",
+    lines = [telegram_bot.city_tag(client), f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)} (за {db.order_day(order_id)})", _label(client), "━━━━━━━━━━━━━━",
              "🛍 ТОВАР:"]
     for it in o.get("товары", []):
         qty = it.get("кол-во", 1)
