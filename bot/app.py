@@ -76,9 +76,9 @@ def _order_ready(o):
     Независимая страховка — даже если где-то в логике ошибка, неполный заказ флористу не уйдёт."""
     if not isinstance(o, dict) or not o.get("товары"):
         return False
-    need = ["заказчик", "получатель", "дата", "время"]
+    need = ["заказчик", "дата", "время"]
     if o.get("получение") == "доставка":
-        need.append("адрес")
+        need += ["адрес", "получатель"]          # при самовывозе получателя нет
     return all(str(o.get(k) or "").strip() not in ("", "—") for k in need)
 
 
@@ -91,7 +91,8 @@ def _format_order(order_id, client, reply):
                 "Ответьте на это сообщение, чтобы написать клиенту.")
 
     def val(x):
-        return str(x).strip() if str(x if x is not None else "").strip() not in ("", "—", "...", "…") else "—"
+        v = str(x if x is not None else "").strip()
+        return v if v not in ("", "—", "...", "…") and v.lower() not in ("null", "none") else "—"
 
     def given(x):  # поле реально заполнено (ИИ иногда оставляет «...» из шаблона)
         return val(x) != "—"
@@ -125,11 +126,14 @@ def _format_order(order_id, client, reply):
         dp = str(o.get("доставка_цена") or "").strip()
         lines.append("   стоимость доставки: " + ("бесплатно" if dp == "0" else f"{dp} ₽" if dp.isdigit() else
                                                   "назовите клиенту при подтверждении" if dp == "уточнят" else val(dp)))
-    lines += [
-        "",
-        f"👤 Заказчик: {val(o.get('заказчик'))}",
-        f"🎁 Получатель: {val(o.get('получатель'))}",
-    ]
+    if pickup:                                  # самовывоз: получателя нет — забирает сам заказчик
+        lines += ["", f"👤 Заберёт: {val(o.get('заказчик'))}"]
+    else:
+        lines += [
+            "",
+            f"👤 Заказчик: {val(o.get('заказчик'))}",
+            f"🎁 Получатель: {val(o.get('получатель'))}",
+        ]
     if given(o.get("открытка")):
         lines.append(f"✉️ Текст открытки (написать от руки): {val(o['открытка'])}")
     if given(o.get("комментарий")):
