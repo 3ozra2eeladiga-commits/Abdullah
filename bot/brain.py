@@ -617,8 +617,8 @@ def _closed_now_note(client, city, asked=False):
                 and db.get_setting(f"closed_note:{client}") != now.strftime("%Y-%m-%d"):
             db.set_setting(f"closed_note:{client}", now.strftime("%Y-%m-%d"))
             en = max(en for _st, en in hours.values())
-            return (f"Сегодня доставить уже не успеем 🙏 Магазин работает до {int(en):02d}:{int(round(en % 1 * 60)):02d}, а на сборку и доставку нужно "
-                    f"около {URGENT_MIN_HOURS} часов. Заказ можно оформить сейчас — на завтра, с 08:00 или к удобному времени.")
+            return (f"Сегодня уже закрываемся 🙏 Давайте подготовим ваш букет завтра к открытию — с 08:00 "
+                    f"или к удобному времени. К какому времени удобно?")
         return ""
     if db.get_setting(f"closed_note:{client}") == now.strftime("%Y-%m-%d"):
         return ""
@@ -712,7 +712,7 @@ def _hour_from_text(t):
     return h
 
 
-URGENT_MIN_HOURS = 2      # срочный заказ: доставка не раньше чем через 2 часа (сборка + оплата + дорога)
+URGENT_MIN_HOURS = 0.5    # срочный заказ: на сборку нужно ~30 минут (Абдулла) — не отпускаем клиента раньше времени
 
 
 _DATE_WORD_RE = re.compile(r"послезавтра|завтра|сегодня|\b\d{1,2}[./]\d{1,2}(?:[./]\d{2,4})?\b|\b\d{1,2}\s+(?:январ|феврал|"
@@ -789,20 +789,30 @@ def _shop_in(text, shops):
     return None
 
 
+def _last_slot_today(city):
+    """Самое позднее время сегодня, к которому ещё успеем (сборка ~30 мин, до закрытия). None — сегодня уже никак."""
+    start, end = _shop_hours(city or "")
+    now = datetime.datetime.now(_MSK)
+    earliest = now + datetime.timedelta(hours=URGENT_MIN_HOURS)
+    earliest += datetime.timedelta(minutes=(-earliest.minute) % 5)           # округляем до 5 минут вверх
+    close = now.replace(hour=int(end), minute=int(round(end % 1 * 60)), second=0, microsecond=0)
+    return earliest if earliest < close else None
+
+
 def _too_late_today_msg(text, city):
-    """«Сегодня / срочно / пока не закроется магазин», а до закрытия меньше 2 часов — честно: сегодня не успеем."""
+    """«Сегодня / срочно», а до закрытия мало времени. Клиента НЕ отпускаем: если ещё успеваем — предлагаем
+    ближайшее время сегодня; если совсем никак — сразу предлагаем завтра с открытия."""
     t = (text or "").lower()
     if not re.search(r"сегодня|прямо\s+сейчас|срочно|как можно скор|побыстрее|поскорее|пока\s+не\s+закр|до\s+закрыт", t):
         return ""
     if re.search(r"завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b", t):
         return ""
     start, end = _shop_hours(city or "")
-    now = datetime.datetime.now(_MSK)
-    if now.hour + now.minute / 60 + URGENT_MIN_HOURS <= end:
-        return ""
-    where = f" ({city})" if city else ""
-    return (f"Сегодня, к сожалению, уже не успеем 🙏 Магазин{where} работает до {end:02d}:00, а на сборку и доставку "
-            f"нужно около {URGENT_MIN_HOURS} часов. Можем доставить завтра — к какому времени удобно (с {start:02d}:00)?")
+    slot = _last_slot_today(city)
+    if slot:
+        return ""                              # успеваем сегодня — обычное оформление
+    return (f"Сегодня уже закрываемся 🙏 Давайте подготовим ваш букет завтра к открытию — с {start:02d}:00. "
+            f"К какому времени удобно? Например: завтра к {start + 1:02d}:00")
 
 
 def _closed_hours_msg(hour, city):
@@ -812,8 +822,16 @@ def _closed_hours_msg(hour, city):
     start, end = _shop_hours(city)
     if start <= hour < end:
         return ""
-    return (f"К сожалению, в {hour:02d}:00 доставить не получится 🙏 Магазин ({city}) работает с {start:02d}:00 до "
-            f"{end:02d}:00 — доставляем в это время. Подскажите, к какому часу удобно?")
+    # Не отказываем, а сразу предлагаем, когда успеем: сегодня перед закрытием или утром.
+    slot = _last_slot_today(city) if hour >= end else None
+    if slot:
+        latest = datetime.datetime.now(_MSK).replace(hour=int(end), minute=0) - datetime.timedelta(minutes=30)
+        when = max(slot, latest)
+        return (f"Работаем до {end:02d}:00 🌸 Успеем сегодня к {when:%H:%M} — подойдёт? "
+                f"Или напишите другое время (завтра с {start:02d}:00).")
+    day = "завтра " if hour >= end else ""
+    return (f"Работаем с {start:02d}:00 до {end:02d}:00 🌸 Можем подготовить {day}к {start:02d}:00 или позже — "
+            f"к какому времени удобно?")
 
 
 # Клиенты (много иностранцев) пишут с ошибками: «ище вареанты», «пакажите букеды», «на завтро».
