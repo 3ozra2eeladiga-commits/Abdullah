@@ -236,7 +236,11 @@ def deliver(client, text, from_staff=False, quote=""):
         order_id = db.save_order(client, reply.order) if reply.order else None
         if order_id and reply.text:
             reply.text += f"\nНомер заказа: №{order_id}"   # по нему клиент может спросить или отменить
-        if reply.text and not from_staff and SALAM_RE.search(text or "") and not re.search(r"алейкум", reply.text, re.I):
+        if reply.text and not from_staff and re.search(r"шалом|shalom", text or "", re.I) \
+                and not re.search(r"шалом", reply.text, re.I):
+            reply.text = re.sub(r"^\s*здравствуйте!?\s*(?:🌸\s*)?", "", reply.text, count=1, flags=re.I)
+            reply.text = f"Шалом! 🤝\n{reply.text}"
+        elif reply.text and not from_staff and SALAM_RE.search(text or "") and not re.search(r"алейкум", reply.text, re.I):
             # «Салам алейкум» — отвечаем тем же, с улыбкой, и продолжаем как обычно.
             greet = "Ва алейкум ассалам! 🤝 Мир вашему дому — а цветы мы принесём 😊"
             if re.match(r"\s*здравствуйте!?", reply.text, re.I):

@@ -912,6 +912,18 @@ def _fix_time_answer(client, text, last_q=""):
     return text
 
 
+def GREET_REPLY(text):
+    """Ответ на приветствие на «своём» языке: «Шалом» → «Шалом! 🤝», «Салам» → «Ва алейкум ассалам! 🤝»."""
+    t = (text or "").lower()
+    if re.search(r"шалом|shalom", t):
+        return "Шалом! 🤝"
+    if re.search(r"салам|ассалам|salam", t):
+        return "Ва алейкум ассалам! 🤝"
+    if re.search(r"привет|здравств|добр\w+\s+(?:утр|день|вечер|ноч)|hello|\bhi\b", t):
+        return "Здравствуйте! 🌸"
+    return ""
+
+
 def _fix_way_typos(client, text):
     """Опечатки в ответе на «доставка или самовывоз?» («саморезов», «самовызов», «дастафка») — исправляем,
     чтобы бот понял ответ, а не задавал странные вопросы. Только для коротких ответов на этот вопрос."""
@@ -2782,6 +2794,9 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Ответ на «Сейчас магазины закрыты … 1 — оформить сейчас / 2 — напишу позже».
     if not from_staff and last_q.startswith("Сейчас магазины закрыты"):
         t = (incoming or "").strip().lower()
+        # «Хочу букет / розы» — это и есть «1 — оформить».
+        if re.search(r"букет|цвет|роз|заказ|хочу|нужн|оформ", t) and not re.match(r"^\W*(?:2|нет|позже)\b", t):
+            t = "1"
         if re.match(r"^\W*(?:1|да|оформ\w*|давай\w*|хорошо|ок)\b", t):
             # Дальше — ровно как днём, только дата уже известна: заказ на завтра (или на сегодня после полуночи).
             target = _set_night_target()
@@ -2804,6 +2819,13 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.del_setting(f"lastq:{client}")
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
+        # Другое («Шалом», «привет», «а что?») — не бросаем выбор: коротко отвечаем и напоминаем 1/2.
+        opts = "\n".join(l for l in last_q.splitlines() if re.match(r"[12] — ", l))
+        hello = GREET_REPLY(incoming)
+        text = (f"{hello} " if hello else "") + f"Ответьте цифрой 🌸\n{opts}"
+        db.set_setting(f"lastq:{client}", last_q)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # Грубость/мат: первый раз — предупреждение, второй — бот прекращает переписку (сотруднику — уведомление).
     if not from_staff and RUDE_RE.search(PRAISE_RE.sub(" ", incoming or "")):
         return _rude_reply(client, incoming, city)
