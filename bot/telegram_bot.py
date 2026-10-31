@@ -301,8 +301,8 @@ def staff_answered(client, who=None):
         _edit_msgs(msgs, f"✅ Ответила клиенту — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
         return
     db.set_setting(f"claim:{client}", json.dumps(msgs, ensure_ascii=False))
-    _edit_msgs(msgs, "💬 Клиенту ответили в чате магазина. Кто ответил — нажмите кнопку:",
-               [[{"text": "✅ Это я ответила", "callback_data": "ans:x:0"}]])
+    _edit_msgs(msgs, "💬 Клиенту ответили в чате магазина — та, кто ответила, нажмите «✅ Ответила клиенту»:",
+               ANSWER_BUTTON)
 
 
 def waiting_clients():
