@@ -395,7 +395,7 @@ def on_check(order_id, action):
     if action == "ok":
         # Кнопка «💳 Оплата» (QR Точки, on_pay) готова, но пока отключена — Абдулла: «пока отбой».
         # Нажатие кнопки — это ответ БОТА. Флорист должна сама написать клиенту (оплата, детали) — до этого
-        # заявка висит в «📭 Без ответа», а здесь — кнопки «💬 Написать клиенту» / «✅ Ответила клиенту».
+        # заявка висит в «📭 Без ответа», а здесь — кнопка «✅ Ответил(а)».
         telegram_bot.notify_staff_wait(client, f"✅ Заявка №{db.order_no(order_id)}: клиенту написали «всё в наличии, "
                                                "флорист напишет в ближайшие минуты».\n"
                                                "👉 Напишите клиенту сами: детали и оплата.")
@@ -473,7 +473,7 @@ def _answered(oid):
     return not db.get_setting(f"oawait:{oid}")
 
 
-_MARKS = {"check": "⏳ ждёт проверки", "ok": "✅ подтверждён", "no": "❌ нет в наличии", "other": "✍️ флорист отвечает сама"}
+_MARKS = {"check": "⏳ ждёт проверки", "ok": "✅ подтверждён", "no": "❌ нет в наличии", "other": "✍️ флорист отвечает сам(а)"}
 
 
 def _status_line(oid):
@@ -536,7 +536,7 @@ def day_summary():
     o_, c_ = config.DAY_OPEN, config.DAY_CLOSE
     text = (f"📊 Итоги дня {_biz_today(now - 300):%d.%m} (с {o_} до {c_}):\n"
             f"Всего заявок: {len(rows)}\n✅ подтверждено: {st.count('ok')}\n❌ нет в наличии: {st.count('no')}\n"
-            f"✍️ флорист отвечает сама: {st.count('other')}\n⏳ не проверено: {st.count('check')}\n"
+            f"✍️ флорист отвечает сам(а): {st.count('other')}\n⏳ не проверено: {st.count('check')}\n"
             f"💬 клиенту ещё не писали: {len(left)}")
     if left:
         text += "\n\nКлиенту не писали — нажмите номер, чтобы открыть заявку:"
@@ -860,7 +860,7 @@ def _handle_instagram(payload):
         client = f"ig:{ev['client']}"
         if ev["type"] == "staff_reply":
             db.pause(client, config.HUMAN_PAUSE_HOURS)
-            telegram_bot.staff_answered(client)    # флорист ответила в Директе — отметка «Ответила»
+            telegram_bot.staff_answered(client)    # флорист ответил(а) в Директе — отметка «Ответил(а)»
             continue
         if ev.get("image_urls"):
             # Фото букета отдаём флористу; остальной текст (если был) идёт отдельным сообщением.

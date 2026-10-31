@@ -259,14 +259,21 @@ def notify_staff(client, text, buttons=None):
     return [(c, m["message_id"]) for c, m, _t, _p in sent]
 
 
-# Сообщения, где КЛИЕНТ ЖДЁТ ОТВЕТА: кнопка «✅ Ответила клиенту». Бот сам проверяет, был ли реальный ответ
+# Сообщения, где КЛИЕНТ ЖДЁТ ОТВЕТА: кнопка «✅ Ответил(а)». Бот сам проверяет, был ли реальный ответ
 # (в чате магазина или ответом через бота): нет ответа — отметиться нельзя; ответили — отметка ставится сама.
-ANSWER_BUTTON = [[{"text": "💬 Написать клиенту", "callback_data": "write:x:0"}],
-                 [{"text": "✅ Ответила клиенту", "callback_data": "ans:x:0"}]]
+ANSWER_BUTTON = [[{"text": "✅ Ответил(а)", "callback_data": "ans:x:0"}]]
+
+
+def _answer_buttons(client):
+    """«✅ Ответил(а)» + если у клиента есть @ник — кнопка сразу открыть чат с ним."""
+    name = client_name(client)
+    m = re.search(r"@(\w{4,})", name)
+    rows = [[{"text": "💬 Открыть чат с клиентом", "url": f"https://t.me/{m.group(1)}"}]] if m else []
+    return rows + ANSWER_BUTTON
 
 
 def notify_staff_wait(client, text, buttons=None):
-    sent = notify_staff(client, text, buttons=buttons or ANSWER_BUTTON)
+    sent = notify_staff(client, text, buttons=buttons or _answer_buttons(client))
     try:
         msgs = json.loads(db.get_setting(f"awaitmsgs:{client}") or "[]")
     except ValueError:
@@ -286,8 +293,8 @@ def _edit_msgs(msgs, note, keyboard=None):
 
 
 def staff_answered(client, who=None):
-    """Сотрудник реально написал клиенту — снимаем «ждёт ответа». Ответ через бота — сразу «✅ Ответила — Имя».
-    Ответ из чата магазина (аккаунт общий, кто писал — не видно) — просим нажать «✅ Это я ответила», и тогда
+    """Сотрудник реально написал клиенту — снимаем «ждёт ответа». Ответ через бота — сразу «✅ Ответил(а) — Имя».
+    Ответ из чата магазина (аккаунт общий, кто писал — не видно) — просим нажать «✅ Ответил(а)», и тогда
     у всех будет видно имя того, кто ответил."""
     db._exec("DELETE FROM settings WHERE key LIKE 'oawait:%' AND value=?", (client,))   # заявки этого клиента — отвечены
     if not db.get_setting(f"await:{client}"):
@@ -299,11 +306,10 @@ def staff_answered(client, who=None):
     db.del_setting(f"await:{client}")
     db.del_setting(f"awaitmsgs:{client}")
     if who:
-        _edit_msgs(msgs, f"✅ Ответила клиенту — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
+        _edit_msgs(msgs, f"✅ Ответил(а) клиенту — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
         return
     db.set_setting(f"claim:{client}", json.dumps(msgs, ensure_ascii=False))
-    _edit_msgs(msgs, "💬 Клиенту ответили в чате магазина — та, кто ответила, нажмите «✅ Ответила клиенту»:",
-               ANSWER_BUTTON)
+    _edit_msgs(msgs, "💬 Клиенту ответили в чате магазина — кто ответил(а), нажмите «✅ Ответил(а)»:", ANSWER_BUTTON)
 
 
 def waiting_clients():
@@ -326,11 +332,11 @@ def stop_rings():
 
 def ensure_staff_keyboard(chat):
     """Один раз присылаем сотруднику кнопки звонка внизу чата."""
-    if not db.get_setting(f"kb_sent4:{chat}"):
+    if not db.get_setting(f"kb_sent5:{chat}"):
         if send(chat, "Кнопки внизу ⬇️ «📭 Без ответа» — заявки, по которым никто не нажал кнопку; "
                       "«📋 Заказы на сегодня» — список на сегодня; «🔔 Позвонить всем» — позвать всех.",
                 reply_markup=STAFF_KB):
-            db.set_setting(f"kb_sent4:{chat}", "1")
+            db.set_setting(f"kb_sent5:{chat}", "1")
 
 
 def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
@@ -704,7 +710,7 @@ def _handle_callback(cq, on_check):
     who = cq.get("from", {}).get("first_name") or "сотрудник"
     if parts[0] == "write":
         # «💬 Написать клиенту»: бот открывает поле ответа — следующее сообщение флориста уйдёт этому клиенту
-        # (от имени магазина), а у всех появится «✅ Ответила клиенту — Имя».
+        # (от имени магазина), а у всех появится «✅ Ответил(а) клиенту — Имя».
         client = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id")) if m else None
         call("answerCallbackQuery", callback_query_id=cq["id"])
         if not client:
@@ -722,13 +728,13 @@ def _handle_callback(cq, on_check):
                  text="Не вижу вашего ответа клиенту 🙏 Сначала напишите ему (в чате магазина или ответом на это "
                       "сообщение) — отметка поставится сама.")
         elif client and db.get_setting(f"claim:{client}"):
-            # Ответили из чата магазина — нажавший «Это я ответила» и есть тот, кто ответил: показываем всем.
+            # Ответили из чата магазина — нажавший «Ответил(а)» и есть тот, кто ответил: показываем всем.
             try:
                 msgs = json.loads(db.get_setting(f"claim:{client}") or "[]")
             except ValueError:
                 msgs = []
             db.del_setting(f"claim:{client}")
-            _edit_msgs(msgs, f"✅ Ответила клиенту — {_staff_name(cq.get('from'))}, "
+            _edit_msgs(msgs, f"✅ Ответил(а) клиенту — {_staff_name(cq.get('from'))}, "
                              f"{time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
             call("answerCallbackQuery", callback_query_id=cq["id"], text="Отмечено ✅")
         else:
