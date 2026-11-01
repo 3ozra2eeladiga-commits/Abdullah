@@ -194,6 +194,59 @@ _pending = {}
 _pending_lock = threading.Lock()
 
 
+# ---------- ТЗ п.11: после оформления заказ «активный» до кнопки «📦 Заказ доставлен» ----------
+ACK_RE = re.compile(r"^[\W\s]*(?:ага|ок|окей|ok|хорошо|спасибо|спс|благодар\w*|понял\w*|ясно|отлично|супер|класс|"
+                    r"жду|ждём|ждем|договорились|угу|да)?[\W\s]*$", re.I)
+ACTIVE_Q = "Это вопрос по вашему текущему заказу или хотите оформить новый?\n1 — по текущему заказу\n2 — новый заказ"
+
+
+def _active_order_guard(client, text):
+    """True — сообщение обработано здесь (бот ответил коротко/спросил/передал флористу), дальше не идём.
+    Строка — клиент выбрал «новый заказ»: обработать эту его фразу как обычно."""
+    oid = db.get_setting(f"active_order:{client}")
+    if not oid or db.get_setting(f"neworder:{client}"):
+        return False
+    t = (text or "").strip()
+    if ACK_RE.fullmatch(t):                          # «ага», «спасибо», смайлик — новый диалог не начинаем
+        if re.search(r"спасибо|спс|благодар", t, re.I):
+            _send_text(client, "Вам спасибо 🌸")
+        db.add_message(client, "user", t)
+        return True
+    aq = db.get_setting(f"activeq:{client}")
+    if aq:
+        if re.match(r"^\W*(?:1\b|по\s+текущ|текущ|этот|по\s+заказ)", t, re.I):
+            db.del_setting(f"activeq:{client}")
+            telegram_bot.notify_staff_wait(client, f"💬 Вопрос по заказу №{db.order_no(int(oid))}: «{aq}»\n"
+                                                   "Ответьте клиенту в чате магазина.")
+            db.pause(client, config.HUMAN_PAUSE_HOURS)
+            _send_text(client, "Передала флористу 🌸 Ответит вам здесь в ближайшее время.")
+            return True
+        if re.match(r"^\W*(?:2\b|нов)", t, re.I):
+            db.del_setting(f"activeq:{client}")
+            db.set_setting(f"neworder:{client}", "1")
+            return aq                                # дальше — обычное оформление нового заказа (с первой фразы)
+        _send_text(client, ACTIVE_Q)
+        return True
+    db.set_setting(f"activeq:{client}", t[:300])
+    db.add_message(client, "user", t)
+    _send_text(client, ACTIVE_Q)
+    return True
+
+
+def on_delivered(order_id, action):
+    """Кнопка «📦 Заказ доставлен»: заказ больше не активный — следующее сообщение клиента начинает новый диалог."""
+    row = db.get_order(order_id)
+    if not row:
+        return "Заявка не найдена."
+    client, _o = row
+    if str(db.get_setting(f"active_order:{client}") or "") == str(order_id):
+        db.del_setting(f"active_order:{client}")
+        db.del_setting(f"neworder:{client}")
+        db.del_setting(f"activeq:{client}")
+    db.set_setting(f"odelivered:{order_id}", "1")
+    return f"📦 Заказ №{db.order_no(order_id)} доставлен"
+
+
 def deliver_debounced(client, text, from_staff=False, quote=""):
     if from_staff:
         return deliver(client, text, from_staff=True, quote=quote)
@@ -261,6 +314,11 @@ def deliver(client, text, from_staff=False, quote=""):
                                   "/resume — снова включить бота, /reset — начать проверку заново.")
             return
         try:
+            guard = _active_order_guard(client, text) if not from_staff else False
+            if guard is True:
+                return
+            if isinstance(guard, str):
+                text = guard                         # «2 — новый заказ»: обрабатываем первую фразу клиента
             reply = brain.respond(client, text, from_staff=from_staff, quote=quote)
             if not from_staff and reply and reply.text and not reply.order and _bot_stuck(client, reply.text):
                 _to_human(client, f"(бот не понимает клиента — повторяет одно и то же) {text}", saved=True)
@@ -275,6 +333,7 @@ def deliver(client, text, from_staff=False, quote=""):
         order_id = db.save_order(client, reply.order) if reply.order else None
         if order_id:
             brain.start_new_order(client)          # следующий заказ — с нуля (без «доставка/завтра» прошлого)
+            db.set_setting(f"active_order:{client}", order_id)   # ТЗ п.11: активен, пока не нажмут «Заказ доставлен»
         if order_id and reply.text:
             reply.text += f"\nНомер заказа: №{db.order_no(order_id)} (на {db.order_day(order_id)})"   # по нему клиент может спросить или отменить
         if reply.text and not from_staff and re.search(r"шалом|shalom", text or "", re.I) \
@@ -1028,7 +1087,7 @@ def main():
     catalog.refresh()
     threading.Thread(target=_daily_loop, daemon=True).start()
     telegram_bot.start(deliver_debounced, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
-                       on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts,
+                       on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts, on_delivered=on_delivered,
                        on_question=on_question)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)

@@ -800,7 +800,7 @@ def _handle_callback(cq, on_check):
         call("answerCallbackQuery", callback_query_id=cq["id"], text=res[:200])
         return
     handler = {"chk": on_check, "ph": _hooks.get("on_photo_button"), "q": _hooks.get("on_question"),
-               "pay": _hooks.get("on_pay")}.get(parts[0]) if len(parts) == 3 else None
+               "pay": _hooks.get("on_pay"), "dlv": _hooks.get("on_delivered")}.get(parts[0]) if len(parts) == 3 else None
     if not handler or not parts[2].isdigit():
         call("answerCallbackQuery", callback_query_id=cq["id"])
         return
@@ -810,7 +810,9 @@ def _handle_callback(cq, on_check):
     call("answerCallbackQuery", callback_query_id=cq["id"], text=result[:200])
     if m:
         # Кнопки убираем (чтобы не нажали второй раз) и дописываем в само сообщение, кто и что отметил.
-        _mark_done(m, f"✅ Отмечено — {_staff_name(cq.get('from'))}: {result.split(' — ')[0].split(': ', 1)[-1]}")
+        # ТЗ п.11: после проверки под заявкой остаётся кнопка «📦 Заказ доставлен» — до неё заказ «активный».
+        keep = [[{"text": "📦 Заказ доставлен", "callback_data": f"dlv:x:{parts[2]}"}]] if parts[0] == "chk" else None
+        _mark_done(m, f"✅ Отмечено — {_staff_name(cq.get('from'))}: {result.split(' — ')[0].split(': ', 1)[-1]}", keep)
 
 
 def _staff_name(user):
@@ -838,11 +840,11 @@ def client_card(client):
     return "\n".join(lines)
 
 
-def _mark_done(m, note):
+def _mark_done(m, note, keyboard=None):
     """Дописывает в сообщение сотрудникам отметку («✅ Отмечено — Маша: Всё верно») и убирает кнопки."""
     if not m:
         return
-    kw = dict(chat_id=m["chat"]["id"], message_id=m["message_id"], reply_markup={"inline_keyboard": []})
+    kw = dict(chat_id=m["chat"]["id"], message_id=m["message_id"], reply_markup={"inline_keyboard": keyboard or []})
     if not note:
         call("editMessageReplyMarkup", **kw)
         return
@@ -862,7 +864,7 @@ def _mark_done(m, note):
     for cp in copies:
         if str(cp["c"]) == str(m["chat"]["id"]) and cp["m"] == m["message_id"]:
             continue
-        kw2 = dict(chat_id=cp["c"], message_id=cp["m"], reply_markup={"inline_keyboard": []})
+        kw2 = dict(chat_id=cp["c"], message_id=cp["m"], reply_markup={"inline_keyboard": keyboard or []})
         if cp.get("p"):
             ok2 = call("editMessageCaption", caption=(cp["t"] + "\n\n" + note)[:1024], **kw2)
         else:
@@ -898,9 +900,9 @@ def run_polling(deliver, on_check):
 
 
 def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None, on_pay=None,
-          on_report=None, on_show=None, counts=None):
+          on_report=None, on_show=None, counts=None, on_delivered=None):
     _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question, on_more=on_more,
-                  on_pay=on_pay, on_report=on_report, on_show=on_show, counts=counts)
+                  on_pay=on_pay, on_report=on_report, on_show=on_show, counts=counts, on_delivered=on_delivered)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return
