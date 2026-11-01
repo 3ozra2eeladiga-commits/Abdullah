@@ -998,6 +998,10 @@ _NAME_STOP = set("имя имени фамилия заказчик заказч
 def _name_from(text):
     """Имя из сообщения клиента («Абдулла», «меня зовут Анна Смирнова», «имя получателя: Анна»)."""
     t = PHONE_RE.sub(" ", text or "")
+    # «Давай Дима», «пусть будет Дима», «запишите Дима», «ну Дима» — само имя после вводных слов.
+    t = re.sub(r"^\W*(?:ну|ок|окей|хорошо|ладно|давай(?:те)?|пусть\s+будет|пиши(?:те)?|запиши(?:те)?|"
+               r"моё\s+имя|мое\s+имя|меня\s+зовут|имя)\b[\s,:—-]*", "", t, flags=re.I)
+    t = re.sub(r"^\W*(?:ну|ок|давай(?:те)?|пусть\s+будет)\b[\s,:—-]*", "", t, flags=re.I)
     if re.search(r"\d|самов|саморез|достав|дастав|забер|завтра|сегодня|адрес|улиц|открыт|букет|магазин|у\s+меня|"
                  r"квартал|ромашк|курьер|привез", t, re.I) or ALREADY_RE.search(t) \
             or re.search(r"\b(?:уже|выше|там|всё|все|ок|окей|хорошо|понял\w*|ладно|зачем|почему|сколько|можно|"
@@ -2794,7 +2798,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Ответ на «придумайте любое имя или слово» (самовывоз без данных) — берём как есть, это «пароль» для выдачи.
     if not from_staff and last_q == CODEWORD_Q and (incoming or "").strip():
         st = _contacts(client)
-        word = re.sub(r"[«»\"']", "", (incoming or "").strip())[:30]
+        word = _name_from(incoming) or re.sub(r"[«»\"']", "", (incoming or "").strip())[:30]
         st.update({"pickup": True, "nophone": True, "me_name": word, "codeword": True})
         db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
         nxt = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
