@@ -992,7 +992,7 @@ def _fix_way_typos(client, text):
 
 # Наши вопросы про имена/телефоны (и ИИ-шные «ваше имя и телефон»).
 CONTACT_Q_RE = re.compile(r"имя\s+и\s+телефон|ваш\s+(?:номер\s+)?телефон|как\s+вас\s+зовут|как\s+зовут\s+получател|"
-                          r"назовите\s+только\s+имя|на\s+ч[ьъ][её]\s+имя|"
+                          r"назовите\s+только\s+имя|на\s+ч[ьъ][её]\s+имя|ваша\s+фамилия|"
                           r"телефон\w*\s+получател", re.I)
 _NAME_STOP = set("имя имени фамилия заказчик заказчика заказчику получатель получателя получателю мой моё мое моя "
                  "меня зовут номер телефон телефона тел это вот и а да нет мне я её ее его ей ему кому для от "
@@ -1095,11 +1095,13 @@ def _contacts_next_q(st):
             return PICKUP_PHONE_Q.format(name=st["me_name"])
         return ""
     if not st.get("me_name") and not st.get("me_phone"):
-        return f"Ваше имя и телефон? 🌸\n{PHONE_NOTE}"
+        return f"Ваши имя, фамилия и телефон? 🌸 ({BONUS_NOTE})\n{PHONE_NOTE}"
     if not st.get("me_name"):
         return "Спасибо 🌸 А как вас зовут? (имя и фамилия)"
     if not st.get("me_phone"):
-        return f"{st['me_name']}, а ваш номер телефона? 📞\n{PHONE_NOTE}"
+        return f"{st['me_name']}, а ваш номер телефона? 📞 ({BONUS_NOTE})\n{PHONE_NOTE}"
+    if len(st["me_name"].split()) < 2 and not st.get("no_surname"):
+        return f"{st['me_name']}, а ваша фамилия? (для бонусной карты)"
     if not st.get("to_name") and not st.get("to_phone"):
         return "Спасибо 🌸 А имя и телефон получателя? (кому дарим)"
     if not st.get("to_name"):
@@ -1458,7 +1460,12 @@ CODEWORD_Q = ("Хорошо 🌸 Тогда придумайте любое им
 PICKUP_NO_PHONE_Q = ("Хорошо 🌸 Телефон не обязателен — данные мы никому не передаём. Назовите только имя, "
                      "на которое выдать заказ в магазине.")
 PHONE_NOTE = "(ваш номер — только для связи с вами по заказу, получателю мы его не сообщаем)"
-CONTACTS_Q = f"Ваше имя и телефон, и имя и телефон получателя? Можно одним сообщением 🌸\n{PHONE_NOTE}"
+BONUS_NOTE = "на этот номер оформим бонусную карту 🎁"
+CONTACTS_Q = (f"Ваши имя, фамилия и телефон ({BONUS_NOTE}), и имя и телефон получателя? Можно одним сообщением 🌸\n"
+              f"{PHONE_NOTE}")
+BONUS_RE = re.compile(r"бонус|кэшб[эе]к|кешб[эе]к|карт\w*\s+(?:лояльн|постоянн|клиент)|скидочн\w*\s+карт|накопительн", re.I)
+BONUS_INFO = ("Бонусная карта — накопительная 🌸 С каждой покупки — кэшбэк от 3%, бонусами можно оплатить от 10% покупки, "
+              "и с каждой покупкой оба процента растут. 1 бонус = 1 ₽, бонусы не сгорают. Карту оформим на ваш номер телефона.")
 # Клиент возмущается, что его переспрашивают: «я уже ответил / уже писал».
 CARD_TEXT_PREFIX_RE = re.compile(r"^\W*(?:текст(?:\s+(?:для|на)\s+открытк\w*)?|на\s+открытк\w*(?:\s+(?:напиш\w*|текст))?)"
                                  r"\s*[:—–-]?\s+(.+)$", re.I | re.S)
@@ -2861,6 +2868,15 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"lastq:{client}", nxt)
         db.add_message(client, "assistant", text)
         return Reply(text=text, city=city)
+    # Вопрос про бонусную карту — рассказываем и возвращаемся к своему вопросу.
+    if not from_staff and BONUS_RE.search(incoming or "") and (re.search(r"\?|что\s+за|как|расскаж|какая|какие|есть\s+ли",
+                                                                       incoming or "", re.I)):
+        back = _last_bot_text(client, last_q)
+        text = BONUS_INFO + (f"\n\n{back}" if back and "?" in back and len(back) < 400 else "")
+        if back:
+            db.set_setting(f"lastq:{client}", back)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # Имена и телефоны — добиваемся ВСЕХ четырёх: имя и телефон заказчика, имя и телефон получателя. Клиент может
     # присылать по частям («мой телефон …», «Абдулла») — спрашиваем ровно недостающее, дальше не идём.
     if not from_staff and CONTACT_Q_RE.search(_last_bot_text(client, last_q)) and len(PHONE_RE.findall(incoming or "")) < 2 \
@@ -2886,11 +2902,17 @@ def respond(client, incoming, from_staff=False, quote=""):
             re.search(r"получател|кому|ей\b|ему\b|мам[аеы]|пап[аеы]", incoming or "", re.I)
             or (st.get("me_name") and st.get("me_phone"))
             or (re.search(r"получател", lb, re.I) and not re.search(r"\bваш", lb, re.I)))   # спросили именно получателя
-        if phone or name or st.get("nophone"):
+        if phone or name or st.get("nophone") or (re.search(r"ваша фамилия", lb, re.I)
+                                                   and CONTACT_REFUSE_RE.search(incoming or "")):
             key = "to" if to_rec else "me"
             if phone:
                 st[f"{key}_phone"] = phone.group(0).strip()
-            if name:
+            surname_q = re.search(r"ваша фамилия", lb, re.I)
+            if surname_q and CONTACT_REFUSE_RE.search(incoming or ""):
+                st["no_surname"] = True             # фамилию давать не хочет — не настаиваем
+            elif name and surname_q and st.get("me_name") and len(st["me_name"].split()) < 2:
+                st["me_name"] = f"{st['me_name']} {name}"     # ответ на «а ваша фамилия?» — дописываем к имени
+            elif name:
                 st[f"{key}_name"] = name
             db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
             q = _contacts_next_q(st)
@@ -4199,7 +4221,9 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.text = f"{'Отличный выбор' if picked else 'Хорошо'} 🌸 {nxt}"
             db.set_setting(f"lastq:{client}", nxt)
         elif nxt and "?" not in reply.text and not re.search(r"\n1 — ", reply.text) \
-                and not SUMMARY_RE.search(reply.text):
+                and not SUMMARY_RE.search(reply.text) \
+                and not any(w in nxt.lower() and w in reply.text.lower()          # уже спросил то же — не дублируем
+                            for w in ("телефон", "адрес", "дату", "времени", "самовывоз", "открытк", "магазин")):
             # ИИ ответил утверждением («букет будет готов к 14:00») и не спросил дальше — разговор бы встал.
             # Добавляем следующий недостающий вопрос (или «Почти всё — напишите «да»»).
             reply.text = f"{reply.text.rstrip()}\n\n{nxt}"
