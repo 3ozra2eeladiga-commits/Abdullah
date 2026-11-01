@@ -206,7 +206,9 @@ class Catalog:
         bouquets_only — только букеты/композиции (без поштучных цветов, открыток, подарков и т.п.).
         """
         q = query.lower()
-        budget = _budget(q)
+        brange = _budget_range(q)
+        budget = brange[1] if brange else None
+        lo = brange[0] if brange else 0
         need_qty = _quantity(q)  # сколько штук просит клиент (для поштучных цветов)
         stems = {_stem(w) for w in re.findall(r"[а-яёa-z]+", q) if len(w) >= 3 and w not in STOP_WORDS}
         wanted_sections = {name for name, pattern in SECTION_HINTS if re.search(pattern, q)}
@@ -233,8 +235,8 @@ class Catalog:
                     score += 1
                 if it["code"] in keep_codes:
                     score += 100
-                if budget and it["price"] > budget and it["code"] not in keep_codes:
-                    continue
+                if budget and not (lo <= it["price"] <= budget) and it["code"] not in keep_codes:
+                    continue                    # вне окна бюджета (±500 ₽)
                 # Поштучные цветы: показываем только те, которых в наличии хватает на нужное количество
                 if need_qty and it["stock"] is not None and it["stock"] < need_qty and it["code"] not in keep_codes:
                     continue
@@ -245,7 +247,7 @@ class Catalog:
             # Ничего конкретного не спросили — показываем ходовые букеты
             for name, items in sections:
                 if name in DEFAULT_SECTIONS:
-                    scored += [(0.5, name, it) for it in items if (not budget or it["price"] <= budget)
+                    scored += [(0.5, name, it) for it in items if (not budget or lo <= it["price"] <= budget)
                                and not (it.get("stock") is not None and it["stock"] <= 0)]
 
         # С бюджетом — сначала то, что ближе к бюджету (дороже), а не самое дешёвое
@@ -264,7 +266,8 @@ class Catalog:
             picked.setdefault(name, []).append(it)
 
         lines = ["Разделы каталога:", *overview, ""]
-        lines.append("Подходящие товары" + (f" (бюджет до {budget} ₽)" if budget else "") + ":")
+        lines.append("Подходящие товары" + (f" (бюджет клиента: {lo}–{budget} ₽, показывай в этих пределах)"
+                                            if budget else "") + ":")
         for name, items in picked.items():
             lines.append(f"\n## {name}")
             lines += [self._line(it) for it in items]
@@ -313,10 +316,11 @@ def _stem(word):
 def _budget(q):
     """«до 3000», «3 тыс», «бюджет 5000», «за 3.000», «недорого/бюджетно» -> число рублей."""
     q = re.sub(r"(?<=\d)[.,\s](?=\d{3}\b)", "", q or "")   # «3.000», «3 000» → «3000»
-    m = re.search(r"(?:до|бюджет|за|около|не дороже)\s*(\d[\d\s]{2,6})", q) or \
+    m = re.search(r"(?:до|бюджет|за|около|не дороже|на|примерно|где-то)\s*(\d[\d\s]{2,6})(?![\d:.])", q) or \
         re.search(r"(\d[\d\s]{2,6})\s*(?:₽|р\b|руб)", q)
-    if m:
-        return int(re.sub(r"\s", "", m.group(1)))
+    if m and int(re.sub(r"\s", "", m.group(1))) >= 500 \
+            and not re.match(r"\s*(?:шт|роз|тюльпан|пион|хризантем|цвет|гвоздик)", q[m.end():]):
+        return int(re.sub(r"\s", "", m.group(1)))    # «на 101 розу» — это количество, а не бюджет
     m = re.search(r"(\d+)\s*(?:тыс|к\b)", q)
     if m:
         return int(m.group(1)) * 1000
@@ -324,6 +328,27 @@ def _budget(q):
     if re.search(r"недорог|бюджетн|подешевл|эконом|скромн|что подешевле", q):
         return 3000
     return None
+
+
+BUDGET_WINDOW = 500   # окно подбора ±500 ₽: «на 3000» → 2500–3500; «2500–3000» → 2000–3500
+
+
+def _budget_range(q):
+    """Бюджет клиента → (от, до) с окном ±500 ₽. Понимает одну сумму («до 3000», «на 3000», «3 тыс») и диапазон
+    в любой форме («2500–3000», «от 2 до 3 тысяч», «2-3к»). Нет бюджета — None."""
+    t = re.sub(r"(?<=\d)[.,\s](?=\d{3}\b)", "", (q or "").lower())      # «3.000», «3 000» → «3000»
+    m = re.search(r"(?:от\s*)?(\d{1,6})\s*(тыс\w*|к\b)?\s*(?:-|–|—|до)\s*(\d{1,6})\s*(тыс\w*|к\b)?", t)
+    if m and not re.search(r"\d{1,2}[:.]\d{2}", m.group(0)):
+        a, b = int(m.group(1)), int(m.group(3))
+        if a < 100 and b < 100 and not (m.group(2) or m.group(4)):
+            a = b = 0                            # «с 10 до 12» — это время, а не деньги
+        k = 1000 if (m.group(2) or m.group(4)) else 1
+        a, b = (a * 1000 if a < 100 else a) if k == 1000 else a, (b * 1000 if b < 100 else b) if k == 1000 else b
+        if 300 <= a <= b <= 300000 and (m.group(0).lstrip().startswith("от") or re.search(r"[-–—]", m.group(0))
+                                         or k == 1000 or a >= 300):
+            return max(0, a - BUDGET_WINDOW), b + BUDGET_WINDOW
+    n = _budget(t)
+    return (max(0, n - BUDGET_WINDOW), n + BUDGET_WINDOW) if n else None
 
 
 def _quantity(q):
