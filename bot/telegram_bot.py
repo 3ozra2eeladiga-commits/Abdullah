@@ -359,13 +359,21 @@ def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
     Останавливается: время вышло / still_waiting() == False / нажали «Выключить звонок»."""
     started = time.time()
     end = started + (seconds if seconds is not None else config.RING_MAX_MIN * 60)
+    rang = False
     while time.time() < end and still_waiting() and _ring_stopped_at[0] < started:
-        kb = staff_kb()                                   # заодно обновляем цифры на кнопках внизу
-        sent = [(chat, send(chat, text, reply_markup=kb)) for chat in staff_chats(client)]
+        # Звонковые сообщения — БЕЗ клавиатуры: если удалить сообщение, к которому привязаны кнопки внизу,
+        # Telegram убирает и сами кнопки (так они и «пропадали»).
+        sent = [(chat, send(chat, text)) for chat in staff_chats(client)]
+        rang = True
         time.sleep(5)                                        # дать мелодии доиграть
         for chat, msg in sent:
             if msg:
                 call("deleteMessage", chat_id=chat, message_id=msg["message_id"])
+    if rang:
+        # Одно короткое сообщение остаётся: возвращает кнопки внизу и обновляет на них цифры. Без звука.
+        kb = staff_kb()
+        for chat in staff_chats(client):
+            send(chat, text.replace("!", "").strip() + " ⬆️", reply_markup=kb, disable_notification=True)
 
 
 def ring(order_id, still_waiting, client=None, quiet=False):
