@@ -514,12 +514,7 @@ def on_report(kind):
             lines.append(("\n" if lines else "") + "💬 Проверены, но клиенту не написали:")
             lines += [f"• {_short_line(oid, c, o)}\n   {_status_line(oid).split(' · ')[0]}" for oid, c, o in checked]
         # Клиенты, которым флорист должен ответить сама (просил сотрудника, вопрос, «Другое»), а ответа ещё нет.
-        waiting = sorted([w for w in telegram_bot.waiting_clients() if w[1] >= _day_start(now)], key=lambda x: x[1])
-        if waiting:
-            lines.append(("\n" if lines else "") + "🙋 Клиент ждёт ответа:")
-        for c, since in waiting:
-            name = telegram_bot.client_name(c).split(" @")[0] or c.split(":", 1)[-1]
-            lines.append(f"• {name} — ждёт {_dur(int((now - since) // 60))}")
+        # Клиенты, ждущие живого сотрудника, — отдельная кнопка «🙋 Ждут сотрудника», здесь их не дублируем.
         ids = [oid for oid, _c, _o in unchecked + checked][:24]
         return (("📭 Без ответа:\n\n" + "\n".join(lines[:40])) if lines else "📭 Всем ответили 👍"), ids
     today = _biz_today(now)
@@ -552,7 +547,7 @@ def staff_counts():
     now = time.time()
     _t, noans = on_report("noanswer")
     _t2, today = on_report("today")
-    return {"noanswer": len(noans) + len([w for w in telegram_bot.waiting_clients() if w[1] >= _day_start(now)]),
+    return {"noanswer": len(noans),
             "today": sum(1 for oid in today if db.order_day(oid) == _biz_today(now).strftime("%d.%m")),
             "human": len(_human_waiting(now))}
 
