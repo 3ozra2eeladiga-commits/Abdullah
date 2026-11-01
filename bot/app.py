@@ -86,7 +86,7 @@ def _format_order(order_id, client, reply):
     o = reply.order
     if not o:
         # JSON не распознался — показываем аккуратно, без «сырого кода»
-        return (f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)} (за {db.order_day(order_id)})\n{_label(client)}\n\n"
+        return (f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)} (на {db.order_day(order_id)})\n{_label(client)}\n\n"
                 "⚠️ Заказ не распознался автоматически. Детали — в переписке с клиентом.\n"
                 "Ответьте на это сообщение, чтобы написать клиенту.")
 
@@ -98,7 +98,7 @@ def _format_order(order_id, client, reply):
         return val(x) != "—"
 
     pickup = o.get("получение") == "самовывоз"
-    lines = [telegram_bot.city_tag(client), f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)} (за {db.order_day(order_id)})", _label(client), "━━━━━━━━━━━━━━",
+    lines = [telegram_bot.city_tag(client), f"🔎 ЗАЯВКА НА ПРОВЕРКУ №{db.order_no(order_id)} (на {db.order_day(order_id)})", _label(client), "━━━━━━━━━━━━━━",
              "🛍 ТОВАР:"]
     for it in o.get("товары", []):
         qty = it.get("кол-во", 1)
@@ -241,7 +241,7 @@ def deliver(client, text, from_staff=False, quote=""):
         if order_id:
             brain.start_new_order(client)          # следующий заказ — с нуля (без «доставка/завтра» прошлого)
         if order_id and reply.text:
-            reply.text += f"\nНомер заказа: №{db.order_no(order_id)}"   # по нему клиент может спросить или отменить
+            reply.text += f"\nНомер заказа: №{db.order_no(order_id)} (на {db.order_day(order_id)})"   # по нему клиент может спросить или отменить
         if reply.text and not from_staff and re.search(r"шалом|shalom", text or "", re.I) \
                 and not re.search(r"шалом", reply.text, re.I):
             reply.text = re.sub(r"^\s*здравствуйте!?\s*(?:🌸\s*)?", "", reply.text, count=1, flags=re.I)
@@ -429,9 +429,8 @@ def _order_day(o, created):
 
 
 def _num(oid):
-    """«№4» — номер за сегодня; заказ, оформленный в другой день, — «№4 от 30.10» (чтобы номера не путались)."""
-    day = db.order_day(oid)
-    return f"№{db.order_no(oid)}" + ("" if not day or day == _biz_today().strftime("%d.%m") else f" от {day}")
+    """«№2» — номер среди заказов на тот же день (у каждого дня свои №1, №2…)."""
+    return f"№{db.order_no(oid)}"
 
 
 def _close_minutes():
@@ -445,8 +444,8 @@ def _short_line(oid, client, o):
     pickup = (o.get("получение") or "").lower().startswith("самовывоз")
     where = ("самовывоз " if pickup else "") + str(o.get("адрес") or "").replace("ул. ", "")
     raw = str(o.get("заказчик") or "")
-    who = "🎁 сюрприз" if "сюрприз" in raw.lower() else re.split(r"[,(]", raw)[0].strip()
-    if not brain._meaningful(who) or brain._name_from(who) == "" and "сюрприз" not in who:
+    who = "без номера заказчика" if re.search(r"сюрприз|не оставил", raw, re.I) else re.split(r"[,(]", raw)[0].strip()
+    if not brain._meaningful(who) or brain._name_from(who) == "" and who != "без номера заказчика":
         who = telegram_bot.client_name(client).split(" @")[0]             # «null», «Точно» → имя из Telegram
     parts = [_num(oid), when if brain._meaningful(when) else "", where[:40], who[:20]]
     return " · ".join(p for p in parts if p and p not in ("—", "..."))

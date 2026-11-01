@@ -97,23 +97,63 @@ def get_order(order_id):
     return (row["client"], json.loads(row["data"])) if row else None
 
 
+_MONTHS_RU = ("январ", "феврал", "март", "апрел", "ма", "июн", "июл", "август", "сентябр", "октябр", "ноябр", "декабр")
+
+
+def _target_day(data, created):
+    """На какой день заказ (дата доставки/самовывоза): «сегодня/завтра» — от дня оформления, «02.11», «8 марта».
+    Не понятно — рабочий день оформления (после 22:00 — следующий)."""
+    import datetime as _dt
+    import re as _re
+    msk = _dt.timezone(_dt.timedelta(hours=3))
+    base = _dt.datetime.fromtimestamp(created, msk)
+    d = str((data or {}).get("дата") or "").lower()
+    for word, add in (("послезавтра", 2), ("завтра", 1), ("сегодня", 0)):
+        if word in d:
+            return base.date() + _dt.timedelta(days=add)
+    m = _re.search(r"\b(\d{1,2})[./](\d{1,2})", d)
+    day = mon = None
+    if m:
+        day, mon = int(m.group(1)), int(m.group(2))
+    else:
+        m = _re.search(r"\b(\d{1,2})\s+([а-яё]+)", d)
+        if m:
+            mon = next((i + 1 for i, w in enumerate(_MONTHS_RU) if m.group(2).startswith(w)), None)
+            day = int(m.group(1))
+    if day and mon:
+        try:
+            t = _dt.date(base.year, mon, day)
+            return t if t >= base.date() - _dt.timedelta(days=1) else _dt.date(base.year + 1, mon, day)
+        except ValueError:
+            pass
+    hh, mm = (int(x) for x in (config.DAY_CLOSE or "22:00").split(":"))
+    return (base + _dt.timedelta(minutes=24 * 60 - hh * 60 - mm)).date()
+
+
 def order_no(order_id):
-    """Номер заказа «за день»: каждый рабочий день нумерация с №1. День заканчивается в DAY_CLOSE (22:00 МСК):
-    заказы после закрытия — уже следующего дня. В базе номер остаётся сквозным (id) — для ссылок и кнопок."""
+    """Номер заказа «на свой день»: у заказов на один и тот же день — №1, №2, №3… (по порядку оформления).
+    В базе номер остаётся сквозным (id) — для ссылок и кнопок."""
     cached = get_setting(f"dayno:{order_id}")
-    if cached and get_setting(f"dayof:{order_id}"):
+    if cached and get_setting(f"dayof:{order_id}") and get_setting(f"dayver:{order_id}") == "2":
         return int(cached)
-    row = _exec("SELECT created FROM orders WHERE id=?", (order_id,)).fetchone()
+    row = _exec("SELECT data, created FROM orders WHERE id=?", (order_id,)).fetchone()
     if not row:
         return order_id
-    hh, mm = (int(x) for x in (config.DAY_CLOSE or "22:00").split(":"))
-    shift = (24 * 60 - (hh * 60 + mm)) * 60            # после закрытия → следующий день
-    msk = 3 * 3600
-    day = int((row["created"] + msk + shift) // 86400)
-    start = day * 86400 - msk - shift
-    n = _exec("SELECT COUNT(*) AS n FROM orders WHERE created>=? AND id<=?", (start, order_id)).fetchone()["n"]
+    try:
+        target = _target_day(json.loads(row["data"]), row["created"])
+    except ValueError:
+        return order_id
+    n = 0
+    for r in _exec("SELECT id, data, created FROM orders WHERE created>=? AND id<=?",
+                   (row["created"] - 120 * 86400, order_id)).fetchall():
+        try:
+            if _target_day(json.loads(r["data"]), r["created"]) == target:
+                n += 1
+        except ValueError:
+            continue
     set_setting(f"dayno:{order_id}", n)
-    set_setting(f"dayof:{order_id}", time.strftime("%d.%m", time.gmtime(start + msk + shift)))
+    set_setting(f"dayof:{order_id}", target.strftime("%d.%m"))
+    set_setting(f"dayver:{order_id}", "2")
     return n
 
 
