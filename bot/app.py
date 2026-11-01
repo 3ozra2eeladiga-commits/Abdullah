@@ -289,6 +289,9 @@ def deliver(client, text, from_staff=False, quote=""):
             else:
                 reply.text = f"Ва алейкум ассалам! 🤝\n{reply.text}"
         if reply.text:
+            # ТЗ п.9: служебные пометки в квадратных скобках («[уточнить]») клиенту никогда не показываем.
+            reply.text = re.sub(r"[ \t]*\[[^\]\n]{0,60}\][ \t]*", " ", reply.text).replace(" ,", ",").strip()
+        if reply.text:
             _send_text(client, brain.pretty(reply.text))  # короткими абзацами — легче читать
         for item in reply.photos:
             _send_photo(client, item)

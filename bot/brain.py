@@ -442,7 +442,7 @@ def _picked_by_price(client, incoming, city):
     return near if len(near) == 1 else []
 
 
-ADDRESS_Q = "Адрес доставки? 📍 Например: Крайнего, 90, подъезд 2, кв. 15"
+ADDRESS_Q = "Адрес доставки? 📍 Улица и дом (если есть — подъезд, этаж, квартира, домофон). Например: Крайнего, 90"
 ALMOST_DONE_Q = "Почти всё 🌸 Напишите «да» — пришлю итог."
 
 
@@ -1639,7 +1639,7 @@ def _order_missing(o, client_text):
             and not re.search(rf"(?<!\d){hour_o}(?!\d)|(?<!\d){hour_o - 12}(?!\d)|как можно|скорее|срочно|"
                               r"через\s+\w+\s+час|через\s+час|любое|утр|вечер|обед", cl):
         return NIGHT_DATE_Q if shops_closed_now(city_o) else DATE_Q   # время придумал ИИ — спрашиваем
-    if o.get("получение") == "доставка" and len((o.get("адрес") or "").strip()) < 6:
+    if o.get("получение") == "доставка" and (len((o.get("адрес") or "").strip()) < 6 or not _meaningful(o.get("адрес"))):
         return ADDRESS_Q
     if _time_is_vague(o.get("время")) and not o.get("_время_у_получателя"):
         return "Подскажите, пожалуйста, точное время — к которому часу нужен букет? (например, к 14:00) 🕒"
@@ -1964,6 +1964,8 @@ def _meaningful(v):
     # «null», «None», «не указано» — это ИИ так пишет «пусто», а не данные клиента.
     if re.fullmatch(r"(?:null|none|nan|undefined|не\s*указан\w*|неизвестн\w*|нет\s+данных|уточнить|—|-)[\s,.]*", v, re.I):
         return False
+    if re.fullmatch(r"\s*\[[^\]]*\]\s*", v) or re.search(r"\[(?:уточн|адрес|имя|телефон|\.\.\.)", v, re.I):
+        return False                         # «[уточнить]» — служебная пометка ИИ, не данные
     return v not in ("", "—", "-", "...", "…", "нет данных") and bool(re.sub(r"[\W_]+", "", v))
 
 
