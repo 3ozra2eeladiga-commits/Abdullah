@@ -1051,6 +1051,10 @@ def start_new_order(client):
     db.new_conversation(client)
 
 
+def lb_is_name_q(text):
+    return bool(re.search(r"Назовите только имя|Как вас зовут|имя и телефон", text or "", re.I))
+
+
 def _is_pickup(client):
     """Клиент забирает сам (самовывоз) — тогда «получателя» и адреса нет. Последнее слово клиента главнее:
     «1 — доставка», потом «нет, самовывоз» — это самовывоз."""
@@ -1434,6 +1438,8 @@ DATE_Q = "На какую дату и к какому времени? 📅 На�
 PICKUP_CONTACT_Q = ("Ваше имя и телефон? 🌸\n(номер — только чтобы быстро связаться с вами по заказу, "
                     "никому его не передаём)")
 PICKUP_PHONE_Q = "{name}, а ваш номер телефона? 📞 Только чтобы быстро связаться по заказу — никому не передаём."
+CODEWORD_Q = ("Хорошо 🌸 Тогда придумайте любое имя или слово — назовёте его в магазине, и мы выдадим заказ. "
+              "Например: «Ромашка»")
 PICKUP_NO_PHONE_Q = ("Хорошо 🌸 Телефон не обязателен — данные мы никому не передаём. Назовите только имя, "
                      "на которое выдать заказ в магазине.")
 PHONE_NOTE = "(ваш номер — только для связи с вами по заказу, получателю мы его не сообщаем)"
@@ -1821,7 +1827,10 @@ def _apply_client_state(order, client, city):
         if note not in c:
             order["комментарий"] = (c + "; " if c else "") + note
     if (order.get("получение") or "").lower().startswith("самовывоз"):
-        if ct_.get("me_name") and ct_.get("nophone") and not ct_.get("me_phone"):
+        if ct_.get("codeword"):
+            order["заказчик"] = f"по слову «{ct_['me_name']}» (имя и телефон не оставил(а))"
+            order["_без_телефона"] = True
+        elif ct_.get("me_name") and ct_.get("nophone") and not ct_.get("me_phone"):
             order["заказчик"] = f"{ct_['me_name']} (телефон не дал — выдать по имени)"
             order["_без_телефона"] = True
         if not str(order.get("получатель") or "").strip() or str(order.get("получатель")).strip() in ("—", "-"):
@@ -2782,6 +2791,19 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"lastq:{client}", SURPRISE_Q)
             db.add_message(client, "assistant", SURPRISE_Q)
             return Reply(text=SURPRISE_Q, city=city)
+    # Ответ на «придумайте любое имя или слово» (самовывоз без данных) — берём как есть, это «пароль» для выдачи.
+    if not from_staff and last_q == CODEWORD_Q and (incoming or "").strip():
+        st = _contacts(client)
+        word = re.sub(r"[«»\"']", "", (incoming or "").strip())[:30]
+        st.update({"pickup": True, "nophone": True, "me_name": word, "codeword": True})
+        db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+        nxt = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
+                             _known_order(client))
+        text = f"Отлично 🌸 Выдадим заказ по слову «{word}»." + (f" {nxt}" if nxt and nxt != ALMOST_DONE_Q else "")
+        if nxt and nxt != ALMOST_DONE_Q:
+            db.set_setting(f"lastq:{client}", nxt)
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     # Имена и телефоны — добиваемся ВСЕХ четырёх: имя и телефон заказчика, имя и телефон получателя. Клиент может
     # присылать по частям («мой телефон …», «Абдулла») — спрашиваем ровно недостающее, дальше не идём.
     if not from_staff and CONTACT_Q_RE.search(_last_bot_text(client, last_q)) and len(PHONE_RE.findall(incoming or "")) < 2 \
@@ -2792,6 +2814,14 @@ def respond(client, incoming, from_staff=False, quote=""):
         phone = PHONE_RE.search(incoming or "")
         name = _name_from(incoming)
         if st["pickup"] and CONTACT_REFUSE_RE.search(incoming or "") and not phone:
+            # Самовывоз: не хочет давать телефон — выдадим по имени; не хочет и имя — пусть придумает слово-пароль.
+            if not st.get("me_name") and lb_is_name_q(_last_bot_text(client, last_q)) and (
+                    st.get("nophone") or re.search(r"\bим(?:я|ени)\b|фамили|данн", incoming or "", re.I)):
+                st["nophone"] = True
+                db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+                db.set_setting(f"lastq:{client}", CODEWORD_Q)
+                db.add_message(client, "assistant", CODEWORD_Q)
+                return Reply(text=CODEWORD_Q, city=city)
             st["nophone"] = True                # самовывоз без телефона — выдадим по имени
             name = ""
         lb = _last_bot_text(client, last_q)
