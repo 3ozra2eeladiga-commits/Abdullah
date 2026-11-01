@@ -428,6 +428,13 @@ def _order_day(o, created):
     return brain._resolve_date(d)
 
 
+def _dur(mins):
+    """550 → «9 ч 10 мин», 45 → «45 мин», 120 → «2 ч»."""
+    mins = max(1, int(mins))
+    h, m = divmod(mins, 60)
+    return f"{h} ч" + (f" {m} мин" if m else "") if h else f"{m} мин"
+
+
 def _num(oid):
     """«№2» — номер среди заказов на тот же день (у каждого дня свои №1, №2…)."""
     return f"№{db.order_no(oid)}"
@@ -503,7 +510,7 @@ def on_report(kind):
             lines.append(("\n" if lines else "") + "🙋 Клиент ждёт ответа:")
         for c, since in waiting:
             name = telegram_bot.client_name(c).split(" @")[0] or c.split(":", 1)[-1]
-            lines.append(f"• {name} — {max(1, int((now - since) // 60))} мин")
+            lines.append(f"• {name} — ждёт {_dur(int((now - since) // 60))}")
         ids = [oid for oid, _c, _o in unchecked + checked][:24]
         return (("📭 Без ответа:\n\n" + "\n".join(lines[:40])) if lines else "📭 Всем ответили 👍"), ids
     today = _biz_today(now)
@@ -562,7 +569,7 @@ def _remind_unchecked():
         mins = int((now - created) // 60)
         if n < 3 and mins >= config.REMIND_MIN * (n + 1):
             db.set_setting(f"oremind:{oid}", n + 1)
-            telegram_bot.notify_staff(client, f"⏰ Заявка №{db.order_no(oid)} не проверена уже {mins} мин! Нажмите номер и проверьте.",
+            telegram_bot.notify_staff(client, f"⏰ Заявка №{db.order_no(oid)} не проверена уже {_dur(mins)}! Нажмите номер и проверьте.",
                                       buttons=[[{"text": f"№{db.order_no(oid)}", "callback_data": f"show:x:{oid}"}]])
             telegram_bot.ring(oid, lambda o=oid: db.get_setting(f"ostatus:{o}") == "check", client)
 
