@@ -257,6 +257,7 @@ def clear_history(client):
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?)", (f"rude:{client}", f"pack:{client}", f"surprise:{client}", f"contacts:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?)", (f"await:{client}", f"awaitmsgs:{client}",
                                                      f"nightorder:{client}", f"closed_note:{client}"))
+    _exec("DELETE FROM settings WHERE key IN (?,?,?)", (f"winq:{client}", f"winok:{client}", f"exacttime:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?,?)", (f"noaddr:{client}", f"notime:{client}", f"placeq:{client}",
                                                          f"addr_extra:{client}", f"addr_base:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?)", (f"seen:{client}", f"asap:{client}"))

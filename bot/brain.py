@@ -446,11 +446,19 @@ ADDRESS_Q = "Адрес доставки? 📍 Например: Крайнег�
 ALMOST_DONE_Q = "Почти всё 🌸 Напишите «да» — пришлю итог."
 
 
+def _not_address(m):
+    """«завтра на 3», «сегодня к 14:00», «через 2 часа», «51 роза» — это время/количество, не адрес."""
+    return bool(PHONE_RE.search(m) or re.search(r"\b(?:сегодня|завтра|послезавтра|через|после|около)\b|\b[квс]\s+\d{1,2}(?:[:.]\d{2})?\b|"
+                          r"\bна\s+\d{1,2}(?:[:.]\d{2})?\s*$|\d{1,2}:\d{2}|\d+\s*(?:роз|шт|тыс|₽|руб|час|мин)", m, re.I)) \
+        and not re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|дом|кв|квартир\w*|подъезд)\b", m, re.I)
+
+
 def _has_address(user_msgs):
-    """Клиент уже назвал адрес: «ул. Весенняя 33», «Крайнего 90», «адрес крайнего 90»."""
-    return any(re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|дом|кв|квартир\w*)\b\.?\s*\S|"
+    """Клиент уже назвал адрес: «ул. Весенняя 33», «Крайнего 90», «адрес крайнего 90», «Весенняя 55»."""
+    return any(not _not_address(m) and re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|дом|кв|квартир\w*)\b\.?\s*\S|"
                          r"адрес\w*\s*[:-]?\s*[А-ЯЁа-яёA-Za-z][^\n]{0,40}?\d+|"
-                         r"^[А-ЯЁа-яё][а-яё-]+(?:\s+[А-ЯЁа-яё][а-яё-]+)?,?\s+\d+", m.strip(), re.I)
+                         r"^(?:[А-ЯЁа-яё-]+,\s*)?[А-ЯЁа-яё][а-яё-]+(?:\s+[А-ЯЁа-яё][а-яё-]+)?,?\s+\d+",
+                         m.strip(), re.I)
                for m in user_msgs)
 
 
@@ -554,8 +562,11 @@ def _delivery_window(date_s, time_s):
     dt = _resolve_date(date_s)
     holiday = bool(dt and dt.strftime("%d.%m") in config.HOLIDAYS)
     hours = config.HOLIDAY_WINDOW_HOURS if holiday else config.WINDOW_HOURS
-    end = (hh + hours) % 24
-    return f"с {hh:02d}:{mm:02d} до {end:02d}:{mm:02d}"
+    # ТЗ п.5: интервал вокруг названного времени — ±30 мин (в праздники шире): «к 15:00» → «с 14:30 до 15:30».
+    center = hh * 60 + mm
+    half = int(hours * 60 / 2)
+    a, b = (center - half) % 1440, (center + half) % 1440
+    return f"с {a // 60:02d}:{a % 60:02d} до {b // 60:02d}:{b % 60:02d}"
 
 
 ANKETA_TAIL = "пришлю варианты 💐"
@@ -913,8 +924,8 @@ def _fix_time_answer(client, text, last_q=""):
         if h > 23:
             return m.group(0)
         return f"{m.group(1)} {h + 12 if 1 <= h <= 7 else h:02d}:00"   # «в 3» — 15:00 (ночью закрыто)
-    t2 = re.sub(r"\b([кв])\s*(\d{1,2})\b(?![:.]\d)(?!\s*(?:числ|чис|дн|янв|фев|мар|апр|ма[яй]|июн|июл|авг|сен|окт|ноя|дек|"
-                r"час\w*\s+дн|минут))(?:\s*час\w*)?", _hh, t, flags=re.I)
+    t2 = re.sub(r"\b([кв]|на)\s*(\d{1,2})\b(?![:.]\d)(?!\s*(?:числ|чис|дн|янв|фев|мар|апр|ма[яй]|июн|июл|авг|сен|окт|ноя|дек|"
+                r"час\w*\s+дн|минут|шт|роз|челов|персон|букет|цвет|тыс|к\b|₽|руб))(?:\s*час\w*)?", _hh, t, flags=re.I)
     if t2 != t and re.search(r"\d{1,2}[./]\d{1,2}|сегодня|завтра|послезавтра|\d{1,2}\s+\w{3,}", t2, re.I) or \
             (t2 != t and TIME_Q_RE.search(last_bot)):
         return t2
@@ -1040,7 +1051,7 @@ def _contacts(client):
 
 
 # Состояние ОДНОГО заказа: после отправленной заявки — сбрасываем, следующий заказ с нуля.
-ORDER_STATE_KEYS = ("chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
+ORDER_STATE_KEYS = ("winq", "winok", "exacttime", "chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
                     "pickup_shop", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
                     "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item")
 
@@ -1814,6 +1825,12 @@ def _apply_client_state(order, client, city):
         if not re.search(r"\d{1,2}[./]\d{1,2}|послезавтра", str(order.get("дата") or "")):
             order["дата"] = nt
         order["_ночной_заказ"] = True
+    ex_t = db.get_setting(f"exacttime:{client}") or ""
+    if ex_t:
+        c0 = str(order.get("комментарий") or "").strip()
+        note0 = f"⏰ Клиент просит точно к {ex_t} — постарайтесь"
+        if note0 not in c0:
+            order["комментарий"] = (c0 + "; " if c0 else "") + note0
     extra = db.get_setting(f"addr_extra:{client}") or ""
     if extra and not (order.get("получение") or "").lower().startswith("самовывоз"):
         base = str(order.get("адрес") or "").strip() or db.get_setting(f"addr_base:{client}") or ""
@@ -2675,6 +2692,40 @@ def respond(client, incoming, from_staff=False, quote=""):
             st = _contacts(client)
             st.update({k: v for k, v in both.items() if v})
             db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+    # ТЗ п.5: доставку гарантируем в часовой интервал. Клиент назвал время → предлагаем «с 14:30 до 15:30, подойдёт?».
+    if not from_staff:
+        winq = db.get_setting(f"winq:{client}") or ""
+        if winq and last_q.startswith("Доставим с"):
+            t_w = (incoming or "").strip().lower()
+            exact = re.match(r"^\W*2\b", t_w) or re.search(r"точно|ровно|строго|не\s+позже|обязательно\s+к", t_w)
+            if exact or re.match(r"^\W*(?:1|да|ок|подойд|хорошо|норм|давай|согласн|устраива)", t_w):
+                db.del_setting(f"winq:{client}")
+                db.set_setting(f"winok:{client}", winq)
+                if exact:
+                    db.set_setting(f"exacttime:{client}", winq)
+                head = (f"Точно к {winq} гарантировать не можем, но постараемся успеть 🌸 Записала пожелание."
+                        if exact else "Отлично 🌸")
+                nxt = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"] + [incoming],
+                                     city, _known_order(client))
+                text = f"{head} {nxt}" if nxt and nxt != ALMOST_DONE_Q else head
+                if nxt:
+                    db.set_setting(f"lastq:{client}", nxt)
+                db.add_message(client, "assistant", text)
+                return Reply(text=text, city=city)
+        hour_w = _hour_from_text(incoming)
+        m_w = re.search(r"\b(\d{1,2})[:.](\d{2})\b", incoming or "")
+        if hour_w is not None and not _is_pickup(client) and not db.get_setting(f"winok:{client}") \
+                and re.search(r"доставк", " ".join(m["content"] for m in db.history(client, 30) if m["role"] == "user")
+                              + " " + (incoming or ""), re.I) \
+                and re.search(r"врем|час|когда|дат", _last_bot_text(client, last_q), re.I):
+            tm = f"{hour_w:02d}:{m_w.group(2) if m_w else '00'}"
+            win = _delivery_window(db.get_setting(f"nightorder:{client}") or "", tm)
+            if win:
+                db.set_setting(f"winq:{client}", tm)
+                text = f"Доставим {win} 🕒 Подойдёт?\n1 — да\n2 — нужно точно к {tm}"
+                db.set_setting(f"lastq:{client}", text)
+                db.add_message(client, "assistant", text)
+                return Reply(text=text, city=city)
     # «Завтра в любое время» — нужно хотя бы примерно «с какого времени», чтобы букет был готов.
     if not from_staff and ANYTIME_RE.search(incoming or "") and not re.search(r"\d{1,2}[:.]\d{2}|\b(?:с|после|к|в)\s*\d{1,2}\b",
                                                                          incoming or "") and last_q != ANYTIME_Q:
