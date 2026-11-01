@@ -187,6 +187,41 @@ def _to_human(client, text, saved=False):
     db.pause(client, config.HUMAN_PAUSE_HOURS)
 
 
+# ТЗ п.1: клиенты пишут одну мысль несколькими сообщениями («На ваш вкус» → «Главное красивый»). Ждём 4 с после
+# каждого сообщения (новое — отсчёт заново), но не дольше 15 с от первого; потом отвечаем один раз на всё вместе.
+PAUSE_SEC, PAUSE_MAX_SEC = 4, 15
+_pending = {}
+_pending_lock = threading.Lock()
+
+
+def deliver_debounced(client, text, from_staff=False, quote=""):
+    if from_staff:
+        return deliver(client, text, from_staff=True, quote=quote)
+    now = time.time()
+    with _pending_lock:
+        b = _pending.setdefault(client, {"texts": [], "quote": "", "first": now, "timer": None})
+        b["texts"].append(text)
+        if quote:
+            b["quote"] = quote
+        if b["timer"]:
+            b["timer"].cancel()
+        delay = max(0.1, min(PAUSE_SEC, b["first"] + PAUSE_MAX_SEC - now))
+        b["timer"] = threading.Timer(delay, _flush_pending, args=(client,))
+        b["timer"].daemon = True
+        b["timer"].start()
+    try:
+        telegram_bot.typing(client)                 # «печатает…», пока ждём
+    except Exception:
+        pass
+
+
+def _flush_pending(client):
+    with _pending_lock:
+        b = _pending.pop(client, None)
+    if b and b["texts"]:
+        deliver(client, "\n".join(t for t in b["texts"] if t), quote=b["quote"])
+
+
 def deliver(client, text, from_staff=False, quote=""):
     """Главная функция: сообщение (от клиента или от сотрудника) -> ответ клиенту.
     quote — текст сообщения, на которое клиент ответил (reply), для распознавания букета."""
@@ -930,7 +965,7 @@ def _handle_instagram(payload):
             text = (text + f"\n[Клиент прислал: {kinds}. Ты пока не можешь их открыть — "
                            f"вежливо попроси описать словами.]").strip()
         if text:
-            deliver(client, text)
+            deliver_debounced(client, text)
 
 
 # ---------- Адреса сервера ----------
@@ -989,7 +1024,7 @@ def main():
     _disable_windows_quick_edit()
     catalog.refresh()
     threading.Thread(target=_daily_loop, daemon=True).start()
-    telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
+    telegram_bot.start(deliver_debounced, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
                        on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts,
                        on_question=on_question)
     log.info("Сервер запущен на порту %s", config.PORT)

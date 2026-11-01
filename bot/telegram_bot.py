@@ -72,6 +72,15 @@ def _client_label(client):
             "ig": f"Инстаграм-клиент {cid}"}.get(kind, cid)
 
 
+def typing(client):
+    """Показать клиенту «печатает…» (около 5 секунд)."""
+    kind, cid = client.split(":", 1)
+    if kind not in ("tg", "tgb"):
+        return
+    conn = _biz_conn_id() if kind == "tgb" else None
+    call("sendChatAction", chat_id=cid, action="typing", **({"business_connection_id": conn} if conn else {}))
+
+
 def send_client(client, text):
     """Сообщение клиенту. tgb — через бизнес-аккаунт магазина, tg — обычная отправка (тест)."""
     kind, cid = client.split(":", 1)
