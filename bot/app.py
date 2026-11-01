@@ -494,13 +494,17 @@ def on_report(kind):
     rows = db.recent_orders(now - 7 * 86400)
     if kind == "human":
         rows_h = _human_waiting(now)
-        if not rows_h:
+        photos_q = _photo_questions(now)
+        if not rows_h and not photos_q:
             return "🙋 Сейчас никто не ждёт сотрудника 👍", []
+        if not rows_h:
+            return _photo_block(photos_q, now).strip(), []
         lines = [f"• {telegram_bot.client_name(c).split(' @')[0] or c.split(':', 1)[-1]} — ждёт {_dur(int((now - t) // 60))}"
                  + (f" · @{telegram_bot.client_name(c).split(' @')[1]}" if " @" in telegram_bot.client_name(c) else "")
                  for c, t in rows_h]
         return ("🙋 Ждут живого сотрудника (" + str(len(rows_h)) + "):\n" + "\n".join(lines)
-                + "\n\nОтветьте им в чате магазина и нажмите «✅ Ответил(а)» под их сообщением."), []
+                + "\n\nОтветьте им в чате магазина и нажмите «✅ Ответил(а)» под их сообщением."
+                + _photo_block(photos_q, now)), []
     if kind == "noanswer":
         rows = [r for r in rows if r[3] >= _day_start(now)]          # только сегодняшние заявки
         left = [(oid, c, o) for oid, c, o, _t in rows if not _answered(oid)]       # по порядку номеров
@@ -536,6 +540,29 @@ def on_report(kind):
     return "\n".join(out).strip(), ids[:24]
 
 
+def _photo_questions(now=None):
+    """Вопросы «есть такой букет?» по фото, на которые флорист ещё не нажал кнопку (за 2 дня)."""
+    now = now or time.time()
+    out = []
+    for r in db._exec("SELECT key, value FROM settings WHERE key LIKE 'phq:%'").fetchall():
+        try:
+            rec = json.loads(r["value"])
+        except ValueError:
+            continue
+        if not rec.get("done") and rec.get("ts") and rec["ts"] >= now - 2 * 86400:
+            out.append(rec)
+    return sorted(out, key=lambda x: x["ts"])
+
+
+def _photo_block(photos_q, now):
+    if not photos_q:
+        return ""
+    lines = [f"• {telegram_bot.client_name(r['client']).split(' @')[0] or 'клиент'} — «{(r.get('q') or 'есть такой?')[:40]}»"
+             f" · ждёт {_dur(int((now - r['ts']) // 60))}" for r in photos_q]
+    return ("\n\n📸 Вопросы по фото — нажмите «Есть / Нет / Другое» под фото (" + str(len(photos_q)) + "):\n"
+            + "\n".join(lines))
+
+
 def _human_waiting(now=None):
     """Клиенты, которые просили живого сотрудника (или ждут ответа флориста), а им ещё не ответили."""
     now = now or time.time()
@@ -549,7 +576,7 @@ def staff_counts():
     _t2, today = on_report("today")
     return {"noanswer": len(noans),
             "today": sum(1 for oid in today if db.order_day(oid) == _biz_today(now).strftime("%d.%m")),
-            "human": len(_human_waiting(now))}
+            "human": len(_human_waiting(now)) + len(_photo_questions(now))}
 
 
 def day_summary():
@@ -811,7 +838,8 @@ def _photo_question(client, buf):
         qid = int(db.get_setting("phq_seq") or 0) + 1
         db.set_setting("phq_seq", qid)
         db.set_setting(f"phq:{qid}", json.dumps({"client": client, "card": card, "q": question,
-                                                 "n": n if len(photos) > 1 else 0}, ensure_ascii=False))
+                                                 "n": n if len(photos) > 1 else 0, "ts": int(time.time())},
+                                                ensure_ascii=False))
         part = f" ({n} из {len(photos)})" if len(photos) > 1 else ""
         telegram_bot.notify_staff_photo(
             client, photo,
@@ -842,7 +870,9 @@ def on_photo_button(qid, action):
     rec["done"] = action
     db.set_setting(f"phq:{qid}", json.dumps(rec, ensure_ascii=False))
     if action == "other":
-        return "Ответьте клиенту сами — ответом на это фото (или в чате)."
+        telegram_bot.notify_staff_wait(client, f"✍️ Вопрос по фото: «{rec.get('q') or 'есть такой?'}» — "
+                                               "ответьте клиенту сами (в чате магазина).")
+        return "Ответьте клиенту сами — в чате магазина. Клиент в «🙋 Ждут сотрудника»."
     with _client_locks[client]:
         city = db.get_city(client)
         photos = []
