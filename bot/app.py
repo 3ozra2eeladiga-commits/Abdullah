@@ -492,6 +492,15 @@ def _status_line(oid):
 def on_report(kind):
     now = time.time()
     rows = db.recent_orders(now - 7 * 86400)
+    if kind == "human":
+        rows_h = _human_waiting(now)
+        if not rows_h:
+            return "🙋 Сейчас никто не ждёт сотрудника 👍", []
+        lines = [f"• {telegram_bot.client_name(c).split(' @')[0] or c.split(':', 1)[-1]} — ждёт {_dur(int((now - t) // 60))}"
+                 + (f" · @{telegram_bot.client_name(c).split(' @')[1]}" if " @" in telegram_bot.client_name(c) else "")
+                 for c, t in rows_h]
+        return ("🙋 Ждут живого сотрудника (" + str(len(rows_h)) + "):\n" + "\n".join(lines)
+                + "\n\nОтветьте им в чате магазина и нажмите «✅ Ответил(а)» под их сообщением."), []
     if kind == "noanswer":
         rows = [r for r in rows if r[3] >= _day_start(now)]          # только сегодняшние заявки
         left = [(oid, c, o) for oid, c, o, _t in rows if not _answered(oid)]       # по порядку номеров
@@ -530,6 +539,22 @@ def on_report(kind):
         ids += [oid for oid, _c, _o in items]
         out.append("")
     return "\n".join(out).strip(), ids[:24]
+
+
+def _human_waiting(now=None):
+    """Клиенты, которые просили живого сотрудника (или ждут ответа флориста), а им ещё не ответили."""
+    now = now or time.time()
+    return sorted([w for w in telegram_bot.waiting_clients() if w[1] >= now - 3 * 86400], key=lambda x: x[1])
+
+
+def staff_counts():
+    """Цифры для кнопок внизу: без ответа / заказы на сегодня / ждут сотрудника."""
+    now = time.time()
+    _t, noans = on_report("noanswer")
+    _t2, today = on_report("today")
+    return {"noanswer": len(noans) + len([w for w in telegram_bot.waiting_clients() if w[1] >= _day_start(now)]),
+            "today": sum(1 for oid in today if db.order_day(oid) == _biz_today(now).strftime("%d.%m")),
+            "human": len(_human_waiting(now))}
 
 
 def day_summary():
@@ -940,7 +965,7 @@ def main():
     catalog.refresh()
     threading.Thread(target=_daily_loop, daemon=True).start()
     telegram_bot.start(deliver, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
-                       on_pay=on_pay, on_report=on_report, on_show=on_show,
+                       on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts,
                        on_question=on_question)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)

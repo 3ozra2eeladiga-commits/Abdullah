@@ -319,10 +319,24 @@ def waiting_clients():
 
 
 RING_BTN, STOP_BTN = "🔔 Позвонить всем", "🔕 Выключить звонок"
-NOANSWER_BTN, TODAY_BTN = "📭 Без ответа", "📋 Заказы на сегодня"
-# Кнопки внизу чата у каждого сотрудника: позвать всех / выключить звонок.
-STAFF_KB = {"keyboard": [[{"text": NOANSWER_BTN}, {"text": TODAY_BTN}], [{"text": RING_BTN}]],
+NOANSWER_BTN, TODAY_BTN, HUMAN_BTN = "📭 Без ответа", "📋 Заказы на сегодня", "🙋 Ждут сотрудника"
+
+
+def staff_kb():
+    """Кнопки внизу чата у сотрудников — с цифрами: сколько без ответа / заказов на сегодня / ждут сотрудника."""
+    try:
+        n = _hooks["counts"]() if _hooks.get("counts") else {}
+    except Exception:
+        n = {}
+    lab = lambda b, k: f"{b} ({n[k]})" if k in n else b
+    return {"keyboard": [[{"text": lab(NOANSWER_BTN, "noanswer")}, {"text": lab(TODAY_BTN, "today")}],
+                         [{"text": lab(HUMAN_BTN, "human")}, {"text": RING_BTN}]],
             "resize_keyboard": True, "is_persistent": True}
+
+
+def _btn(text, base):
+    """Нажата ли кнопка (с цифрой в скобках или без)."""
+    return text == base or text.startswith(base + " (")
 _ring_stopped_at = [0.0]          # когда кто-то нажал «Выключить звонок» — все звонки, начатые раньше, замолкают
 
 
@@ -332,11 +346,12 @@ def stop_rings():
 
 def ensure_staff_keyboard(chat):
     """Один раз присылаем сотруднику кнопки звонка внизу чата."""
-    if not db.get_setting(f"kb_sent5:{chat}"):
-        if send(chat, "Кнопки внизу ⬇️ «📭 Без ответа» — заявки, по которым никто не нажал кнопку; "
-                      "«📋 Заказы на сегодня» — список на сегодня; «🔔 Позвонить всем» — позвать всех.",
-                reply_markup=STAFF_KB):
-            db.set_setting(f"kb_sent5:{chat}", "1")
+    if not db.get_setting(f"kb_sent6:{chat}"):
+        if send(chat, "Кнопки внизу ⬇️ цифра в скобках — сколько: «📭 Без ответа» — клиентам ещё не написали; "
+                      "«📋 Заказы на сегодня»; «🙋 Ждут сотрудника» — клиенты просят живого человека; "
+                      "«🔔 Позвонить всем» — позвать всех.",
+                reply_markup=staff_kb()):
+            db.set_setting(f"kb_sent6:{chat}", "1")
 
 
 def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
@@ -345,7 +360,8 @@ def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
     started = time.time()
     end = started + (seconds if seconds is not None else config.RING_MAX_MIN * 60)
     while time.time() < end and still_waiting() and _ring_stopped_at[0] < started:
-        sent = [(chat, send(chat, text)) for chat in staff_chats(client)]
+        kb = staff_kb()                                   # заодно обновляем цифры на кнопках внизу
+        sent = [(chat, send(chat, text, reply_markup=kb)) for chat in staff_chats(client)]
         time.sleep(5)                                        # дать мелодии доиграть
         for chat, msg in sent:
             if msg:
@@ -486,19 +502,22 @@ def _handle(msg, deliver):
                  "document": "файл", "video_note": "видео-кружок"}
         text = f"[Клиент прислал {names.get(kind, kind)}, без текста]"
 
+    if _btn(text, HUMAN_BTN) and _hooks.get("on_report"):
+        send(chat_id, _hooks["on_report"]("human")[0], reply_markup=staff_kb())
+        return
     if text == RING_BTN:
         ring_all(_staff_name(msg.get("from")))
-        send(chat_id, "🔔 Звоню всем ~15 секунд.", reply_markup=STAFF_KB)
+        send(chat_id, "🔔 Звоню всем ~15 секунд.", reply_markup=staff_kb())
         return
-    if text in (NOANSWER_BTN, TODAY_BTN) and _hooks.get("on_report"):
-        rep, ids = _hooks["on_report"]("noanswer" if text == NOANSWER_BTN else "today")
+    if (_btn(text, NOANSWER_BTN) or _btn(text, TODAY_BTN)) and _hooks.get("on_report"):
+        rep, ids = _hooks["on_report"]("noanswer" if _btn(text, NOANSWER_BTN) else "today")
         # Под списком — кнопки «№17», «№19»…: нажал — бот присылает эту заявку целиком (с кнопками).
         rows = [[{"text": f"№{db.order_no(i)}", "callback_data": f"show:x:{i}"} for i in ids[k:k + 4]] for k in range(0, len(ids[:24]), 4)]
-        send(chat_id, rep, reply_markup={"inline_keyboard": rows} if rows else STAFF_KB)
+        send(chat_id, rep, reply_markup={"inline_keyboard": rows} if rows else staff_kb())
         return
     if text == STOP_BTN:
         stop_rings()
-        send(chat_id, "🔕 Звонок выключен.", reply_markup=STAFF_KB)
+        send(chat_id, "🔕 Звонок выключен.", reply_markup=staff_kb())
         return
     if text.startswith("/start") or text.startswith("/help"):
         send(chat_id, "Здравствуйте! Сюда будут приходить заказы и вопросы из Инстаграма.\n\n"
@@ -511,7 +530,7 @@ def _handle(msg, deliver):
                       "• /biz — кому бот отвечает в Telegram магазина.\n"
                       "• /city — заявки какого города получать на этом телефоне.\n"
                       "• 🔔 Позвонить всем — кнопка внизу.\n"
-                      f"• /myid — ваш ID ({user_id}).", reply_markup=STAFF_KB)
+                      f"• /myid — ваш ID ({user_id}).", reply_markup=staff_kb())
         return
     if text.startswith("/myid"):
         send(chat_id, f"Ваш ID: {user_id}, ID этого чата: {chat_id}")
@@ -862,9 +881,9 @@ def run_polling(deliver, on_check):
 
 
 def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None, on_pay=None,
-          on_report=None, on_show=None):
+          on_report=None, on_show=None, counts=None):
     _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question, on_more=on_more,
-                  on_pay=on_pay, on_report=on_report, on_show=on_show)
+                  on_pay=on_pay, on_report=on_report, on_show=on_show, counts=counts)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return
