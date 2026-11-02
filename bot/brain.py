@@ -1671,7 +1671,8 @@ def _order_missing(o, client_text):
     if closed:
         return closed
     # Имена и телефоны — ОДНИМ вопросом (Абдулла: не тянуть по одному), спрашиваем только недостающее.
-    need_me = not (o.get("заказчик") or "").strip() or not _phone_was_given(o.get("заказчик"), client_text)
+    need_me = not (o.get("заказчик") or "").strip() or not _phone_was_given(o.get("заказчик"), client_text) \
+        or not _meaningful(str(o.get("заказчик") or "").split(",")[0])        # «..., 8991…» — имени нет
     need_to = not (o.get("получатель") or "").strip() or not _phone_was_given(o.get("получатель"), client_text)
     if (o.get("получение") or "").lower().startswith("самовывоз"):
         need_to = False                     # самовывоз: получатель — тот, кто заберёт (заказчик)
@@ -1690,7 +1691,7 @@ def _order_missing(o, client_text):
     if need_me and need_to:
         return CONTACTS_Q
     if need_me:
-        return f"Ваше имя и телефон?\n{PHONE_NOTE}"
+        return f"Ваши имя, фамилия и телефон? 🌸 ({BONUS_NOTE})\n{PHONE_NOTE}"
     if need_to:
         return "Имя и телефон получателя?"
     card = (o.get("открытка") or "").strip()
@@ -1784,6 +1785,16 @@ def _apply_client_state(order, client, city):
     if not isinstance(items, list):
         items = order["товары"] = []
     _drop_prev_items(order, client)
+    # Одна и та же позиция дважды (ИИ + код добавили одну открытку) — оставляем одну.
+    uniq, seen_t = [], set()
+    for it in order["товары"]:
+        key = (str(it.get("код") or "").strip().lower() or
+               re.sub(r"[\W_]+", "", str(it.get("название") or "").lower())) if isinstance(it, dict) else str(it)
+        if key in seen_t:
+            continue
+        seen_t.add(key)
+        uniq.append(it)
+    order["товары"] = uniq
     items = order["товары"]
     photo_item = db.get_setting(f"photo_item:{client}")
     if photo_item and not any(not CARD_RE.search(str(it.get("название") or "")) and (it.get("код") or it.get("название"))
@@ -1834,8 +1845,10 @@ def _apply_client_state(order, client, city):
         order["_ночной_заказ"] = True
     ex_t = db.get_setting(f"exacttime:{client}") or ""
     if ex_t:
+        order["время"] = ex_t
+        order["_точно"] = ex_t                   # не интервал, а точно к этому времени
         c0 = str(order.get("комментарий") or "").strip()
-        note0 = f"⏰ Клиент просит точно к {ex_t} — постарайтесь"
+        note0 = f"⚠️ ТОЧНО К {ex_t} — клиент просил ровно к этому времени, отправьте курьера с запасом"
         if note0 not in c0:
             order["комментарий"] = (c0 + "; " if c0 else "") + note0
     extra = db.get_setting(f"addr_extra:{client}") or ""
@@ -2318,6 +2331,8 @@ def _order_summary(o):
         items.append(f"{'собрать пышнее: +' if extra > 0 else 'собрать скромнее: −'}{_rub(abs(extra))}")
     price = str(o.get("доставка_цена") or "")
     win = _delivery_window(o.get("дата"), o.get("время")) if o.get("получение") != "самовывоз" else ""
+    if o.get("_точно"):
+        win = f"точно к {o['_точно']} (постараемся ровно ко времени)"
     when = " ".join(x for x in (str(o.get("дата") or "").strip(),
                                 win or ((str(o["время"]) if re.match(r"\s*как можно", str(o["время"]))
                                          else f"к {o['время']}") if o.get("время") else "")) if x)
@@ -2712,7 +2727,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                 db.set_setting(f"winok:{client}", winq)
                 if exact:
                     db.set_setting(f"exacttime:{client}", winq)
-                head = (f"Точно к {winq} гарантировать не можем, но постараемся успеть 🌸 Записала пожелание."
+                head = (f"Хорошо 🌸 Передам флористу: нужно точно к {winq}. Отправим курьера с запасом — время в пути "
+                        f"зависит от дороги, но сделаем всё, чтобы букет был ровно к {winq}."
                         if exact else "Отлично 🌸")
                 nxt = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"] + [incoming],
                                      city, _known_order(client))
