@@ -175,7 +175,7 @@ REMIND_MIN = int(os.getenv("REMIND_MIN", "15"))            # заявку не �
 # Ежедневно: утром (MORNING_AT) — список заказов на сегодня, в DAY_CLOSE — итоги дня (по Москве).
 DAY_OPEN = os.getenv("DAY_OPEN", "07:30")
 DAY_CLOSE = os.getenv("DAY_CLOSE", "22:00")
-MORNING_AT = os.getenv("MORNING_AT", "07:25")
+MORNING_AT = os.getenv("MORNING_AT", "07:40")
 QUIET_FROM = int(os.getenv("QUIET_FROM", "22"))
 QUIET_TO = int(os.getenv("QUIET_TO", "7"))
 
