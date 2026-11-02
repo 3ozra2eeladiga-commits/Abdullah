@@ -246,8 +246,21 @@ def on_delivered(order_id, action):
         db.del_setting(f"active_order:{client}")
         db.del_setting(f"neworder:{client}")
         db.del_setting(f"activeq:{client}")
+    if db.get_setting(f"odelivered:{order_id}"):
+        return f"📦 Заказ №{db.order_no(order_id)} уже отмечен доставленным"
     db.set_setting(f"odelivered:{order_id}", "1")
-    return f"📦 Заказ №{db.order_no(order_id)} доставлен"
+    # Клиенту — короткое спасибо (Абдулла): заказ доставлен / выдан, ждём снова.
+    pickup = str((_o or {}).get("получение") or "").lower().startswith("самовывоз")
+    shop = f" {config.SHOP_NAME}" if config.SHOP_NAME else " нас"
+    text = (f"Ваш заказ №{db.order_no(order_id)} {'выдан' if pickup else 'доставлен'} 🌸 "
+            f"Спасибо, что выбрали{shop}! Будем рады видеть вас снова 💐")
+    try:
+        _send_text(client, text)
+        db.add_message(client, "assistant", text)
+    except Exception:
+        log.exception("Не отправилось спасибо клиенту %s", client)
+        return f"📦 Заказ №{db.order_no(order_id)} отмечен, но сообщение клиенту не ушло"
+    return f"📦 Заказ №{db.order_no(order_id)} доставлен — клиенту написали «спасибо»"
 
 
 def deliver_debounced(client, text, from_staff=False, quote=""):
