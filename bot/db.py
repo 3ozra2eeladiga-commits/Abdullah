@@ -130,11 +130,21 @@ def _target_day(data, created):
     return (base + _dt.timedelta(minutes=24 * 60 - hh * 60 - mm)).date()
 
 
+def _made_day(created):
+    """Рабочий день оформления: после закрытия (DAY_CLOSE, 22:00 МСК) — уже следующий день."""
+    import datetime as _dt
+    import os as _os
+    hh, mm = (int(x) for x in (_os.getenv("DAY_CLOSE", "22:00") + ":0").split(":")[:2])
+    t = _dt.datetime.fromtimestamp(created, _dt.timezone(_dt.timedelta(hours=3)))
+    return t.date() + _dt.timedelta(days=1 if (t.hour, t.minute) >= (hh, mm) else 0)
+
+
 def order_no(order_id):
-    """Номер заказа «на свой день»: у заказов на один и тот же день — №1, №2, №3… (по порядку оформления).
-    В базе номер остаётся сквозным (id) — для ссылок и кнопок."""
+    """Номер заказа за рабочий день ОФОРМЛЕНИЯ (22:00–22:00): №1, №2, №3… подряд, на какой бы день ни был заказ
+    (Абдулла: две заявки «№1» за один день путают). В базе номер остаётся сквозным (id) — для ссылок и кнопок.
+    dayof — день доставки (для «Заказы: сегодня/завтра»)."""
     cached = get_setting(f"dayno:{order_id}")
-    if cached and get_setting(f"dayof:{order_id}") and get_setting(f"dayver:{order_id}") == "2":
+    if cached and get_setting(f"dayof:{order_id}") and get_setting(f"dayver:{order_id}") == "3":
         return int(cached)
     row = _exec("SELECT data, created FROM orders WHERE id=?", (order_id,)).fetchone()
     if not row:
@@ -143,17 +153,12 @@ def order_no(order_id):
         target = _target_day(json.loads(row["data"]), row["created"])
     except ValueError:
         return order_id
-    n = 0
-    for r in _exec("SELECT id, data, created FROM orders WHERE created>=? AND id<=?",
-                   (row["created"] - 120 * 86400, order_id)).fetchall():
-        try:
-            if _target_day(json.loads(r["data"]), r["created"]) == target:
-                n += 1
-        except ValueError:
-            continue
+    made = _made_day(row["created"])
+    n = sum(1 for r in _exec("SELECT created FROM orders WHERE created>=? AND id<=?",
+                             (row["created"] - 2 * 86400, order_id)).fetchall() if _made_day(r["created"]) == made)
     set_setting(f"dayno:{order_id}", n)
     set_setting(f"dayof:{order_id}", target.strftime("%d.%m"))
-    set_setting(f"dayver:{order_id}", "2")
+    set_setting(f"dayver:{order_id}", "3")
     return n
 
 
