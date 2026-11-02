@@ -777,9 +777,11 @@ def _handle_callback(cq, on_check):
             _edit_msgs(msgs, f"✅ Ответил(а) клиенту — {_staff_name(cq.get('from'))}, "
                              f"{time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
             call("answerCallbackQuery", callback_query_id=cq["id"], text="Отмечено ✅")
+            if _rest_buttons(m):
+                _mark_done(m, "", _rest_buttons(m))
         else:
             call("answerCallbackQuery", callback_query_id=cq["id"], text="Уже отмечено ✅")
-            _mark_done(m, "")
+            _mark_done(m, "", _rest_buttons(m))
         return
     if parts[0] == "show" and parts[2].isdigit() and _hooks.get("on_show"):
         call("answerCallbackQuery", callback_query_id=cq["id"])
@@ -815,8 +817,20 @@ def _handle_callback(cq, on_check):
     if m:
         # Кнопки убираем (чтобы не нажали второй раз) и дописываем в само сообщение, кто и что отметил.
         # ТЗ п.11: после проверки под заявкой остаётся кнопка «📦 Заказ доставлен» — до неё заказ «активный».
-        keep = [[{"text": "📦 Заказ доставлен", "callback_data": f"dlv:x:{parts[2]}"}]] if parts[0] == "chk" else None
+        # Абдулла: под заявкой — «💬 Открыть чат с клиентом», «✅ Ответил(а)» и «📦 Заказ доставлен».
+        keep = None
+        if parts[0] == "chk":
+            cl = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id"))
+            keep = (_answer_buttons(cl) if cl else ANSWER_BUTTON) + \
+                [[{"text": "📦 Заказ доставлен", "callback_data": f"dlv:x:{parts[2]}"}]]
         _mark_done(m, f"✅ Отмечено — {_staff_name(cq.get('from'))}: {result.split(' — ')[0].split(': ', 1)[-1]}", keep)
+
+
+def _rest_buttons(m):
+    """Кнопки сообщения без «✅ Ответил(а)» — «Открыть чат» и «📦 Заказ доставлен» под заявкой остаются."""
+    rows = ((m or {}).get("reply_markup") or {}).get("inline_keyboard") or []
+    rest = [r for r in rows if not any(str(b.get("callback_data") or "").startswith("ans:") for b in r)]
+    return rest if any(str(b.get("callback_data") or "").startswith("dlv:") for r in rest for b in r) else None
 
 
 def _staff_name(user):
