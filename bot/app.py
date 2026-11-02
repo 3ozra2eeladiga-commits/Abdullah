@@ -747,7 +747,7 @@ def _photo_questions(now=None):
             rec = json.loads(r["value"])
         except ValueError:
             continue
-        if not rec.get("done") and rec.get("ts") and rec["ts"] >= now - 2 * 86400:
+        if not rec.get("done") and rec.get("ts") and rec["ts"] >= _day_start(now):   # только за этот рабочий день
             out.append(rec)
     return sorted(out, key=lambda x: x["ts"])
 
@@ -764,7 +764,8 @@ def _photo_block(photos_q, now):
 def _human_waiting(now=None):
     """Клиенты, которые просили живого сотрудника (или ждут ответа флориста), а им ещё не ответили."""
     now = now or time.time()
-    return sorted([w for w in telegram_bot.waiting_clients() if w[1] >= now - 3 * 86400], key=lambda x: x[1])
+    # Только за текущий рабочий день: после закрытия (22:00) счётчик с нуля, старое — в итогах дня.
+    return sorted([w for w in telegram_bot.waiting_clients() if w[1] >= _day_start(now)], key=lambda x: x[1])
 
 
 def staff_counts():
@@ -786,11 +787,17 @@ def day_summary():
     rows = [r for r in db.recent_orders(start) if start <= r[3] <= now]
     st = [db.get_setting(f"ostatus:{oid}") or "" for oid, _c, _o, _t in rows]
     left = [oid for (oid, _c, _o, _t) in rows if not _answered(oid)]
+    waited = [(c, t) for c, t in telegram_bot.waiting_clients() if start <= t <= now]
     o_, c_ = config.DAY_OPEN, config.DAY_CLOSE
     text = (f"📊 Итоги дня {_biz_today(now - 300):%d.%m} (с {o_} до {c_}):\n"
             f"Всего заявок: {len(rows)}\n✅ подтверждено: {st.count('ok')}\n❌ нет в наличии: {st.count('no')}\n"
             f"✍️ флорист отвечает сам(а): {st.count('other')}\n⏳ не проверено: {st.count('check')}\n"
             f"💬 клиенту ещё не писали: {len(left)}")
+    if waited:
+        text += f"\n🙋 ждали сотрудника, но не ответили: {len(waited)}\n" + "\n".join(
+            f"• {telegram_bot.client_name(c).split(' @')[0] or c.split(':', 1)[-1]}"
+            + (f" · @{telegram_bot.client_name(c).split(' @')[1]}" if " @" in telegram_bot.client_name(c) else "")
+            for c, _t in waited[:20])
     revs = []
     for r in db._exec("SELECT key, value FROM settings WHERE key LIKE 'rev:%'").fetchall():
         try:
@@ -842,6 +849,11 @@ def _daily_loop():
             if hm >= config.DAY_CLOSE and db.get_setting("daily_sum") != day:
                 db.set_setting("daily_sum", day)
                 _send_to_staff(*day_summary())
+                # Новый рабочий день: кнопки внизу с обнулёнными цифрами (старое — в итогах выше, по номерам).
+                for chat in telegram_bot.staff_chats():
+                    telegram_bot.send(chat, f"🌙 Магазин закрыт. Счётчики с нуля — принимаем заказы на "
+                                            f"{_biz_today():%d.%m}. Что не успели — в итогах выше, нажмите номер.",
+                                      reply_markup=telegram_bot.staff_kb(), disable_notification=True)
             if config.MORNING_AT <= hm < "11:00" and db.get_setting("daily_morning") != day:   # только утром
                 db.set_setting("daily_morning", day)
                 text, ids = on_report("today")
