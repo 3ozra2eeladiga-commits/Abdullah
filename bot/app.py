@@ -236,6 +236,84 @@ def _active_order_guard(client, text):
     return True
 
 
+REVIEW_Q = ("Оцените, пожалуйста, заказ — ответьте одной цифрой:\n"
+            "5 — отлично 🤩\n4 — хорошо 🙂\n3 — нормально 😐\n2 — плохо 😕\n1 — очень плохо 😞")
+REVIEW_REPLY = {
+    5: "Спасибо огромное! 🥰 Очень рады, что всё понравилось — для нас это лучшая награда 💐 Ждём вас снова!",
+    4: "Спасибо за оценку! 🌸 Рады, что понравилось. Если что-то можно было сделать ещё лучше — напишите, "
+       "мы обязательно учтём.",
+}
+REVIEW_WHY = ("Нам очень жаль, что так получилось 😔 Расскажите, пожалуйста, что было не так? "
+              "Мы обязательно разберёмся и постараемся всё исправить.")
+REVIEW_THANKS = "Спасибо, что рассказали 🙏 Передала флористу — мы разберёмся и свяжемся с вами."
+REVIEW_GOOD_RE = re.compile(r"отличн|супер|класс|прекрасн|восторг|шикарн|великолепн|понравил|красив|спасибо|👍|❤|🔥|😍|🥰", re.I)
+REVIEW_BAD_RE = re.compile(r"плох|ужас|не\s+понрав|разочар|завял|вял|опоздал|не\s+то\b|кошмар|отврат|👎|😡|😞", re.I)
+
+
+def _save_review(order_id, score, why=""):
+    try:
+        old = json.loads(db.get_setting(f"rev:{order_id}") or "{}")
+    except ValueError:
+        old = {}
+    old.update({"s": score, "ts": int(time.time())})
+    if why:
+        old["why"] = why
+    db.set_setting(f"rev:{order_id}", json.dumps(old, ensure_ascii=False))
+
+
+def _review_reply(client, text):
+    """Отзыв после «📦 Заказ доставлен»: цифра 1–5. 4–5 — благодарим; 1–3 — спрашиваем, что не так, и ответ
+    отправляем флористу. Пришло что-то другое — обычный разговор (отзыв больше не ждём)."""
+    t = (text or "").strip()
+    oid = db.get_setting(f"reviewwhy:{client}")
+    if oid:                                              # клиент объясняет, почему плохо
+        db.del_setting(f"reviewwhy:{client}")
+        try:
+            score = json.loads(db.get_setting(f"rev:{oid}") or "{}").get("s", "?")
+        except ValueError:
+            score = "?"
+        _save_review(int(oid), score, t)
+        db.add_message(client, "user", t)
+        _send_text(client, REVIEW_THANKS)
+        db.add_message(client, "assistant", REVIEW_THANKS)
+        telegram_bot.notify_staff_wait(client, f"😔 Плохой отзыв по заказу №{db.order_no(int(oid))}: {score} из 5 "
+                                               f"({_label(client)})\nПричина: «{t}»\nСвяжитесь с клиентом.")
+        return True
+    oid = db.get_setting(f"review:{client}")
+    if not oid:
+        return False
+    db.del_setting(f"review:{client}")
+    m = re.fullmatch(r"\D{0,15}?([1-5])(?:\s*(?:из\s*5|/\s*5|⭐+|звезд\w*|балл\w*))?\W{0,5}", t, re.I)
+    score = int(m.group(1)) if m else None
+    rest = ""
+    if score is None:
+        if REVIEW_BAD_RE.search(t):
+            score, rest = 2, t                           # сразу написал, что плохо — это и есть причина
+        elif REVIEW_GOOD_RE.search(t) and len(t) <= 80:
+            score = 5
+        else:
+            return False
+    oid = int(oid)
+    _save_review(oid, score, rest)
+    db.add_message(client, "user", t)
+    if score >= 4:
+        _send_text(client, REVIEW_REPLY[score])
+        db.add_message(client, "assistant", REVIEW_REPLY[score])
+        telegram_bot.notify_staff(client, f"{'⭐' * score} Отзыв по заказу №{db.order_no(oid)}: {score} из 5 "
+                                          f"({_label(client)})" + (f"\n«{t}»" if not m else ""))
+        return True
+    if rest:
+        _send_text(client, REVIEW_THANKS)
+        db.add_message(client, "assistant", REVIEW_THANKS)
+        telegram_bot.notify_staff_wait(client, f"😔 Плохой отзыв по заказу №{db.order_no(oid)} ({_label(client)}):\n"
+                                               f"«{t}»\nСвяжитесь с клиентом.")
+        return True
+    db.set_setting(f"reviewwhy:{client}", oid)
+    _send_text(client, REVIEW_WHY)
+    db.add_message(client, "assistant", REVIEW_WHY)
+    return True
+
+
 def on_delivered(order_id, action):
     """Кнопка «📦 Заказ доставлен»: заказ больше не активный — следующее сообщение клиента начинает новый диалог."""
     row = db.get_order(order_id)
@@ -253,10 +331,12 @@ def on_delivered(order_id, action):
     pickup = str((_o or {}).get("получение") or "").lower().startswith("самовывоз")
     shop = f" {config.SHOP_NAME}" if config.SHOP_NAME else " нас"
     text = (f"Ваш заказ №{db.order_no(order_id)} {'выдан' if pickup else 'доставлен'} 🌸 "
-            f"Спасибо, что выбрали{shop}! Будем рады видеть вас снова 💐")
+            f"Спасибо, что выбрали{shop}! Будем рады видеть вас снова 💐\n\n" + REVIEW_Q)
     try:
         _send_text(client, text)
         db.add_message(client, "assistant", text)
+        db.set_setting(f"review:{client}", order_id)        # ждём оценку 1–5
+        db.del_setting(f"reviewwhy:{client}")
     except Exception:
         log.exception("Не отправилось спасибо клиенту %s", client)
         return f"📦 Заказ №{db.order_no(order_id)} отмечен, но сообщение клиенту не ушло"
@@ -299,6 +379,8 @@ def deliver(client, text, from_staff=False, quote=""):
         _send_text(client, secret)
         return
     with _client_locks[client]:
+        if not from_staff and _review_reply(client, text):     # оценка после доставки (1–5) и «почему плохо»
+            return
         if not from_staff and not db.is_paused(client) and STUCK_RE.search(text or "") \
                 and len(db.history(client, 6)) >= 4:       # недоволен ботом посреди разговора
             _to_human(client, text)
@@ -709,6 +791,18 @@ def day_summary():
             f"Всего заявок: {len(rows)}\n✅ подтверждено: {st.count('ok')}\n❌ нет в наличии: {st.count('no')}\n"
             f"✍️ флорист отвечает сам(а): {st.count('other')}\n⏳ не проверено: {st.count('check')}\n"
             f"💬 клиенту ещё не писали: {len(left)}")
+    revs = []
+    for r in db._exec("SELECT key, value FROM settings WHERE key LIKE 'rev:%'").fetchall():
+        try:
+            v = json.loads(r["value"])
+        except ValueError:
+            continue
+        if start <= int(v.get("ts") or 0) <= now:
+            revs.append((int(r["key"][4:]), v))
+    if revs:
+        text += "\n\n⭐ Отзывы клиентов:"
+        for oid, v in sorted(revs):
+            text += f"\n• №{db.order_no(oid)} — {v.get('s')} из 5" + (f": «{v['why'][:150]}»" if v.get("why") else "")
     if left:
         text += "\n\nКлиенту не писали — нажмите номер, чтобы открыть заявку:"
     return text, left[-24:]
