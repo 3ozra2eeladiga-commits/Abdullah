@@ -169,6 +169,50 @@ def _bot_stuck(client, new_text):
     return bool(norm(new_text)) and last.count(norm(new_text)) >= 3
 
 
+# Жалоба (цветы завяли, курьер опоздал, нахамили…) — бот не спорит и не продаёт: сразу флористу как срочное,
+# клиенту — извинение и когда ответят (ночью — когда откроется магазин).
+COMPLAINT_RE = re.compile(
+    r"ужасн|отвратит|кошмарн|завял|увял|подвял|гнил|испорч|помят|поломан|сломан|осыпал|"
+    r"опоздал|опоздани|не\s+привез|не\s+привёз|не\s+доставил|не\s+доставлен|до\s+сих\s+пор\s+(?:нет|не)|"
+    r"обман|нахамил|хамил|хамств|грубил|нагруб|недовол|разочаров|жалоб|претензи|"
+    r"верн\w*\s+(?:мне\s+)?(?:деньг|оплат)|возврат\w*\s+(?:денег|средств)|"
+    r"плох(?:ие|ой|ая|о\s+собран|ого\s+качеств)|не\s+то\s+(?:привез|доставил|собрал)|не\s+понравил", re.I)
+COMPLAINT_ABOUT_RE = re.compile(r"цвет|букет|роз|пион|тюльпан|курьер|доставк|достав|заказ|флорист|продав|магазин|"
+                                r"обслуж|привез|получил|сотрудни|девушк|вас\b|ваш", re.I)
+
+
+def _is_complaint(text):
+    t = re.sub(r"(?:ужасно|жутко|кошмарно)\s+(?:красив|мил|нрав|довол|рад|приятн|счастлив|понрав)\w*", " ", text or "", flags=re.I)
+    return bool(COMPLAINT_RE.search(t) and (COMPLAINT_ABOUT_RE.search(t) or re.search(r"жалоб|претензи|верн\w*\s+деньг", t, re.I)))
+
+
+def _complaint(client, text):
+    """Жалоба клиента — срочно флористу (со звонком днём), бот замолкает с этим клиентом."""
+    db.add_message(client, "user", text)
+    city = db.get_city(client)
+    closed = brain.shops_closed_now(city)
+    telegram_bot.notify_staff_wait(client, f"😡 ЖАЛОБА КЛИЕНТА ({_label(client)}{', ' + city if city else ''}):\n«{text}»\n"
+                                           f"Срочно свяжитесь с клиентом — в чате или ответом на это сообщение. "
+                                           f"Бот с ним молчит; /resume ответом — включить бота.")
+    if not closed:
+        telegram_bot.ring(0, lambda c=client: bool(db.get_setting(f"await:{c}")), client,
+                          text="😡 Жалоба клиента — срочно ответьте!")
+    reply = ("Мне очень жаль, что так получилось 😔 Ваше сообщение я сразу передала флористу. "
+             + (f"Сейчас магазин закрыт 🌙 — вам ответят {brain.opening_text(city)}, как только магазин откроется, "
+                "и во всём разберутся." if closed else
+                "Она свяжется с вами в ближайшие минуты и во всём разберётся.")
+             + "\nЕсли можете, пришлите фото и опишите, что случилось, — всё передам 🙏")
+    _send_text(client, reply)
+    db.add_message(client, "assistant", reply)
+    db.pause(client, config.HUMAN_PAUSE_HOURS)
+    db.set_setting(f"complaint:{client}", int(time.time()))   # фото и подробности после жалобы — тоже флористу
+
+
+def _complaint_open(client):
+    t = db.get_setting(f"complaint:{client}")
+    return bool(t and str(t).isdigit() and time.time() - int(t) < 24 * 3600)
+
+
 def _to_human(client, text, saved=False):
     """Клиент просит сотрудника: всё, что он прислал (и фото), — флористу; бот замолкает. Под блокировкой.
     saved — сообщение клиента уже записано в историю."""
@@ -389,6 +433,9 @@ def deliver(client, text, from_staff=False, quote=""):
                 and not re.search(r"\bдля\b|букет|цвет|роз|подар", text or "", re.I):   # «букет для менеджера» — не то
             _to_human(client, text)
             return
+        if not from_staff and not db.is_paused(client) and _is_complaint(text):
+            _complaint(client, text)
+            return
         # Клиент прислал фото и теперь пишет, что хочет («у вас есть такой?») — фото с вопросом флористу.
         if not from_staff and not db.is_paused(client) and _photo_buf(client).get("photos"):
             old = _photo_timers.pop(client, None)
@@ -402,7 +449,9 @@ def deliver(client, text, from_staff=False, quote=""):
         if not from_staff and db.is_paused(client):
             db.add_message(client, "user", text)
             # Бот молчит (клиента ведёт сотрудник), но вопрос о заказе/доставке не должен потеряться — флористу.
-            if STATUS_RE.search(text or ""):
+            if _complaint_open(client):
+                telegram_bot.notify_staff_wait(client, f"😡 К жалобе клиент добавил ({_label(client)}):\n«{text}»")
+            elif STATUS_RE.search(text or ""):
                 telegram_bot.notify_staff_wait(client, f"📦 Клиент спрашивает о заказе/доставке ({_label(client)}):\n"
                                                   f"«{text}»\nОтветьте клиенту в чате или ответом на это сообщение.")
             if client.startswith("tg:"):
@@ -989,6 +1038,10 @@ def on_client_photo(client, photo, caption=""):
     """Клиент прислал фото (Telegram file_id или ссылка из Инстаграма) — запоминаем и ждём остальные/текст."""
     with _client_locks[client]:
         if db.is_paused(client):
+            if _complaint_open(client):     # фото к жалобе — сразу флористу
+                db.add_message(client, "user", "[клиент прислал фото к жалобе]" + (f": {caption}" if caption else ""))
+                telegram_bot.notify_staff_photo(client, photo, f"😡 Фото к жалобе\n{_label(client)}"
+                                                               + (f"\n«{caption}»" if caption else ""))
             return                          # клиента ведёт флорист — он и видит фото в чате
         buf = _photo_buf(client)
         buf.setdefault("photos", []).append(photo)

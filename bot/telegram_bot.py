@@ -398,7 +398,7 @@ def _ring_loop(text, client=None, seconds=None, still_waiting=lambda: True):
             send(chat, text.replace("!", "").strip() + " ⬆️", reply_markup=kb, disable_notification=True)
 
 
-def ring(order_id, still_waiting, client=None, quiet=False):
+def ring(order_id, still_waiting, client=None, quiet=False, text=None):
     """«Звонок» о новой заявке: ~RING_SECONDS секунд (по умолчанию 10), потом тишина. В тихие часы — без звонка."""
     if quiet_now():
         return                                  # тихие часы — никакого звонка
@@ -407,8 +407,8 @@ def ring(order_id, still_waiting, client=None, quiet=False):
             for chat in staff_chats(client):
                 ensure_staff_keyboard(chat)
             tag = city_tag(client).replace("📍 ", "") if client else ""
-            text = f"🔔 Новая заявка №{db.order_no(order_id)}{' — ' + tag if tag else ''}!"
-            _ring_loop(text, client, seconds=config.RING_SECONDS, still_waiting=still_waiting)
+            msg = text or f"🔔 Новая заявка №{db.order_no(order_id)}{' — ' + tag if tag else ''}!"
+            _ring_loop(msg, client, seconds=config.RING_SECONDS, still_waiting=still_waiting)
         except Exception as e:                               # звонок не должен ронять бота
             log.warning("Звонок о заявке №%s не удался: %s", order_id, e)
     threading.Thread(target=run, daemon=True).start()
