@@ -306,6 +306,7 @@ def staff_answered(client, who=None):
     Ответ из чата магазина (аккаунт общий, кто писал — не видно) — просим нажать «✅ Ответил(а)», и тогда
     у всех будет видно имя того, кто ответил."""
     db._exec("DELETE FROM settings WHERE key LIKE 'oawait:%' AND value=?", (client,))   # заявки этого клиента — отвечены
+    db.del_setting(f"delivq:{client}")             # про цену доставки флорист уже ответил(а) — в заявку пометку не ставим
     if not db.get_setting(f"await:{client}"):
         return
     try:

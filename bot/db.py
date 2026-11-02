@@ -255,8 +255,9 @@ def clear_history(client):
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
           (f"editorder:{client}", f"photo_item:{client}", f"cphotos:{client}", f"addto:{client}", f"wantcard:{client}", f"wantcard_text:{client}", f"draft:{client}", f"cardtext:{client}", f"cardstep:{client}", f"site_sent:{client}", f"prev_items:{client}", f"nocard:{client}", f"shown:{client}", f"chosen:{client}", f"ocheck:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?)", (f"rude:{client}", f"pack:{client}", f"surprise:{client}", f"contacts:{client}"))
-    _exec("DELETE FROM settings WHERE key IN (?,?,?,?)", (f"await:{client}", f"awaitmsgs:{client}",
-                                                     f"nightorder:{client}", f"closed_note:{client}"))
+    _exec("DELETE FROM settings WHERE key IN (?,?,?,?,?,?)", (f"await:{client}", f"awaitmsgs:{client}",
+                                                     f"nightorder:{client}", f"closed_note:{client}",
+                                                     f"delivq:{client}", f"delivq_need:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?,?,?)", (f"winq:{client}", f"winok:{client}", f"exacttime:{client}",
                                                        f"active_order:{client}", f"neworder:{client}", f"activeq:{client}"))
     _exec("DELETE FROM settings WHERE key IN (?,?,?,?,?)", (f"noaddr:{client}", f"notime:{client}", f"placeq:{client}",

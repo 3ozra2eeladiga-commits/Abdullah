@@ -267,6 +267,8 @@ CITY_RE = re.compile(r"\[ГОРОД\s+([^\]]+)\]", re.I)
 STAFF_PREFIX = "[Ответ сотрудника магазина]"
 # Заказ после «да» уходит флористу как заявка на проверку наличия — подтверждает его сотрудник, а не бот.
 CHECK_SENT_TEXT = "Спасибо! Флорист проверит наличие и подтвердит заказ — пара минут 🌸"
+DELIV_SENT_TEXT = ("Спасибо! Заявка у флориста 🌸 Она свяжется с вами в ближайшие минуты ⏱ — подтвердит, "
+                   "что доставка туда есть, назовёт её стоимость и проверит, всё ли в наличии.")
 
 
 @dataclass
@@ -1053,7 +1055,8 @@ def _contacts(client):
 # Состояние ОДНОГО заказа: после отправленной заявки — сбрасываем, следующий заказ с нуля.
 ORDER_STATE_KEYS = ("neworder", "activeq", "winq", "winok", "exacttime", "chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
                     "pickup_shop", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
-                    "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item")
+                    "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item",
+                    "delivq", "delivq_need")
 
 
 def start_new_order(client):
@@ -1585,6 +1588,32 @@ PRAISE_RE = re.compile(r"\b[ао]ху[ея]н\w*|\b[ао]хуи?т\w*|\bзаеб
 # «Сколько стоит доставка?», «доставка платная?»
 DELIV_PRICE_RE = re.compile(r"(?:сколько|стоимост|цен[аы]|почём|почем)\w*[^.?!]{0,25}доставк|"
                             r"доставк\w*[^.?!]{0,20}(?:сколько|стоит|стоимост|цен[аы]|платн|бесплат)", re.I)
+DELIV_DEST_Q = ("Подскажу 🌸 Точную стоимость доставки назовёт флорист — она зависит от места. "
+                "Куда доставить? Напишите улицу и дом (или посёлок) — сразу передам флористу.")
+
+
+def _deliv_dest(client, city, incoming, history):
+    """Куда доставка — для вопроса флористу о цене: посёлок рядом или адрес (из этого сообщения / черновика)."""
+    msgs = [m["content"] for m in history if m["role"] == "user"] + [incoming or ""]
+    town = city or ""
+    for c in config.city_list():
+        for n in c.get("nearby", []) or []:
+            if any(re.search(r"\b" + re.escape(n[:max(4, len(n) - 2)].lower()), m.lower()) for m in msgs):
+                return n
+    if _has_address([incoming or ""]) and not DELIV_PRICE_RE.fullmatch((incoming or "").strip()):
+        addr = re.sub(r"[,.\s]*(?:а\s+)?(?:сколько|какая|какова|стоимост|цен[аы]|почём|почем)[^\n]*$", "",
+                      incoming.strip(), flags=re.I).strip(" ,.?")
+        if len(addr) >= 4:
+            return ", ".join(x for x in (town, addr) if x)
+    a = str(_known_order(client).get("адрес") or "").strip()
+    if _meaningful(a) and len(a) >= 6 and not re.search(r"узна|уточн", a, re.I):
+        return a if town.lower()[:5] in a.lower() else ", ".join(x for x in (town, a) if x)
+    for m in reversed(msgs):
+        if _has_address([m]) and not DELIV_PRICE_RE.search(m):
+            return ", ".join(x for x in (town, m.strip()[:80]) if x)
+    return ""
+
+
 # В ответ на «что написать на открытке» клиент хочет ДРУГУЮ открытку / передумал — это не текст.
 OTHER_CARD_RE = re.compile(r"друг(?:ая|ую|ие|ой|их)\b|ещ[её]\s+(?:открыт|вариант)|есть\s+ещ[её]|другие\s+вариант|"
                            r"не\s+(?:эт[уа]|ту|та)\b|передумал|покаж\w*\s+(?:друг|ещ|открыт)|не\s+та\s+открыт", re.I)
@@ -1796,6 +1825,13 @@ def _apply_client_state(order, client, city):
         uniq.append(it)
     order["товары"] = uniq
     items = order["товары"]
+    dq = db.get_setting(f"delivq:{client}")
+    if dq and not (order.get("получение") or "").lower().startswith("самовывоз"):
+        order["_цена_доставки_вопрос"] = True
+        dnote = f"💰 Клиент спрашивает стоимость доставки ({dq}) — флорист ещё не ответил(а), назовите при подтверждении"
+        c = str(order.get("комментарий") or "").strip()
+        if "Клиент спрашивает стоимость доставки" not in c:
+            order["комментарий"] = (c + "; " if c else "") + dnote
     photo_item = db.get_setting(f"photo_item:{client}")
     if photo_item and not any(not CARD_RE.search(str(it.get("название") or "")) and (it.get("код") or it.get("название"))
                               for it in items if isinstance(it, dict)):
@@ -3817,7 +3853,8 @@ def respond(client, incoming, from_staff=False, quote=""):
             _clear_client_state(client)
             now_h = datetime.datetime.now(_MSK).hour + datetime.datetime.now(_MSK).minute / 60
             st, en = _shop_hours(city or "")
-            reply.text = CHECK_SENT_TEXT if st <= now_h < en else (
+            ask_price = reply.order.get("_цена_доставки_вопрос")
+            reply.text = (DELIV_SENT_TEXT if ask_price else CHECK_SENT_TEXT) if st <= now_h < en else (
                 "Спасибо! Заказ записан 🌸 Сейчас магазин закрыт — флорист проверит наличие и подтвердит его утром, "
                 f"с {st:02d}:00.")
             reply.photos = []
@@ -3832,25 +3869,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             advance()
         reply.photos, reply.question = [], ""
         order_text = True
-    # «Сколько стоит доставка?» — цену называет флорист при подтверждении. Спросили второй раз (настаивают) —
-    # передаём вопрос флористу, чтобы ответила сразу.
-    if not from_staff and config.DELIVERY_BY_FLORIST and DELIV_PRICE_RE.search(incoming or ""):
-        asks = sum(1 for m in history if m["role"] == "user" and DELIV_PRICE_RE.search(m["content"]))
-        if asks >= 2 or re.search(r"сейчас|сразу|точно|конкретн|всё[- ]?таки|все[- ]?таки|хочу знать|скажите", incoming, re.I):
-            reply.text = "Хорошо, уточняю у флориста стоимость доставки — она скоро напишет вам 🌸"
-            reply.question = f"Клиент просит сразу назвать стоимость доставки: «{incoming}». Ответьте клиенту."
-        else:
-            note = "Стоимость доставки флорист сообщит при подтверждении заказа, вместе с суммой к оплате 🌸"
-            # Из ответа ИИ убираем всё про доставку — наша фраза уже это говорит (без повтора дважды).
-            rest = " ".join(p for p in re.split(r"(?<=[.!?])\s+|\n+", reply.text or "")
-                            if p.strip() and not re.search(r"доставк|флорист\w*\s+сообщ", p, re.I)).strip()
-            if not rest and db.get_pending_order(client):
-                rest = "Остальное в заказе верно? Ответьте «да» или «нет»."
-            reply.text = (note + ("\n\n" + rest if rest else "")).strip()
-            if reply.question and re.search(r"доставк", reply.question, re.I):
-                reply.question = ""
-        reply.photos = [] if not keep_photos else reply.photos
-    elif not from_staff and config.DELIVERY_BY_FLORIST and not order_text and reply.text:
+    if not from_staff and config.DELIVERY_BY_FLORIST and not order_text and reply.text:
         # ИИ сам назвал цену доставки («бесплатно от 1500», «250 ₽») — убираем: цену называет флорист.
         reply.text = re.sub(r"[^.!?\n]*доставк[^.!?\n]*(?:бесплат|\d+\s*(?:₽|руб))[^.!?\n]*[.!?]?\s*", "",
                             reply.text, flags=re.I).strip() or reply.text
@@ -4292,4 +4311,36 @@ def respond(client, incoming, from_staff=False, quote=""):
                                                  [m["content"] for m in history if m["role"] == "user"])
         if to_summary and not keep_photos:
             advance()                                # всё собрано — показываем итог (или спрашиваем недостающее)
+    # «Сколько стоит доставка?» — точную цену знает флорист. Узнаём КУДА доставка, сразу передаём вопрос флористу
+    # (она ответит клиенту за пару минут), а бот тем временем продолжает оформление. Не успела ответить до конца
+    # заказа — в заявке пометка «клиент спрашивает стоимость доставки».
+    asked_now = bool(DELIV_PRICE_RE.search(incoming or ""))
+    need_dest = bool(db.get_setting(f"delivq_need:{client}"))
+    if not from_staff and config.DELIVERY_BY_FLORIST and not order_text and (asked_now or need_dest) \
+            and not db.get_setting(f"delivq:{client}") and not reply.order:
+        dest = _deliv_dest(client, city, incoming, history)
+        rest = " ".join(p for p in re.split(r"(?<=[.!?])\s+|\n+", reply.text or "")
+                        if p.strip() and not re.search(r"доставк|флорист|уточн", p, re.I)).strip()
+        if dest:
+            db.del_setting(f"delivq_need:{client}")
+            db.set_setting(f"delivq:{client}", dest)
+            note = f"Передала флористу — она напишет точную стоимость доставки ({dest}) в течение пары минут ⏱"
+            if reply.photos and not keep_photos:
+                rest = (reply.text or "").strip()        # букет ещё не выбран — показ вариантов оставляем как есть
+            elif not (rest and "?" in rest):
+                nq = _next_question([m["content"] for m in history if m["role"] == "user"] + [incoming], city,
+                                    _known_order(client))
+                rest = "" if nq == ADDRESS_Q else nq
+                if rest:
+                    db.set_setting(f"lastq:{client}", rest)
+            reply.text = note + ("\n\nА пока продолжим оформление 🌸 " + rest if rest else " 🌸")
+            reply.question = (f"💰 Клиент спрашивает точную стоимость доставки: {dest}. "
+                              f"Сообщение: «{incoming}». Напишите клиенту цену (или что туда не доставляем — "
+                              f"тогда предложите самовывоз или своего курьера).")
+        elif asked_now:
+            db.set_setting(f"delivq_need:{client}", "1")
+            reply.text = DELIV_DEST_Q
+            db.set_setting(f"lastq:{client}", DELIV_DEST_Q)
+            reply.question = ""
+            reply.photos = [] if not keep_photos else reply.photos
     return reply
