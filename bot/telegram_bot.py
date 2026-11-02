@@ -273,6 +273,15 @@ def notify_staff(client, text, buttons=None):
 ANSWER_BUTTON = [[{"text": "✅ Ответил(а)", "callback_data": "ans:x:0"}]]
 
 
+def _chat_url(client):
+    """Ссылка «открыть чат с клиентом»: по @нику, а без ника — по id (tg://user?id=…, работает не у всех)."""
+    m = re.search(r"@(\w{4,})", client_name(client) or "")
+    if m:
+        return f"https://t.me/{m.group(1)}"
+    kind, _, cid = (client or "").partition(":")
+    return f"tg://user?id={cid}" if kind in ("tgb", "tg") and cid.isdigit() else ""
+
+
 def _answer_buttons(client):
     """«✅ Ответил(а)» + если у клиента есть @ник — кнопка сразу открыть чат с ним."""
     name = client_name(client)
@@ -821,8 +830,9 @@ def _handle_callback(cq, on_check):
         keep = None
         if parts[0] == "chk":
             cl = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id"))
-            keep = (_answer_buttons(cl) if cl else ANSWER_BUTTON) + \
-                [[{"text": "📦 Заказ доставлен", "callback_data": f"dlv:x:{parts[2]}"}]]
+            dlv = [{"text": "📦 Заказ доставлен", "callback_data": f"dlv:x:{parts[2]}"}]
+            url = _chat_url(cl) if cl else ""
+            keep = ANSWER_BUTTON + [dlv + ([{"text": "💬 Открыть чат", "url": url}] if url else [])]
         _mark_done(m, f"✅ Отмечено — {_staff_name(cq.get('from'))}: {result.split(' — ')[0].split(': ', 1)[-1]}", keep)
 
 
@@ -858,22 +868,34 @@ def client_card(client):
     return "\n".join(lines)
 
 
+def _edit(method, **kw):
+    """Правка сообщения; если Telegram не принял кнопку-ссылку на клиента (tg://user — приватность клиента),
+    повторяем те же кнопки без неё."""
+    ok = call(method, **kw)
+    kb = (kw.get("reply_markup") or {}).get("inline_keyboard") or []
+    if not ok and "tg://user" in json.dumps(kb, ensure_ascii=False):
+        kb2 = [[b for b in r if "tg://user" not in str(b.get("url") or "")] for r in kb]
+        kw["reply_markup"] = {"inline_keyboard": [r for r in kb2 if r]}
+        ok = call(method, **kw)
+    return ok
+
+
 def _mark_done(m, note, keyboard=None):
     """Дописывает в сообщение сотрудникам отметку («✅ Отмечено — Маша: Всё верно») и убирает кнопки."""
     if not m:
         return
     kw = dict(chat_id=m["chat"]["id"], message_id=m["message_id"], reply_markup={"inline_keyboard": keyboard or []})
     if not note:
-        call("editMessageReplyMarkup", **kw)
+        _edit("editMessageReplyMarkup", **kw)
         return
     if m.get("text") is not None:
-        ok = call("editMessageText", text=(m["text"] + "\n\n" + note)[:4096], **kw)
+        ok = _edit("editMessageText", text=(m["text"] + "\n\n" + note)[:4096], **kw)
     elif m.get("caption") is not None or m.get("photo"):
-        ok = call("editMessageCaption", caption=((m.get("caption") or "") + "\n\n" + note)[:1024], **kw)
+        ok = _edit("editMessageCaption", caption=((m.get("caption") or "") + "\n\n" + note)[:1024], **kw)
     else:
         ok = None
     if not ok:
-        call("editMessageReplyMarkup", **kw)
+        _edit("editMessageReplyMarkup", **kw)
     # Та же заявка/сообщение у ДРУГИХ сотрудников — ставим ту же отметку и убираем кнопки и у них.
     try:
         copies = json.loads(db.get_setting(f"copies:{m['chat']['id']}:{m['message_id']}") or "[]")
@@ -884,11 +906,11 @@ def _mark_done(m, note, keyboard=None):
             continue
         kw2 = dict(chat_id=cp["c"], message_id=cp["m"], reply_markup={"inline_keyboard": keyboard or []})
         if cp.get("p"):
-            ok2 = call("editMessageCaption", caption=(cp["t"] + "\n\n" + note)[:1024], **kw2)
+            ok2 = _edit("editMessageCaption", caption=(cp["t"] + "\n\n" + note)[:1024], **kw2)
         else:
-            ok2 = call("editMessageText", text=(cp["t"] + "\n\n" + note)[:4096], **kw2)
+            ok2 = _edit("editMessageText", text=(cp["t"] + "\n\n" + note)[:4096], **kw2)
         if not ok2:
-            call("editMessageReplyMarkup", **kw2)
+            _edit("editMessageReplyMarkup", **kw2)
 
 
 def run_polling(deliver, on_check):
