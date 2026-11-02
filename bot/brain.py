@@ -1848,7 +1848,7 @@ def _apply_client_state(order, client, city):
         order["время"] = ex_t
         order["_точно"] = ex_t                   # не интервал, а точно к этому времени
         c0 = str(order.get("комментарий") or "").strip()
-        note0 = f"⚠️ ТОЧНО К {ex_t} — клиент просил ровно к этому времени, отправьте курьера с запасом"
+        note0 = f"‼️ ВАЖНО: ТОЧНО К {ex_t} — клиенту очень нужно ровно к этому времени, отправьте курьера заранее"
         if note0 not in c0:
             order["комментарий"] = (c0 + "; " if c0 else "") + note0
     extra = db.get_setting(f"addr_extra:{client}") or ""
@@ -2332,7 +2332,7 @@ def _order_summary(o):
     price = str(o.get("доставка_цена") or "")
     win = _delivery_window(o.get("дата"), o.get("время")) if o.get("получение") != "самовывоз" else ""
     if o.get("_точно"):
-        win = f"точно к {o['_точно']} (постараемся ровно ко времени)"
+        win = f"точно к {o['_точно']}"
     when = " ".join(x for x in (str(o.get("дата") or "").strip(),
                                 win or ((str(o["время"]) if re.match(r"\s*как можно", str(o["время"]))
                                          else f"к {o['время']}") if o.get("время") else "")) if x)
@@ -2727,8 +2727,8 @@ def respond(client, incoming, from_staff=False, quote=""):
                 db.set_setting(f"winok:{client}", winq)
                 if exact:
                     db.set_setting(f"exacttime:{client}", winq)
-                head = (f"Хорошо 🌸 Передам флористу: нужно точно к {winq}. Отправим курьера с запасом — время в пути "
-                        f"зависит от дороги, но сделаем всё, чтобы букет был ровно к {winq}."
+                head = (f"Хорошо 🌸 Букет будет к {winq} — отправим курьера заранее, с запасом по времени. "
+                        f"Флористу передала: важно точно к {winq}."
                         if exact else "Отлично 🌸")
                 nxt = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"] + [incoming],
                                      city, _known_order(client))

@@ -120,7 +120,7 @@ def _format_order(order_id, client, reply):
     when = f"{val(o.get('дата'))}, {val(o.get('время'))}" + (f" (окно {win})" if win else "")
     if o.get("_точно") or re.search(r"ТОЧНО К", str(o.get("комментарий") or "")):
         t_ex = o.get("_точно") or val(o.get("время"))
-        when = f"{val(o.get('дата'))}, ⚠️ ТОЧНО К {t_ex} (клиент просил ровно к этому времени)"
+        when = f"{val(o.get('дата'))}, ‼️ ТОЧНО К {t_ex} — клиенту очень важно, курьера отправить заранее"
     lines.append(f"🕒 Когда: {when}")
     if pickup:
         lines.append(f"🏪 Самовывоз — {val(o.get('город'))}, {val(o.get('адрес'))}")
