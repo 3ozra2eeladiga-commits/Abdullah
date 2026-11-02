@@ -676,6 +676,8 @@ def staff_counts():
     _t2, today = on_report("today")
     return {"noanswer": len(noans),
             "today": sum(1 for oid in today if db.order_day(oid) == _biz_today(now).strftime("%d.%m")),
+            "tomorrow": sum(1 for oid in today
+                            if db.order_day(oid) == (_biz_today(now) + datetime.timedelta(days=1)).strftime("%d.%m")),
             "human": len(_human_waiting(now)) + len(_photo_questions(now))}
 
 

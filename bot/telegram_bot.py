@@ -338,13 +338,16 @@ def staff_kb():
     except Exception:
         n = {}
     lab = lambda b, k: f"{b} ({n[k]})" if k in n else b
-    return {"keyboard": [[{"text": lab(NOANSWER_BTN, "noanswer")}, {"text": lab(TODAY_BTN, "today")}],
+    today = (f"📋 Заказы: сегодня {n['today']} · завтра {n.get('tomorrow', 0)}" if "today" in n else TODAY_BTN)
+    return {"keyboard": [[{"text": lab(NOANSWER_BTN, "noanswer")}, {"text": today}],
                          [{"text": lab(HUMAN_BTN, "human")}, {"text": RING_BTN}]],
             "resize_keyboard": True, "is_persistent": True}
 
 
 def _btn(text, base):
     """Нажата ли кнопка (с цифрой в скобках или без)."""
+    if base == TODAY_BTN and text.startswith("📋 Заказы"):
+        return True
     return text == base or text.startswith(base + " (")
 _ring_stopped_at = [0.0]          # когда кто-то нажал «Выключить звонок» — все звонки, начатые раньше, замолкают
 
