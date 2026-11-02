@@ -543,7 +543,18 @@ def _handle(msg, deliver):
         rep, ids = _hooks["on_report"]("noanswer" if _btn(text, NOANSWER_BTN) else "today")
         # Под списком — кнопки «№17», «№19»…: нажал — бот присылает эту заявку целиком (с кнопками).
         rows = [[{"text": f"№{db.order_no(i)}", "callback_data": f"show:x:{i}"} for i in ids[k:k + 4]] for k in range(0, len(ids[:24]), 4)]
-        send(chat_id, rep, reply_markup={"inline_keyboard": rows} if rows else staff_kb())
+        kb = staff_kb()
+        if rows and db.get_setting(f"kbshown:{chat_id}") != json.dumps(kb, ensure_ascii=False):
+            # Цифры на кнопках внизу устарели — обновить их можно только новым сообщением с кнопками:
+            # список — с обновлёнными кнопками внизу, а номера «№…» — отдельным сообщением под ним.
+            send(chat_id, rep, reply_markup=kb)
+            send(chat_id, "Открыть заявку — нажмите номер 👇", reply_markup={"inline_keyboard": rows})
+            db.set_setting(f"kbshown:{chat_id}", json.dumps(kb, ensure_ascii=False))
+        elif rows:
+            send(chat_id, rep, reply_markup={"inline_keyboard": rows})
+        else:
+            send(chat_id, rep, reply_markup=kb)
+            db.set_setting(f"kbshown:{chat_id}", json.dumps(kb, ensure_ascii=False))
         return
     if text == STOP_BTN:
         stop_rings()
@@ -595,7 +606,8 @@ def _handle(msg, deliver):
                  if text.startswith("/reset") else "▶️ Бот снова отвечает вам в Telegram магазина.")
             return
         if text.startswith("/reset"):
-            send(chat_id, "🔄 Начали заново: бот забыл тестовый разговор. Пишите как новый клиент.")
+            send(chat_id, "🔄 Начали заново: бот забыл тестовый разговор. Пишите как новый клиент.",
+                 reply_markup=staff_kb())
         else:
             send(chat_id, "▶️ Бот снова отвечает в режиме проверки.")
         return
