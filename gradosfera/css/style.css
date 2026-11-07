@@ -970,3 +970,16 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .team__svg .tw__head { fill: #f3d9bd; }
 .team__svg .tw__hair { fill: #3a2a20; }
 .team__svg .tw__screen { fill: #ffd9a8; }
+
+/* спят: Z-буквы летят от каждого, дышат; работают: печатают заметнее, экраны мерцают */
+.tr__zz text { fill: #ffb27a; font: 700 13px var(--sans); opacity: 0; animation: zFly 3s ease-in infinite; }
+.tr__zz text:nth-child(2) { font-size: 17px; animation-delay: 1s; }
+.tr__zz text:nth-child(3) { font-size: 22px; animation-delay: 2s; }
+.tr:nth-child(2) .tr__zz text { animation-duration: 3.4s; } .tr:nth-child(3) .tr__zz text { animation-duration: 2.8s; }
+@keyframes zFly { 0% { opacity: 0; transform: translate(0, 0) rotate(-10deg); } 15% { opacity: 1; } 70% { opacity: .9; } 100% { opacity: 0; transform: translate(22px, -46px) rotate(12deg); } }
+.tr .tw__vest { transform-box: fill-box; transform-origin: 50% 100%; animation: breathe 3.2s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: scale(1.06, 1.08); } }
+.tw__type { animation: twType2 .18s ease-in-out infinite alternate; }
+@keyframes twType2 { from { transform: translate(0, 0); } to { transform: translate(1px, -3px); } }
+.tw__screen { animation: scrFlick 1.6s steps(3) infinite; }
+@keyframes scrFlick { 0% { opacity: 1; } 33% { opacity: .75; } 66% { opacity: .95; } }
