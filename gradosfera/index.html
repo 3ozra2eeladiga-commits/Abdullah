@@ -110,6 +110,27 @@
 <!-- ============ FACADE: фото раскрывается из полосы ============ -->
 <section class="facade" id="facade">
   <div class="facade__pin">
+    <div class="pull" id="pull" aria-hidden="true">
+      <svg class="pull__ropes"><line id="ropeL"/><line id="ropeR"/></svg>
+      <div class="pull__side pull__side--l" id="pullL"><svg class="pull__man" viewBox="-40 -120 80 125" aria-hidden="true">
+  <g class="pm-leg pm-leg--a"><path d="M0 -42 L-10 -4"/><path d="M-10 -4 h-9"/></g>
+  <g class="pm-leg pm-leg--b"><path d="M0 -42 L10 -4"/><path d="M10 -4 h-9"/></g>
+  <path class="pm-body" d="M0 -42 L4 -78"/>
+  <rect class="pm-vest" x="-6" y="-78" width="14" height="24" rx="3" transform="rotate(8 0 -66)"/>
+  <circle class="pm-head" cx="7" cy="-90" r="8"/>
+  <path class="pm-hat" d="M-3 -93 a10 10 0 0 1 20 0 z"/><path class="pm-hat" d="M-6 -93 h26" />
+  <path class="pm-arm" d="M4 -72 L26 -64"/><path class="pm-arm" d="M4 -66 L26 -60"/>
+</svg></div>
+      <div class="pull__side pull__side--r" id="pullR"><svg class="pull__man" viewBox="-40 -120 80 125" aria-hidden="true">
+  <g class="pm-leg pm-leg--a"><path d="M0 -42 L-10 -4"/><path d="M-10 -4 h-9"/></g>
+  <g class="pm-leg pm-leg--b"><path d="M0 -42 L10 -4"/><path d="M10 -4 h-9"/></g>
+  <path class="pm-body" d="M0 -42 L4 -78"/>
+  <rect class="pm-vest" x="-6" y="-78" width="14" height="24" rx="3" transform="rotate(8 0 -66)"/>
+  <circle class="pm-head" cx="7" cy="-90" r="8"/>
+  <path class="pm-hat" d="M-3 -93 a10 10 0 0 1 20 0 z"/><path class="pm-hat" d="M-6 -93 h26" />
+  <path class="pm-arm" d="M4 -72 L26 -64"/><path class="pm-arm" d="M4 -66 L26 -60"/>
+</svg></div>
+    </div>
     <div class="facade__mask" id="facadeMask">
       <img src="img/photo/closeup.webp" alt="Фасад ЖК «Новый Квартал» снизу вверх" loading="lazy">
       <canvas id="facadeVideo" class="facade__video is-ready" data-frames="frames/facade" data-count="99" data-section="#facade" data-start="0.28" data-span="0.62" aria-hidden="true"></canvas>

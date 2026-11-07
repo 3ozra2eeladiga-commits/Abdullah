@@ -173,6 +173,45 @@
      .from('.facade__copy', { opacity: 0, y: 40, ease: 'power2.out', duration: 0.4 }, 0.35);
   ftl.fromTo('#facadeVideo', { scale: 1.25 }, { scale: 1, ease: 'power2.inOut' }, 0);
 
+  // двое рабочих тянут края фото тросами в стороны
+  (function () {
+    var mask = document.getElementById('facadeMask'), pull = document.getElementById('pull');
+    if (!mask || !pull) return;
+    var L = document.getElementById('pullL'), R = document.getElementById('pullR');
+    var rl = document.getElementById('ropeL'), rr = document.getElementById('ropeR');
+    var lastL = null, still = 0, dustT = 0;
+    function dust(x, y, dir) {
+      var d = document.createElement('i'); d.className = 'pull__dust';
+      d.style.left = x + 'px'; d.style.top = (y - 4) + 'px'; d.style.setProperty('--dx', (dir * 18) + 'px');
+      pull.appendChild(d); setTimeout(function () { d.remove(); }, 700);
+    }
+    gsap.ticker.add(function () {
+      var raw = /inset\(([^)]*)\)/.exec(mask.style.clipPath || '');
+      if (!raw) { pull.style.opacity = 0; return; }
+      var v = raw[1].trim().split(/\s+/).map(parseFloat);
+      if (v.length === 1) v = [v[0], v[0], v[0], v[0]]; else if (v.length === 2) v = [v[0], v[1], v[0], v[1]]; else if (v.length === 3) v = [v[0], v[1], v[2], v[1]];
+      var m = [0, v[0], v[1], v[2], v[3]];
+      var W = pull.clientWidth, H = pull.clientHeight;
+      var top = +m[1], right = +m[2], left = +m[4];
+      var xl = W * left / 100, xr = W * (1 - right / 100);
+      var gap = Math.min(W * 0.12, 120);                       // рабочие стоят в стороне от края
+      var foot = H * (1 - top / 100) + 6;                     // стоят на уровне низа картинки
+      var hand = foot - (L.offsetHeight || 80) * 0.55;
+      var manL = xl - gap, manR = xr + gap;
+      L.style.left = manL + 'px'; R.style.left = manR + 'px'; L.style.top = R.style.top = foot + 'px';
+      rl.setAttribute('x1', xl); rl.setAttribute('y1', H * 0.5); rl.setAttribute('x2', manL + 14); rl.setAttribute('y2', hand);
+      rr.setAttribute('x1', xr); rr.setAttribute('y1', H * 0.5); rr.setAttribute('x2', manR - 14); rr.setAttribute('y2', hand);
+      var vis = left > 0.6 && left < 49;                       // когда фото раскрылось — рабочие уходят
+      pull.style.opacity = vis ? 1 : 0;
+      pull.style.transition = 'opacity .35s';
+      var moving = lastL !== null && Math.abs(left - lastL) > 0.02;
+      if (moving) still = 0; else still++;
+      pull.classList.toggle('walking', still < 6);
+      if (moving && vis && Date.now() - dustT > 120) { dustT = Date.now(); dust(manL, foot, 1); dust(manR, foot, -1); }
+      lastL = left;
+    });
+  })();
+
   // фасад: кадры день → ночь рисует js/frames.js; здесь — полоска «день — ночь»
   (function () {
     var bar = document.getElementById('dnBar');

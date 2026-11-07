@@ -541,3 +541,24 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
   .key__step { display: block; position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(18,18,20,.8); border: 1px solid var(--copper); color: #fff; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; pointer-events: none; transition: opacity .3s; }
   .key.done .key__step { opacity: 0; }
 }
+
+/* фасад: двое рабочих растягивают фото на тросах */
+.pull { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.pull__ropes { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.pull__ropes line { stroke: #e9d8bf; stroke-width: 2.5; stroke-linecap: round; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+.pull__side { position: absolute; top: 0; width: clamp(60px, 7vw, 96px); transform: translate(-50%, -100%); will-change: left, top; }
+.pull__side--l .pull__man { transform: scaleX(-1); }
+.pull__man { width: 100%; height: auto; display: block; overflow: visible; }
+.pull__man path, .pull__man circle { fill: none; stroke: #efe7da; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.pull__man .pm-vest { fill: #f07832; stroke: none; }
+.pull__man .pm-hat { fill: #c98a5b; stroke: #c98a5b; stroke-width: 3; }
+.pm-leg { transform-origin: 0 -42px; transform-box: view-box; }
+.pull.walking .pm-leg--a { animation: pmStep .42s ease-in-out infinite alternate; }
+.pull.walking .pm-leg--b { animation: pmStep .42s ease-in-out infinite alternate-reverse; }
+@keyframes pmStep { from { transform: rotate(-16deg); } to { transform: rotate(16deg); } }
+.pull.walking .pull__man { animation: pmBob .21s ease-in-out infinite alternate; }
+@keyframes pmBob { to { translate: 0 -3px; } }
+.pull__dust { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: rgba(201,138,91,.5); pointer-events: none; animation: pmDust .7s ease-out forwards; }
+@keyframes pmDust { to { opacity: 0; transform: translate(var(--dx), -14px) scale(2.4); } }
+.pull__side--l .pull__man { transform: scaleX(-1) rotate(10deg); transform-origin: 50% 100%; }
+.pull__side--r .pull__man { transform: rotate(10deg); transform-origin: 50% 100%; }
