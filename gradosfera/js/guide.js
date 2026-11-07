@@ -7,7 +7,7 @@
   if (!g || !body) return;
   var mobile = window.matchMedia('(max-width: 760px)').matches;
   var STOPS = [
-    ['#about',    0.70, 'Привет! Я покажу дом. «Новый Квартал» — 8 этажей бизнес-класса в центре Моздока.'],
+    ['#about',    0.70, 'Привет! Я покажу дом. «Новый Квартал» — 8 этажей бизнес-класса в центре Моздока. Нужна помощь — нажмите на меня!'],
     ['#facade',   0.62, 'Смотрите на стеклянную башню — ночью фасад светится!'],
     ['#lift',     0.58, 'Садитесь в лифт — листайте вниз, прокатимся от паркинга до крыши!'],
     ['#flats',    0.66, 'Планировки от 45 до 105 м². Жмите на вкладки — смотрите варианты.'],
@@ -16,7 +16,7 @@
     ['#boiler',   0.70, 'Своя котельная на весь дом. Проведите по фото — увидите, как идёт тепло.'],
     ['#gallery',  0.60, 'Листайте галерею — здесь все ракурсы дома.'],
     ['#terms',    0.66, 'Сдача — I квартал 2028. Разрешение на строительство — по кнопке ниже.'],
-    ['#contacts', 0.74, 'Остались вопросы? Звоните: <a href="tel:+79388153333">+7 (938) 815-33-33</a> или приезжайте в офис продаж — покажем всё лично!']
+    ['#contacts', 0.74, 'Остались вопросы? Звоните: <a href="tel:+79388153333">+7 (938) 815-33-33</a> или приезжайте в офис продаж. Нужна помощь — нажмите на меня!']
   ];
   var nodes = STOPS.map(function (s) { return document.querySelector(s[0]); });
   var cur = -1, y = 0, timer = 0, moveN = 0;
@@ -50,6 +50,23 @@
       timer = setTimeout(function () { if (i !== STOPS.length - 1) bub.classList.remove('is-on'); }, mobile ? 5500 : 8000);
     }, 560);
   }
+  // «Нужна помощь? Нажмите на меня» — по клику открывается меню помощи
+  var man = g.querySelector('.guide__man'), menu = document.getElementById('guideMenu'), helpT = 0;
+  function openMenu(v) { g.classList.toggle('menu-open', v); }
+  if (man) man.addEventListener('click', function (e) { e.stopPropagation(); openMenu(!g.classList.contains('menu-open')); });
+  if (bub) bub.addEventListener('click', function () { openMenu(true); });
+  if (menu) menu.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) openMenu(false); });
+  document.addEventListener('click', function (e) { if (!g.contains(e.target)) openMenu(false); });
+  function helpHint() {
+    clearInterval(helpT);
+    helpT = setInterval(function () {
+      if (cur < 0 || g.classList.contains('menu-open') || bub.classList.contains('is-on') || cur === STOPS.length - 1) return;
+      bub.innerHTML = 'Нужна помощь? Нажмите на меня — подскажу 👋'; bub.classList.add('is-on');
+      setTimeout(function () { if (bub.textContent.indexOf('Нужна помощь') === 0) bub.classList.remove('is-on'); }, 4500);
+    }, 16000);
+  }
+  helpHint();
+
   var raf = 0;
   var settle = 0;
   function check() { raf = 0; var i = sectionNow(); clearTimeout(settle); settle = setTimeout(function () { go(i); }, 220); }

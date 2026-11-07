@@ -667,3 +667,16 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .lift__final p { margin: 0; max-width: 520px; color: rgba(239,231,218,.9); font-size: clamp(14px, 1.3vw, 18px); line-height: 1.55; text-shadow: 0 2px 20px rgba(0,0,0,.7); }
 .guide__bubble { width: max-content; }
 @media (max-width: 760px) { .guide__bubble { max-width: 230px; } }
+
+/* гид: «нажмите на меня» и меню помощи */
+.guide__man { pointer-events: auto; cursor: pointer; }
+.guide__menu { position: absolute; right: 60px; bottom: 30px; width: 270px; display: grid; gap: 6px; padding: 14px; border-radius: 16px; background: #efe7da; color: #1b1410; box-shadow: 0 16px 40px rgba(0,0,0,.5);
+  opacity: 0; transform: translateY(8px) scale(.96); pointer-events: none; transition: opacity .25s, transform .25s; }
+.guide.menu-open .guide__menu { opacity: 1; transform: none; pointer-events: auto; }
+.guide.menu-open .guide__bubble { opacity: 0 !important; }
+.guide__menu b { font: 700 14px var(--sans); margin-bottom: 4px; }
+.gmn { display: block; padding: 10px 12px; border-radius: 10px; background: #fff; color: #1b1410; font: 600 13px/1.3 var(--sans); text-align: left; transition: background .2s; }
+.gmn:hover { background: #ffe1c7; }
+.gmn--x { background: transparent; color: #7a6656; font-weight: 500; text-align: center; }
+.guide__man:hover .mm__vest { fill: #ff8a45; }
+@media (max-width: 760px) { .guide__menu { right: auto; left: 46px; width: min(270px, calc(100vw - 80px)); } }
