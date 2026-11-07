@@ -918,3 +918,17 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .fwalk__dot.seen::before { animation: none; opacity: 0; }
 .fwalk__dot.is-on::before { animation: none; opacity: 0; }
 @media (max-width: 760px) { .fwalk__dot { width: 30px; height: 30px; margin: -15px 0 0 -15px; } .fwalk__dot::after { inset: 7px; } }
+/* точки комнат «бьются как сердце»: тук-тук — пауза, с волной и свечением */
+.fwalk__dot::after { animation: dotHeart 1.3s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(255,122,47,.6), 0 2px 8px rgba(0,0,0,.35); }
+.fwalk__dot::before { animation: dotWave 1.3s ease-out infinite; border-width: 3px; }
+.fwalk__dot:nth-of-type(2n)::after, .fwalk__dot:nth-of-type(2n)::before { animation-delay: .25s; }
+.fwalk__dot:nth-of-type(3n)::after, .fwalk__dot:nth-of-type(3n)::before { animation-delay: .5s; }
+@keyframes dotHeart {
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(255,122,47,.7), 0 2px 8px rgba(0,0,0,.35); }
+  14%  { transform: scale(1.45); box-shadow: 0 0 14px 6px rgba(255,122,47,.55), 0 2px 8px rgba(0,0,0,.35); }
+  28%  { transform: scale(1.05); }
+  42%  { transform: scale(1.35); box-shadow: 0 0 12px 5px rgba(255,122,47,.45), 0 2px 8px rgba(0,0,0,.35); }
+  70%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,122,47,0), 0 2px 8px rgba(0,0,0,.35); }
+}
+@keyframes dotWave { 0% { transform: scale(.8); opacity: 0; } 12% { opacity: 1; } 70% { transform: scale(2.3); opacity: 0; } 100% { transform: scale(2.3); opacity: 0; } }
+.fwalk__dot.seen::after, .fwalk__dot.is-on::after { animation: none; }
