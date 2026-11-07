@@ -17,7 +17,7 @@
     { key: '3a', tab: '3-комнатная', type: '3-комнатная', img: 'img/plans/3k-a.webp', areas: [105.63], note: 'Три комнаты, кухня-гостиная и две ванные зоны.' }
   ];
   var GALLERY = ['img/photo/corner-morning.webp', 'img/photo/closeup.webp', 'img/photo/yard.webp', 'img/photo/front.webp', 'img/photo/corner-sunset.webp',
-    'img/night-1.webp', 'img/night-2.webp', 'img/landscaping.webp', 'img/yard.webp', 'img/commerce.webp', 'img/parking.webp', 'img/roof.webp'];
+    'img/night-1.webp', 'img/night-2.webp', 'img/landscaping.webp', 'img/yard.webp', 'img/commerce.webp', 'img/parking.webp', 'img/photo/roof.webp'];
   for (var g = 2; g <= 16; g++) GALLERY.push('img/gallery/slide-' + (g < 10 ? '0' + g : g) + '.webp');
 
   var fmt = function (a) { return a.toFixed(2).replace('.', ',').replace(/0+$/, '').replace(/,$/, ''); };
