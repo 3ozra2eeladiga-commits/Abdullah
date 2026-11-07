@@ -822,3 +822,39 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .biz__call { color: #ffb27a; font-size: 14px; font-weight: 600; }
 /* подпись раздела внизу слева не сливается с текстом страницы */
 .build-hud { padding: 6px 10px; margin-left: -10px; border-radius: 999px; background: rgba(16,17,20,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+/* безопасность: тонкие линии рисуются при появлении, спокойная анимация */
+.safe { align-items: start; }
+.safe__head { display: grid; gap: 10px; }
+.safe__head .muted { font-size: 15px; }
+.safe ul { gap: 0; border: 1px solid var(--line); }
+.safe li { display: grid; justify-items: start; gap: 18px; padding: 28px 26px; border-left: 1px solid var(--line); opacity: 0; transform: translateY(14px); transition: opacity .8s, transform .8s; }
+.safe li:first-child { border-left: 0; }
+.safe.in li { opacity: 1; transform: none; }
+.safe.in li:nth-child(2) { transition-delay: .15s; } .safe.in li:nth-child(3) { transition-delay: .3s; }
+.safe li div { display: grid; gap: 6px; }
+.safe__ic { width: 56px; height: 56px; overflow: visible; }
+.safe__ic .sd { fill: none; stroke: var(--copper); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 160; stroke-dashoffset: 160; transition: stroke-dashoffset 1.8s ease; }
+.safe.in .safe__ic .sd { stroke-dashoffset: 0; }
+.safe__lock { transform-origin: 32px 38px; }
+.safe.in .safe__lock { animation: safeLock 7s ease-in-out 2s infinite; }
+@keyframes safeLock { 0%, 90%, 100% { transform: none; } 94% { transform: translateY(1.5px); } }
+.safe__cam { transform-origin: 20px 18px; }
+.safe.in .safe__cam { animation: safeCam 8s ease-in-out 1.6s infinite; }
+@keyframes safeCam { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(10deg); } }
+.safe__beam { fill: rgba(255,160,90,.12); stroke: none; opacity: 0; transition: opacity 1s 1.4s; }
+.safe.in .safe__beam { opacity: 1; }
+.safe__rec { fill: #ff5a3c; opacity: 0; }
+.safe.in .safe__rec { animation: safeRec 2s steps(1) 1.6s infinite; }
+@keyframes safeRec { 0% { opacity: 1; } 50% { opacity: 0; } }
+.safe__drop { fill: rgba(140,190,255,.75); opacity: 0; }
+.safe.in .safe__drop { animation: safeDrop 3.2s ease-in 2s infinite; }
+.safe.in .safe__drop.d2 { animation-delay: 2.6s; } .safe.in .safe__drop.d3 { animation-delay: 3.1s; }
+@keyframes safeDrop { 0% { opacity: 0; transform: translateY(-6px); } 15% { opacity: 1; } 60% { opacity: 0; transform: translateY(16px); } 100% { opacity: 0; } }
+@media (max-width: 760px) {
+  .safe li { grid-template-columns: 48px 1fr; align-items: center; gap: 16px; padding: 20px 18px; border-left: 0; border-top: 1px solid var(--line); }
+  .safe li:first-child { border-top: 0; }
+  .safe__ic { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .safe__ic * { animation: none !important; } }
+.safe ul { background: rgba(16,17,20,.86); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
