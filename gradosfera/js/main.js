@@ -37,32 +37,74 @@
   btn.addEventListener('click', function () { setMenu(!menu.classList.contains('is-open')); });
   $$('a', menu).forEach(function (a) { a.addEventListener('click', function () { setMenu(false); }); });
 
-  /* ---------- квартиры ---------- */
-  var tabs = $('#flatTabs'), cur = 0;
-  var showFlat = function (i, areaIdx) {
-    cur = i; var f = FLATS[i];
-    $$('.ftab', tabs).forEach(function (t, k) { t.classList.toggle('is-active', k === i); t.setAttribute('aria-selected', k === i); });
-    var img = $('#flatImg');
-    if (f.img) { img.hidden = false; img.src = f.img; img.alt = 'Планировка: ' + f.type; $('#flatNoImg').hidden = true; }
-    else { img.hidden = true; img.removeAttribute('src'); $('#flatNoImg').hidden = false; }
-    $('#flatType').textContent = f.type;
-    var a = areaIdx || 0;
-    $('#flatArea').textContent = fmt(f.areas[a]);
-    $('#flatNote').textContent = f.note;
-    var v = $('#flatVariants'); v.innerHTML = '';
-    if (f.areas.length > 1) f.areas.forEach(function (ar, k) {
-      var b = document.createElement('button'); b.type = 'button'; b.textContent = fmt(ar) + ' м²';
-      if (k === a) b.classList.add('is-active');
-      b.addEventListener('click', function () { showFlat(i, k); });
-      v.appendChild(b);
-    });
-  };
-  FLATS.forEach(function (f, i) {
-    var t = document.createElement('button'); t.className = 'ftab'; t.type = 'button'; t.setAttribute('role', 'tab'); t.textContent = f.tab;
-    t.addEventListener('click', function () { showFlat(i); });
-    tabs.appendChild(t);
+  /* ---------- квартиры: карточки по типам + отдельное окно с вариантами (как на хороших сайтах ЖК) ---------- */
+  var TYPES = [
+    { key: '1', short: '1К', name: '1-комнатная', note: 'Для одного или пары. Компактная планировка с отдельной кухней.' },
+    { key: 'e2', short: 'Е2', name: 'Евро-двушка', note: 'Спальня и кухня-гостиная — современный формат.' },
+    { key: '2', short: '2К', name: '2-комнатная', note: 'Две изолированные комнаты — для семьи или с кабинетом.' },
+    { key: '3', short: '3К', name: '3-комнатная', note: 'Самая просторная квартира в доме — для большой семьи.' }
+  ];
+  var VARIANTS = {};
+  FLATS.forEach(function (f) {
+    var key = f.key === 'e2' ? 'e2' : f.key.charAt(0);
+    (VARIANTS[key] = VARIANTS[key] || []);
+    f.areas.forEach(function (ar) { VARIANTS[key].push({ area: ar, img: f.img }); });
   });
-  showFlat(0);
+  Object.keys(VARIANTS).forEach(function (k) { VARIANTS[k].sort(function (a, b) { return a.area - b.area; }); });
+
+  var ft = $('#ftypes');
+  TYPES.forEach(function (t, ti) {
+    var v = VARIANTS[t.key] || [], min = v[0].area, max = v[v.length - 1].area, img = (v.find(function (x) { return x.img; }) || {}).img;
+    var c = document.createElement('button'); c.type = 'button'; c.className = 'ftype fade';
+    c.innerHTML = '<span class="ftype__plan">' + (img ? '<img src="' + img + '" alt="Планировка: ' + t.name + '" loading="lazy">' : '<i>Планировка по запросу</i>') + '</span>' +
+      '<span class="ftype__body"><span class="ftype__name">' + t.name + '</span>' +
+      '<span class="ftype__area">' + (min === max ? fmt(min) : fmt(min) + '–' + fmt(max)) + '<small>м²</small></span>' +
+      '<span class="ftype__note">' + t.note + '</span>' +
+      '<span class="ftype__foot"><span>' + v.length + ' ' + (v.length === 1 ? 'вариант' : v.length < 5 ? 'варианта' : 'вариантов') + '</span><b>Смотреть →</b></span></span>';
+    c.addEventListener('click', function () { openWin(ti, 0); });
+    ft.appendChild(c);
+  });
+
+  var win = $('#fwin'), wt = 0, wv = 0;
+  document.body.appendChild(win);   // окно поверх всего сайта (вне слоя main)
+  var tbar = $('#fwTypes');
+  TYPES.forEach(function (t, ti) {
+    var v = VARIANTS[t.key];
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'fwt';
+    b.innerHTML = '<b>' + t.short + '</b><small>от ' + fmt(v[0].area) + ' м²</small>';
+    b.addEventListener('click', function () { show(ti, 0); });
+    tbar.appendChild(b);
+  });
+  function show(ti, vi) {
+    var t = TYPES[ti], v = VARIANTS[t.key]; wt = ti; wv = (vi + v.length) % v.length;
+    var cur = v[wv];
+    $('#fwTitle').innerHTML = t.name + '<br>' + fmt(cur.area) + ' м²';
+    $('#fwCrumb').textContent = t.name;
+    $$('.fwt', tbar).forEach(function (b, i) { b.classList.toggle('is-on', i === ti); });
+    var img = $('#fwImg');
+    if (cur.img) { img.hidden = false; img.src = cur.img; img.alt = 'Планировка: ' + t.name + ', ' + fmt(cur.area) + ' м²'; $('#fwNoImg').hidden = true; }
+    else { img.hidden = true; img.removeAttribute('src'); $('#fwNoImg').hidden = false; }
+    $('#fwCount').textContent = v.length > 1 ? (wv + 1) + ' / ' + v.length : '';
+    $$('.fwin__arr').forEach(function (a) { a.style.display = v.length > 1 ? '' : 'none'; });
+    $('#fwSpecs').innerHTML = '<div><dt>Тип</dt><dd>' + t.name + '</dd></div><div><dt>Площадь общая</dt><dd>' + fmt(cur.area) + ' м²</dd></div><div><dt>Вариант</dt><dd>' + (wv + 1) + ' из ' + v.length + '</dd></div><div><dt>Сдача</dt><dd>I кв. 2028</dd></div>';
+    $('#fwNote').textContent = t.note;
+    var ar = $('#fwAreas'); ar.innerHTML = '';
+    v.forEach(function (x, k) { var b = document.createElement('button'); b.type = 'button'; b.textContent = fmt(x.area) + ' м²'; if (k === wv) b.classList.add('is-on'); b.addEventListener('click', function () { show(ti, k); }); ar.appendChild(b); });
+  }
+  function openWin(ti, vi) { show(ti, vi); win.classList.add('is-open'); win.setAttribute('aria-hidden', 'false'); document.body.classList.add('lock'); }
+  function closeWin() { win.classList.remove('is-open'); win.setAttribute('aria-hidden', 'true'); document.body.classList.remove('lock'); }
+  win.addEventListener('click', function (e) {
+    if (e.target === win || e.target.closest('[data-fclose]')) closeWin();
+    var s = e.target.closest('[data-fstep]'); if (s) show(wt, wv + (+s.getAttribute('data-fstep')));
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!win.classList.contains('is-open')) return;
+    if (e.key === 'Escape') closeWin(); if (e.key === 'ArrowRight') show(wt, wv + 1); if (e.key === 'ArrowLeft') show(wt, wv - 1);
+  });
+  var fsx = null;
+  $('#fwPlan').addEventListener('touchstart', function (e) { fsx = e.touches[0].clientX; }, { passive: true });
+  $('#fwPlan').addEventListener('touchend', function (e) { if (fsx === null) return; var d = e.changedTouches[0].clientX - fsx; if (Math.abs(d) > 45) show(wt, wv + (d < 0 ? 1 : -1)); fsx = null; });
+  $('#fwImg').addEventListener('click', function () { var v = VARIANTS[TYPES[wt].key][wv]; if (v.img) openLb([v.img], 0); });
 
   /* ---------- галерея + lightbox ---------- */
   var track = $('#galTrack'), lb = $('#lb'), lbImg = $('#lbImg'), list = [], idx = 0;
@@ -97,7 +139,6 @@
   lb.addEventListener('touchstart', function (e) { tx = e.touches[0].clientX; }, { passive: true });
   lb.addEventListener('touchend', function (e) { if (tx === null) return; var d = e.changedTouches[0].clientX - tx; if (Math.abs(d) > 50 && list.length > 1) step(d < 0 ? 1 : -1); tx = null; });
   $$('[data-zoom]').forEach(function (b) { b.addEventListener('click', function () { openLb([b.dataset.zoom], 0); }); });
-  $('.flat__plan').addEventListener('click', function () { var f = FLATS[cur]; if (f.img) openLb([f.img.replace('/plans/', '/plans/')], 0); });
   $('#lbImg').addEventListener('load', function () { /* план на светлом фоне */ });
 
   var y = $('#year'); if (y) y.textContent = new Date().getFullYear();

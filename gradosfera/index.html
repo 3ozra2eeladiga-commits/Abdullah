@@ -237,16 +237,34 @@
       <p class="muted fade">Одно-, двух- и трёхкомнатные квартиры и евро-двушка — от&nbsp;45,45 до&nbsp;105,63 м². Актуальные цены и наличие — по&nbsp;телефону отдела продаж.</p>
     </div>
 
-    <div class="flats__tabs" role="tablist" id="flatTabs"></div>
+    <div class="ftypes" id="ftypes"></div>
 
-    <div class="flat" id="flat">
-      <div class="flat__plan"><img id="flatImg" src="" alt=""><span class="flat__noimg" id="flatNoImg" hidden>Планировка по запросу</span></div>
-      <div class="flat__info">
-        <span class="tag" id="flatType"></span>
-        <div class="flat__area"><b id="flatArea"></b><span>м²</span></div>
-        <p class="muted" id="flatNote"></p>
-        <div class="flat__variants" id="flatVariants"></div>
-        <a class="btn btn--fill" href="tel:+79388153333">Узнать цену — позвонить</a>
+    <div class="fwin" id="fwin" role="dialog" aria-modal="true" aria-labelledby="fwTitle" aria-hidden="true">
+      <div class="fwin__inner">
+        <div class="fwin__top">
+          <div class="fwin__crumbs">Квартиры / <span id="fwCrumb"></span></div>
+          <button class="fwin__x" type="button" data-fclose aria-label="Закрыть">×</button>
+        </div>
+        <div class="fwin__head">
+          <h3 class="fwin__title" id="fwTitle"></h3>
+          <div class="fwin__types" id="fwTypes"></div>
+        </div>
+        <div class="fwin__body">
+          <div class="fwin__plan" id="fwPlan">
+            <button class="fwin__arr fwin__arr--l" type="button" data-fstep="-1" aria-label="Предыдущий вариант">←</button>
+            <img id="fwImg" alt=""><span class="fwin__noimg" id="fwNoImg" hidden>Планировка по запросу</span>
+            <button class="fwin__arr fwin__arr--r" type="button" data-fstep="1" aria-label="Следующий вариант">→</button>
+            <span class="fwin__count" id="fwCount"></span>
+          </div>
+          <div class="fwin__side">
+            <span class="tag">Характеристики</span>
+            <dl class="fwin__specs" id="fwSpecs"></dl>
+            <p class="muted" id="fwNote"></p>
+            <span class="tag">Варианты площади</span>
+            <div class="fwin__areas" id="fwAreas"></div>
+            <a class="btn btn--fill" href="tel:+79388153333">Узнать цену — позвонить</a>
+          </div>
+        </div>
       </div>
     </div>
 
