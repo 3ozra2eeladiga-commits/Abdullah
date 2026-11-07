@@ -772,3 +772,35 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .ftype__plan { position: relative; }
 .ftype__plan img { position: absolute; inset: 8%; width: 84%; height: 84%; max-width: none; max-height: none; }
 html, body { overflow-x: clip; }
+
+/* прогулка по квартире */
+.fwin__left { display: grid; gap: 10px; min-width: 0; }
+.fwalk { position: absolute; inset: 0; pointer-events: none; }
+.fwalk__man { position: absolute; width: 26px; height: 34px; margin: -30px 0 0 -13px; z-index: 3; filter: drop-shadow(0 3px 3px rgba(0,0,0,.25));
+  transition: left 1.05s cubic-bezier(.45,0,.4,1), top 1.05s cubic-bezier(.45,0,.4,1); }
+.fwalk__man.flip { transform: scaleX(-1); }
+.fwalk__man path { fill: none; stroke: #1b1410; stroke-width: 2.6; stroke-linecap: round; }
+.fwalk.walking .fl1 { animation: flA .32s ease-in-out infinite alternate; transform-origin: 17px 34px; }
+.fwalk.walking .fl2 { animation: flA .32s ease-in-out infinite alternate-reverse; transform-origin: 23px 34px; }
+.fwalk.walking .fwalk__man svg, .fwalk.walking .fwalk__man { animation: none; }
+@keyframes flA { from { transform: rotate(-16deg); } to { transform: rotate(16deg); } }
+.fwalk:not(.walking) .fwalk__man { animation: fBob 1.6s ease-in-out infinite; }
+@keyframes fBob { 50% { margin-top: -32px; } }
+.fwalk__spot { position: absolute; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: radial-gradient(circle, rgba(255,138,69,.38), rgba(255,138,69,0) 70%);
+  transition: left 1.05s cubic-bezier(.45,0,.4,1), top 1.05s cubic-bezier(.45,0,.4,1); animation: fSpot 1.8s ease-in-out infinite; }
+.fwalk.done .fwalk__spot { opacity: 0; }
+@keyframes fSpot { 50% { transform: scale(1.25); } }
+.fwalk__dot { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; pointer-events: auto; cursor: pointer; z-index: 2; }
+.fwalk__dot::after { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: #fff; border: 2px solid #c8743c; box-shadow: 0 0 0 3px rgba(200,116,60,.18); transition: transform .2s; }
+.fwalk__dot:hover::after { transform: scale(1.35); }
+.fwalk__dot.seen::after { background: #c8743c; }
+.fwalk__dot.is-on::after { opacity: 0; }
+.fcap { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 12px 14px; border: 1px solid var(--line); background: rgba(255,255,255,.03); font-size: 14px; line-height: 1.45; }
+.fcap__txt { flex: 1; min-width: 0; }
+.fcap__txt b { display: block; font-family: var(--serif); font-weight: 400; font-size: 17px; letter-spacing: .02em; color: #ffb27a; margin-bottom: 2px; }
+.fcap.is-new .fcap__txt { animation: fcapIn .45s ease; }
+@keyframes fcapIn { from { opacity: 0; transform: translateY(6px); } }
+.fcap__btn { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); color: var(--cream); font-size: 13px; }
+.fcap__btn:hover { border-color: #c8743c; }
+.fcap__go { flex-shrink: 0; padding: 9px 14px; border-radius: 999px; background: #c8743c; color: #fff; font-size: 13px; font-weight: 600; white-space: nowrap; }
+@media (max-width: 760px) { .fcap { font-size: 13px; min-height: 76px; } .fcap__txt b { font-size: 15px; } .fwalk__man { width: 20px; height: 26px; margin: -23px 0 0 -10px; } }
