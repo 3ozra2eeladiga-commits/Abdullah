@@ -43,6 +43,7 @@ body.lock { overflow: hidden; }
 
 /* ---------- фон «стройка» ---------- */
 .build-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.build-fg { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
 main, .ftr { position: relative; z-index: 1; }
 .build-hud { position: fixed; z-index: 2; left: max(var(--gut), var(--safe-l)); bottom: calc(22px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 10px; font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--copper); font-weight: 500; opacity: 0; transition: opacity .5s; pointer-events: none; }
 body.past-hero .build-hud { opacity: 1; }

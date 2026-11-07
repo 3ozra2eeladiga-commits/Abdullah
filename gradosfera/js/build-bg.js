@@ -36,6 +36,7 @@
     var x0 = mobile ? (W - bw) / 2 : W * 0.6;
     G = { gy: gy, fh: fh, bw: bw, x0: x0, cols: 7, a: mobile ? 0.55 : 0.8 };
     buildGrid();
+    if (typeof fg !== 'undefined' && fg) { fg.width = cv.width; fg.height = cv.height; fg.style.width = W + 'px'; fg.style.height = H + 'px'; }
     stars = []; for (var k = 0; k < (mobile ? 50 : 110); k++) stars.push({ x: rnd() * W, y: rnd() * gy * 0.7, r: rnd() * 1.2 + 0.3, ph: rnd() * 6 });
   }
   function onScroll() {
@@ -303,93 +304,120 @@
     if (doneFlash > 0) { ctx.fillStyle = 'rgba(255,220,170,' + doneFlash * 0.12 + ')'; ctx.fillRect(0, 0, W, H); doneFlash -= 0.03; }
   }
 
-  /* ---------- заливка бетона: бетономешалка приезжает и льёт струю, которая течёт вниз вместе с прокруткой ---------- */
+  /* ---------- фасадная люлька с тремя рабочими справа ----------
+     Под первым экраном рабочие заходят в люльку, подпрыгивают — и она падает вниз, как лифт.
+     Пока листаешь — люлька едет вниз вдоль стены (окна стены проплывают мимо), рабочие держатся за поручни.
+     Остановился — работают: сварщик (искры), молоток, мойщик окна. */
   var aboutEl = document.getElementById('about');
-  var pourStart = 0, flowOff = 0, lastTarget = 0, drops = [];
-  function concreteTruck(x, y, s, t, pouring) {
-    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    st(COPPER, 0.95, 1.3, 8);
-    ctx.strokeRect(70, -34, 26, 26);                       // кабина справа
-    st(WARM, 0.55, 1, 8); ctx.strokeRect(76, -30, 14, 10);
-    st(COPPER, 0.95, 1.3, 8); line(-6, -8, 98, -8);
-    wheel(6, -1, 8, t); wheel(26, -1, 8, t); wheel(84, -1, 8, t);
-    // барабан
-    ctx.save(); ctx.translate(30, -30); ctx.rotate(0.18);
-    ctx.beginPath(); ctx.ellipse(0, 0, 38, 18, 0, 0, 6.3); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(0, 0, 38, 18, 0, 0, 6.3); ctx.clip();
-    st(CREAM, 0.4, 1); for (var k = -4; k <= 4; k++) { var off = ((t * 40 + k * 20) % 160) - 80; line(off - 12, -18, off + 12, 18); }
-    ctx.restore();
-    // лоток: опускается, когда начинается заливка
-    st(COPPER, 1, 2.2, 8);
-    var ang = mix(-0.2, 0.9, pouring);
-    var lx = -8, ly = -22, ex = lx - Math.cos(ang) * 30, ey = ly + Math.sin(ang) * 30;
-    line(lx, ly, ex, ey); line(lx, ly - 5, ex, ey - 5);
+  var fg = document.createElement('canvas'); fg.className = 'build-fg'; fg.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(fg);
+  var fctx = fg.getContext('2d');
+  var gond = { start: 0, v: 0, lastY: window.scrollY }, gsparks = [];
+
+  function worker(x, foot, s, pose, k, t, phase) {
+    // pose: walk | hop | hold | weld | hammer | wipe
+    ctx.save(); ctx.translate(x, foot); ctx.scale(s, s);
+    var lw = 1.6;
+    var legA = pose === 'walk' ? Math.sin(t * 10 + k) * 0.5 : 0;
+    // ноги
+    st(CREAM, 0.9, lw); line(0, -14, Math.sin(legA) * 8, 0); line(0, -14, -Math.sin(legA) * 8, 0);
+    // корпус + жилет
+    line(0, -14, 0, -30);
+    ctx.fillStyle = 'rgba(240,120,50,' + 0.85 * G.a + ')'; ctx.fillRect(-4, -29, 8, 12);
+    // голова и каска
+    st(CREAM, 0.9, lw); ctx.beginPath(); ctx.arc(0, -35, 4.2, 0, 6.3); ctx.stroke();
+    ctx.fillStyle = 'rgba(' + COPPER + ',' + G.a + ')'; ctx.beginPath(); ctx.arc(0, -36.5, 5, Math.PI, 0); ctx.fill(); ctx.fillRect(-6.5, -37, 13, 1.8);
+    // руки
+    st(CREAM, 0.9, lw);
+    var sh = { x: 0, y: -27 }, hand;
+    if (pose === 'walk') { line(sh.x, sh.y, -Math.sin(legA) * 7, -17); line(sh.x, sh.y, Math.sin(legA) * 7, -17); }
+    else if (pose === 'hop') { line(sh.x, sh.y, -8, -40); line(sh.x, sh.y, 8, -40); }
+    else if (pose === 'hold') { line(sh.x, sh.y, -7, -22); line(sh.x, sh.y, 7, -22); }
+    else if (pose === 'weld') {
+      hand = { x: 12, y: -26 }; line(sh.x, sh.y, hand.x, hand.y); line(sh.x, sh.y, 6, -18);
+      st(COPPER, 1, 1.6); line(hand.x, hand.y, hand.x + 6, hand.y - 2);
+    } else if (pose === 'hammer') {
+      var a = -1.9 + Math.abs(Math.sin(t * 7 + k)) * 1.6;
+      hand = { x: Math.cos(a) * 11, y: sh.y + Math.sin(a) * 11 }; line(sh.x, sh.y, hand.x, hand.y); line(sh.x, sh.y, -6, -18);
+      st(COPPER, 1, 2); var hx = hand.x + Math.cos(a) * 6, hy = hand.y + Math.sin(a) * 6; line(hand.x, hand.y, hx, hy); line(hx - 3 * Math.sin(a), hy + 3 * Math.cos(a), hx + 3 * Math.sin(a), hy - 3 * Math.cos(a));
+    } else if (pose === 'wipe') {
+      var wx = 11 + Math.sin(t * 4 + k) * 5, wy = -32 + Math.cos(t * 4 + k) * 4;
+      line(sh.x, sh.y, wx, wy); line(sh.x, sh.y, -6, -18);
+      st(CREAM, 0.9, 2); line(wx, wy - 4, wx, wy + 4);
+    }
     noGlow(); ctx.restore();
-    return { x: x + ex * s, y: y + ey * s };
+    if (hand) return { x: x + (hand.x + 7) * s, y: foot + (hand.y - 2) * s };
   }
 
-  function concrete(t) {
+  function gondola(t) {
     if (!aboutEl) return;
     var r = aboutEl.getBoundingClientRect();
-    var s = mobile ? 0.8 : 1.35;
-    var sx = mobile ? 9 : Math.max(30, W * 0.022);           // где течёт струя
-    var baseY = r.top + (mobile ? 44 : 70);                // машина стоит в начале блока «О доме»
-    var arrive = clamp((H - r.top) / (H * 0.55), 0, 1);
-    var ease = 1 - Math.pow(1 - arrive, 3);
-    var truckX = mix(-140 * s - 140, sx + 14 * s, ease);
-    var pouring = clamp((arrive - 0.9) / 0.1, 0, 1);
-    if (pouring > 0 && !pourStart) pourStart = t;
-    if (pouring === 0 && r.top > H * 0.8) pourStart = 0;
-    var spout = { x: sx, y: baseY - 4 };
-    if (baseY > -80 && baseY < H + 80) spout = concreteTruck(truckX, baseY, s, t, pouring);
-    if (!pourStart) return;
+    if (!gond.start) { if (r.top < H * 0.18) gond.start = t; else return; }
+    if (r.top > H * 0.6) { gond.start = 0; gsparks.length = 0; return; }   // вернулись на первый экран — сценка начнётся заново
+    var s = mobile ? 0.45 : 1;
+    var pw = 140 * s, x1 = W - (mobile ? 4 : 18), x0 = x1 - pw;
+    var el = t - gond.start;
+    var topY = H * (mobile ? 0.2 : 0.2), cruise = H * (mobile ? 0.46 : 0.42);
 
-    // скорость течения: базовая + скорость прокрутки
-    var v = Math.abs(target - lastTarget) * 4000; lastTarget = target;
-    flowOff += 1.6 + Math.min(v, 30);
-    var w = mobile ? 10 : 22;
-    var y0 = Math.max(spout.y, -10);
-    var front = spout.y + (t - pourStart) * H * 1.4;      // голова струи падает вниз
-    var poolH = (mobile ? 34 : 64) * seg(prog, 0.88, 1);
-    var y1 = Math.min(front, H - poolH);
-    if (y1 > y0) {
-      // сама струя, слегка колышется
-      var xAt = function (y) { return sx + Math.sin(y * 0.018 + t * 2.6) * (mobile ? 1.4 : 2.6); };
-      ctx.beginPath(); ctx.moveTo(xAt(y0) - w / 2, y0);
-      for (var y = y0; y <= y1; y += 12) ctx.lineTo(xAt(y) - w / 2 - Math.sin(y * 0.05 + t * 5) * 0.8, y);
-      ctx.lineTo(xAt(y1) - w / 2, y1);
-      for (y = y1; y >= y0; y -= 12) ctx.lineTo(xAt(y) + w / 2 + Math.sin(y * 0.04 + t * 4) * 0.8, y);
-      ctx.closePath();
-      var g = ctx.createLinearGradient(sx - w / 2, 0, sx + w / 2, 0);
-      g.addColorStop(0, 'rgba(105,100,94,0.95)'); g.addColorStop(0.45, 'rgba(178,172,163,0.97)'); g.addColorStop(1, 'rgba(92,88,82,0.95)');
-      ctx.fillStyle = g; ctx.fill();
-      // блики и пузыри, бегут вниз
-      ctx.strokeStyle = 'rgba(232,226,216,0.55)'; ctx.lineWidth = mobile ? 1 : 1.5;
-      var span = y1 - y0;
-      for (var k = 0; k < (mobile ? 10 : 18); k++) {
-        var yy = y0 + ((flowOff * (1 + (k % 3) * 0.25) + k * 61) % Math.max(span, 1));
-        var xx = xAt(yy) + ((k % 3) - 1) * w * 0.22;
-        line(xx, yy, xx, yy + 10 + (k % 4) * 4);
+    // скорость прокрутки (пиксели за кадр, сглаженная)
+    var dy = Math.abs(window.scrollY - gond.lastY); gond.lastY = window.scrollY;
+    gond.v += (dy - gond.v) * 0.15;
+    var moving = gond.v > 1.2 && el > 3.2;
+
+    var py, walk = 1, hop = 0;
+    if (el < 1.8) { py = topY; walk = el / 1.8; }
+    else if (el < 2.3) { py = topY; hop = (el - 1.8) / 0.5; }
+    else if (el < 3.2) { var q = (el - 2.3) / 0.9; py = topY + (cruise - topY) * (1 - Math.pow(1 - q, 3)) + Math.sin(q * 9) * 10 * (1 - q); }
+    else py = cruise;
+    if (moving) py += Math.min(gond.v * 0.5, 16) + Math.sin(t * 22) * 1.2;   // инерция «лифта» и вибрация
+
+    // «линейка этажей» у правого края — проплывает вверх, когда люлька едет вниз
+    var cell = 70 * s, off = (window.scrollY * 0.85) % cell;
+    for (var y = -off; y < H + cell; y += cell) {
+      st(COPPER, 0.55, 1); line(W - (mobile ? 5 : 10), y, W, y);
+      st(COPPER, 0.25, 1); line(W - (mobile ? 3 : 5), y + cell / 2, W, y + cell / 2);
+    }
+
+    // тросы
+    var sway = Math.sin(t * 1.4) * (moving ? 2.5 : 1);
+    st(CREAM, 0.6, 1); line(x0 + 8 * s, 0, x0 + 8 * s + sway, py - 34 * s); line(x1 - 8 * s, 0, x1 - 8 * s + sway, py - 34 * s);
+    // люлька
+    ctx.save(); ctx.translate(sway, 0);
+    st(COPPER, 0.95, 1.6, 6);
+    line(x0, py, x1, py);                                   // пол
+    line(x0, py - 26 * s, x1, py - 26 * s);                 // поручень
+    for (var k = 0; k <= 4; k++) { var xx = x0 + pw * k / 4; line(xx, py, xx, py - 26 * s); }
+    st(COPPER, 0.5, 1); for (k = 0; k < 8; k++) line(x0 + pw * k / 8, py - 13 * s, x0 + pw * (k + 1) / 8, py - 13 * s);
+    // лебёдки на концах (крутятся, когда едем)
+    [x0 + 8 * s, x1 - 8 * s].forEach(function (mx) {
+      st(COPPER, 0.95, 1.2, 4); ctx.strokeRect(mx - 6 * s, py - 40 * s, 12 * s, 10 * s);
+      var a = moving ? t * 12 : 0; line(mx, py - 35 * s, mx + Math.cos(a) * 4 * s, py - 35 * s + Math.sin(a) * 4 * s);
+      line(mx, py - 30 * s, mx, py - 26 * s);
+    });
+    noGlow(); ctx.restore();
+
+    // рабочие
+    var spots = [0.2, 0.5, 0.8], jobs = ['weld', 'hammer', 'wipe'];
+    for (k = 0; k < 3; k++) {
+      var tx = x0 + pw * spots[k] + sway;
+      var startX = W + 30 + k * 34;
+      var wxk = walk < 1 ? mix(startX, tx, clamp(walk * 1.3 - k * 0.15, 0, 1)) : tx;
+      var foot = py - 2 * s - (hop > 0 ? Math.sin(Math.PI * hop) * 20 * s : 0);
+      var pose = walk < 1 ? (wxk === tx ? 'hold' : 'walk') : hop > 0 && hop < 1 ? 'hop' : (el < 3.2 || moving ? 'hold' : jobs[k]);
+      var tool = worker(wxk, foot, s, pose, k, t);
+      if (pose === 'weld' && tool && Math.random() < 0.8) {
+        for (var n = 0; n < 2; n++) gsparks.push({ x: tool.x, y: tool.y, vx: (Math.random() - 0.7) * 3, vy: -Math.random() * 2.5, life: 1 });
       }
-      // капли и брызги у головы струи
-      if (front < H - poolH && Math.random() < 0.5) drops.push({ x: xAt(front), y: front, vx: (Math.random() - 0.5) * 2, vy: Math.random() * 2, life: 1 });
+      if (pose === 'hammer' && tool && Math.abs(Math.sin(t * 7 + k)) < 0.12) gsparks.push({ x: tool.x, y: tool.y, vx: Math.random() * 1.5, vy: -Math.random() * 1.5, life: 0.6 });
     }
-    // лужа-фундамент в самом низу страницы растекается по ширине
-    if (poolH > 0.5) {
-      var pw = W * seg(prog, 0.88, 1);
-      var pg = ctx.createLinearGradient(0, H - poolH, 0, H);
-      pg.addColorStop(0, 'rgba(178,172,163,0.95)'); pg.addColorStop(1, 'rgba(100,96,90,0.95)');
-      ctx.fillStyle = pg; ctx.beginPath(); ctx.moveTo(sx - pw * 0.15, H);
-      ctx.quadraticCurveTo(sx - pw * 0.15, H - poolH, sx + 20, H - poolH);
-      ctx.lineTo(sx + pw, H - poolH); ctx.lineTo(sx + pw + 10, H); ctx.closePath(); ctx.fill();
-      st(COPPER, 0.9, 1.4, 6); line(0, H - poolH - 6, sx + pw + 12, H - poolH - 6); noGlow();   // опалубка
-      if (Math.random() < 0.4) drops.push({ x: sx + (Math.random() - 0.3) * 30, y: H - poolH, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3, life: 1 });
+    ctx.lineCap = 'round';
+    for (var i = gsparks.length - 1; i >= 0; i--) {
+      var p = gsparks[i]; p.vy += 0.12; p.x += p.vx; p.y += p.vy; p.life -= 0.035;
+      if (p.life <= 0 || p.y > H) { gsparks.splice(i, 1); continue; }
+      ctx.strokeStyle = 'rgba(255,' + Math.round(170 + 70 * p.life) + ',110,' + p.life + ')'; ctx.lineWidth = 1.3;
+      line(p.x, p.y, p.x - p.vx * 2.2, p.y - p.vy * 2.2);
     }
-    for (var i = drops.length - 1; i >= 0; i--) {
-      var d = drops[i]; d.vy += 0.25; d.x += d.vx; d.y += d.vy; d.life -= 0.04;
-      if (d.life <= 0 || d.y > H) { drops.splice(i, 1); continue; }
-      ctx.fillStyle = 'rgba(170,164,155,' + d.life + ')'; ctx.beginPath(); ctx.arc(d.x, d.y, mobile ? 2 : 3.4, 0, 6.3); ctx.fill();
-    }
+    ctx.lineCap = 'butt';
   }
 
   var lastHud = '';
@@ -417,8 +445,11 @@
     trucks(prog, t);
     excavator(prog, t);
     particles(b.cur, b, t);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);   // бетон рисуется без «камеры»
-    concrete(t);
+    // люлька — на отдельном слое поверх страницы
+    var mainCtx = ctx; ctx = fctx;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+    gondola(t);
+    ctx = mainCtx;
 
     if (hud) {
       var txt = prog < 0.1 ? 'Котлован' : (b.build < LEVELS ? 'Этаж ' + Math.max(1, level) + ' из ' + LEVELS : (prog < 0.86 ? 'Фасад' : 'Дом готов'));
