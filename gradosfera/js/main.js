@@ -249,6 +249,7 @@
       var moving = lastL !== null && Math.abs(left - lastL) > 0.02;
       if (moving) still = 0; else still++;
       pull.classList.toggle('walking', still < 6);
+      if (window.gsSfx && window.gsSfx.pull) window.gsSfx.pull(moving && vis ? Math.min(1, Math.abs(left - lastL) / 0.5) : 0);
       if (moving && vis && Date.now() - dustT > 120) { dustT = Date.now(); dust(manL, foot, 1); dust(manR, foot, -1); }
       lastL = left;
     });

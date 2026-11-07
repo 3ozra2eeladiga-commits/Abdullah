@@ -81,7 +81,7 @@
   // Поэтому пробуем возобновить сразу, а при первом касании страницы — пересоздаём звук заново (это разрешено только по касанию).
   function rebuild() {
     try { ctx.close(); } catch (e) {}
-    ctx = null; eng = null; noiseBuf = null;
+    ctx = null; eng = null; noiseBuf = null; rope = null;
     init(); ctx.resume();
     master.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 1.5);
     clearTimeout(timer); timer = null; step = 0; loop();
@@ -106,6 +106,7 @@
       var t = ctx.currentTime;
       master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(0, t + 0.05);
       if (eng) { try { eng.o.stop(); eng.o2.stop(); eng.n.stop(); } catch (e) {} eng = null; }
+      stopRope();
       clearTimeout(timer); timer = null;
       setTimeout(function () { if (document.hidden && ctx) ctx.suspend(); }, 120);
     } else wake();
@@ -149,8 +150,32 @@
     eng.o.frequency.setTargetAtTime(34 + v * 22, t, 0.2); eng.o2.frequency.setTargetAtTime(68 + v * 44, t, 0.2);
     eng.lp.frequency.setTargetAtTime(200 + v * 260, t, 0.2);
   }
+  // трос: «шшш» верёвки по блоку + скрип + шаги рабочих, громкость — от скорости
+  var rope = null, lastStep = 0, lastCreak = 0;
+  function pull(level) {
+    if (!on || !ctx) return;
+    var v = Math.max(0, Math.min(1, level || 0)), t = ctx.currentTime;
+    if (!rope) {
+      if (v <= 0) return;
+      var n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+      n.buffer = noise(); n.loop = true; bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 1.4; g.gain.value = 0;
+      lfo.frequency.value = 7; lg.gain.value = 350; lfo.connect(lg); lg.connect(bp.frequency);   // «волокна» верёвки
+      n.connect(bp); bp.connect(g); g.connect(master); n.start(); lfo.start();
+      rope = { n: n, g: g, lfo: lfo };
+    }
+    rope.g.gain.setTargetAtTime(v * 0.09, t, v > 0 ? 0.05 : 0.15);
+    if (v > 0.05 && t - lastStep > 0.42 - v * 0.15) { lastStep = t; thump(t + 0.01, 160, 70, 0.10 + v * 0.08, 0.09); }          // шаги
+    if (v > 0.25 && t - lastCreak > 1.1 + Math.random()) {                                                                      // скрип блока
+      lastCreak = t; var o = ctx.createOscillator(), cg = ctx.createGain(), f = ctx.createBiquadFilter();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(240 + Math.random() * 80, t); o.frequency.linearRampToValueAtTime(330 + Math.random() * 120, t + 0.28);
+      f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 6;
+      cg.gain.setValueAtTime(0.0001, t); cg.gain.exponentialRampToValueAtTime(0.03, t + 0.04); cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+      o.connect(f); f.connect(cg); cg.connect(master); o.start(t); o.stop(t + 0.35);
+    }
+  }
+  function stopRope() { if (rope) { try { rope.n.stop(); rope.lfo.stop(); } catch (e) {} rope = null; } }
   window.gsSfx = {
-    engine: engine,
+    engine: engine, pull: pull,
     bump: function () { if (!on || !ctx) return; var t = ctx.currentTime + 0.01; thump(t, 90, 40, 0.5, 0.22); thump(t + 0.2, 80, 38, 0.42, 0.22); },
     park: function () {
       if (!on || !ctx) return; engine(0); var t = ctx.currentTime + 0.15;
