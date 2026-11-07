@@ -496,3 +496,9 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .parking__scheme { width: min(100%, calc(84vh * 1.23)); justify-self: center; }
 .parking .boiler__hint { bottom: auto; top: 38%; }
 .parking.touched .boiler__hint { opacity: 0; }
+
+.life__grid { grid-template-columns: repeat(2, 1fr); }
+.life__grid .card--big { grid-column: 1 / -1; }
+.parking__photo { margin: 0; overflow: hidden; }
+.parking__photo img { width: 100%; aspect-ratio: 21 / 9; object-fit: cover; display: block; }
+@media (max-width: 760px) { .life__grid { grid-template-columns: 1fr; } .parking__photo img { aspect-ratio: 16 / 10; } }
