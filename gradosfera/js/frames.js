@@ -7,7 +7,7 @@
 
   function FrameScroller(cv) {
     var base = cv.getAttribute('data-frames') + (mobile ? '/m/' : '/d/');
-    var count = +cv.getAttribute('data-count');
+    var count = +((mobile && cv.getAttribute('data-count-m')) || cv.getAttribute('data-count'));
     var section = document.querySelector(cv.getAttribute('data-section'));
     var start = +(cv.getAttribute('data-start') || 0), span = +(cv.getAttribute('data-span') || 1);
     var ctx = cv.getContext('2d');

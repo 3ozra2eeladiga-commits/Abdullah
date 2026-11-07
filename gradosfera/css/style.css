@@ -879,3 +879,4 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .fwalk__tag { position: absolute; z-index: 4; transform: translate(-50%, -100%); margin-top: -36px; padding: 3px 8px; border-radius: 999px; background: rgba(27,20,16,.82); color: #fff; font: 600 10.5px/1.2 var(--sans); white-space: nowrap; opacity: 0; transition: opacity .3s; pointer-events: none; }
 .fwalk__tag.is-on { opacity: 1; }
 @media (max-width: 760px) { .fwalk__tag { margin-top: -28px; font-size: 10px; } .fcap__av { width: 22px; height: 29px; } }
+@media (max-width: 760px) { .hero__city { display: none !important; } }
