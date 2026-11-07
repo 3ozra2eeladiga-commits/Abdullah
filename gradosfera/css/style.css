@@ -471,31 +471,60 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 @media (max-width: 1024px) { .snd { left: auto; right: calc(max(var(--gut), var(--safe-r)) + 64px); } .snd span { display: none; } .snd { padding: 0 9px; } }
 
 
-/* ---------- строитель у кнопки звука (js/mate.js) ---------- */
-.mate { position: fixed; z-index: 61; top: calc(var(--header-h, 76px) + env(safe-area-inset-top, 0px) - 6px); left: calc(max(var(--gut), var(--safe-l)) + 206px); display: flex; align-items: flex-start; gap: 6px; pointer-events: none; transition: opacity .4s, transform .4s; }
-.mate__svg { width: 46px; height: 54px; flex-shrink: 0; overflow: visible; }
-.mate__svg path, .mate__svg circle { fill: none; stroke: #efe7da; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
-.mate__vest { fill: #f07832; }
-.mate__hat { fill: #c98a5b; stroke: #c98a5b !important; }
-.mate__seat { fill: #8a6a4f; }
-.mate__phones path { stroke: #222 !important; stroke-width: 3 !important; } .mate__phones rect { fill: #ffb27a; }
+/* ---------- двое строителей на качелях у кнопки звука + гид (js/mate.js, js/guide.js) ---------- */
+.mate { position: fixed; z-index: 61; top: calc(var(--header-h, 76px) + env(safe-area-inset-top, 0px) - 2px); left: calc(max(var(--gut), var(--safe-l)) + 196px); display: flex; align-items: flex-start; gap: 4px; pointer-events: none; transition: opacity .4s; }
+.swings { width: 120px; height: 72px; flex-shrink: 0; overflow: visible; }
+.swings path, .swings circle, .guide__man path, .guide__man circle { fill: none; stroke: #efe7da; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.swings__bar { stroke: #c98a5b !important; stroke-width: 3 !important; }
+.swing__rope { stroke: rgba(239,231,218,.6) !important; stroke-width: 1.4 !important; }
+.swing__seat { fill: #8a6a4f; }
+.mm__vest { fill: #f07832; }
+.mm__hat { fill: #c98a5b; stroke: #c98a5b !important; }
+.mm__phones path { stroke: #222 !important; stroke-width: 3 !important; } .mm__phones rect { fill: #ffb27a; }
+.mm__brow, .mm__phones { display: none; }
+.swing { transform-box: view-box; }
+.swing--a { transform-origin: 37px 3px; } .swing--b { transform-origin: 113px 3px; animation: swingIdle 3.2s ease-in-out infinite; }
+@keyframes swingIdle { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+.mate.on .swing--a { animation: swingBig 1.6s ease-in-out infinite; }
+@keyframes swingBig { 0%,100% { transform: rotate(-16deg); } 50% { transform: rotate(16deg); } }
+.mate.on .mm__phones { display: inline; }
+.mate.grumpy .mm--a .mm__brow { display: inline; }
 .mate__notes text { fill: #ffb27a; font-size: 10px; opacity: 0; }
-.mate__sit, .mate__phones, .mate__brow { display: none; }
-.mate__arm--wave { transform-origin: 38px 30px; animation: mateWave 1.2s ease-in-out infinite; }
-@keyframes mateWave { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-28deg); } }
-.mate.on .mate__stand { display: none; } .mate.on .mate__sit, .mate.on .mate__phones { display: inline; }
-.mate.on .mate__head { animation: mateBob .9s ease-in-out infinite; transform-origin: 30px 26px; }
-@keyframes mateBob { 50% { transform: rotate(6deg) translateY(1px); } }
 .mate.on .mate__notes text { animation: mateNote 2s ease-in-out infinite; } .mate.on .mate__notes text:nth-child(2) { animation-delay: 1s; }
 @keyframes mateNote { 0% { opacity: 0; transform: translateY(4px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
-.mate.grumpy .mate__brow { display: inline; } .mate.grumpy .mate__arm--wave { animation-duration: .5s; }
-.mate__bubble { pointer-events: auto; position: relative; margin-top: 4px; max-width: 230px; padding: 9px 13px; border-radius: 14px 14px 14px 4px; background: #efe7da; color: #1b1410; font: 600 12px/1.35 var(--sans); text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,.4); transition: opacity .35s, transform .35s; }
+.swing__rider { transition: opacity .2s; }
+.mate.guide-out .swing__rider { opacity: 0; }
+.mate__bubble { pointer-events: auto; position: relative; margin-top: 46px; max-width: 220px; padding: 9px 13px; border-radius: 14px 14px 14px 4px; background: #efe7da; color: #1b1410; font: 600 12px/1.35 var(--sans); text-align: left; box-shadow: 0 8px 24px rgba(0,0,0,.4); transition: opacity .35s, transform .35s; }
 .mate__bubble::before { content: ""; position: absolute; left: -6px; top: 10px; border: 6px solid transparent; border-right-color: #efe7da; border-left: 0; }
-.mate.quiet .mate__bubble { opacity: 0; transform: translateX(-6px) scale(.95); pointer-events: none; }
-.mate.on .mate__bubble { opacity: 0; pointer-events: none; }
-.menu.is-open ~ .mate, body.lock .mate { opacity: 0; }
-@media (max-width: 1024px) { .mate { left: auto; right: calc(max(var(--gut), var(--safe-r)) + 30px); flex-direction: row-reverse; } .mate__bubble { border-radius: 14px 14px 4px 14px; } .mate__bubble::before { left: auto; right: -6px; border-right: 0; border-left: 6px solid #efe7da; } }
-@media (max-width: 760px) { .mate { right: auto; left: calc(max(var(--gut), var(--safe-l)) + 34px); flex-direction: row; } .mate__svg { width: 38px; height: 45px; } .mate__bubble { max-width: 190px; font-size: 11px; border-radius: 14px 14px 14px 4px; } .mate__bubble::before { right: auto; left: -6px; border-left: 0; border-right: 6px solid #efe7da; } }
+.mate.quiet .mate__bubble, .mate.on .mate__bubble { opacity: 0; transform: translateX(-6px) scale(.95); pointer-events: none; }
+body.lock .mate, body.lock .guide { opacity: 0 !important; }
+@media (max-width: 1024px) { .mate { left: auto; right: calc(max(var(--gut), var(--safe-r)) + 20px); flex-direction: row-reverse; } .mate__bubble { border-radius: 14px 14px 4px 14px; } .mate__bubble::before { left: auto; right: -6px; border-right: 0; border-left: 6px solid #efe7da; } }
+@media (max-width: 760px) { .mate { right: auto; left: calc(max(var(--gut), var(--safe-l)) + 24px); flex-direction: row; } .swings { width: 96px; height: 58px; } .mate__bubble { margin-top: 34px; max-width: 170px; font-size: 11px; border-radius: 14px 14px 14px 4px; } .mate__bubble::before { right: auto; left: -6px; border-left: 0; border-right: 6px solid #efe7da; } }
+
+/* гид */
+.guide { position: fixed; z-index: 60; right: calc(max(var(--gut), var(--safe-r)) + 8px); top: 0; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity .3s; }
+.guide.is-on { opacity: 1; }
+.guide__rope { position: absolute; left: -20px; top: 0; width: 40px; overflow: visible; }
+.guide__rope line { stroke: #e9d8bf; stroke-width: 2; }
+.guide__body { position: absolute; right: 0; top: 0; display: flex; align-items: flex-end; flex-direction: row-reverse; gap: 6px; transform: translate(0, -100%); transition: top .55s cubic-bezier(.5,0,.3,1); }
+.guide__man { width: 52px; height: 56px; flex-shrink: 0; overflow: visible; }
+.gm-arm--rope { display: none; }
+.guide.roping .gm-arm--rope { display: inline; } .guide.roping .gm-arm--point, .guide.roping .gm-arm--r { display: none; }
+.guide.roping .gm-legs { transform: translateY(-2px); }
+.guide.jumping .guide__man { animation: gJump .55s cubic-bezier(.3,0,.4,1); }
+@keyframes gJump { 0% { transform: translateY(0) scale(1, 1); } 12% { transform: translateY(4px) scale(1.1, .85); } 50% { transform: translateY(-46px) rotate(-14deg); } 88% { transform: translateY(2px) scale(1.08, .9); } 100% { transform: none; } }
+.gm-arm--point { transform-origin: 22px 30px; animation: gPoint 1.4s ease-in-out infinite; }
+@keyframes gPoint { 50% { transform: rotate(10deg); } }
+.guide__bubble { pointer-events: auto; max-width: 250px; padding: 11px 14px; margin-bottom: 30px; border-radius: 14px 14px 4px 14px; background: #efe7da; color: #1b1410; font: 600 13px/1.4 var(--sans); box-shadow: 0 10px 30px rgba(0,0,0,.45); opacity: 0; transform: translateY(6px) scale(.96); transition: opacity .3s, transform .3s; }
+.guide__bubble.is-on { opacity: 1; transform: none; }
+.guide__bubble a { color: #b5602b; font-weight: 700; text-decoration: underline; }
+@media (max-width: 760px) {
+  .guide { right: auto; left: calc(max(var(--gut), var(--safe-l)) + 4px); }
+  .guide__body { right: auto; left: 0; flex-direction: row; }
+  .guide__man { width: 40px; height: 44px; }
+  .guide__bubble { max-width: calc(100vw - 150px); font-size: 12px; border-radius: 14px 14px 14px 4px; margin-bottom: 22px; }
+  .guide__rope { left: 0; }
+}
 
 /* ---------- reveal (GSAP добавляет класс js-anim на html) ---------- */
 .js-anim .fade { opacity: 0; transform: translateY(30px); }
@@ -636,3 +665,5 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 @media (max-width: 760px) { .snd { right: auto; left: calc(max(var(--gut), var(--safe-l)) + 46px); } }
 
 .lift__final p { margin: 0; max-width: 520px; color: rgba(239,231,218,.9); font-size: clamp(14px, 1.3vw, 18px); line-height: 1.55; text-shadow: 0 2px 20px rgba(0,0,0,.7); }
+.guide__bubble { width: max-content; }
+@media (max-width: 760px) { .guide__bubble { max-width: 230px; } }
