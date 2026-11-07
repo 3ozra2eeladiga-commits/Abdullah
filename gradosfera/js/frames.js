@@ -25,7 +25,7 @@
     var order = [0];
     [8, 4, 2, 1].forEach(function (step) { for (var i = 0; i < count; i += step) if (order.indexOf(i) < 0) order.push(i); });
     var qi = 0;
-    function pump() { var n = 0; while (qi < order.length && n < 6) { load(order[qi++]); n++; } if (qi < order.length) setTimeout(pump, 60); }
+    function pump() { var n = 0; while (qi < order.length && n < 12) { load(order[qi++]); n++; } if (qi < order.length) setTimeout(pump, 25); }
     // кадры начинают грузиться, когда раздел близко (первый экран — сразу), чтобы не мешать друг другу
     var begun = false;
     function begin() { if (begun) return; begun = true; load(0); setTimeout(pump, 50); }

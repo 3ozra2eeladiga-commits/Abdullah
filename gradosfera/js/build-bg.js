@@ -423,6 +423,9 @@
   var lastHud = '';
   function frame(now) {
     var t = (now - t0) / 1000;
+    // пока виден первый экран (видео), фон-стройку не рисуем — телефону легче, видео не дёргается
+    var heroEl = document.getElementById('hero');
+    if (heroEl && window.scrollY < heroEl.offsetHeight - window.innerHeight * 0.9) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); if (fctx) fctx.clearRect(0, 0, fg.width, fg.height); if (!reduce && !document.hidden) requestAnimationFrame(frame); return; }
     if (lastNow && GLOW) { if (now - lastNow > 28) slow++; else slow = Math.max(0, slow - 1); if (slow > 20) GLOW = 0; }
     lastNow = now;
     prog += (target - prog) * (reduce ? 1 : 0.2);
