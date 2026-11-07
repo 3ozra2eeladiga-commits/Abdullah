@@ -15,6 +15,8 @@
   var target = 0, prog = reduce ? 1 : 0, t0 = performance.now();
   var sparks = [], dust = [], flashes = [], stars = [];
   var lastLevel = -1, bump = 0, fired = false, doneFlash = 0;
+  var W0 = function () { return window.innerWidth; };
+  var GLOW = 1, slow = 0, lastNow = 0;   // свечение; счётчик медленных кадров
 
   var seed = 11; function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
   var order = []; for (var i = 0; i < 200; i++) order.push(i);
@@ -22,16 +24,18 @@
   var rank = {}; order.forEach(function (v, k) { rank[v] = k; });
 
   function size() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    DPR = Math.min(window.devicePixelRatio || 1, W0() < 760 ? 1.25 : 1.5);
     W = window.innerWidth; H = window.innerHeight;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     cv.style.width = W + 'px'; cv.style.height = H + 'px';
     mobile = W < 760;
+    GLOW = mobile ? 0 : GLOW;
     var gy = H * (mobile ? 0.84 : 0.86);
     var fh = Math.min(H * (mobile ? 0.06 : 0.074), 70);
     var bw = mobile ? W * 0.66 : Math.min(W * 0.31, 520);
     var x0 = mobile ? (W - bw) / 2 : W * 0.6;
     G = { gy: gy, fh: fh, bw: bw, x0: x0, cols: 7, a: mobile ? 0.55 : 0.8 };
+    buildGrid();
     stars = []; for (var k = 0; k < (mobile ? 50 : 110); k++) stars.push({ x: rnd() * W, y: rnd() * gy * 0.7, r: rnd() * 1.2 + 0.3, ph: rnd() * 6 });
   }
   function onScroll() {
@@ -45,9 +49,21 @@
   function line(x1, y1, x2, y2) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
   function st(rgb, a, w, glow) {
     ctx.strokeStyle = 'rgba(' + rgb + ',' + clamp(a * G.a, 0, 1) + ')'; ctx.lineWidth = w || 1;
-    ctx.shadowColor = 'rgba(' + rgb + ',' + clamp(a, 0, 1) + ')'; ctx.shadowBlur = glow || 0;
+    if (GLOW) { ctx.shadowColor = 'rgba(' + rgb + ',' + clamp(a, 0, 1) + ')'; ctx.shadowBlur = glow || 0; } else ctx.shadowBlur = 0;
   }
   function noGlow() { ctx.shadowBlur = 0; }
+
+  /* ---------- сетка-чертёж: рисуем один раз ---------- */
+  var gridLayer = document.createElement('canvas');
+  function buildGrid() {
+    gridLayer.width = cv.width; gridLayer.height = cv.height;
+    var g = gridLayer.getContext('2d'); g.setTransform(DPR, 0, 0, DPR, 0, 0);
+    g.strokeStyle = 'rgba(' + CREAM + ',0.035)'; g.lineWidth = 1; g.beginPath();
+    var s = 64;
+    for (var x = (W % s) / 2; x < W; x += s) { g.moveTo(x, 0); g.lineTo(x, H); }
+    for (var y = (H % s) / 2; y < H; y += s) { g.moveTo(0, y); g.lineTo(W, y); }
+    g.stroke();
+  }
 
   /* ---------- небо ---------- */
   function sky(p, t) {
@@ -86,7 +102,7 @@
     var x = W * 0.05, y = mobile ? H * 0.5 : H * 0.72;
     ctx.lineWidth = 1.2;
     ctx.strokeStyle = 'rgba(' + COPPER + ',' + ((mobile ? 0.12 : 0.16) + bump * 0.4) + ')';
-    ctx.shadowColor = 'rgba(' + COPPER + ',0.6)'; ctx.shadowBlur = bump * 30;
+    ctx.shadowColor = 'rgba(' + COPPER + ',0.6)'; ctx.shadowBlur = GLOW ? bump * 30 : 0;
     ctx.strokeText(txt, x, y);
     ctx.font = (s * 0.075) + 'px Onest, system-ui, sans-serif';
     ctx.fillStyle = 'rgba(' + COPPER + ',' + (mobile ? 0.2 : 0.24) + ')'; ctx.shadowBlur = 0;
@@ -177,7 +193,7 @@
         var sw = bw * clamp((f - 0.6) / 0.4, 0, 1);
         st(COPPER, 1, 1.8, 10); line(x0 - 6, yb - fh, x0 - 6 + sw + 12 * (sw / bw), yb - fh);
         if (f < 1) { // яркая «головка» рисующейся плиты
-          ctx.fillStyle = 'rgba(' + HOT + ',0.95)'; ctx.shadowColor = 'rgba(' + HOT + ',1)'; ctx.shadowBlur = 18;
+          ctx.fillStyle = 'rgba(' + HOT + ',0.95)'; ctx.shadowColor = 'rgba(' + HOT + ',1)'; ctx.shadowBlur = GLOW ? 18 : 0;
           ctx.beginPath(); ctx.arc(x0 - 6 + sw, yb - fh, 2.6, 0, 6.3); ctx.fill();
         }
       }
@@ -216,7 +232,7 @@
       var lit = rank[n] < light * total * 0.9;
       if (lit) {
         ctx.fillStyle = 'rgba(' + WARM + ',' + ((0.6 + Math.sin(t * 2 + n) * 0.06) * G.a) + ')';
-        ctx.shadowColor = 'rgba(' + WARM + ',0.8)'; ctx.shadowBlur = 12; ctx.fillRect(wx, wy, ww, wh); noGlow();
+        ctx.shadowColor = 'rgba(' + WARM + ',0.8)'; ctx.shadowBlur = GLOW ? 12 : 0; ctx.fillRect(wx, wy, ww, wh); noGlow();
       }
       st(CREAM, lit ? 0.6 : 0.3, 1); ctx.strokeRect(wx, wy, ww, wh);
     }
@@ -237,7 +253,7 @@
     line(mx + mw / 2, yTop - 34, mx - jibL, yTop - 8); line(mx + mw / 2, yTop - 34, mx + mw + cj, yTop - 8);
     // мигающий огонёк на верхушке
     var blink = (Math.sin(t * 4) > 0.6) ? 1 : 0.15;
-    ctx.fillStyle = 'rgba(255,90,60,' + blink * a + ')'; ctx.shadowColor = 'rgba(255,90,60,1)'; ctx.shadowBlur = 16 * blink;
+    ctx.fillStyle = 'rgba(255,90,60,' + blink * a + ')'; ctx.shadowColor = 'rgba(255,90,60,1)'; ctx.shadowBlur = GLOW ? 16 * blink : 0;
     ctx.beginPath(); ctx.arc(mx + mw / 2, yTop - 36, 2.5, 0, 6.3); ctx.fill(); noGlow();
     ctx.fillStyle = 'rgba(' + COPPER + ',' + (0.4 * a * G.a) + ')'; ctx.fillRect(mx + mw + cj - 24, yTop - 6, 22, 13);
     var tr = 0.5 + Math.sin(t * 0.5) * 0.4, tx = mx - 10 - (jibL - 20) * tr;
@@ -252,7 +268,7 @@
   /* ---------- частицы ---------- */
   function particles(cur, b, t) {
     if (cur.active && !reduce) {
-      for (var k = 0; k < (mobile ? 3 : 6); k++) sparks.push({ x: cur.x, y: cur.y, vx: (Math.random() - 0.5) * 4.5, vy: -Math.random() * 3.8 - 0.5, life: 1, w: 1.4 });
+      for (var k = 0; k < (mobile ? 2 : 4); k++) sparks.push({ x: cur.x, y: cur.y, vx: (Math.random() - 0.5) * 4.5, vy: -Math.random() * 3.8 - 0.5, life: 1, w: 1.4 });
       if (Math.random() < 0.06) flashes.push({ x: cur.x, y: cur.y, life: 1 });
     }
     // салют, когда дом готов
@@ -270,7 +286,7 @@
       if (s.life <= 0 || s.y > G.gy + 4) { sparks.splice(i, 1); continue; }
       var L = Math.min(1, s.life);
       ctx.strokeStyle = 'rgba(255,' + Math.round(160 + 80 * L) + ',110,' + L + ')'; ctx.lineWidth = s.w;
-      ctx.shadowColor = 'rgba(255,200,120,1)'; ctx.shadowBlur = 8;
+      ctx.shadowBlur = 0;
       line(s.x, s.y, s.x - s.vx * 2.4, s.y - s.vy * 2.4);
     }
     noGlow(); ctx.lineCap = 'butt';
@@ -290,13 +306,16 @@
   var lastHud = '';
   function frame(now) {
     var t = (now - t0) / 1000;
-    prog += (target - prog) * (reduce ? 1 : 0.07);
+    if (lastNow && GLOW) { if (now - lastNow > 28) slow++; else slow = Math.max(0, slow - 1); if (slow > 20) GLOW = 0; }
+    lastNow = now;
+    prog += (target - prog) * (reduce ? 1 : 0.2);
     var level = prog < 0.1 ? 0 : Math.min(LEVELS, Math.ceil(seg(prog, 0.1, 0.72) * LEVELS));
     if (level !== lastLevel) { if (lastLevel >= 0) bump = 1; lastLevel = level; }
     bump *= 0.92;
 
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(gridLayer, 0, 0, W, H);
     sky(prog, t);
     bigNumber(level, prog);
     // камера: в начале ближе к котловану, потом плавно отъезжает
