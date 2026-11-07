@@ -390,6 +390,39 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .parking__floor { opacity: 1 !important; top: 4% !important; }
 .parking .boiler__steps li { counter-increment: st; }
 
+
+/* ---------- квартира под ключ (js/key.js) ---------- */
+.key__stage { position: relative; overflow: hidden; aspect-ratio: 16 / 9; touch-action: pan-y; cursor: ew-resize; user-select: none; -webkit-user-select: none; background: #222; }
+.key__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.key__done { position: absolute; inset: 0; clip-path: inset(0 100% 0 0); will-change: clip-path; }
+.key__svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.kw { fill: none; stroke: #ffb27a; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 8 10; filter: drop-shadow(0 0 6px rgba(255,150,80,.95)); animation: kwFlow 1.2s linear infinite; }
+@keyframes kwFlow { to { stroke-dashoffset: -36; } }
+.key__wires { transition: opacity .4s; }
+.key__shade { fill: rgba(10,10,12,.55); }
+.key__line { stroke: #fff; stroke-width: 3; filter: drop-shadow(0 0 10px rgba(255,255,255,1)) drop-shadow(0 0 30px rgba(255,190,120,.8)); }
+.kl circle { fill: rgba(239,231,218,.25); stroke: rgba(239,231,218,.5); stroke-width: 2; transition: fill .3s, stroke .3s; }
+.kl text { fill: rgba(239,231,218,.5); font: 600 22px var(--sans); letter-spacing: .12em; text-transform: uppercase; text-anchor: middle; transition: fill .3s; }
+.kl.is-on circle { fill: #ffb27a; stroke: #ffb27a; filter: drop-shadow(0 0 8px rgba(255,170,90,.9)); }
+.kl.is-on text { fill: #fff; }
+.key__final { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.8); display: flex; flex-direction: column; align-items: center; gap: 14px; opacity: 0; transition: opacity .5s, transform .5s cubic-bezier(.3,1.5,.5,1); pointer-events: none; text-align: center; }
+.key__final b { font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 5vw, 76px); text-transform: uppercase; color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,.5); line-height: 1; }
+.key__icon { width: clamp(80px, 9vw, 130px); }
+.key__icon circle, .key__icon path { fill: none; stroke: #ffcf9e; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 8px rgba(255,180,100,.9)); }
+.key.done .key__final { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.key.touched .key__hint { opacity: 0; }
+.key__hint { bottom: auto; top: 50%; }
+.key__points { list-style: none; margin: 30px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 30px; }
+.key__points li { display: grid; gap: 6px; padding: 18px 0; border-top: 1px solid var(--line); }
+.key__points b { font-family: var(--serif); font-weight: 400; font-size: clamp(24px, 2.4vw, 36px); text-transform: uppercase; color: var(--copper); }
+.key__points span { color: var(--muted); font-size: 15px; }
+.key .boiler__ctl { margin-top: 22px; }
+@media (max-width: 760px) {
+  .key__stage { aspect-ratio: 4 / 5; }
+  .kl text { display: none; } .kl circle { r: 12px; }
+  .key__points { grid-template-columns: 1fr; }
+}
+
 /* ---------- reveal (GSAP добавляет класс js-anim на html) ---------- */
 .js-anim .fade { opacity: 0; transform: translateY(30px); }
 .split .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .06em; margin-bottom: -.06em; }
@@ -502,3 +535,9 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .parking__photo { margin: 0; overflow: hidden; }
 .parking__photo img { width: 100%; aspect-ratio: 21 / 9; object-fit: cover; display: block; }
 @media (max-width: 760px) { .life__grid { grid-template-columns: 1fr; } .parking__photo img { aspect-ratio: 16 / 10; } }
+
+.key__step { display: none; }
+@media (max-width: 760px) {
+  .key__step { display: block; position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(18,18,20,.8); border: 1px solid var(--copper); color: #fff; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; pointer-events: none; transition: opacity .3s; }
+  .key.done .key__step { opacity: 0; }
+}

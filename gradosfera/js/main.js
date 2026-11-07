@@ -181,9 +181,6 @@
   })();
 
   // бегущая строка
-  var row = $('#marq');
-  gsap.to(row, { xPercent: -50, ease: 'none', duration: 40, repeat: -1 });
-  gsap.fromTo(row, { x: 0 }, { x: -200, ease: 'none', scrollTrigger: { trigger: '.marq', start: 'top bottom', end: 'bottom top', scrub: true } });
 
   window.addEventListener('load', function () { ST.refresh(); });
 })();
