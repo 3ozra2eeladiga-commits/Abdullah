@@ -49,6 +49,31 @@
   </div>
 </nav>
 
+<div class="mate" id="mate" aria-hidden="true">
+  <svg class="mate__svg" viewBox="0 0 60 70">
+    <g class="mate__stand">
+      <path class="mate__leg" d="M26 44 L22 62 M34 44 L38 62"/>
+      <rect class="mate__vest" x="21" y="26" width="18" height="20" rx="4"/>
+      <path class="mate__arm mate__arm--l" d="M22 30 L14 42"/>
+      <path class="mate__arm mate__arm--wave" d="M38 30 L48 18"/>
+    </g>
+    <g class="mate__sit">
+      <path class="mate__leg" d="M24 46 h14 v14 M30 46 h12 v14"/>
+      <rect class="mate__vest" x="21" y="28" width="18" height="19" rx="4"/>
+      <path class="mate__arm" d="M22 32 L18 44 M38 32 L42 44"/>
+      <rect class="mate__seat" x="16" y="47" width="28" height="5" rx="2"/>
+    </g>
+    <g class="mate__head">
+      <circle class="mate__face" cx="30" cy="18" r="8"/>
+      <path class="mate__hat" d="M20 15 a10 9 0 0 1 20 0 z"/><path class="mate__hat" d="M18 15 h24"/>
+      <g class="mate__phones"><path d="M21 19 a9 9 0 0 1 18 0"/><rect x="18" y="17" width="5" height="8" rx="2"/><rect x="37" y="17" width="5" height="8" rx="2"/></g>
+      <path class="mate__brow" d="M25 15 l4 1.5 M35 15 l-4 1.5"/>
+    </g>
+    <g class="mate__notes"><text x="44" y="12">♪</text><text x="50" y="22">♫</text></g>
+  </svg>
+  <button class="mate__bubble" id="mateBubble" type="button">Включите звук — услышите, как оживает дом 🎧</button>
+</div>
+
 <canvas id="buildBg" class="build-bg" aria-hidden="true"></canvas>
 <div class="build-hud" aria-hidden="true"><span class="build-hud__dot"></span><span id="buildHud">Котлован</span></div>
 
@@ -390,6 +415,7 @@
 <script src="js/boiler.js"></script>
 <script src="js/parking.js"></script>
 <script src="js/lift.js"></script>
+<script src="js/mate.js"></script>
 <script src="js/sound.js"></script>
 <script src="js/frames.js"></script>
 </body>

@@ -9,12 +9,22 @@
   var steps = Array.prototype.slice.call(box.querySelectorAll('.boiler__steps li'));
   var L = path.getTotalLength();
   var FLOORS = [795, 697, 599, 501, 403, 305, 207, 118], PARK_Y = 1150, SX = 1240;
+  var lastDrive = 0, bumped = false, parked = false;
   var clamp = function (v) { return v < 0 ? 0 : v > 1 ? 1 : v; };
   var ease = function (t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; };
   function render(p) {
     var drive = ease(clamp(p / 0.4)), walk = clamp((p - 0.42) / 0.13), lift = ease(clamp((p - 0.55) / 0.45));
     var d = drive * L, pt = path.getPointAtLength(d), pt2 = path.getPointAtLength(Math.min(L, d + 2));
     var ang = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180 / Math.PI;
+    if (window.gsSfx) {
+      var dv = Math.abs(drive - lastDrive);
+      window.gsSfx.engine(drive > 0 && drive < 1 ? Math.min(1, 0.25 + dv * 60) : 0);
+      if (!bumped && lastDrive < 0.62 && drive >= 0.62) { bumped = true; window.gsSfx.bump(); }   // «лежачий» внизу рампы
+      if (drive < 0.5) bumped = false;
+      if (!parked && drive >= 0.999) { parked = true; window.gsSfx.park(); }
+      if (drive < 0.9) parked = false;
+    }
+    lastDrive = drive;
     car.setAttribute('transform', 'translate(' + pt.x + ' ' + pt.y + ') rotate(' + (drive >= 1 ? 0 : ang) + ')');
     // человек: от машины к лифту
     man.style.opacity = walk > 0 && lift === 0 ? 1 : 0;

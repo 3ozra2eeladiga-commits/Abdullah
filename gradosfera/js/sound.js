@@ -62,6 +62,8 @@
     btn.classList.toggle('is-on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.querySelector('span').textContent = on ? 'Звук вкл' : 'Звук';
     try { localStorage.setItem('gs-sound', on ? '1' : '0'); } catch (e) {}
+    if (window.gsMate) window.gsMate(on);
+    if (!on && eng) eng.g.gain.setTargetAtTime(0, ctx.currentTime, 0.1);
     if (on) {
       if (!ctx) init();
       ctx.resume();
@@ -76,6 +78,64 @@
   }
   btn.addEventListener('click', function () { setOn(!on); });
   document.addEventListener('visibilitychange', function () { if (ctx && on) { if (document.hidden) ctx.suspend(); else ctx.resume(); } });
+
+
+  // ---------- эффекты: мотор машины, «лежачий полицейский», парковка, вода в трубах ----------
+  var noiseBuf = null, eng = null, lastWater = 0;
+  function noise() {
+    if (noiseBuf) return noiseBuf;
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    var d = noiseBuf.getChannelData(0); for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return noiseBuf;
+  }
+  function thump(t, f0, f1, vol, dur) {
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+    var n = ctx.createBufferSource(), ng = ctx.createGain(), lp = ctx.createBiquadFilter();
+    n.buffer = noise(); lp.type = 'lowpass'; lp.frequency.value = 500;
+    ng.gain.setValueAtTime(vol * 0.5, t); ng.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.6);
+    n.connect(lp); lp.connect(ng); ng.connect(master); n.start(t); n.stop(t + dur);
+  }
+  function engine(level) {
+    if (!on || !ctx) return;
+    if (!eng) {
+      var o = ctx.createOscillator(), o2 = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+      var n = ctx.createBufferSource(), nl = ctx.createBiquadFilter(), ng = ctx.createGain();
+      o.type = 'sawtooth'; o2.type = 'sine'; o.frequency.value = 38; o2.frequency.value = 76;
+      lp.type = 'lowpass'; lp.frequency.value = 260; g.gain.value = 0;
+      n.buffer = noise(); n.loop = true; nl.type = 'bandpass'; nl.frequency.value = 180; nl.Q.value = 0.6; ng.gain.value = 0.35;
+      o.connect(lp); o2.connect(lp); lp.connect(g); n.connect(nl); nl.connect(ng); ng.connect(g); g.connect(master);
+      o.start(); o2.start(); n.start();
+      eng = { o: o, o2: o2, g: g, lp: lp };
+    }
+    var t = ctx.currentTime, v = Math.max(0, Math.min(1, level));
+    eng.g.gain.setTargetAtTime(v * 0.16, t, 0.12);
+    eng.o.frequency.setTargetAtTime(34 + v * 22, t, 0.2); eng.o2.frequency.setTargetAtTime(68 + v * 44, t, 0.2);
+    eng.lp.frequency.setTargetAtTime(200 + v * 260, t, 0.2);
+  }
+  window.gsSfx = {
+    engine: engine,
+    bump: function () { if (!on || !ctx) return; var t = ctx.currentTime + 0.01; thump(t, 90, 40, 0.5, 0.22); thump(t + 0.2, 80, 38, 0.42, 0.22); },
+    park: function () {
+      if (!on || !ctx) return; engine(0); var t = ctx.currentTime + 0.15;
+      // короткий «пик-пик» сигнализации
+      [0, 0.16].forEach(function (dt) { var o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = 1760;
+        g.gain.setValueAtTime(0.0001, t + dt); g.gain.exponentialRampToValueAtTime(0.05, t + dt + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.09);
+        var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2500; o.connect(lp); lp.connect(g); g.connect(master); o.start(t + dt); o.stop(t + dt + 0.12); });
+    },
+    water: function (level) {
+      if (!on || !ctx || level <= 0) return;
+      var now = ctx.currentTime, gap = 0.34 - 0.2 * Math.min(1, level);
+      if (now - lastWater < gap) return; lastWater = now;
+      thump(now + 0.01, 120, 55, 0.22 + 0.15 * Math.min(1, level), 0.2);       // «тух»
+      var o = ctx.createOscillator(), g = ctx.createGain();                        // пузырёк
+      o.type = 'sine'; o.frequency.setValueAtTime(380 + Math.random() * 200, now + 0.05); o.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+      g.gain.setValueAtTime(0.0001, now + 0.05); g.gain.exponentialRampToValueAtTime(0.03, now + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+      o.connect(g); g.connect(master); o.start(now + 0.05); o.stop(now + 0.15);
+    }
+  };
 
   // «дзинь» лифта — вызывается из js/lift.js
   window.gsDing = function () {
