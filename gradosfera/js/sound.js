@@ -65,7 +65,7 @@
     if (window.gsMate) window.gsMate(on);
     if (!on && eng) eng.g.gain.setTargetAtTime(0, ctx.currentTime, 0.1);
     if (on) {
-      if (!ctx) init();
+      if (!ctx) init(); else if (ctx.state !== 'running') rebuild();
       ctx.resume();
       master.gain.cancelScheduledValues(ctx.currentTime);
       master.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 2);
@@ -77,7 +77,28 @@
     }
   }
   btn.addEventListener('click', function () { setOn(!on); });
-  document.addEventListener('visibilitychange', function () { if (ctx && on) { if (document.hidden) ctx.suspend(); else ctx.resume(); } });
+  // Ушли на другую вкладку (карта, звонок) и вернулись: телефон «глушит» звук, и простое resume() часто не срабатывает.
+  // Поэтому пробуем возобновить сразу, а при первом касании страницы — пересоздаём звук заново (это разрешено только по касанию).
+  function rebuild() {
+    try { ctx.close(); } catch (e) {}
+    ctx = null; eng = null; noiseBuf = null;
+    init(); ctx.resume();
+    master.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 1.5);
+    clearTimeout(timer); timer = null; step = 0; loop();
+  }
+  function wake() { if (ctx && on && !document.hidden && ctx.state !== 'running') { try { ctx.resume(); } catch (e) {} } }
+  function onGesture(e) {
+    if (!ctx || !on || ctx.state === 'running') return;
+    if (e && btn.contains(e.target)) return;      // нажатие на колонку обработает сама кнопка
+    rebuild();
+  }
+  ['pointerdown', 'touchend', 'keydown'].forEach(function (t) { document.addEventListener(t, onGesture, true); });
+  document.addEventListener('visibilitychange', function () {
+    if (!ctx || !on) return;
+    if (document.hidden) ctx.suspend(); else wake();
+  });
+  window.addEventListener('focus', wake);
+  window.addEventListener('pageshow', wake);
 
 
   // ---------- эффекты: мотор машины, «лежачий полицейский», парковка, вода в трубах ----------
