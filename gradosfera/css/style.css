@@ -765,3 +765,10 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 @media (max-width: 760px) { .guide__menu { width: auto; } }
 
 #gmAim { transition: transform .4s; }
+/* планировка всегда вписывается в рамку (и вертикальные, и горизонтальные) */
+.fwin__body > * { min-width: 0; }
+.fwin__plan img { position: absolute; inset: 6%; width: 88%; height: 88%; max-width: none; max-height: none; }
+.ftypes > * { min-width: 0; }
+.ftype__plan { position: relative; }
+.ftype__plan img { position: absolute; inset: 8%; width: 84%; height: 84%; max-width: none; max-height: none; }
+html, body { overflow-x: clip; }
