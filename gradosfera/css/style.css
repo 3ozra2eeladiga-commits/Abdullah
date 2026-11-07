@@ -16,7 +16,7 @@
   --safe-r: env(safe-area-inset-right, 0px);
 }
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; background: var(--bg); }
 body { margin: 0; background: var(--bg); color: var(--cream); font: 300 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 img { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
@@ -40,6 +40,13 @@ body.lock { overflow: hidden; }
 .btn:hover { background: var(--cream); color: var(--bg); border-color: var(--cream); }
 .btn--fill { background: var(--copper); border-color: var(--copper); color: #1b1410; }
 .btn--fill:hover { background: var(--cream); border-color: var(--cream); }
+
+/* ---------- фон «стройка» ---------- */
+.build-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+main, .ftr { position: relative; z-index: 1; }
+.build-hud { position: fixed; z-index: 2; left: max(var(--gut), var(--safe-l)); bottom: calc(22px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 10px; font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--copper); font-weight: 500; opacity: 0; transition: opacity .5s; pointer-events: none; }
+body.past-hero .build-hud { opacity: 1; }
+.build-hud__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--copper); animation: ping 2.4s infinite; }
 
 /* ---------- header ---------- */
 .hdr { position: fixed; z-index: 60; inset: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: calc(18px + env(safe-area-inset-top, 0px)) max(var(--gut), var(--safe-r)) 18px max(var(--gut), var(--safe-l)); transition: background .4s, padding .4s; }
@@ -152,7 +159,7 @@ body.lock { overflow: hidden; }
 .extra__card small { color: var(--muted); font-size: 13px; }
 
 /* ---------- life ---------- */
-.life { background: var(--bg-2); }
+.life { background: rgba(26, 26, 29, .55); }
 .life__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .card { display: grid; gap: 18px; align-content: start; }
 .card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
