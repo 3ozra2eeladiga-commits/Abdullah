@@ -54,6 +54,7 @@
   function loop() {
     var dur = 8;
     pad(CHORDS[step % CHORDS.length], ctx.currentTime + 0.05, dur);
+    if (step % 2 === 1) taps(ctx.currentTime + 4.05);
     step++;
     timer = setTimeout(loop, dur * 1000);
   }
@@ -163,15 +164,45 @@
       n.connect(bp); bp.connect(g); g.connect(master); n.start(); lfo.start();
       rope = { n: n, g: g, lfo: lfo };
     }
-    rope.g.gain.setTargetAtTime(v * 0.09, t, v > 0 ? 0.05 : 0.15);
-    if (v > 0.05 && t - lastStep > 0.42 - v * 0.15) { lastStep = t; thump(t + 0.01, 160, 70, 0.10 + v * 0.08, 0.09); }          // шаги
+    rope.g.gain.setTargetAtTime(v * 0.28, t, v > 0 ? 0.05 : 0.15);
+    if (v > 0.05 && t - lastStep > 0.42 - v * 0.15) { lastStep = t; knock(t + 0.01, 420, 0.10 + v * 0.08); }          // шаги
     if (v > 0.25 && t - lastCreak > 1.1 + Math.random()) {                                                                      // скрип блока
       lastCreak = t; var o = ctx.createOscillator(), cg = ctx.createGain(), f = ctx.createBiquadFilter();
       o.type = 'sawtooth'; o.frequency.setValueAtTime(240 + Math.random() * 80, t); o.frequency.linearRampToValueAtTime(330 + Math.random() * 120, t + 0.28);
       f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 6;
-      cg.gain.setValueAtTime(0.0001, t); cg.gain.exponentialRampToValueAtTime(0.03, t + 0.04); cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+      cg.gain.setValueAtTime(0.0001, t); cg.gain.exponentialRampToValueAtTime(0.07, t + 0.04); cg.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
       o.connect(f); f.connect(cg); cg.connect(master); o.start(t); o.stop(t + 0.35);
     }
+  }
+  // короткий «деревянный» стук (слышно и в динамике телефона)
+  function knock(t, f, vol, out) {
+    var o = ctx.createOscillator(), g = ctx.createGain(), bp = ctx.createBiquadFilter();
+    o.type = 'triangle'; o.frequency.setValueAtTime(f * 1.6, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.03);
+    bp.type = 'bandpass'; bp.frequency.value = f * 1.2; bp.Q.value = 3;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    o.connect(bp); bp.connect(g); g.connect(out || master); o.start(t); o.stop(t + 0.14);
+  }
+  // звук стройки при прокрутке: «трещотка» гаечного ключа — щелчки настроены в тон музыке
+  var scrollAcc = 0, lastY = window.scrollY, lastTick = 0;
+  window.addEventListener('scroll', function () {
+    var y = window.scrollY, dy = Math.abs(y - lastY); lastY = y;
+    if (!on || !ctx || ctx.state !== 'running' || dy > 2000) return;
+    scrollAcc += dy;
+    var t = ctx.currentTime;
+    if (scrollAcc >= 70 && t - lastTick > 0.045) {
+      scrollAcc = 0; lastTick = t;
+      var ch = CHORDS[(step + CHORDS.length - 1) % CHORDS.length], m = ch[2 + Math.floor(Math.random() * (ch.length - 2))] + 12;
+      knock(t + 0.005, hz(m), 0.075, musicGain);
+    }
+  }, { passive: true });
+  // «молоточки вдалеке» — два лёгких звонких удара в такт музыке, иногда
+  function taps(t) {
+    [0, 0.32].forEach(function (dt, i) {
+      var f = hz(84 - i * 5), o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = f; o2.frequency.value = f * 2.76; o.type = o2.type = 'sine';
+      g.gain.setValueAtTime(0.0001, t + dt); g.gain.exponentialRampToValueAtTime(0.03, t + dt + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.6);
+      o.connect(g); o2.connect(g); g.connect(musicGain); o.start(t + dt); o2.start(t + dt); o.stop(t + dt + 0.65); o2.stop(t + dt + 0.65);
+    });
   }
   function stopRope() { if (rope) { try { rope.n.stop(); rope.lfo.stop(); } catch (e) {} rope = null; } }
   window.gsSfx = {
