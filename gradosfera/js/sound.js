@@ -54,7 +54,6 @@
   function loop() {
     var dur = 8;
     pad(CHORDS[step % CHORDS.length], ctx.currentTime + 0.05, dur);
-    if (step % 2 === 1) taps(ctx.currentTime + 4.05);
     step++;
     timer = setTimeout(loop, dur * 1000);
   }
@@ -196,7 +195,7 @@
     if (!on || !ctx || ctx.state !== 'running' || dy > 2000) return;
     scrollAcc += dy;
     var t = ctx.currentTime;
-    if (scrollAcc >= 150 && t - lastTick > 0.09) { scrollAcc = 0; lastTick = t; tick(t + 0.005); }
+    // звук при прокрутке отключён по просьбе — при листании только музыка
   }, { passive: true });
   // «молоточки вдалеке» — два лёгких звонких удара в такт музыке, иногда
   function taps(t) {
