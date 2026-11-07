@@ -156,7 +156,7 @@
         want = Math.min(1, st.progress / 0.97); if (!raf) raf = requestAnimationFrame(seek);
         hero.classList.toggle('is-moving', st.progress > 0.025);
         // «Моздок» появляется, когда расходятся облака (≈ 10–30% прокрутки)
-        var c = st.progress, o = c < 0.09 ? 0 : c < 0.15 ? (c - 0.09) / 0.06 : c < 0.28 ? 1 : c < 0.35 ? (0.35 - c) / 0.07 : 0;
+        var c = st.progress, o = c < 0.06 ? 0 : c < 0.11 ? (c - 0.06) / 0.05 : c < 0.44 ? 1 : c < 0.52 ? (0.52 - c) / 0.08 : 0;
         if (city) { city.style.opacity = o; city.style.transform = 'scale(' + (1.06 - 0.06 * o) + ')'; }
       }
     });
