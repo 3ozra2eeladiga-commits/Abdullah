@@ -206,7 +206,7 @@ body.past-hero .build-hud { opacity: 1; }
 .contacts__bg { position: absolute; inset: 0; background-size: cover; background-position: center 30%; opacity: .32; }
 .contacts::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, var(--bg) 0%, rgba(18,18,20,.55) 40%, rgba(18,18,20,.7) 100%); }
 .contacts__inner { position: relative; z-index: 2; display: grid; gap: clamp(40px, 5vw, 70px); }
-.contacts__cols { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 30px; border-top: 1px solid var(--line); padding-top: 30px; }
+.contacts__cols { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 30px; border-top: 1px solid var(--line); padding-top: 30px; }
 .contacts__cols > div { display: grid; gap: 10px; align-content: start; }
 .contacts__cols p { font-size: 18px; font-weight: 400; }
 .contacts__phone { font-family: var(--serif); font-size: clamp(32px, 3.6vw, 54px); line-height: 1; }
