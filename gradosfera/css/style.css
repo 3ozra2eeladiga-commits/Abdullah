@@ -235,6 +235,29 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .lb__arr--l { left: calc(14px + var(--safe-l)); } .lb__arr--r { right: calc(14px + var(--safe-r)); }
 .lb__n { position: absolute; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); font-size: 12px; letter-spacing: .2em; color: var(--muted); }
 
+/* ---------- появление фото «как на стройке» (js/reveal-fx.js) ---------- */
+.fx-wrap, .fx-host { position: relative; }
+.fx-wrap { overflow: hidden; }
+.fx-wrap > img { display: block; width: 100%; }
+.fx-clean { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fx-bp-img { filter: grayscale(1) sepia(1) saturate(2.2) hue-rotate(-12deg) brightness(.42) contrast(1.6); }
+.fx-grid { position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background-image: linear-gradient(rgba(201,138,91,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(201,138,91,.35) 1px, transparent 1px);
+  background-size: 28px 28px; mix-blend-mode: screen; }
+.fx-scan { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 3; background: #ffe2b8;
+  box-shadow: 0 0 12px 3px rgba(255,190,120,.9), 0 0 40px 10px rgba(201,138,91,.5); }
+.fx-cover { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; perspective: 900px; }
+.fx-brick { position: absolute; background: var(--bg); box-shadow: inset 0 0 0 1px rgba(201,138,91,.35); }
+.fx-board { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, #1d1b1a, #252220 60%, #1a1918); box-shadow: inset -1px 0 0 rgba(201,138,91,.5); backface-visibility: hidden; }
+.fx-band { position: absolute; left: 0; right: 0; background: var(--bg); box-shadow: inset 0 1px 0 rgba(201,138,91,.7); }
+.fx-crane { overflow: visible !important; z-index: 3; }
+.fx-cable { position: absolute; left: 50%; bottom: 100%; width: 1px; height: 100vh; background: linear-gradient(transparent, rgba(239,231,218,.7)); }
+.fx-hook { position: absolute; bottom: -2px; left: -7px; width: 14px; height: 10px; border: 1.5px solid var(--copper); border-top: 0; border-radius: 0 0 8px 8px; }
+.fx-weld { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
+.fx-weld rect { fill: none; stroke: #ffcf99; stroke-width: 2; filter: drop-shadow(0 0 4px rgba(255,180,100,.9)); }
+.fx-spark { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; z-index: 4; pointer-events: none;
+  background: #fff4e0; box-shadow: 0 0 10px 4px rgba(255,210,140,1), 0 0 30px 12px rgba(255,150,60,.7); }
+
 /* ---------- reveal (GSAP добавляет класс js-anim на html) ---------- */
 .js-anim .fade { opacity: 0; transform: translateY(30px); }
 .split .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .06em; margin-bottom: -.06em; }

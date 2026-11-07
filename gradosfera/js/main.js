@@ -167,10 +167,5 @@
   gsap.to(row, { xPercent: -50, ease: 'none', duration: 40, repeat: -1 });
   gsap.fromTo(row, { x: 0 }, { x: -200, ease: 'none', scrollTrigger: { trigger: '.marq', start: 'top bottom', end: 'bottom top', scrub: true } });
 
-  // картинки во дворе: мягкое появление
-  $$('.card img, .gallery__item').forEach(function (el) {
-    gsap.from(el, { clipPath: 'inset(12% 0% 12% 0%)', duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 90%' } });
-  });
-
   window.addEventListener('load', function () { ST.refresh(); });
 })();
