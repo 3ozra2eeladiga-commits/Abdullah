@@ -259,6 +259,56 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .fx-spark { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; z-index: 4; pointer-events: none;
   background: #fff4e0; box-shadow: 0 0 10px 4px rgba(255,210,140,1), 0 0 30px 12px rgba(255,150,60,.7); }
 
+
+/* ---------- схема котельной (js/boiler.js) ---------- */
+.life__grid { grid-template-columns: repeat(3, 1fr); }
+.boiler { margin-top: clamp(70px, 8vw, 120px); display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(30px, 5vw, 70px); align-items: center; border-top: 1px solid var(--line); padding-top: 40px; }
+.boiler__scheme svg { width: 100%; height: auto; display: block; overflow: visible; }
+.b-grid path { stroke: rgba(239,231,218,.05); stroke-width: 1; fill: none; }
+.pipe { fill: none; stroke: rgba(239,231,218,.18); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.flow { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 10 16; opacity: 0; transition: opacity .6s; }
+.flow--heat { stroke: #ff8a45; }
+.flow--ret { stroke: #b9774c; }
+.flow--water { stroke: #ffb27a; }
+.flow--cold { stroke: #7fb2e6; }
+.boiler.s1 .flow--cold, .boiler.s2 .flow--heat, .boiler.s2 .flow--ret, .boiler.s3 .flow--water { opacity: 1; animation: flowMove 1s linear infinite; }
+.boiler.s2 .flow--ret { animation-duration: 1.4s; }
+@keyframes flowMove { to { stroke-dashoffset: -26; } }
+.boiler-box rect { fill: #1b1a19; stroke: var(--copper); stroke-width: 2; }
+.boiler-box .boiler-box__panel { fill: #121214; stroke: rgba(239,231,218,.3); stroke-width: 1; }
+.boiler-box__temp { fill: var(--copper); font: 600 10px var(--sans); letter-spacing: .16em; }
+.flame path { fill: url(#hotG); transform-origin: 120px 236px; transform: scale(0); transition: transform .6s cubic-bezier(.3,1.6,.5,1); }
+.boiler.s1 .flame path { transform: scale(1); animation: flick .35s ease-in-out infinite alternate; }
+@keyframes flick { from { transform: scale(1, 1); } to { transform: scale(.92, 1.08); } }
+.rad__body { fill: #1b1a19; stroke: rgba(239,231,218,.35); stroke-width: 2; transition: fill .8s, stroke .8s; }
+.rad__fins { stroke: rgba(239,231,218,.2); stroke-width: 2; fill: none; transition: stroke .8s; }
+.boiler.s2 .rad__body { fill: rgba(226,104,58,.35); stroke: #ff9a4d; }
+.boiler.s2 .rad__fins { stroke: rgba(255,170,110,.8); }
+.heat path, .steam path { fill: none; stroke: rgba(255,170,110,.7); stroke-width: 2; stroke-linecap: round; opacity: 0; }
+.boiler.s2 .heat path { animation: rise 1.8s ease-out infinite; }
+.boiler.s2 .heat path:nth-child(2) { animation-delay: .5s; } .boiler.s2 .heat path:nth-child(3) { animation-delay: 1s; }
+.steam path { stroke: rgba(239,231,218,.55); }
+.boiler.s3 .steam path { animation: rise 2s ease-out infinite; } .boiler.s3 .steam path:nth-child(2) { animation-delay: .8s; }
+@keyframes rise { 0% { opacity: 0; transform: translateY(6px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
+.tap__body { fill: none; stroke: rgba(239,231,218,.6); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.drops circle { fill: #ffb27a; opacity: 0; }
+.boiler.s3 .drops circle { animation: drop .9s linear infinite; }
+.boiler.s3 .drops circle:nth-child(2) { animation-delay: .3s; } .boiler.s3 .drops circle:nth-child(3) { animation-delay: .6s; }
+.boiler.s3 .drops circle:nth-child(4) { animation-delay: .45s; } .boiler.s3 .drops circle:nth-child(5) { animation-delay: .15s; }
+@keyframes drop { 0% { opacity: 0; transform: translateY(-6px); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(14px); } }
+.b-lbl { fill: rgba(239,231,218,.55); font: 500 11px var(--sans); letter-spacing: .14em; text-transform: uppercase; }
+.b-lbl--big { fill: var(--copper); font-size: 13px; }
+.b-lbl--cold { fill: rgba(127,178,230,.8); }
+.boiler__text { display: grid; gap: 22px; align-content: start; }
+.boiler__steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; counter-reset: st; }
+.boiler__steps li { counter-increment: st; display: grid; grid-template-columns: 44px 1fr; gap: 2px 14px; padding: 16px 0; border-bottom: 1px solid var(--line); opacity: .38; transition: opacity .5s; }
+.boiler__steps li::before { content: "0" counter(st); grid-row: span 2; font-family: var(--serif); font-size: 30px; line-height: 1; color: var(--copper); }
+.boiler__steps li b { font-weight: 500; font-size: 17px; }
+.boiler__steps li span { color: var(--muted); font-size: 14px; }
+.boiler__steps li.is-on { opacity: 1; }
+@media (max-width: 1024px) { .boiler { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .life__grid { grid-template-columns: 1fr; } }
+
 /* ---------- reveal (GSAP добавляет класс js-anim на html) ---------- */
 .js-anim .fade { opacity: 0; transform: translateY(30px); }
 .split .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .06em; margin-bottom: -.06em; }

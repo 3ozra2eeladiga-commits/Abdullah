@@ -187,7 +187,82 @@
       <article class="card fade"><img data-fx="weld" src="img/photo/roof.webp" alt="Лаунж-зона на крыше" loading="lazy"><div><span class="tag">Кровля</span><h3>Лаунж-зона на крыше</h3><p>Обеденные группы и вид на город.</p></div></article>
       <article class="card fade"><img data-fx="floors" src="img/photo/parking.webp" alt="Подземный паркинг" loading="lazy"><div><span class="tag">Паркинг</span><h3>Подземный паркинг</h3><p>Пожаротушение и вытяжная вентиляция.</p></div></article>
       <article class="card fade"><img data-fx="fence" src="img/photo/commerce.webp" alt="Коммерческий первый этаж" loading="lazy"><div><span class="tag">1 этаж</span><h3>Коммерция</h3><p>Магазины и сервисы у подъезда.</p></div></article>
-      <article class="card fade"><img data-fx="bricks" src="img/heating.webp" alt="Собственная котельная" loading="lazy"><div><span class="tag">Тепло</span><h3>Своя котельная</h3><p>Экономия и тепло без городских сетей.</p></div></article>
+    </div>
+
+
+    <div class="boiler" id="boiler">
+      <div class="boiler__scheme">
+        <svg viewBox="0 0 640 420" role="img" aria-label="Схема: котёл, отопление и горячая вода">
+          <defs>
+            <linearGradient id="hotG" x1="0" x2="1"><stop offset="0" stop-color="#ff9a4d"/><stop offset="1" stop-color="#e2683a"/></linearGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <!-- сетка-чертёж -->
+          <g class="b-grid"><path d="M0 60H640M0 120H640M0 180H640M0 240H640M0 300H640M0 360H640M80 0V420M160 0V420M240 0V420M320 0V420M400 0V420M480 0V420M560 0V420"/></g>
+
+          <!-- холодная вода в котёл -->
+          <path class="pipe pipe--cold" d="M30 330 H120 V262"/>
+          <path class="flow flow--cold" d="M30 330 H120 V262"/>
+          <text class="b-lbl b-lbl--cold" x="30" y="350">холодная вода</text>
+
+          <!-- контур отопления: подача и обратка -->
+          <path class="pipe" d="M178 120 H300 V95 H600"/>
+          <path class="flow flow--heat" d="M178 120 H300 V95 H600"/>
+          <path class="pipe pipe--ret" d="M600 205 H330 V170 H178"/>
+          <path class="flow flow--ret" d="M600 205 H330 V170 H178"/>
+          <!-- радиаторы -->
+          <g class="rad" transform="translate(360 112)">
+            <rect class="rad__body" x="0" y="0" width="90" height="70" rx="4"/>
+            <path class="rad__fins" d="M15 6V64M30 6V64M45 6V64M60 6V64M75 6V64"/>
+            <g class="heat"><path d="M20 -8 q-6 -10 0 -20 q6 -10 0 -20"/><path d="M45 -8 q-6 -10 0 -20 q6 -10 0 -20"/><path d="M70 -8 q-6 -10 0 -20 q6 -10 0 -20"/></g>
+          </g>
+          <g class="rad" transform="translate(490 112)">
+            <rect class="rad__body" x="0" y="0" width="90" height="70" rx="4"/>
+            <path class="rad__fins" d="M15 6V64M30 6V64M45 6V64M60 6V64M75 6V64"/>
+            <g class="heat"><path d="M20 -8 q-6 -10 0 -20 q6 -10 0 -20"/><path d="M45 -8 q-6 -10 0 -20 q6 -10 0 -20"/><path d="M70 -8 q-6 -10 0 -20 q6 -10 0 -20"/></g>
+          </g>
+          <text class="b-lbl" x="360" y="230">радиаторы отопления</text>
+
+          <!-- контур горячей воды -->
+          <path class="pipe" d="M178 240 H260 V320 H470 V300"/>
+          <path class="flow flow--water" d="M178 240 H260 V320 H470 V300"/>
+          <path class="pipe" d="M380 320 V375 H560 V290"/>
+          <path class="flow flow--water" d="M380 320 V375 H560 V290"/>
+          <!-- кран на кухне -->
+          <g class="tap" transform="translate(470 300)">
+            <path class="tap__body" d="M0 0 V-22 H26 V-12"/>
+            <g class="drops"><circle cx="26" cy="-2" r="2.4"/><circle cx="26" cy="10" r="2.4"/><circle cx="26" cy="22" r="2.4"/></g>
+            <g class="steam"><path d="M38 -16 q-5 -8 0 -16 q5 -8 0 -16"/><path d="M48 -10 q-5 -8 0 -16 q5 -8 0 -16"/></g>
+          </g>
+          <text class="b-lbl" x="430" y="345">кухня</text>
+          <!-- душ -->
+          <g class="tap" transform="translate(560 290)">
+            <path class="tap__body" d="M0 0 V-40 H-22 V-34"/>
+            <path class="tap__body" d="M-34 -34 H-10"/>
+            <g class="drops"><circle cx="-30" cy="-24" r="2"/><circle cx="-22" cy="-14" r="2"/><circle cx="-14" cy="-24" r="2"/><circle cx="-26" cy="-4" r="2"/><circle cx="-18" cy="-4" r="2"/></g>
+          </g>
+          <text class="b-lbl" x="540" y="396">ванная</text>
+
+          <!-- котёл -->
+          <g class="boiler-box">
+            <rect x="62" y="96" width="116" height="166" rx="8"/>
+            <rect class="boiler-box__panel" x="80" y="114" width="80" height="26" rx="3"/>
+            <text class="boiler-box__temp" x="120" y="132" text-anchor="middle">ВЫКЛ</text>
+            <g class="flame" filter="url(#glow)"><path d="M120 236 c-22 -8 -22 -34 -6 -50 c0 12 8 16 12 16 c-2 -14 4 -26 14 -34 c-2 16 12 24 12 42 c0 16 -14 26 -32 26z"/></g>
+          </g>
+          <text class="b-lbl b-lbl--big" x="62" y="84">котёл</text>
+        </svg>
+      </div>
+      <div class="boiler__text">
+        <span class="tag">Тепло и горячая вода</span>
+        <h3 class="h3">Своя котельная</h3>
+        <ol class="boiler__steps">
+          <li data-step="1"><b>Котёл</b><span>Собственная котельная — экономия ресурсов и индивидуальный комфорт.</span></li>
+          <li data-step="2"><b>Отопление</b><span>Нагретая вода идёт по трубам к радиаторам и возвращается обратно — в квартире тепло.</span></li>
+          <li data-step="3"><b>Горячая вода</b><span>Второй контур греет воду для кухни и ванной.</span></li>
+        </ol>
+        <p class="fine">Схема упрощённая и показывает принцип работы.</p>
+      </div>
     </div>
 
     <div class="safe fade">
@@ -272,5 +347,6 @@
 <script src="js/main.js"></script>
 <script src="js/build-bg.js"></script>
 <script src="js/reveal-fx.js"></script>
+<script src="js/boiler.js"></script>
 </body>
 </html>
