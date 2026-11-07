@@ -1,6 +1,7 @@
-/* Фон «дом строится, пока листаешь».
-   Тонкая медная графика на канвасе за контентом: котлован → экскаватор → кран и 8 этажей → фасад → свет в окнах.
-   Прогресс стройки = прогресс прокрутки страницы. Кран, искры и ковш двигаются всегда — фон живой. */
+/* Фон «дом строится, пока листаешь» — версия 2, «невозможно не заметить».
+   Небо: рассвет → день → закат → ночь со звёздами. Огромная цифра этажа. Камера отъезжает по мере роста дома.
+   Экскаватор, самосвал, бетономешалка, кран с балкой, вспышки сварки. Финал: подсветка фасада, салют, «ДОМ ГОТОВ».
+   Прогресс стройки = прогресс прокрутки. Всё рисуется кодом, без видео. */
 (function () {
   'use strict';
   var cv = document.getElementById('buildBg');
@@ -8,32 +9,31 @@
   var ctx = cv.getContext('2d');
   var hud = document.getElementById('buildHud');
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var FLOORS = 7, LEVELS = FLOORS + 1;           // 8 этажей: первый (коммерция) + 7 жилых
-  var COPPER = '201,138,91', CREAM = '239,231,218', WARM = '255,196,128';
+  var LEVELS = 8;                                   // 8 этажей, как у настоящего дома
+  var COPPER = '201,138,91', CREAM = '239,231,218', WARM = '255,196,128', HOT = '255,214,150';
   var W = 0, H = 0, DPR = 1, mobile = false, G = {};
   var target = 0, prog = reduce ? 1 : 0, t0 = performance.now();
-  var sparks = [], dust = [];
+  var sparks = [], dust = [], flashes = [], stars = [];
+  var lastLevel = -1, bump = 0, fired = false, doneFlash = 0;
 
-  // случайный, но стабильный порядок окон для включения света
-  var order = []; for (var i = 0; i < 400; i++) order.push(i);
-  var seed = 7; var rnd = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  var seed = 11; function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+  var order = []; for (var i = 0; i < 200; i++) order.push(i);
   for (i = order.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)); var tmp = order[i]; order[i] = order[j]; order[j] = tmp; }
-  var lightRank = {}; order.forEach(function (v, k) { lightRank[v] = k; });
+  var rank = {}; order.forEach(function (v, k) { rank[v] = k; });
 
   function size() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth; H = window.innerHeight;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     cv.style.width = W + 'px'; cv.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     mobile = W < 760;
-    var gy = H * (mobile ? 0.86 : 0.88);
-    var fh = Math.min(H * (mobile ? 0.058 : 0.062), 58);
-    var bw = mobile ? W * 0.62 : Math.min(W * 0.27, 440);
-    var x0 = mobile ? (W - bw) / 2 + W * 0.05 : W * 0.63;
-    G = { gy: gy, fh: fh, bw: bw, x0: x0, cols: 7, alpha: mobile ? 0.45 : 0.62 };
+    var gy = H * (mobile ? 0.84 : 0.86);
+    var fh = Math.min(H * (mobile ? 0.06 : 0.074), 70);
+    var bw = mobile ? W * 0.66 : Math.min(W * 0.31, 520);
+    var x0 = mobile ? (W - bw) / 2 : W * 0.6;
+    G = { gy: gy, fh: fh, bw: bw, x0: x0, cols: 7, a: mobile ? 0.55 : 0.8 };
+    stars = []; for (var k = 0; k < (mobile ? 50 : 110); k++) stars.push({ x: rnd() * W, y: rnd() * gy * 0.7, r: rnd() * 1.2 + 0.3, ph: rnd() * 6 });
   }
-
   function onScroll() {
     var max = document.documentElement.scrollHeight - window.innerHeight;
     target = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
@@ -41,202 +41,282 @@
 
   var clamp = function (v, a, b) { return v < a ? a : v > b ? b : v; };
   var seg = function (p, a, b) { return clamp((p - a) / (b - a), 0, 1); };
+  var mix = function (a, b, k) { return a + (b - a) * k; };
   function line(x1, y1, x2, y2) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
-  function stroke(rgb, a, w) { ctx.strokeStyle = 'rgba(' + rgb + ',' + (a * G.alpha) + ')'; ctx.lineWidth = w || 1; }
-
-  function drawGrid() {
-    stroke(CREAM, 0.035, 1);
-    var s = 64;
-    for (var x = (W % s) / 2; x < W; x += s) line(x, 0, x, H);
-    for (var y = (H % s) / 2; y < H; y += s) line(0, y, W, y);
+  function st(rgb, a, w, glow) {
+    ctx.strokeStyle = 'rgba(' + rgb + ',' + clamp(a * G.a, 0, 1) + ')'; ctx.lineWidth = w || 1;
+    ctx.shadowColor = 'rgba(' + rgb + ',' + clamp(a, 0, 1) + ')'; ctx.shadowBlur = glow || 0;
   }
+  function noGlow() { ctx.shadowBlur = 0; }
 
-  function drawGround(p) {
-    stroke(COPPER, 0.5, 1);
-    line(0, G.gy, W, G.gy);
-    // штриховка земли
-    stroke(COPPER, 0.12, 1);
-    for (var x = -20; x < W; x += 14) line(x, G.gy + 4, x + 10, G.gy + 14);
-    // котлован / фундамент
-    var dig = seg(p, 0, 0.1), depth = G.fh * 1.1 * dig;
-    if (depth > 1) {
-      var a = G.x0 - 18, b = G.x0 + G.bw + 18;
-      ctx.fillStyle = 'rgba(18,18,20,1)'; ctx.fillRect(a, G.gy + 1, b - a, depth + 14);
-      stroke(COPPER, 0.55, 1);
-      ctx.beginPath(); ctx.moveTo(a - 10, G.gy); ctx.lineTo(a, G.gy + depth); ctx.lineTo(b, G.gy + depth); ctx.lineTo(b + 10, G.gy); ctx.stroke();
-      if (p > 0.09) { // плита фундамента
-        stroke(COPPER, 0.4, 1);
-        for (var k = a + 6; k < b - 6; k += 10) line(k, G.gy + depth - 6, k + 6, G.gy + depth - 1);
+  /* ---------- небо ---------- */
+  function sky(p, t) {
+    // цвет горизонта: рассвет (медь) → день (холодный) → закат (тёплый) → ночь (синий)
+    var stops = [[0, [201, 120, 70, 0.22]], [0.35, [120, 140, 160, 0.10]], [0.7, [220, 110, 60, 0.22]], [0.9, [40, 60, 120, 0.22]], [1, [30, 45, 100, 0.2]]];
+    var c = stops[0][1];
+    for (var k = 0; k < stops.length - 1; k++) {
+      if (p >= stops[k][0] && p <= stops[k + 1][0]) {
+        var q = (p - stops[k][0]) / (stops[k + 1][0] - stops[k][0]);
+        c = stops[k][1].map(function (v, n) { return mix(v, stops[k + 1][1][n], q); });
       }
     }
-  }
-
-  function drawExcavator(p, t) {
-    var leave = seg(p, 0.86, 1);
-    var x = G.x0 - (mobile ? 70 : 150) - leave * (G.x0 + 220), y = G.gy;
-    if (x < -200) return;
-    var s = mobile ? 0.7 : 1;
-    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
-    stroke(COPPER, 0.8, 1.2);
-    // гусеницы
-    ctx.beginPath(); ctx.moveTo(-34, -2); ctx.arcTo(-42, -2, -42, -10, 6); ctx.arcTo(-42, -16, -34, -16, 6);
-    ctx.lineTo(34, -16); ctx.arcTo(42, -16, 42, -10, 6); ctx.arcTo(42, -2, 34, -2, 6); ctx.closePath(); ctx.stroke();
-    for (var w = -30; w <= 30; w += 15) { ctx.beginPath(); ctx.arc(w, -9, 4, 0, 6.3); ctx.stroke(); }
-    // корпус и кабина
-    ctx.strokeRect(-30, -40, 50, 22); ctx.strokeRect(-26, -62, 22, 22);
-    stroke(CREAM, 0.25, 1); ctx.strokeRect(-22, -58, 14, 12);
-    // стрела: работает, пока идёт стройка
-    var work = p < 0.86 ? 1 : 0;
-    var a1 = -0.75 + Math.sin(t * 1.6) * 0.28 * work, a2 = 1.25 + Math.sin(t * 1.6 + 1.2) * 0.4 * work;
-    var bx = 20, by = -36, l1 = 58, l2 = 44;
-    var ex = bx + Math.cos(a1) * l1, ey = by + Math.sin(a1) * l1;
-    var fx = ex + Math.cos(a1 + a2) * l2, fy = ey + Math.sin(a1 + a2) * l2;
-    stroke(COPPER, 0.85, 2); line(bx, by, ex, ey); line(ex, ey, fx, fy);
-    stroke(COPPER, 0.85, 1.2);
-    ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx + 12, fy + 4); ctx.lineTo(fx + 8, fy + 14); ctx.lineTo(fx - 2, fy + 10); ctx.closePath(); ctx.stroke();
-    ctx.restore();
-    // пыль из-под ковша
-    if (work && Math.random() < 0.3) dust.push({ x: x + (fx + 6) * s, y: y + (fy + 12) * s, vx: (Math.random() - 0.3) * 0.6, vy: -Math.random() * 0.5, life: 1 });
-  }
-
-  function floorY(i) { return G.gy - (i + 1) * G.fh; }
-
-  function drawBuilding(p, t) {
-    var build = seg(p, 0.1, 0.72) * LEVELS;            // сколько этажей «поднялось»
-    var face = seg(p, 0.7, 0.86), light = seg(p, 0.86, 0.98);
-    var x0 = G.x0, bw = G.bw, fh = G.fh, cols = G.cols, cw = bw / cols;
-    var topDone = Math.floor(build);
-    var cur = { x: x0 + bw / 2, y: G.gy, active: false };
-
-    for (var i = 0; i < LEVELS; i++) {
-      var f = clamp(build - i, 0, 1);
-      if (f <= 0) break;
-      var yb = G.gy - i * fh;                      // низ этажа
-      var colH = fh * clamp(f / 0.6, 0, 1);
-      stroke(COPPER, 0.75, 1);
-      for (var c = 0; c <= cols; c++) line(x0 + c * cw, yb, x0 + c * cw, yb - colH);
-      if (f > 0.6) { // плита перекрытия ползёт слева направо
-        var sw = bw * clamp((f - 0.6) / 0.4, 0, 1);
-        stroke(COPPER, 0.9, 1.6); line(x0 - 4, yb - fh, x0 - 4 + sw + 8 * (sw / bw), yb - fh);
-      }
-      if (f < 1) { cur = { x: x0 + bw * clamp((f - 0.6) / 0.4, 0, 1), y: yb - colH, active: true }; }
-      // леса на текущем этаже
-      if (i === topDone && f < 1) {
-        stroke(CREAM, 0.18, 1);
-        var sx = x0 + bw + 6;
-        line(sx, yb, sx, yb - fh); line(sx + 10, yb, sx + 10, yb - fh); line(sx, yb, sx + 10, yb - fh); line(sx + 10, yb, sx, yb - fh);
-      }
-    }
-
-    // фасад: стеклянная башня, светлые вертикали, окна
-    if (face > 0) {
-      var top = floorY(LEVELS - 1);
-      // стеклянная башня на углу
-      var tw = cw * 1.1, tx = x0 + cw * 0.5;
-      stroke(CREAM, 0.55 * face, 1.2);
-      ctx.beginPath(); ctx.moveTo(tx, G.gy - fh); ctx.lineTo(tx, top + 8);
-      ctx.quadraticCurveTo(tx + tw / 2, top - 14, tx + tw, top + 8); ctx.lineTo(tx + tw, G.gy - fh); ctx.stroke();
-      // светлые вертикали (как у настоящего фасада)
-      [3, 4.5, 6].forEach(function (k) {
-        var vx = x0 + cw * k;
-        stroke(CREAM, 0.4 * face, 1); line(vx, G.gy - fh, vx, G.gy - fh - (LEVELS - 1) * fh * face);
-        line(vx + 4, G.gy - fh, vx + 4, G.gy - fh - (LEVELS - 1) * fh * face);
+    var g = ctx.createRadialGradient(G.x0 + G.bw / 2, G.gy, 0, G.x0 + G.bw / 2, G.gy, Math.max(W, H) * 0.9);
+    g.addColorStop(0, 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + c[3] + ')');
+    g.addColorStop(1, 'rgba(18,18,20,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // звёзды ночью
+    var night = seg(p, 0.82, 0.97);
+    if (night > 0) {
+      stars.forEach(function (s) {
+        var tw = 0.5 + 0.5 * Math.sin(t * 2 + s.ph);
+        ctx.fillStyle = 'rgba(' + CREAM + ',' + (night * tw * 0.8) + ')';
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.3); ctx.fill();
       });
-      // карниз
-      stroke(COPPER, 0.9 * face, 2); line(x0 - 8, top, x0 + (bw + 16) * face - 8, top);
-      // витрины первого этажа
-      stroke(CREAM, 0.35 * face, 1);
-      for (c = 0; c < cols; c++) ctx.strokeRect(x0 + c * cw + 4, G.gy - fh + 8, cw - 8, fh - 12);
     }
-    var total = FLOORS * (cols - 1), shown = Math.floor(total * face), n = 0;
-    for (i = 1; i < LEVELS; i++) {
-      for (c = 1; c < cols; c++, n++) {
-        if (n >= shown) continue;
-        var wx = x0 + c * cw - cw * 0.28, wy = floorY(i) + fh * 0.2, ww = cw * 0.56, wh = fh * 0.58;
-        var lit = lightRank[n] < light * total * 0.85;
-        if (lit) {
-          var flick = 0.85 + Math.sin(t * 2 + n) * 0.06;
-          ctx.fillStyle = 'rgba(' + WARM + ',' + (0.55 * flick * G.alpha) + ')'; ctx.fillRect(wx, wy, ww, wh);
-        }
-        stroke(CREAM, lit ? 0.5 : 0.28, 1); ctx.strokeRect(wx, wy, ww, wh);
-      }
-    }
-    return { cur: cur, build: build };
   }
 
-  function drawCrane(p, t, cur) {
-    var fade = 1 - seg(p, 0.88, 0.97);
-    var appear = seg(p, 0.08, 0.14);
-    var a = fade * appear;
-    if (a <= 0) return;
-    var mx = G.x0 + G.bw + (mobile ? 24 : 44);
-    var topY = G.gy - (LEVELS + 2.2) * G.fh;
-    var jibL = G.bw + (mobile ? 30 : 70), cj = mobile ? 34 : 70;
-    stroke(COPPER, 0.7 * a, 1);
-    // мачта-решётка
-    var mw = 12, yTop = topY;
+  /* ---------- огромная цифра этажа ---------- */
+  function bigNumber(level, p) {
+    if (p < 0.04) return;
+    var txt = level <= 0 ? '00' : (level < 10 ? '0' + level : '' + level);
+    var s = (mobile ? H * 0.34 : H * 0.62) * (1 + bump * 0.06);
+    ctx.save();
+    ctx.font = s + 'px Forum, "Times New Roman", serif';
+    ctx.textBaseline = 'alphabetic';
+    var x = W * 0.05, y = mobile ? H * 0.5 : H * 0.72;
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = 'rgba(' + COPPER + ',' + ((mobile ? 0.12 : 0.16) + bump * 0.4) + ')';
+    ctx.shadowColor = 'rgba(' + COPPER + ',0.6)'; ctx.shadowBlur = bump * 30;
+    ctx.strokeText(txt, x, y);
+    ctx.font = (s * 0.075) + 'px Onest, system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(' + COPPER + ',' + (mobile ? 0.2 : 0.24) + ')'; ctx.shadowBlur = 0;
+    ctx.fillText(level >= LEVELS && p > 0.86 ? 'ДОМ ГОТОВ' : 'ЭТАЖ', x + 8, y + s * 0.11);
+    ctx.restore();
+  }
+
+  /* ---------- земля, котлован ---------- */
+  function ground(p) {
+    st(COPPER, 0.6, 1, 6); line(-50, G.gy, W + 50, G.gy); noGlow();
+    st(COPPER, 0.13, 1); for (var x = -60; x < W + 60; x += 14) line(x, G.gy + 4, x + 10, G.gy + 14);
+    var dig = seg(p, 0, 0.1), depth = G.fh * 1.2 * dig;
+    if (depth > 1) {
+      var a = G.x0 - 20, b = G.x0 + G.bw + 20;
+      ctx.fillStyle = 'rgb(18,18,20)'; ctx.fillRect(a - 10, G.gy + 1, b - a + 20, depth + 16);
+      st(COPPER, 0.7, 1.2, 8);
+      ctx.beginPath(); ctx.moveTo(a - 12, G.gy); ctx.lineTo(a, G.gy + depth); ctx.lineTo(b, G.gy + depth); ctx.lineTo(b + 12, G.gy); ctx.stroke(); noGlow();
+      if (p > 0.09) { st(COPPER, 0.4, 1); for (var k = a + 6; k < b - 6; k += 10) line(k, G.gy + depth - 6, k + 6, G.gy + depth - 1); }
+    }
+  }
+
+  /* ---------- машины ---------- */
+  function tracks(w) {
+    ctx.beginPath(); ctx.moveTo(-w + 8, -2); ctx.arcTo(-w, -2, -w, -10, 6); ctx.arcTo(-w, -16, -w + 8, -16, 6);
+    ctx.lineTo(w - 8, -16); ctx.arcTo(w, -16, w, -10, 6); ctx.arcTo(w, -2, w - 8, -2, 6); ctx.closePath(); ctx.stroke();
+  }
+  function wheel(x, y, r, t) { ctx.beginPath(); ctx.arc(x, y, r, 0, 6.3); ctx.stroke(); line(x, y, x + Math.cos(t * 6) * r, y + Math.sin(t * 6) * r); }
+
+  function excavator(p, t) {
+    var leave = seg(p, 0.86, 1);
+    var x = G.x0 - (mobile ? 64 : 140) - leave * (G.x0 + 300), y = G.gy;
+    if (x < -220) return;
+    var s = mobile ? 0.75 : 1.25;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    st(COPPER, 0.95, 1.3, 6); tracks(42);
+    for (var w = -30; w <= 30; w += 15) wheel(w, -9, 4, t * (leave > 0 ? 3 : 0));
+    ctx.strokeRect(-30, -40, 50, 22); ctx.strokeRect(-26, -62, 22, 22);
+    st(WARM, 0.5, 1, 8); ctx.strokeRect(-22, -58, 14, 12);
+    var work = p < 0.86 ? 1 : 0;
+    var a1 = -0.8 + Math.sin(t * 1.8) * 0.3 * work, a2 = 1.25 + Math.sin(t * 1.8 + 1.2) * 0.45 * work;
+    var bx = 20, by = -36, ex = bx + Math.cos(a1) * 60, ey = by + Math.sin(a1) * 60;
+    var fx = ex + Math.cos(a1 + a2) * 46, fy = ey + Math.sin(a1 + a2) * 46;
+    st(COPPER, 1, 2.2, 8); line(bx, by, ex, ey); line(ex, ey, fx, fy);
+    st(COPPER, 1, 1.3, 6); ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx + 13, fy + 4); ctx.lineTo(fx + 9, fy + 15); ctx.lineTo(fx - 2, fy + 11); ctx.closePath(); ctx.stroke();
+    noGlow(); ctx.restore();
+    if (work && Math.random() < 0.45) dust.push({ x: x + (fx + 6) * s, y: y + (fy + 12) * s, vx: (Math.random() - 0.3) * 0.8, vy: -Math.random() * 0.7, life: 1 });
+  }
+
+  // самосвал во время котлована, бетономешалка во время этажей — ездят туда-обратно
+  function trucks(p, t) {
+    var mixerOn = p > 0.1 && p < 0.8, dumpOn = p < 0.14;
+    if (!mixerOn && !dumpOn) return;
+    var span = W + 240, speed = mobile ? 38 : 70;
+    var x = ((t * speed) % span) - 120, y = G.gy, s = mobile ? 0.7 : 1.1;
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    st(COPPER, 0.85, 1.2, 6);
+    ctx.strokeRect(-52, -30, 22, 22);              // кабина
+    st(WARM, 0.45, 1, 6); ctx.strokeRect(-48, -26, 12, 9);
+    st(COPPER, 0.85, 1.2, 6); line(-56, -8, 52, -8);
+    wheel(-40, -2, 7, t); wheel(20, -2, 7, t); wheel(38, -2, 7, t);
+    if (mixerOn) {
+      // барабан бетономешалки вращается
+      ctx.save(); ctx.translate(14, -26); ctx.rotate(-0.15);
+      ctx.beginPath(); ctx.ellipse(0, 0, 34, 16, 0, 0, 6.3); ctx.stroke();
+      ctx.beginPath(); ctx.rect(-34, -16, 68, 32); ctx.clip();
+      st(CREAM, 0.35, 1);
+      for (var k = -3; k <= 3; k++) { var off = ((t * 30 + k * 18) % 108) - 54; line(off - 10, -16, off + 10, 16); }
+      ctx.restore();
+    } else {
+      st(COPPER, 0.85, 1.2, 6); ctx.beginPath(); ctx.moveTo(-26, -10); ctx.lineTo(-22, -34); ctx.lineTo(50, -34); ctx.lineTo(50, -10); ctx.stroke();
+      st(COPPER, 0.4, 1); for (var d = -16; d < 46; d += 10) { ctx.beginPath(); ctx.arc(d, -36, 5, Math.PI, 0); ctx.stroke(); }
+    }
+    noGlow(); ctx.restore();
+  }
+
+  /* ---------- дом ---------- */
+  function floorY(i) { return G.gy - (i + 1) * G.fh; }
+  function building(p, t) {
+    var build = seg(p, 0.1, 0.72) * LEVELS, face = seg(p, 0.7, 0.86), light = seg(p, 0.86, 0.98);
+    var x0 = G.x0, bw = G.bw, fh = G.fh, cols = G.cols, cw = bw / cols, topDone = Math.floor(build);
+    var cur = { x: x0 + bw / 2, y: G.gy, active: false };
+    for (var i = 0; i < LEVELS; i++) {
+      var f = clamp(build - i, 0, 1); if (f <= 0) break;
+      var yb = G.gy - i * fh, colH = fh * clamp(f / 0.6, 0, 1);
+      st(COPPER, 0.85, 1.1, 5);
+      for (var c = 0; c <= cols; c++) line(x0 + c * cw, yb, x0 + c * cw, yb - colH);
+      if (f > 0.6) {
+        var sw = bw * clamp((f - 0.6) / 0.4, 0, 1);
+        st(COPPER, 1, 1.8, 10); line(x0 - 6, yb - fh, x0 - 6 + sw + 12 * (sw / bw), yb - fh);
+        if (f < 1) { // яркая «головка» рисующейся плиты
+          ctx.fillStyle = 'rgba(' + HOT + ',0.95)'; ctx.shadowColor = 'rgba(' + HOT + ',1)'; ctx.shadowBlur = 18;
+          ctx.beginPath(); ctx.arc(x0 - 6 + sw, yb - fh, 2.6, 0, 6.3); ctx.fill();
+        }
+      }
+      if (f < 1) cur = { x: x0 + bw * clamp((f - 0.6) / 0.4, 0, 1), y: f > 0.6 ? yb - fh : yb - colH, active: true };
+      if (i === topDone && f < 1) {
+        st(CREAM, 0.25, 1); var sx = x0 + bw + 6;
+        for (var q = 0; q < 2; q++) { var xx = sx + q * 12; line(xx, yb, xx, yb - fh); }
+        line(sx, yb, sx + 12, yb - fh); line(sx + 12, yb, sx, yb - fh);
+      }
+    }
+    noGlow();
+    var top = floorY(LEVELS - 1);
+    if (face > 0) {
+      var tw = cw * 1.1, tx = x0 + cw * 0.5;
+      st(CREAM, 0.7 * face, 1.3, 8);
+      ctx.beginPath(); ctx.moveTo(tx, G.gy - fh); ctx.lineTo(tx, top + 10);
+      ctx.quadraticCurveTo(tx + tw / 2, top - 16, tx + tw, top + 10); ctx.lineTo(tx + tw, G.gy - fh); ctx.stroke();
+      st(COPPER, 1 * face, 2.2, 10); line(x0 - 10, top, x0 - 10 + (bw + 20) * face, top);
+      st(CREAM, 0.4 * face, 1); for (c = 0; c < cols; c++) ctx.strokeRect(x0 + c * cw + 4, G.gy - fh + 8, cw - 8, fh - 12);
+    }
+    // вертикальная подсветка фасада — включается в финале, как на настоящем доме
+    [3, 4.5, 6].forEach(function (k) {
+      var vx = x0 + cw * k, hgt = (LEVELS - 1) * fh * face;
+      if (hgt <= 0) return;
+      st(CREAM, 0.45, 1); line(vx, G.gy - fh, vx, G.gy - fh - hgt); line(vx + 5, G.gy - fh, vx + 5, G.gy - fh - hgt);
+      if (light > 0) {
+        var pulse = 0.85 + Math.sin(t * 1.5 + k) * 0.15;
+        st(HOT, light * pulse, 3, 26); line(vx + 2.5, G.gy - fh, vx + 2.5, G.gy - fh - hgt * clamp(light * 1.6, 0, 1));
+      }
+    });
+    noGlow();
+    var total = (LEVELS - 1) * (cols - 1), shown = Math.floor(total * face), n = 0;
+    for (i = 1; i < LEVELS; i++) for (c = 1; c < cols; c++, n++) {
+      if (n >= shown) continue;
+      var wx = x0 + c * cw - cw * 0.28, wy = floorY(i) + fh * 0.2, ww = cw * 0.56, wh = fh * 0.58;
+      var lit = rank[n] < light * total * 0.9;
+      if (lit) {
+        ctx.fillStyle = 'rgba(' + WARM + ',' + ((0.6 + Math.sin(t * 2 + n) * 0.06) * G.a) + ')';
+        ctx.shadowColor = 'rgba(' + WARM + ',0.8)'; ctx.shadowBlur = 12; ctx.fillRect(wx, wy, ww, wh); noGlow();
+      }
+      st(CREAM, lit ? 0.6 : 0.3, 1); ctx.strokeRect(wx, wy, ww, wh);
+    }
+    return { cur: cur, build: build, top: top };
+  }
+
+  /* ---------- кран ---------- */
+  function crane(p, t, cur) {
+    var a = seg(p, 0.08, 0.14) * (1 - seg(p, 0.88, 0.96)); if (a <= 0) return;
+    var mx = G.x0 + G.bw + (mobile ? 26 : 56), yTop = G.gy - (LEVELS + 2.4) * G.fh;
+    var jibL = G.bw + (mobile ? 34 : 90), cj = mobile ? 36 : 80, mw = 13;
+    st(COPPER, 0.8 * a, 1, 5);
     line(mx, G.gy, mx, yTop); line(mx + mw, G.gy, mx + mw, yTop);
     for (var y = G.gy; y > yTop + 12; y -= 18) { line(mx, y, mx + mw, y - 18); line(mx + mw, y, mx, y - 18); }
-    // кабина, стрела, противовес
-    ctx.strokeRect(mx - 4, yTop - 14, mw + 8, 12);
-    stroke(COPPER, 0.85 * a, 1.4);
+    ctx.strokeRect(mx - 4, yTop - 15, mw + 8, 13);
+    st(COPPER, 0.95 * a, 1.5, 8);
     line(mx + mw + cj, yTop - 8, mx - jibL, yTop - 8);
-    line(mx + mw / 2, yTop - 30, mx - jibL, yTop - 8); line(mx + mw / 2, yTop - 30, mx + mw + cj, yTop - 8);
-    ctx.fillStyle = 'rgba(' + COPPER + ',' + (0.35 * a * G.alpha) + ')'; ctx.fillRect(mx + mw + cj - 22, yTop - 6, 20, 12);
-    // тележка ездит по стреле, крюк опускается к текущему этажу
-    var tr = 0.5 + Math.sin(t * 0.45) * 0.38;
-    var tx = mx - 10 - (jibL - 20) * tr;
-    var hookY = Math.min(cur.y - 30, yTop + 30 + (cur.y - yTop - 60) * (0.5 + Math.sin(t * 0.7) * 0.5));
-    stroke(CREAM, 0.45 * a, 1); line(tx, yTop - 8, tx, hookY);
-    stroke(COPPER, 0.9 * a, 1.2); ctx.strokeRect(tx - 5, yTop - 11, 10, 6);
-    // балка на крюке
-    var sway = Math.sin(t * 1.3) * 0.08;
-    ctx.save(); ctx.translate(tx, hookY + 8); ctx.rotate(sway);
-    stroke(CREAM, 0.4 * a, 1); line(0, -8, -18, 0); line(0, -8, 18, 0);
-    stroke(COPPER, 0.9 * a, 2); line(-26, 0, 26, 0);
-    ctx.restore();
+    line(mx + mw / 2, yTop - 34, mx - jibL, yTop - 8); line(mx + mw / 2, yTop - 34, mx + mw + cj, yTop - 8);
+    // мигающий огонёк на верхушке
+    var blink = (Math.sin(t * 4) > 0.6) ? 1 : 0.15;
+    ctx.fillStyle = 'rgba(255,90,60,' + blink * a + ')'; ctx.shadowColor = 'rgba(255,90,60,1)'; ctx.shadowBlur = 16 * blink;
+    ctx.beginPath(); ctx.arc(mx + mw / 2, yTop - 36, 2.5, 0, 6.3); ctx.fill(); noGlow();
+    ctx.fillStyle = 'rgba(' + COPPER + ',' + (0.4 * a * G.a) + ')'; ctx.fillRect(mx + mw + cj - 24, yTop - 6, 22, 13);
+    var tr = 0.5 + Math.sin(t * 0.5) * 0.4, tx = mx - 10 - (jibL - 20) * tr;
+    var hookY = Math.min(cur.y - 30, yTop + 30 + (cur.y - yTop - 60) * (0.5 + Math.sin(t * 0.8) * 0.5));
+    st(CREAM, 0.5 * a, 1); line(tx, yTop - 8, tx, hookY);
+    st(COPPER, a, 1.3, 6); ctx.strokeRect(tx - 5, yTop - 11, 10, 6);
+    ctx.save(); ctx.translate(tx, hookY + 8); ctx.rotate(Math.sin(t * 1.3) * 0.1);
+    st(CREAM, 0.45 * a, 1); line(0, -8, -20, 0); line(0, -8, 20, 0);
+    st(COPPER, a, 2.4, 10); line(-30, 0, 30, 0); ctx.restore(); noGlow();
   }
 
-  function particles(cur) {
-    // искры сварки на текущем этаже
+  /* ---------- частицы ---------- */
+  function particles(cur, b, t) {
     if (cur.active && !reduce) {
-      for (var k = 0; k < (mobile ? 2 : 4); k++) sparks.push({ x: cur.x, y: cur.y, vx: (Math.random() - 0.5) * 3.4, vy: -Math.random() * 3 - 0.5, life: 1 });
+      for (var k = 0; k < (mobile ? 3 : 6); k++) sparks.push({ x: cur.x, y: cur.y, vx: (Math.random() - 0.5) * 4.5, vy: -Math.random() * 3.8 - 0.5, life: 1, w: 1.4 });
+      if (Math.random() < 0.06) flashes.push({ x: cur.x, y: cur.y, life: 1 });
     }
+    // салют, когда дом готов
+    if (prog > 0.96 && !fired) {
+      fired = true; doneFlash = 1;
+      for (var n = 0; n < 4; n++) {
+        var cx = G.x0 + G.bw * (0.15 + n * 0.25), cy = b.top - G.fh * (1.5 + (n % 2));
+        for (var m = 0; m < 50; m++) { var ang = m / 50 * 6.283, sp = 2 + Math.random() * 3; sparks.push({ x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 1.4, w: 1.6 }); }
+      }
+    }
+    if (prog < 0.9) fired = false;
+    ctx.lineCap = 'round';
     for (var i = sparks.length - 1; i >= 0; i--) {
-      var s = sparks[i]; s.vy += 0.12; s.x += s.vx; s.y += s.vy; s.life -= 0.03;
-      if (s.life <= 0 || s.y > G.gy) { sparks.splice(i, 1); continue; }
-      ctx.strokeStyle = 'rgba(255,' + Math.round(170 + 60 * s.life) + ',110,' + (s.life * G.alpha) + ')';
-      ctx.lineWidth = 1.2; line(s.x, s.y, s.x - s.vx * 2, s.y - s.vy * 2);
+      var s = sparks[i]; s.vy += 0.1; s.vx *= 0.99; s.x += s.vx; s.y += s.vy; s.life -= 0.022;
+      if (s.life <= 0 || s.y > G.gy + 4) { sparks.splice(i, 1); continue; }
+      var L = Math.min(1, s.life);
+      ctx.strokeStyle = 'rgba(255,' + Math.round(160 + 80 * L) + ',110,' + L + ')'; ctx.lineWidth = s.w;
+      ctx.shadowColor = 'rgba(255,200,120,1)'; ctx.shadowBlur = 8;
+      line(s.x, s.y, s.x - s.vx * 2.4, s.y - s.vy * 2.4);
+    }
+    noGlow(); ctx.lineCap = 'butt';
+    for (i = flashes.length - 1; i >= 0; i--) {
+      var f = flashes[i]; f.life -= 0.08; if (f.life <= 0) { flashes.splice(i, 1); continue; }
+      var g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 70 * f.life + 10);
+      g.addColorStop(0, 'rgba(255,230,190,' + 0.55 * f.life + ')'); g.addColorStop(1, 'rgba(255,200,120,0)');
+      ctx.fillStyle = g; ctx.fillRect(f.x - 90, f.y - 90, 180, 180);
     }
     for (i = dust.length - 1; i >= 0; i--) {
-      var d = dust[i]; d.x += d.vx; d.y += d.vy; d.life -= 0.012;
-      if (d.life <= 0) { dust.splice(i, 1); continue; }
-      ctx.fillStyle = 'rgba(' + COPPER + ',' + (0.25 * d.life * G.alpha) + ')';
-      ctx.beginPath(); ctx.arc(d.x, d.y, 1.6 + (1 - d.life) * 3, 0, 6.3); ctx.fill();
+      var d = dust[i]; d.x += d.vx; d.y += d.vy; d.life -= 0.012; if (d.life <= 0) { dust.splice(i, 1); continue; }
+      ctx.fillStyle = 'rgba(' + COPPER + ',' + 0.28 * d.life + ')'; ctx.beginPath(); ctx.arc(d.x, d.y, 1.8 + (1 - d.life) * 4, 0, 6.3); ctx.fill();
     }
+    if (doneFlash > 0) { ctx.fillStyle = 'rgba(255,220,170,' + doneFlash * 0.12 + ')'; ctx.fillRect(0, 0, W, H); doneFlash -= 0.03; }
   }
 
   var lastHud = '';
   function frame(now) {
     var t = (now - t0) / 1000;
-    prog += (target - prog) * (reduce ? 1 : 0.08);
+    prog += (target - prog) * (reduce ? 1 : 0.07);
+    var level = prog < 0.1 ? 0 : Math.min(LEVELS, Math.ceil(seg(prog, 0.1, 0.72) * LEVELS));
+    if (level !== lastLevel) { if (lastLevel >= 0) bump = 1; lastLevel = level; }
+    bump *= 0.92;
+
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    drawGrid();
-    drawGround(prog);
-    var b = drawBuilding(prog, t);
-    drawCrane(prog, t, b.cur);
-    drawExcavator(prog, t);
-    particles(b.cur);
+    sky(prog, t);
+    bigNumber(level, prog);
+    // камера: в начале ближе к котловану, потом плавно отъезжает
+    var zoom = mix(mobile ? 1.25 : 1.45, 1, seg(prog, 0, 0.7));
+    var cx = G.x0 + G.bw / 2, cy = G.gy;
+    ctx.translate(cx, cy); ctx.scale(zoom, zoom); ctx.translate(-cx, -cy - (zoom - 1) * G.fh * 2.2);
+    ground(prog);
+    var b = building(prog, t);
+    crane(prog, t, b.cur);
+    trucks(prog, t);
+    excavator(prog, t);
+    particles(b.cur, b, t);
+
     if (hud) {
-      var txt;
-      if (prog < 0.1) txt = 'Котлован';
-      else if (b.build < LEVELS) txt = 'Этаж ' + Math.max(1, Math.ceil(b.build)) + ' из ' + LEVELS;
-      else if (prog < 0.86) txt = 'Фасад';
-      else txt = 'Дом готов';
+      var txt = prog < 0.1 ? 'Котлован' : (b.build < LEVELS ? 'Этаж ' + Math.max(1, level) + ' из ' + LEVELS : (prog < 0.86 ? 'Фасад' : 'Дом готов'));
       if (txt !== lastHud) { hud.textContent = txt; lastHud = txt; }
     }
-    if (!reduce) requestAnimationFrame(frame);
+    if (!reduce && !document.hidden) requestAnimationFrame(frame);
   }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && !reduce) requestAnimationFrame(frame); });
 
   size(); onScroll();
   window.addEventListener('resize', size);
