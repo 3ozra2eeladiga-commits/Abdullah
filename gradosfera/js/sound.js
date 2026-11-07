@@ -182,6 +182,13 @@
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
     o.connect(bp); bp.connect(g); g.connect(out || master); o.start(t); o.stop(t + 0.14);
   }
+  // тихий сухой «тик» — как кольцо фокуса у объектива камеры
+  function tick(t) {
+    var n = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    n.buffer = noise(); hp.type = 'highpass'; hp.frequency.value = 3000; bp.type = 'bandpass'; bp.frequency.value = 4800 + Math.random() * 600; bp.Q.value = 2.5;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.022, t + 0.001); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.018);
+    n.connect(hp); hp.connect(bp); bp.connect(g); g.connect(master); n.start(t, Math.random()); n.stop(t + 0.03);
+  }
   // звук стройки при прокрутке: «трещотка» гаечного ключа — щелчки настроены в тон музыке
   var scrollAcc = 0, lastY = window.scrollY, lastTick = 0;
   window.addEventListener('scroll', function () {
@@ -189,11 +196,7 @@
     if (!on || !ctx || ctx.state !== 'running' || dy > 2000) return;
     scrollAcc += dy;
     var t = ctx.currentTime;
-    if (scrollAcc >= 70 && t - lastTick > 0.045) {
-      scrollAcc = 0; lastTick = t;
-      var ch = CHORDS[(step + CHORDS.length - 1) % CHORDS.length], m = ch[2 + Math.floor(Math.random() * (ch.length - 2))] + 12;
-      knock(t + 0.005, hz(m), 0.075, musicGain);
-    }
+    if (scrollAcc >= 150 && t - lastTick > 0.09) { scrollAcc = 0; lastTick = t; tick(t + 0.005); }
   }, { passive: true });
   // «молоточки вдалеке» — два лёгких звонких удара в такт музыке, иногда
   function taps(t) {
