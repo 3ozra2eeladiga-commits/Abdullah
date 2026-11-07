@@ -147,6 +147,7 @@
   if (!hasGsap || reduce) return;
   var gsap = window.gsap, ST = window.ScrollTrigger;
   gsap.registerPlugin(ST);
+  ST.config({ ignoreMobileResize: true });   // телефон: панель браузера прячется — не пересчитываем всё (иначе страница «прыгает»)
   document.documentElement.classList.add('js-anim');
 
   // заголовки: разбиваем на слова

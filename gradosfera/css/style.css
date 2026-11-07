@@ -771,7 +771,7 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .ftypes > * { min-width: 0; }
 .ftype__plan { position: relative; }
 .ftype__plan img { position: absolute; inset: 8%; width: 84%; height: 84%; max-width: none; max-height: none; }
-html, body { overflow-x: clip; }
+.about, .life, .gallery { overflow-x: clip; }
 
 /* прогулка по квартире */
 .fwin__left { display: grid; gap: 10px; min-width: 0; }

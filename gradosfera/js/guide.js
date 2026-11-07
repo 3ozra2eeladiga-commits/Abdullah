@@ -90,7 +90,8 @@
 
   var raf = 0;
   var settle = 0;
-  function check() { raf = 0; point(); var i = sectionNow(); clearTimeout(settle); settle = setTimeout(function () { go(i); }, 220); }
+  var ptT = 0;
+  function check() { raf = 0; if (!ptT) ptT = setTimeout(function () { ptT = 0; point(); }, 200); var i = sectionNow(); clearTimeout(settle); settle = setTimeout(function () { go(i); }, 220); }
   window.addEventListener('scroll', function () { if (!raf) raf = requestAnimationFrame(check); }, { passive: true });
   window.addEventListener('resize', function () { if (cur >= 0) { body.style.top = targetY(cur) + 'px'; y = targetY(cur); } });
   body.style.top = (mobile ? window.innerHeight - 96 : window.innerHeight * 0.3) + 'px';
