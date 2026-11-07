@@ -6,17 +6,17 @@
   var rope = document.getElementById('guideRope'), line = rope && rope.querySelector('line'), mate = document.getElementById('mate');
   if (!g || !body) return;
   var mobile = window.matchMedia('(max-width: 760px)').matches;
-  var STOPS = [
-    ['#about',    0.70, 'Привет! Я покажу дом. «Новый Квартал» — 8 этажей бизнес-класса в центре Моздока. Нужна помощь — нажмите на меня!'],
-    ['#facade',   0.62, 'Смотрите на стеклянную башню — ночью фасад светится!'],
-    ['#lift',     0.58, 'Садитесь в лифт — листайте вниз, прокатимся от паркинга до крыши!'],
-    ['#flats',    0.66, 'Планировки от 45 до 105 м². Нажмите на карточку — откроются все площади и планы.'],
-    ['#life',     0.62, 'Двор без машин, крыша и коммерция — всё для жителей.'],
-    ['#parking',  0.70, 'Проведите пальцем по картинке — машина сама заедет в паркинг!'],
-    ['#boiler',   0.70, 'Своя котельная на весь дом. Проведите по фото — увидите, как идёт тепло.'],
-    ['#gallery',  0.60, 'Листайте галерею — здесь все ракурсы дома.'],
-    ['#terms',    0.66, 'Сдача — I квартал 2028. Разрешение на строительство — по кнопке ниже.'],
-    ['#contacts', 0.74, 'Остались вопросы? Звоните: <a href="tel:+79388153333">+7 (938) 815-33-33</a> или приезжайте в офис продаж — покажем всё лично!']
+  var STOPS = [   // коротко: 3–6 слов, чтобы облачко было маленьким
+    ['#about',    0.70, 'Привет! Покажу дом 👋'],
+    ['#facade',   0.62, 'Ночью фасад светится ✨'],
+    ['#lift',     0.58, 'Листайте — едем на крышу'],
+    ['#flats',    0.66, 'Нажмите на карточку'],
+    ['#life',     0.62, 'Всё для жителей'],
+    ['#parking',  0.70, 'Проведите пальцем по фото'],
+    ['#boiler',   0.70, 'Проведите — пойдёт тепло'],
+    ['#gallery',  0.60, 'Листайте галерею'],
+    ['#terms',    0.66, 'Сдача — I кв. 2028'],
+    ['#contacts', 0.74, '<a href="tel:+79388153333">Позвонить нам</a>']
   ];
   var nodes = STOPS.map(function (s) { return document.querySelector(s[0]); });
   // куда показывает рука у каждой остановки: главный элемент раздела
@@ -66,8 +66,7 @@
     timer = setTimeout(function () {
       g.classList.remove('roping', 'jumping');
       if (line) line.setAttribute('y2', -window.innerHeight);
-      bub.innerHTML = STOPS[i][2]; bub.classList.add('is-on'); point();
-      timer = setTimeout(function () { if (i !== STOPS.length - 1) bub.classList.remove('is-on'); }, mobile ? 5500 : 8000);
+      point(); pendingTxt = i; sayWhenIdle();
     }, 560);
   }
   // «Нужна помощь? Нажмите на меня» — по клику открывается меню помощи
@@ -84,9 +83,27 @@
     if (helped) return;
     if (cur < 0 || g.classList.contains('menu-open') || bub.classList.contains('is-on') || cur === STOPS.length - 1) { helpT = setTimeout(tryHint, 10000); return; }
     helped = true;
-    bub.innerHTML = 'Если нужна помощь — нажмите на меня 👋'; bub.classList.add('is-on');
-    setTimeout(function () { if (bub.textContent.indexOf('Если нужна') === 0) bub.classList.remove('is-on'); }, 4500);
+    bub.innerHTML = 'Нужна помощь? Нажмите на меня'; bub.classList.add('is-on');
+    setTimeout(function () { if (bub.textContent.indexOf('Нужна помощь') === 0) bub.classList.remove('is-on'); }, 4500);
   }, 90000);
+
+  var pendingTxt = -1, lastScroll = 0, idleT = 0, said = {};
+  function sayWhenIdle() {
+    clearTimeout(idleT);
+    if (pendingTxt < 0 || said[pendingTxt]) return;
+    var wait = 1300 - (Date.now() - lastScroll);
+    idleT = setTimeout(function () {
+      if (Date.now() - lastScroll < 1200) { sayWhenIdle(); return; }
+      var i = pendingTxt; if (i !== cur || said[i]) return;
+      said[i] = true; bub.innerHTML = STOPS[i][2]; bub.classList.add('is-on');
+      clearTimeout(timer); timer = setTimeout(function () { if (i !== STOPS.length - 1) bub.classList.remove('is-on'); }, 3200);
+    }, Math.max(150, wait));
+  }
+  window.addEventListener('scroll', function () {
+    lastScroll = Date.now();
+    if (bub.classList.contains('is-on') && !g.classList.contains('menu-open') && cur !== STOPS.length - 1) bub.classList.remove('is-on');
+    if (pendingTxt >= 0 && !said[pendingTxt]) sayWhenIdle();
+  }, { passive: true });
 
   var raf = 0;
   var settle = 0;
