@@ -27,6 +27,7 @@
     <span class="hdr__name">Новый Квартал</span>
     <span class="hdr__sub">жилой комплекс · Градосфера</span>
   </a>
+  <button class="snd" id="soundBtn" type="button" aria-pressed="false" aria-label="Включить музыку"><i></i><i></i><i></i><span>Звук</span></button>
   <button class="hdr__menu" id="menuBtn" aria-expanded="false" aria-controls="menu"><span class="hdr__menu-txt">Меню</span><span class="hdr__lines"><i></i><i></i></span></button>
 </header>
 
@@ -167,12 +168,13 @@
 <section class="lift" id="lift">
   <div class="lift__pin">
     <div class="lift__shaft" id="liftShaft">
-      <div class="lift__strip" id="liftStrip" style="--n:5"><div class="lift__slide" style="--i:0"><img src="img/photo/parking.webp" alt="Подземный паркинг" loading="lazy"><span class="lift__cap">Подземный паркинг</span></div><div class="lift__slab" style="--i:0"></div><div class="lift__slide" style="--i:1"><img src="img/photo/commerce.webp" alt="Витрины первого этажа" loading="lazy"><span class="lift__cap">Витрины первого этажа</span></div><div class="lift__slab" style="--i:1"></div><div class="lift__slide" style="--i:2"><img src="img/photo/yard-top.webp" alt="Двор без машин" loading="lazy"><span class="lift__cap">Двор без машин</span></div><div class="lift__slab" style="--i:2"></div><div class="lift__slide" style="--i:3"><img src="img/photo/view-town.webp" alt="Вид на Моздок" loading="lazy"><span class="lift__cap">Вид на Моздок</span></div><div class="lift__slab" style="--i:3"></div><div class="lift__slide" style="--i:4"><img src="img/photo/roof.webp" alt="Лаунж-зона на крыше" loading="lazy"><span class="lift__cap">Лаунж-зона на крыше</span></div></div>
+      <div class="lift__strip" id="liftStrip" style="--n:4"><div class="lift__slide" style="--i:0"><img src="img/lift/l1.webp" alt="Подземный паркинг" loading="lazy"></div><div class="lift__slab" style="--i:0"></div><div class="lift__slide" style="--i:1"><img src="img/lift/l2.webp" alt="Лобби" loading="lazy"></div><div class="lift__slab" style="--i:1"></div><div class="lift__slide" style="--i:2"><img src="img/lift/l3.webp" alt="Ваш этаж" loading="lazy"></div><div class="lift__slab" style="--i:2"></div><div class="lift__slide" style="--i:3"><img src="img/lift/l4.webp" alt="Крыша" loading="lazy"></div></div>
     </div>
+    <div class="lift__infos"><div class="lift__info" data-i="0"><span class="tag">Этаж −1</span><b>Подземный паркинг</b><p>Своё машино-место под домом. Лифт поднимает прямо на ваш этаж — без улицы, в любую погоду. Пожаротушение и вентиляция.</p></div><div class="lift__info" data-i="1"><span class="tag">Этаж 1</span><b>Лобби</b><p>Входная группа в тёплом дереве и камне. Закрытая охраняемая территория и видеонаблюдение.</p></div><div class="lift__info" data-i="2"><span class="tag">Этаж 2–7</span><b>Ваш этаж</b><p>Квартиры от 45,45 до 105,63 м²: продуманные планировки и большие окна.</p></div><div class="lift__info" data-i="3"><span class="tag">Этаж 8</span><b>Крыша</b><p>Эксплуатируемая кровля: лаунж-зоны, обеденные группы и вид на весь город.</p></div></div>
     <div class="lift__glass" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="lift__panel" aria-hidden="true">
       <div class="lift__display"><span class="lift__arrow">▲</span><b id="liftFloor">−1</b></div>
-      <ul class="lift__btns" id="liftBtns"><li data-i="4">8</li><li data-i="3">6</li><li data-i="2">3</li><li data-i="1">1</li><li data-i="0">−1</li></ul>
+      <ul class="lift__btns" id="liftBtns"><li data-i="3">8</li><li data-i="2">2–7</li><li data-i="1">1</li><li data-i="0">−1</li></ul>
     </div>
     <div class="lift__title"><span class="tag">Стеклянный лифт</span><h2 class="h2">Поднимемся<br>на крышу?</h2></div>
     <div class="lift__doors" id="liftDoors" aria-hidden="true"><i></i><i></i></div>
@@ -388,6 +390,7 @@
 <script src="js/boiler.js"></script>
 <script src="js/parking.js"></script>
 <script src="js/lift.js"></script>
+<script src="js/sound.js"></script>
 <script src="js/frames.js"></script>
 </body>
 </html>

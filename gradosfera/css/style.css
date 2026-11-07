@@ -442,6 +442,34 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
   .lift__cap { font-size: 10px; letter-spacing: .14em; bottom: 12%; }
 }
 
+
+/* лифт: подписи этажей */
+.lift__cap { display: none; }
+.lift__infos { position: absolute; z-index: 4; left: calc(6% + 34px); bottom: calc(10% + env(safe-area-inset-bottom, 0px)); max-width: min(480px, 60%); }
+.lift__info { position: absolute; left: 0; bottom: 0; width: max-content; max-width: min(480px, 60vw); display: grid; gap: 10px; padding: 22px 26px; border-radius: 16px;
+  background: rgba(14,14,16,.78); border: 1px solid rgba(201,138,91,.4); backdrop-filter: blur(8px);
+  opacity: 0; transform: translateY(24px); transition: opacity .45s, transform .45s cubic-bezier(.2,.8,.2,1); pointer-events: none; }
+.lift__info b { font-family: var(--serif); font-weight: 400; font-size: clamp(28px, 3.2vw, 46px); line-height: 1; text-transform: uppercase; color: #fff; }
+.lift__info p { margin: 0; color: rgba(239,231,218,.8); font-size: 15px; line-height: 1.55; }
+.lift__info.is-on { opacity: 1; transform: none; }
+.lift.arrived .lift__info { opacity: 0 !important; }
+.lift__btns li { width: auto; min-width: 40px; padding: 0 6px; border-radius: 20px; }
+@media (max-width: 760px) {
+  .lift__infos { left: calc(3% + 18px); right: 86px; max-width: none; bottom: calc(6% + env(safe-area-inset-bottom, 0px)); }
+  .lift__info { max-width: calc(100vw - 130px); padding: 14px 16px; }
+  .lift__info p { font-size: 13px; }
+  .lift__btns li { min-width: 30px; font-size: 11px; }
+}
+/* кнопка звука */
+.snd { position: absolute; left: calc(max(var(--gut), var(--safe-l)) + 210px); top: 50%; transform: translateY(-50%); display: inline-flex; align-items: flex-end; gap: 3px; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(239,231,218,.25); color: var(--cream); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+.snd i { width: 2px; height: 6px; background: currentColor; margin-bottom: 11px; border-radius: 1px; transition: height .3s; }
+.snd span { margin-left: 8px; align-self: center; }
+.snd.is-on { border-color: var(--copper); color: #ffb27a; }
+.snd.is-on i { animation: sndBar 1s ease-in-out infinite alternate; }
+.snd.is-on i:nth-child(2) { animation-delay: .3s; } .snd.is-on i:nth-child(3) { animation-delay: .6s; }
+@keyframes sndBar { from { height: 4px; } to { height: 12px; } }
+@media (max-width: 1024px) { .snd { left: auto; right: calc(max(var(--gut), var(--safe-r)) + 64px); } .snd span { display: none; } .snd { padding: 0 9px; } }
+
 /* ---------- reveal (GSAP добавляет класс js-anim на html) ---------- */
 .js-anim .fade { opacity: 0; transform: translateY(30px); }
 .split .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .06em; margin-bottom: -.06em; }
@@ -576,3 +604,6 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 @keyframes pmDust { to { opacity: 0; transform: translate(var(--dx), -14px) scale(2.4); } }
 .pull__side--l .pull__man { transform: scaleX(-1) rotate(10deg); transform-origin: 50% 100%; }
 .pull__side--r .pull__man { transform: rotate(10deg); transform-origin: 50% 100%; }
+.lift__glass i:nth-child(1), .lift__glass i:nth-child(2) { display: none; }
+.lift__slide::after { background: linear-gradient(180deg, rgba(10,10,12,.25), rgba(10,10,12,0) 25%, rgba(10,10,12,0) 60%, rgba(10,10,12,.55)); }
+@media (max-width: 760px) { .snd { right: auto; left: calc(max(var(--gut), var(--safe-l)) + 46px); } }
