@@ -1,27 +1,26 @@
-/* Маленький строитель у кнопки звука: зовёт включить звук; со звуком — сидит в наушниках и качает головой;
-   после выключения — недоволен и снова зовёт. */
+/* Строитель на качелях у кнопки звука — БЕЗ текста, только жестами:
+   звук выключен — сидит, скрестив руки, хмурится; время от времени возмущённо тычет пальцем в колонку,
+   мотает головой, над головой мигает перечёркнутый динамик, а колонка подсвечивается.
+   Звук включён — надевает наушники и качается под музыку. */
 (function () {
   'use strict';
-  var m = document.getElementById('mate'), bub = document.getElementById('mateBubble'), btn = document.getElementById('soundBtn');
-  if (!m || !bub || !btn) return;
-  var CALL = ['Включите звук — услышите, как оживает дом 🎧', 'Нажмите на колонку 🔊 рядом со мной — со звуком интереснее!'];
-  var GRUMPY = ['Эй! Верните звук 😤', 'Без звука скучно… Включите обратно!', 'Ну я же слушал! Нажмите на колонку 🙏'];
-  var hideT = 0, nagT = 0, k = 0;
-  function say(text, ms) {
-    bub.textContent = text; m.classList.remove('quiet');
-    clearTimeout(hideT); hideT = setTimeout(function () { m.classList.add('quiet'); }, ms || 7000);
-  }
-  function nag(list) {
-    clearInterval(nagT);
-    nagT = setInterval(function () { if (!m.classList.contains('on')) { say(list[k++ % list.length], 5000); hint(); } }, 40000);
-  }
+  var m = document.getElementById('mate'), btn = document.getElementById('soundBtn');
+  if (!m || !btn) return;
+  var t = 0, first = 0;
   function hint() { btn.classList.remove('is-hint'); void btn.offsetWidth; btn.classList.add('is-hint'); }
-  bub.addEventListener('click', function () { btn.click(); });
+  function demand() {
+    if (m.classList.contains('on')) return;
+    m.classList.remove('demand'); void m.offsetWidth; m.classList.add('demand'); hint();
+    setTimeout(function () { m.classList.remove('demand'); }, 2600);
+  }
+  function loop() { clearInterval(t); t = setInterval(demand, 11000); }
+  var sw = m.querySelector('.swings'); if (sw) { sw.style.pointerEvents = 'auto'; sw.style.cursor = 'pointer'; sw.addEventListener('click', function () { btn.click(); }); }
   window.gsMate = function (on) {
-    m.classList.toggle('on', on);
-    if (on) { m.classList.remove('grumpy'); clearInterval(nagT); clearTimeout(hideT); m.classList.add('quiet'); }
-    else { m.classList.add('grumpy'); say(GRUMPY[k++ % GRUMPY.length], 6000); nag(GRUMPY); }
+    m.classList.toggle('on', on); m.classList.toggle('grumpy', !on);
+    if (on) { clearInterval(t); m.classList.remove('demand'); }
+    else { setTimeout(demand, 600); loop(); }
   };
-  setTimeout(function () { say(CALL[0], 8000); hint(); }, 1800);
-  nag(CALL);
+  m.classList.add('grumpy');
+  first = setTimeout(demand, 2200);
+  loop();
 })();

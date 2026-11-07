@@ -880,3 +880,26 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .fwalk__tag.is-on { opacity: 1; }
 @media (max-width: 760px) { .fwalk__tag { margin-top: -28px; font-size: 10px; } .fcap__av { width: 22px; height: 29px; } }
 @media (max-width: 760px) { .hero__city { display: none !important; } }
+
+/* строитель без слов: жесты вместо текста */
+.mate__bubble { display: none !important; }
+.mm__cross, .mm__point, .mm__mute, .mm__mouth { display: none; }
+.mm__mute path { stroke: #ffb27a !important; stroke-width: 1.6 !important; }
+.mm__mouth { stroke-width: 1.6 !important; }
+.mm__head { transform-box: fill-box; transform-origin: 50% 90%; }
+.mate.grumpy:not(.on) .mm--a .mm__brow, .mate.grumpy:not(.on) .mm--a .mm__mouth { display: inline; }
+.mate.grumpy:not(.on):not(.demand) .mm--a .mm__arm { display: none; }
+.mate.grumpy:not(.on):not(.demand) .mm--a .mm__cross { display: inline; }
+.mate.grumpy:not(.on) .swing--a { animation: swingSulk 4s ease-in-out infinite; }
+@keyframes swingSulk { 0%,100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
+.mate.demand .mm--a .mm__armR { display: none; }
+.mate.demand .mm--a .mm__point, .mate.demand .mm--a .mm__mute { display: inline; }
+.mm__point { transform-box: view-box; transform-origin: 38px 31px; }
+.mate.demand .mm--a .mm__point { animation: matePoke .4s ease-in-out 5 alternate; }
+@keyframes matePoke { from { transform: rotate(-6deg); } to { transform: rotate(8deg) translate(1px,-1px); } }
+.mate.demand .mm--a .mm__head { animation: mateShake .5s ease-in-out 1s 3; }
+@keyframes mateShake { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
+.mate.demand .mm--a .mm__mute { animation: mateMute .65s steps(1) 4; }
+@keyframes mateMute { 50% { opacity: 0; } }
+.mate.demand .swing--a { animation: mateHop .32s ease-in-out 4 alternate; }
+@keyframes mateHop { from { transform: rotate(-3deg) translateY(0); } to { transform: rotate(3deg) translateY(-2px); } }
