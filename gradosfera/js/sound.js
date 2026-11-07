@@ -158,14 +158,14 @@
     if (!rope) {
       if (v <= 0) return;
       var n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
-      n.buffer = noise(); n.loop = true; bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 1.4; g.gain.value = 0;
-      lfo.frequency.value = 7; lg.gain.value = 350; lfo.connect(lg); lg.connect(bp.frequency);   // «волокна» верёвки
+      n.buffer = noise(); n.loop = true; bp.type = 'bandpass'; bp.frequency.value = 650; bp.Q.value = 0.7; g.gain.value = 0;
+      lfo.frequency.value = 3; lg.gain.value = 120; lfo.connect(lg); lg.connect(bp.frequency);   // «волокна» верёвки
       n.connect(bp); bp.connect(g); g.connect(master); n.start(); lfo.start();
       rope = { n: n, g: g, lfo: lfo };
     }
-    rope.g.gain.setTargetAtTime(v * 0.28, t, v > 0 ? 0.05 : 0.15);
-    if (v > 0.05 && t - lastStep > 0.42 - v * 0.15) { lastStep = t; knock(t + 0.01, 420, 0.10 + v * 0.08); }          // шаги
-    if (v > 0.25 && t - lastCreak > 1.1 + Math.random()) {                                                                      // скрип блока
+    rope.g.gain.setTargetAtTime(v * 0.045, t, v > 0 ? 0.08 : 0.2);
+    if (false && t - lastStep > 0.42 - v * 0.15) { lastStep = t; knock(t + 0.01, 420, 0.10 + v * 0.08); }          // шаги
+    if (false && t - lastCreak > 1.1 + Math.random()) {                                                                      // скрип блока
       lastCreak = t; var o = ctx.createOscillator(), cg = ctx.createGain(), f = ctx.createBiquadFilter();
       o.type = 'sawtooth'; o.frequency.setValueAtTime(240 + Math.random() * 80, t); o.frequency.linearRampToValueAtTime(330 + Math.random() * 120, t + 0.28);
       f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 6;
