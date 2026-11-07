@@ -932,3 +932,41 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 }
 @keyframes dotWave { 0% { transform: scale(.8); opacity: 0; } 12% { opacity: 1; } 70% { transform: scale(2.3); opacity: 0; } 100% { transform: scale(2.3); opacity: 0; } }
 .fwalk__dot.seen::after, .fwalk__dot.is-on::after { animation: none; }
+
+/* офис продаж «живьём»: работают / отдыхают */
+.team { display: grid; grid-template-columns: minmax(0, 1.3fr) 1fr; align-items: center; gap: 24px; padding: 22px 24px; border: 1px solid var(--line); background: rgba(16,17,20,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.team__svg { width: 100%; height: auto; overflow: visible; }
+.team__svg path, .team__svg circle { fill: none; stroke: #efe7da; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.team__desk { stroke: #c98a5b !important; stroke-width: 3 !important; }
+.tw__chair { stroke: rgba(239,231,218,.45) !important; }
+.tw__vest { fill: #f07832; }
+.tw__hair { fill: #3a2a20; stroke: #3a2a20 !important; }
+.tw__head { fill: #f3d9bd; stroke: #1b1410 !important; stroke-width: 1.6 !important; }
+.tw__screen { fill: #ffd9a8; stroke: none !important; filter: drop-shadow(0 0 6px rgba(255,200,130,.9)); }
+.tw__click { stroke: #ffb27a !important; stroke-width: 1.6 !important; opacity: 0; }
+.team__work, .team__rest { display: none; }
+.team.is-open .team__work, .team.is-closed .team__rest { display: inline; }
+.tw__type { transform-box: fill-box; transform-origin: 0% 0%; animation: twType .22s steps(2) infinite alternate; }
+.tw:nth-child(2) .tw__type { animation-delay: .1s; } .tw:nth-child(3) .tw__type { animation-delay: .05s; }
+@keyframes twType { from { transform: translateY(0); } to { transform: translateY(-2px); } }
+.tw__click { animation: twClick .44s steps(1) infinite; } .tw:nth-child(2) .tw__click { animation-delay: .2s; }
+@keyframes twClick { 50% { opacity: 1; } }
+.tw .tw__head { animation: twNod 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes twNod { 50% { transform: translateY(1px) rotate(3deg); } }
+.tr__mug { stroke: #ffb27a !important; }
+.tr__steam { stroke: rgba(239,231,218,.5) !important; stroke-width: 1.4 !important; animation: trSteam 2.4s ease-in-out infinite; }
+@keyframes trSteam { 0% { opacity: 0; transform: translateY(3px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(-6px); } }
+.tr__z { fill: #ffb27a; font: 600 14px var(--sans); opacity: 0; animation: trZ 2.6s ease-in-out infinite; } .tr__z.z2 { animation-delay: 1.3s; font-size: 18px; }
+@keyframes trZ { 0% { opacity: 0; transform: translate(0, 4px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(8px, -12px); } }
+.team__info { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: start; }
+.team__info b { display: block; font-family: var(--serif); font-weight: 400; font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; text-transform: uppercase; }
+.team__info span#teamSub { display: block; margin-top: 6px; color: var(--muted); font-size: 15px; }
+.team__dot { width: 12px; height: 12px; margin-top: 8px; border-radius: 50%; background: #3fd07a; box-shadow: 0 0 0 0 rgba(63,208,122,.6); animation: teamDot 1.6s ease-out infinite; }
+.team.is-closed .team__dot { background: #8a8a8a; animation: none; }
+@keyframes teamDot { 0% { box-shadow: 0 0 0 0 rgba(63,208,122,.6); } 100% { box-shadow: 0 0 0 12px rgba(63,208,122,0); } }
+.team__call { grid-column: 2; justify-self: start; margin-top: 8px; }
+.team.is-closed .team__call { display: none; }
+@media (max-width: 760px) { .team { grid-template-columns: 1fr; padding: 18px 16px; gap: 14px; } }
+.team__svg .tw__head { fill: #f3d9bd; }
+.team__svg .tw__hair { fill: #3a2a20; }
+.team__svg .tw__screen { fill: #ffd9a8; }
