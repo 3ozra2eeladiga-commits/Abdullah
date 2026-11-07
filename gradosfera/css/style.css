@@ -634,3 +634,5 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .lift__glass i:nth-child(1), .lift__glass i:nth-child(2) { display: none; }
 .lift__slide::after { background: linear-gradient(180deg, rgba(10,10,12,.25), rgba(10,10,12,0) 25%, rgba(10,10,12,0) 60%, rgba(10,10,12,.55)); }
 @media (max-width: 760px) { .snd { right: auto; left: calc(max(var(--gut), var(--safe-l)) + 46px); } }
+
+.lift__final p { margin: 0; max-width: 520px; color: rgba(239,231,218,.9); font-size: clamp(14px, 1.3vw, 18px); line-height: 1.55; text-shadow: 0 2px 20px rgba(0,0,0,.7); }
