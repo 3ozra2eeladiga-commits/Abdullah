@@ -137,7 +137,30 @@
      .to('#heroBar', { scaleY: 1, ease: 'none' }, 0)
      .to('.hero__line:first-child > span', { xPercent: -4, ease: 'none' }, 0)
      .to('.hero__line--r > span', { xPercent: 4, ease: 'none' }, 0)
-     .to('.hero__title, .hero__lead', { opacity: 0, ease: 'power1.in' }, 0.55);
+     ;
+
+  // видео первого экрана: кадр = прокрутка внутри первого экрана
+  (function () {
+    var hero = document.getElementById('hero'), v = document.getElementById('heroVideo'), city = document.getElementById('heroCity');
+    if (!v) return;
+    var want = 0, raf = 0, ready = false;
+    function seek() { raf = 0; if (!ready || !v.duration) return; var t = want * (v.duration - 0.05); if (Math.abs(v.currentTime - t) > 0.02) v.currentTime = t; }
+    function onReady() { if (ready) return; ready = true; hero.classList.add('has-video'); v.pause(); seek(); }
+    v.addEventListener('loadeddata', onReady);
+    if (v.readyState >= 2) onReady();
+    var wake = function () { var pr = v.play(); if (pr && pr.then) pr.then(function () { v.pause(); onReady(); seek(); }).catch(function () {}); };
+    window.addEventListener('touchstart', wake, { once: true, passive: true });
+    window.ScrollTrigger.create({
+      trigger: '#hero', start: 'top top', end: 'bottom bottom',
+      onUpdate: function (st) {
+        want = Math.min(1, st.progress / 0.97); if (!raf) raf = requestAnimationFrame(seek);
+        hero.classList.toggle('is-moving', st.progress > 0.025);
+        // «Моздок» появляется, когда расходятся облака (≈ 10–30% прокрутки)
+        var c = st.progress, o = c < 0.09 ? 0 : c < 0.15 ? (c - 0.09) / 0.06 : c < 0.28 ? 1 : c < 0.35 ? (0.35 - c) / 0.07 : 0;
+        if (city) { city.style.opacity = o; city.style.transform = 'scale(' + (1.06 - 0.06 * o) + ')'; }
+      }
+    });
+  })();
 
   // цифры
   $$('.num').forEach(function (el) {

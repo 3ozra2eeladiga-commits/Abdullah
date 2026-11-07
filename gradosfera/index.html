@@ -57,7 +57,12 @@
   <div class="hero__stage">
     <div class="hero__img hero__img--day" style="background-image:url('img/photo/corner-morning.webp')"></div>
     <div class="hero__img hero__img--eve" style="background-image:url('img/photo/corner-sunset.webp')"></div>
+    <video id="heroVideo" class="hero__video" muted playsinline preload="auto" poster="img/photo/hero-first.webp" aria-hidden="true">
+      <source src="video/hero-720.mp4" type="video/mp4" media="(max-width: 760px)">
+      <source src="video/hero.mp4" type="video/mp4">
+    </video>
     <div class="hero__shade"></div>
+    <div class="hero__city" id="heroCity" aria-hidden="true"><b>Моздок</b><span>Северная Осетия · Алания</span></div>
 
     <h1 class="hero__title">
       <span class="hero__line"><span>Новый</span></span>
@@ -66,7 +71,7 @@
     <p class="hero__lead">Дом бизнес-класса в&nbsp;центре Моздока</p>
 
     <div class="hero__progress" aria-hidden="true">
-      <span>утро</span><i><b id="heroBar"></b></i><span>вечер</span>
+      <span>день</span><i><b id="heroBar"></b></i><span>ночь</span>
     </div>
 
     <div class="hero__foot">
