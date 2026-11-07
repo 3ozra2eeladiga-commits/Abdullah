@@ -333,6 +333,27 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
   .boiler--photo .boiler__steps { grid-template-columns: 1fr; }
   .xlbl { display: none; }
 }
+
+/* рентген всего дома */
+.boiler--house .boiler__scheme img { transition: filter 1s; }
+.boiler--house.s1 .boiler__scheme img { filter: brightness(.5) saturate(.7) contrast(1.05); }
+.hflow, .wflow { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 6; }
+.hflow { stroke: #ff8a45; filter: drop-shadow(0 0 7px rgba(255,140,70,1)); }
+.wflow { stroke: #ffd29a; stroke-width: 4; filter: drop-shadow(0 0 6px rgba(255,210,150,.9)); }
+.branch { fill: none; stroke: #ff9a55; stroke-width: 3; stroke-linecap: round; opacity: 0; transition: opacity .4s; filter: drop-shadow(0 0 5px rgba(255,140,70,.9)); }
+.branch.is-on { opacity: .9; }
+.fl { opacity: 0; transition: opacity .6s; }
+.fl.is-on { opacity: 1; }
+.bhouse rect { fill: rgba(18,18,20,.85); stroke: var(--copper); stroke-width: 2.5; transition: stroke .6s; }
+.bhouse text { fill: var(--cream); font: 600 18px var(--sans); letter-spacing: .2em; text-anchor: middle; }
+.bflame { fill: #ff8a45; transform-box: fill-box; transform-origin: 50% 100%; transform: scale(0); transition: transform .5s cubic-bezier(.3,1.6,.5,1); }
+.boiler--house.s1 .bflame { transform: scale(1); animation: flick .35s ease-in-out infinite alternate; }
+.boiler--house.s1 .bhouse rect { stroke: #ffb27a; filter: drop-shadow(0 0 10px rgba(255,150,80,.8)); }
+.boiler__floor { position: absolute; right: 2.5%; top: 6%; display: flex; align-items: baseline; gap: 8px; color: var(--cream); opacity: 0; transition: opacity .5s; text-shadow: 0 2px 20px rgba(0,0,0,.6); }
+.boiler__floor b { font-family: var(--serif); font-weight: 400; font-size: clamp(40px, 6vw, 90px); line-height: 1; color: #ffb27a; }
+.boiler__floor span { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; }
+.boiler--house.s2 .boiler__floor { opacity: 1; }
+@media (max-width: 760px) { .boiler__floor b { font-size: 38px; } }
 @media (max-width: 1024px) { .boiler { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .life__grid { grid-template-columns: 1fr; } }
 
