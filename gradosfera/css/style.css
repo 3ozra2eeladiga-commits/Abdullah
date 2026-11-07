@@ -306,6 +306,33 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .boiler__steps li b { font-weight: 500; font-size: 17px; }
 .boiler__steps li span { color: var(--muted); font-size: 14px; }
 .boiler__steps li.is-on { opacity: 1; }
+
+/* схема на фото квартиры («рентген») */
+.boiler--photo { grid-template-columns: 1fr; gap: 26px; }
+.boiler__head { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.boiler--photo .boiler__scheme { position: relative; overflow: hidden; }
+.boiler--photo .boiler__scheme img { width: 100%; height: auto; display: block; transition: filter 1s; }
+.boiler--photo.s1 .boiler__scheme img { filter: brightness(.62) saturate(.8); }
+.boiler--photo .boiler__scheme svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pipe--x { stroke: rgba(255,255,255,.12); stroke-width: 12; stroke-dasharray: 2 10; }
+.boiler--photo .flow { stroke-width: 6; filter: drop-shadow(0 0 6px rgba(255,150,80,.9)); }
+.boiler--photo .flow--cold { filter: drop-shadow(0 0 6px rgba(120,180,240,.9)); }
+.boil-glow, .rad-glow { opacity: 0; transition: opacity 1s; }
+.boiler--photo.s1 .boil-glow { opacity: 1; animation: pulseG 2s ease-in-out infinite; }
+.boiler--photo.s2 .rad-glow { opacity: 1; }
+@keyframes pulseG { 50% { opacity: .55; } }
+.heat--x path, .steam--x path { stroke-width: 4; }
+.drops--x circle { fill: #ffcf9e; }
+.xlbl { opacity: 0; transition: opacity .6s; }
+.xlbl line { stroke: rgba(239,231,218,.7); stroke-width: 2; }
+.xlbl rect { fill: rgba(18,18,20,.82); stroke: var(--copper); stroke-width: 2; }
+.xlbl text { fill: var(--cream); font: 600 20px var(--sans); letter-spacing: .12em; text-transform: uppercase; text-anchor: middle; }
+.boiler--photo.s1 .xlbl[data-s="1"], .boiler--photo.s2 .xlbl[data-s="2"], .boiler--photo.s3 .xlbl[data-s="3"] { opacity: 1; }
+.boiler--photo .boiler__steps { grid-template-columns: repeat(3, 1fr); gap: 0 30px; }
+@media (max-width: 760px) {
+  .boiler--photo .boiler__steps { grid-template-columns: 1fr; }
+  .xlbl { display: none; }
+}
 @media (max-width: 1024px) { .boiler { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .life__grid { grid-template-columns: 1fr; } }
 

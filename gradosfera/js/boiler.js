@@ -14,7 +14,7 @@
   if (reduce || typeof window.ScrollTrigger === 'undefined') { setStage(3); return; }
   window.ScrollTrigger.create({
     trigger: box, start: 'top 80%', end: 'bottom 60%',
-    onUpdate: function (st) { var p = st.progress; setStage(p < 0.02 ? 0 : p < 0.33 ? 1 : p < 0.66 ? 2 : 3); },
+    onUpdate: function (st) { var p = st.progress; setStage(p < 0.02 ? 0 : p < 0.22 ? 1 : p < 0.45 ? 2 : 3); },
     onLeave: function () { setStage(3); }
   });
   setStage(0);
