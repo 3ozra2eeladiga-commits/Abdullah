@@ -868,3 +868,14 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .safe__beam { opacity: 1; }
 .safe__drop { fill: #7fb6ff; }
 @media (max-width: 760px) { .safe li { grid-template-columns: 56px 1fr; } .safe__ic { width: 56px; height: 56px; padding: 9px; } }
+
+/* связь «человечек ↔ текст»: облачко-хвостик тянется к нему, мини-аватар, вспышка рамки, ярлык комнаты над головой */
+.fcap { position: relative; --tx: 50%; border-color: rgba(200,116,60,.5); background: rgba(200,116,60,.07); }
+.fcap::before { content: ""; position: absolute; top: -9px; left: var(--tx); width: 16px; height: 16px; margin-left: -8px; transform: rotate(45deg);
+  background: #1a1513; border-left: 1px solid rgba(200,116,60,.5); border-top: 1px solid rgba(200,116,60,.5); transition: left 1.05s cubic-bezier(.45,0,.4,1); }
+.fcap.is-new { animation: fcapGlow 1.2s ease; }
+@keyframes fcapGlow { 0% { border-color: #ff8a45; box-shadow: 0 0 0 3px rgba(255,138,69,.25); } 100% { border-color: rgba(200,116,60,.5); box-shadow: none; } }
+.fcap__av { flex-shrink: 0; width: 26px; height: 34px; align-self: center; }
+.fwalk__tag { position: absolute; z-index: 4; transform: translate(-50%, -100%); margin-top: -36px; padding: 3px 8px; border-radius: 999px; background: rgba(27,20,16,.82); color: #fff; font: 600 10.5px/1.2 var(--sans); white-space: nowrap; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.fwalk__tag.is-on { opacity: 1; }
+@media (max-width: 760px) { .fwalk__tag { margin-top: -28px; font-size: 10px; } .fcap__av { width: 22px; height: 29px; } }

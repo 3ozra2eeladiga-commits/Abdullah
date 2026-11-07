@@ -35,7 +35,9 @@
     '<rect x="12" y="18" width="16" height="17" rx="4" fill="#ff7a2f" stroke="#1b1410" stroke-width="2"/><path d="M12 22 L6 31 M28 22 L34 31" stroke="#1b1410" stroke-width="2.4" stroke-linecap="round"/>' +
     '<circle cx="20" cy="11" r="6.5" fill="#f3d9bd" stroke="#1b1410" stroke-width="2"/><path d="M12.5 9 a7.5 7 0 0 1 15 0 z M11 9 h18" fill="#ffb000" stroke="#1b1410" stroke-width="2" stroke-linejoin="round"/></svg>';
   plan.appendChild(lay);
-  var man = lay.querySelector('.fwalk__man'), spot = lay.querySelector('.fwalk__spot');
+  lay.insertAdjacentHTML('beforeend', '<span class="fwalk__tag"></span>');
+  var man = lay.querySelector('.fwalk__man'), spot = lay.querySelector('.fwalk__spot'), tag = lay.querySelector('.fwalk__tag');
+  var AV = '<svg class="fcap__av" viewBox="0 0 40 52" aria-hidden="true"><rect x="12" y="18" width="16" height="17" rx="4" fill="#ff7a2f" stroke="#1b1410" stroke-width="2"/><circle cx="20" cy="11" r="6.5" fill="#f3d9bd" stroke="#1b1410" stroke-width="2"/><path d="M12.5 9 a7.5 7 0 0 1 15 0 z M11 9 h18" fill="#ffb000" stroke="#1b1410" stroke-width="2"/><path d="M17 35 L15 48 M23 35 L25 48" stroke="#efe7da" stroke-width="2.6" stroke-linecap="round"/></svg>';
   var rooms = [], dots = [], step = -1, timer = 0, playing = false, key = '';
 
   function geo() {
@@ -44,18 +46,20 @@
     return { x: ir.left - pr.left + (ir.width - nw * s) / 2, y: ir.top - pr.top + (ir.height - nh * s) / 2, w: nw * s, h: nh * s };
   }
   function place(el, r, g) { el.style.left = (g.x + r[2] * g.w) + 'px'; el.style.top = (g.y + r[3] * g.h) + 'px'; }
-  function say(html, btns) { cap.innerHTML = '<span class="fcap__txt">' + html + '</span>' + (btns || ''); cap.classList.remove('is-new'); void cap.offsetWidth; cap.classList.add('is-new'); }
+  function tail() { var x = parseFloat(man.style.left) || 0; cap.style.setProperty('--tx', Math.max(18, Math.min(cap.clientWidth - 18, x)) + 'px'); }
+  function say(html, btns) { tail(); cap.innerHTML = AV + '<span class="fcap__txt">' + html + '</span>' + (btns || ''); cap.classList.remove('is-new'); void cap.offsetWidth; cap.classList.add('is-new'); }
   function go(i, auto) {
     clearTimeout(timer);
     if (i >= rooms.length) { finish(); return; }
     step = i; var r = rooms[i], g = geo();
     var cx = parseFloat(man.style.left) || 0;
     man.classList.toggle('flip', g.x + r[2] * g.w < cx);
-    lay.classList.add('walking'); lay.classList.remove('done');
+    lay.classList.add('walking'); lay.classList.remove('done'); tag.classList.remove('is-on');
     place(man, r, g); place(spot, r, g);
     dots.forEach(function (d, k) { d.classList.toggle('is-on', k === i); d.classList.toggle('seen', k < i || d.classList.contains('seen')); });
     timer = setTimeout(function () {
       lay.classList.remove('walking');
+      tag.textContent = NAMES[r[0]]; place(tag, r, geo()); tag.classList.add('is-on'); clearTimeout(tag._t); tag._t = setTimeout(function () { tag.classList.remove('is-on'); }, 2600);
       say('<b>' + NAMES[r[0]] + ' · ' + r[1] + ' м²</b>' + cap1(T[r[0]](r[1]).replace(/^[^—]*— /, '')), ctrl());
       if (auto && playing) timer = setTimeout(function () { go(i + 1, true); }, 3600);
     }, 1100);
@@ -63,7 +67,7 @@
   function cap1(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
   function ctrl() { return '<button class="fcap__btn" type="button" data-walk="' + (playing ? 'pause' : 'play') + '">' + (playing ? '❚❚' : '▶') + '</button>'; }
   function finish() {
-    playing = false; lay.classList.add('done'); dots.forEach(function (d) { d.classList.remove('is-on'); });
+    playing = false; lay.classList.add('done'); tag.classList.remove('is-on'); dots.forEach(function (d) { d.classList.remove('is-on'); });
     say(FINAL, '<a class="fcap__go" href="#life" data-walk="roof">На крышу →</a><button class="fcap__btn" type="button" data-walk="again" aria-label="Ещё раз">↻</button>');
   }
   function start() {
@@ -99,7 +103,7 @@
   window.addEventListener('resize', function () {
     if (!rooms.length) return; var g = geo();
     dots.forEach(function (d, i) { place(d, rooms[i], g); });
-    if (step >= 0 && step < rooms.length) { place(man, rooms[step], g); place(spot, rooms[step], g); }
+    if (step >= 0 && step < rooms.length) { place(man, rooms[step], g); place(spot, rooms[step], g); place(tag, rooms[step], g); tail(); }
   });
   // при открытии окна с той же картинкой (load не сработает) — перезапуск
   new MutationObserver(function () { if (document.getElementById('fwin').classList.contains('is-open')) { if (img.complete) start(); } else { clearTimeout(timer); playing = false; } })
