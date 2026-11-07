@@ -241,12 +241,12 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .fx-wrap { overflow: hidden; }
 .fx-wrap > img { display: block; width: 100%; }
 .fx-clean { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.fx-bp-img { filter: grayscale(1) invert(1) sepia(1) hue-rotate(165deg) saturate(2.2) brightness(.6) contrast(1.5); }
+.fx-bp-img { filter: grayscale(1) invert(1) brightness(.72) contrast(1.45); }
 .fx-grid { position: absolute; inset: 0; pointer-events: none; z-index: 2;
-  background-image: linear-gradient(rgba(140,215,255,.32) 1px, transparent 1px), linear-gradient(90deg, rgba(140,215,255,.32) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(255,255,255,.22) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px);
   background-size: 28px 28px; mix-blend-mode: screen; }
-.fx-scan { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 3; background: #eaf8ff;
-  box-shadow: 0 0 12px 3px rgba(150,220,255,.95), 0 0 44px 12px rgba(80,170,255,.5); }
+.fx-scan { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 3; background: #ffffff;
+  box-shadow: 0 0 12px 3px rgba(255,255,255,.95), 0 0 44px 12px rgba(255,255,255,.35); }
 .fx-cover { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; perspective: 900px; }
 .fx-brick { position: absolute; background: var(--bg); box-shadow: inset 0 0 0 1px rgba(201,138,91,.35); }
 .fx-board { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, #1d1b1a, #252220 60%, #1a1918); box-shadow: inset -1px 0 0 rgba(201,138,91,.5); backface-visibility: hidden; }
