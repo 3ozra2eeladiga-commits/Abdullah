@@ -88,7 +88,7 @@
     // заходит со стороны входной двери (из прихожей), чуть «издалека»
     man.style.transition = 'none'; place(man, [0, 0, rooms[0][2], Math.min(1.02, rooms[0][3] + .12)], g); void man.offsetWidth; man.style.transition = '';
     playing = true;
-    say('<b>Прогулка по квартире</b>Пойдёмте, покажу, как здесь живётся 👋', ctrl());
+    say('<b>Прогулка по квартире</b>Нажмите на оранжевую точку — покажу комнату 👆', ctrl());
     timer = setTimeout(function () { go(0, true); }, 900);
   }
   cap.addEventListener('click', function (e) {

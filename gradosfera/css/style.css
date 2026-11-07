@@ -907,3 +907,14 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 /* гид: маленькое облачко, только когда вы остановились */
 .guide__bubble { padding: 7px 11px; font-size: 12px; line-height: 1.3; border-radius: 12px 12px 4px 12px; }
 @media (max-width: 760px) { .guide__bubble { font-size: 11.5px; padding: 6px 10px; margin-bottom: 26px; border-radius: 12px 12px 12px 4px; } }
+
+/* точки комнат — заметные: крупнее, оранжевые, с «пульсом» */
+.fwalk__dot { width: 34px; height: 34px; margin: -17px 0 0 -17px; }
+.fwalk__dot::after { inset: 8px; background: #ff7a2f; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+.fwalk__dot::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 2px solid #ff7a2f; animation: dotPulse 1.8s ease-out infinite; }
+.fwalk__dot:nth-of-type(2n)::before { animation-delay: .6s; } .fwalk__dot:nth-of-type(3n)::before { animation-delay: 1.2s; }
+@keyframes dotPulse { 0% { transform: scale(.7); opacity: .9; } 100% { transform: scale(1.9); opacity: 0; } }
+.fwalk__dot.seen::after { background: #fff; border-color: #ff7a2f; }
+.fwalk__dot.seen::before { animation: none; opacity: 0; }
+.fwalk__dot.is-on::before { animation: none; opacity: 0; }
+@media (max-width: 760px) { .fwalk__dot { width: 30px; height: 30px; margin: -15px 0 0 -15px; } .fwalk__dot::after { inset: 7px; } }
