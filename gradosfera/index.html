@@ -168,12 +168,6 @@
       </div>
     </div>
 
-    <div class="extra">
-      <button class="extra__card" data-zoom="img/plan-parking.webp">
-        <img src="img/plan-parking.webp" alt="План подземного паркинга" loading="lazy">
-        <span><b>Подземный паркинг</b><small>Машино-места с доступом на жилые этажи</small></span>
-      </button>
-    </div>
     <p class="fine">Планировки носят информационный характер.</p>
   </div>
 </section>
@@ -192,6 +186,67 @@
       <article class="card fade"><img data-fx="fence" src="img/photo/commerce.webp" alt="Коммерческий первый этаж" loading="lazy"><div><span class="tag">1 этаж</span><h3>Коммерция</h3><p>Магазины и сервисы у подъезда.</p></div></article>
     </div>
 
+
+    <div class="boiler boiler--photo parking" id="parking">
+      <div class="boiler__head">
+        <span class="tag">Паркинг</span>
+        <h3 class="h3">Подземный паркинг</h3>
+      </div>
+      <div class="boiler__scheme parking__scheme">
+        <svg viewBox="0 0 1600 1300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  <defs>
+    <linearGradient id="ugG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16171a"/><stop offset="1" stop-color="#0d0e10"/></linearGradient>
+    <radialGradient id="liftG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="rgba(255,200,130,.55)"/><stop offset="1" stop-color="rgba(255,200,130,0)"/></radialGradient>
+    <clipPath id="photoClip"><rect x="0" y="0" width="1600" height="800"/></clipPath>
+  </defs>
+  <image href="img/photo/front.webp" x="0" y="0" width="1600" height="893" preserveAspectRatio="xMidYMid slice" clip-path="url(#photoClip)"/>
+  <rect class="pk-dim" x="0" y="0" width="1600" height="800"/>
+  <!-- подземный уровень -->
+  <rect x="0" y="800" width="1600" height="500" fill="url(#ugG)"/>
+  <g class="pk-grid"><path d="M0 850H1600"/><path d="M0 900H1600"/><path d="M0 950H1600"/><path d="M0 1000H1600"/><path d="M0 1050H1600"/><path d="M0 1100H1600"/><path d="M0 1150H1600"/><path d="M0 1200H1600"/><path d="M0 1250H1600"/><path d="M0 800V1300"/><path d="M80 800V1300"/><path d="M160 800V1300"/><path d="M240 800V1300"/><path d="M320 800V1300"/><path d="M400 800V1300"/><path d="M480 800V1300"/><path d="M560 800V1300"/><path d="M640 800V1300"/><path d="M720 800V1300"/><path d="M800 800V1300"/><path d="M880 800V1300"/><path d="M960 800V1300"/><path d="M1040 800V1300"/><path d="M1120 800V1300"/><path d="M1200 800V1300"/><path d="M1280 800V1300"/><path d="M1360 800V1300"/><path d="M1440 800V1300"/><path d="M1520 800V1300"/><path d="M1600 800V1300"/></g>
+  <path class="pk-ground" d="M0 800 H1600"/>
+  <text class="pk-lbl" x="24" y="786">уровень земли</text>
+  <!-- стены паркинга, плита -->
+  <path class="pk-wall" d="M300 800 V840 M1560 800 V1180 M440 1180 H1560"/>
+  <path class="pk-slab" d="M300 840 H1560"/>
+  <!-- рампа -->
+  <path class="pk-ramp" d="M150 800 C230 800 250 820 300 860 L520 1110 C560 1140 600 1150 680 1150 H1560"/>
+  <text class="pk-lbl" x="330" y="950" transform="rotate(48 330 950)">въезд</text>
+  <!-- колонны и машино-места -->
+  <rect class="pk-col" x="760" y="840" width="14" height="310"/><rect class="pk-col" x="1020" y="840" width="14" height="310"/><rect class="pk-col" x="1400" y="840" width="14" height="310"/>
+  <path class="pk-spot" d="M720 1150 v14"/><path class="pk-spot" d="M810 1150 v14"/><path class="pk-spot" d="M900 1150 v14"/><path class="pk-spot" d="M990 1150 v14"/><path class="pk-spot" d="M1080 1150 v14"/><path class="pk-spot" d="M1170 1150 v14"/><path class="pk-spot" d="M1260 1150 v14"/><path class="pk-spot" d="M1350 1150 v14"/>
+  <rect class="pk-spot-hl" x="886" y="1144" width="90" height="12" rx="3"/>
+  <g class="pk-car pk-car--parked" transform="translate(1110 1150)"><path d="M-38 -6 h76 v-14 l-14 -14 h-40 l-14 14z"/><circle cx="-22" cy="-4" r="7"/><circle cx="22" cy="-4" r="7"/></g><g class="pk-car pk-car--parked" transform="translate(1470 1150)"><path d="M-38 -6 h76 v-14 l-14 -14 h-40 l-14 14z"/><circle cx="-22" cy="-4" r="7"/><circle cx="22" cy="-4" r="7"/></g>
+  <text class="pk-lbl pk-lbl--big" x="1100" y="1222">−1 · ПОДЗЕМНЫЙ ПАРКИНГ</text>
+  <!-- пожаротушение: спринклеры -->
+  <g class="pk-spr"><path d="M640 840 v12"/><circle cx="640" cy="856" r="4"/></g><g class="pk-spr"><path d="M760 840 v12"/><circle cx="760" cy="856" r="4"/></g><g class="pk-spr"><path d="M880 840 v12"/><circle cx="880" cy="856" r="4"/></g><g class="pk-spr"><path d="M1000 840 v12"/><circle cx="1000" cy="856" r="4"/></g><g class="pk-spr"><path d="M1120 840 v12"/><circle cx="1120" cy="856" r="4"/></g><g class="pk-spr"><path d="M1240 840 v12"/><circle cx="1240" cy="856" r="4"/></g><g class="pk-spr"><path d="M1360 840 v12"/><circle cx="1360" cy="856" r="4"/></g><g class="pk-spr"><path d="M1480 840 v12"/><circle cx="1480" cy="856" r="4"/></g>
+  <!-- шахта лифта: от паркинга до 8 этажа -->
+  <rect class="pk-shaft" x="1214" y="108" width="52" height="1042" rx="4"/>
+  <path class="pk-stop" data-lv="1" d="M1200 795 h80"/><path class="pk-stop" data-lv="2" d="M1200 697 h80"/><path class="pk-stop" data-lv="3" d="M1200 599 h80"/><path class="pk-stop" data-lv="4" d="M1200 501 h80"/><path class="pk-stop" data-lv="5" d="M1200 403 h80"/><path class="pk-stop" data-lv="6" d="M1200 305 h80"/><path class="pk-stop" data-lv="7" d="M1200 207 h80"/><path class="pk-stop" data-lv="8" d="M1200 118 h80"/>
+  <ellipse class="pk-liftglow" cx="1240" cy="1120" rx="70" ry="60" fill="url(#liftG)"/>
+  <g class="pk-cab" id="pkCab"><rect x="1220" y="1088" width="40" height="56" rx="4"/>
+    <circle cx="1240" cy="1106" r="5"/><path d="M1240 1112 v18 M1233 1120 h14 M1240 1130 l-6 12 M1240 1130 l6 12"/></g>
+  <!-- машина -->
+  <path id="pkPath" d="M-60 800 H150 C230 800 250 820 300 860 L520 1110 C560 1140 600 1150 680 1150 H930" fill="none" stroke="none"/>
+  <g class="pk-car pk-car--main" id="pkCar"><path d="M-40 -6 h80 v-15 l-15 -15 h-40 l-15 15z"/><rect class="pk-win" x="-22" y="-32" width="40" height="10" rx="2"/><circle cx="-24" cy="-4" r="8"/><circle cx="24" cy="-4" r="8"/><path class="pk-beam" d="M40 -14 l120 -18 v34z"/></g>
+  <!-- человек от машины к лифту -->
+  <g class="pk-man" id="pkMan"><circle cx="0" cy="-46" r="6"/><path d="M0 -40 v22 M-8 -32 h16 M0 -18 l-7 16 M0 -18 l7 16"/></g>
+  <!-- подписи -->
+  <g class="xlbl" data-s="1"><line x1="420" y1="920" x2="520" y2="1000"/><rect x="470" y="1000" width="250" height="40" rx="20"/><text x="595" y="1027">Удобный заезд</text></g>
+  <g class="xlbl" data-s="2"><line x1="930" y1="1090" x2="930" y2="950"/><rect x="790" y="910" width="280" height="40" rx="20"/><text x="930" y="937">Ваше машино-место</text></g>
+  <g class="xlbl" data-s="3"><line x1="1270" y1="420" x2="1360" y2="380"/><rect x="1300" y="340" width="280" height="40" rx="20"/><text x="1440" y="367">Лифт прямо домой</text></g>
+</svg>
+        <div class="boiler__floor parking__floor" aria-hidden="true"><b id="pkFloor">−1</b><span>этаж</span></div>
+        <div class="boiler__hint" aria-hidden="true"><i>←</i>Проведите по картинке<i>→</i></div>
+      </div>
+      <label class="boiler__ctl"><span>Улица</span><input type="range" id="pkRange" min="0" max="1000" value="0" aria-label="Путь от улицы до квартиры"><span>Дома, 8 этаж</span></label>
+      <ol class="boiler__steps">
+        <li><b>Заезд</b><span>Удобный въезд с улицы по рампе, широкие проезды — легко даже на большой машине.</span></li>
+        <li><b>Машино-место</b><span>Своё место в подземном паркинге. Система пожаротушения и вытяжная вентиляция.</span></li>
+        <li><b>Лифт прямо домой</b><span>Пассажирский лифт выходит прямо в паркинг — на свой этаж без улицы.</span></li>
+      </ol>
+      <p class="fine">Схема упрощённая и показывает принцип. <button class="link-btn" type="button" data-zoom="img/plan-parking.webp">Открыть план паркинга</button></p>
+    </div>
 
     <div class="boiler boiler--photo boiler--house" id="boiler">
       <div class="boiler__head">
@@ -298,6 +353,7 @@
 <script src="js/build-bg.js"></script>
 <script src="js/reveal-fx.js"></script>
 <script src="js/boiler.js"></script>
+<script src="js/parking.js"></script>
 <script src="js/frames.js"></script>
 </body>
 </html>
