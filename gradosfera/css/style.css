@@ -391,36 +391,55 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .parking .boiler__steps li { counter-increment: st; }
 
 
-/* ---------- квартира под ключ (js/key.js) ---------- */
-.key__stage { position: relative; overflow: hidden; aspect-ratio: 16 / 9; touch-action: pan-y; cursor: ew-resize; user-select: none; -webkit-user-select: none; background: #222; }
-.key__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-.key__done { position: absolute; inset: 0; clip-path: inset(0 100% 0 0); will-change: clip-path; }
-.key__svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.kw { fill: none; stroke: #ffb27a; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 8 10; filter: drop-shadow(0 0 6px rgba(255,150,80,.95)); animation: kwFlow 1.2s linear infinite; }
-@keyframes kwFlow { to { stroke-dashoffset: -36; } }
-.key__wires { transition: opacity .4s; }
-.key__shade { fill: rgba(10,10,12,.55); }
-.key__line { stroke: #fff; stroke-width: 3; filter: drop-shadow(0 0 10px rgba(255,255,255,1)) drop-shadow(0 0 30px rgba(255,190,120,.8)); }
-.kl circle { fill: rgba(239,231,218,.25); stroke: rgba(239,231,218,.5); stroke-width: 2; transition: fill .3s, stroke .3s; }
-.kl text { fill: rgba(239,231,218,.5); font: 600 22px var(--sans); letter-spacing: .12em; text-transform: uppercase; text-anchor: middle; transition: fill .3s; }
-.kl.is-on circle { fill: #ffb27a; stroke: #ffb27a; filter: drop-shadow(0 0 8px rgba(255,170,90,.9)); }
-.kl.is-on text { fill: #fff; }
-.key__final { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%) scale(.8); display: flex; flex-direction: column; align-items: center; gap: 14px; opacity: 0; transition: opacity .5s, transform .5s cubic-bezier(.3,1.5,.5,1); pointer-events: none; text-align: center; }
-.key__final b { font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 5vw, 76px); text-transform: uppercase; color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,.5); line-height: 1; }
-.key__icon { width: clamp(80px, 9vw, 130px); }
-.key__icon circle, .key__icon path { fill: none; stroke: #ffcf9e; stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 8px rgba(255,180,100,.9)); }
-.key.done .key__final { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-.key.touched .key__hint { opacity: 0; }
-.key__hint { bottom: auto; top: 50%; }
-.key__points { list-style: none; margin: 30px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 30px; }
-.key__points li { display: grid; gap: 6px; padding: 18px 0; border-top: 1px solid var(--line); }
-.key__points b { font-family: var(--serif); font-weight: 400; font-size: clamp(24px, 2.4vw, 36px); text-transform: uppercase; color: var(--copper); }
-.key__points span { color: var(--muted); font-size: 15px; }
-.key .boiler__ctl { margin-top: 22px; }
+
+/* ---------- лифт сквозь дом (js/lift.js) ---------- */
+.lift { position: relative; height: 560vh; }
+.lift__pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: #0d0e10; }
+.lift__shaft { position: absolute; inset: 0; overflow: hidden; }
+.lift__strip { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--n) * 100%); will-change: transform; }
+.lift__slide { position: absolute; left: 0; right: 0; height: calc(100% / var(--n)); bottom: calc(var(--i) * 100% / var(--n)); }
+.lift__slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lift__slide::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,10,12,.55), rgba(10,10,12,0) 30%, rgba(10,10,12,0) 70%, rgba(10,10,12,.55)); }
+.lift__cap { position: absolute; left: 50%; bottom: 16%; transform: translateX(-50%); z-index: 1; padding: 9px 18px; border-radius: 999px; background: rgba(18,18,20,.72); border: 1px solid rgba(201,138,91,.6); color: #fff; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
+.lift__slab { position: absolute; left: 0; right: 0; height: 9vh; bottom: calc((var(--i) + 1) * 100% / var(--n) - 4.5vh); z-index: 2;
+  background: linear-gradient(#1a1a1c, #2a2826 40%, #1a1a1c); box-shadow: 0 -1px 0 var(--copper), 0 1px 0 var(--copper), 0 0 40px rgba(0,0,0,.8); }
+.lift__slab::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: repeating-linear-gradient(90deg, rgba(201,138,91,.5) 0 30px, transparent 30px 60px); }
+/* стекло и рамы кабины */
+.lift__glass { position: absolute; inset: 0; pointer-events: none; z-index: 3;
+  background: linear-gradient(115deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,.05) 48%, rgba(255,255,255,0) 60%); }
+.lift__glass i { position: absolute; top: 0; bottom: 0; width: 10px; background: linear-gradient(90deg, #111, #3a3633 50%, #111); box-shadow: 0 0 20px rgba(0,0,0,.7); }
+.lift__glass i:nth-child(1) { left: 6%; } .lift__glass i:nth-child(2) { right: 6%; } .lift__glass i:nth-child(3) { left: 0; right: 0; width: auto; height: 10px; top: auto; bottom: 22%; opacity: .7; }
+/* табло и кнопки */
+.lift__panel { position: absolute; z-index: 4; right: calc(6% + 26px); top: 50%; transform: translateY(-50%); display: grid; gap: 16px; justify-items: center;
+  padding: 18px 14px; border-radius: 14px; background: rgba(14,14,16,.82); border: 1px solid rgba(201,138,91,.35); backdrop-filter: blur(6px); }
+.lift__display { display: flex; align-items: center; gap: 8px; min-width: 76px; justify-content: center; padding: 8px 10px; border-radius: 8px; background: #050506; box-shadow: inset 0 0 12px rgba(255,140,60,.25); }
+.lift__display b { font-family: var(--serif); font-weight: 400; font-size: 44px; line-height: 1; color: #ffb27a; text-shadow: 0 0 14px rgba(255,150,80,.9); font-variant-numeric: tabular-nums; }
+.lift__arrow { color: #ffb27a; font-size: 13px; opacity: .3; transition: opacity .3s; }
+.lift.moving .lift__arrow { opacity: 1; animation: liftArr .8s ease-in-out infinite; }
+@keyframes liftArr { 50% { transform: translateY(-4px); } }
+.lift__btns { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lift__btns li { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid rgba(239,231,218,.3); color: rgba(239,231,218,.6); font-size: 14px; font-weight: 600; transition: all .3s; }
+.lift__btns li.is-on { border-color: #ffb27a; color: #1b1410; background: #ffb27a; box-shadow: 0 0 16px rgba(255,170,90,.9); }
+.lift__title { position: absolute; z-index: 7; left: calc(6% + 34px); top: calc(var(--header-h, 76px) + 40px); display: grid; gap: 14px; transition: opacity .5s; text-shadow: 0 2px 30px rgba(0,0,0,.6); }
+.lift.started .lift__title { opacity: 0; }
+/* двери */
+.lift__doors { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.lift__doors i { position: absolute; top: 0; bottom: 0; width: 50%; background: linear-gradient(90deg, #1f1e1d, #34312e 50%, #1f1e1d); transition: transform .05s linear; }
+.lift__doors i::after { content: ""; position: absolute; top: 18%; bottom: 18%; width: 2px; background: linear-gradient(transparent, var(--copper), transparent); }
+.lift__doors i:nth-child(1) { left: 0; } .lift__doors i:nth-child(1)::after { right: 22px; }
+.lift__doors i:nth-child(2) { right: 0; } .lift__doors i:nth-child(2)::after { left: 22px; }
+.lift__final { position: absolute; z-index: 6; left: 50%; top: 46%; transform: translate(-50%, -50%) scale(.92); display: grid; gap: 14px; justify-items: center; text-align: center; opacity: 0; transition: opacity .6s, transform .6s; pointer-events: none; }
+.lift__final b { font-family: var(--serif); font-weight: 400; font-size: clamp(36px, 6vw, 96px); line-height: 1; text-transform: uppercase; color: #fff; text-shadow: 0 4px 40px rgba(0,0,0,.6); }
+.lift.arrived .lift__final { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.lift.arrived .lift__cap { opacity: 0; }
 @media (max-width: 760px) {
-  .key__stage { aspect-ratio: 4 / 5; }
-  .kl text { display: none; } .kl circle { r: 12px; }
-  .key__points { grid-template-columns: 1fr; }
+  .lift { height: 480vh; }
+  .lift__glass i:nth-child(1) { left: 3%; } .lift__glass i:nth-child(2) { right: 3%; }
+  .lift__panel { right: calc(3% + 14px); padding: 12px 8px; gap: 10px; }
+  .lift__display { min-width: 56px; } .lift__display b { font-size: 30px; }
+  .lift__btns li { width: 30px; height: 30px; font-size: 12px; }
+  .lift__title { left: calc(3% + 22px); right: 90px; }
+  .lift__cap { font-size: 10px; letter-spacing: .14em; bottom: 12%; }
 }
 
 /* ---------- reveal (GSAP добавляет класс js-anim на html) ---------- */
@@ -536,11 +555,6 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .parking__photo img { width: 100%; aspect-ratio: 21 / 9; object-fit: cover; display: block; }
 @media (max-width: 760px) { .life__grid { grid-template-columns: 1fr; } .parking__photo img { aspect-ratio: 16 / 10; } }
 
-.key__step { display: none; }
-@media (max-width: 760px) {
-  .key__step { display: block; position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(18,18,20,.8); border: 1px solid var(--copper); color: #fff; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; pointer-events: none; transition: opacity .3s; }
-  .key.done .key__step { opacity: 0; }
-}
 
 /* фасад: двое рабочих растягивают фото на тросах */
 .pull { position: absolute; inset: 0; z-index: 3; pointer-events: none; }

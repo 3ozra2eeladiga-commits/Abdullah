@@ -85,7 +85,6 @@
     <div class="about__text">
       <p class="lead fade">«Новый Квартал» — пространство для спокойной и безопасной жизни в центре Моздока. Закрытый двор без машин, зелёные зоны отдыха и тихие уголки для семейных прогулок.</p>
       <p class="muted fade">Подземный паркинг с прямым доступом на жилые этажи, лаунж-зона на эксплуатируемой крыше с видом на город, продуманные планировки и большие окна. Это выбор тех, кто ценит приватность, качество и гармоничную городскую среду.</p>
-      <a class="btn fade" href="#flats">Смотреть квартиры</a>
     </div>
   </div>
 
@@ -163,6 +162,23 @@
 </section>
 
 <!-- ============ MARQUEE ============ -->
+
+<!-- ============ ЛИФТ СКВОЗЬ ДОМ ============ -->
+<section class="lift" id="lift">
+  <div class="lift__pin">
+    <div class="lift__shaft" id="liftShaft">
+      <div class="lift__strip" id="liftStrip" style="--n:5"><div class="lift__slide" style="--i:0"><img src="img/photo/parking.webp" alt="Подземный паркинг" loading="lazy"><span class="lift__cap">Подземный паркинг</span></div><div class="lift__slab" style="--i:0"></div><div class="lift__slide" style="--i:1"><img src="img/photo/commerce.webp" alt="Витрины первого этажа" loading="lazy"><span class="lift__cap">Витрины первого этажа</span></div><div class="lift__slab" style="--i:1"></div><div class="lift__slide" style="--i:2"><img src="img/photo/yard-top.webp" alt="Двор без машин" loading="lazy"><span class="lift__cap">Двор без машин</span></div><div class="lift__slab" style="--i:2"></div><div class="lift__slide" style="--i:3"><img src="img/photo/view-town.webp" alt="Вид на Моздок" loading="lazy"><span class="lift__cap">Вид на Моздок</span></div><div class="lift__slab" style="--i:3"></div><div class="lift__slide" style="--i:4"><img src="img/photo/roof.webp" alt="Лаунж-зона на крыше" loading="lazy"><span class="lift__cap">Лаунж-зона на крыше</span></div></div>
+    </div>
+    <div class="lift__glass" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="lift__panel" aria-hidden="true">
+      <div class="lift__display"><span class="lift__arrow">▲</span><b id="liftFloor">−1</b></div>
+      <ul class="lift__btns" id="liftBtns"><li data-i="4">8</li><li data-i="3">6</li><li data-i="2">3</li><li data-i="1">1</li><li data-i="0">−1</li></ul>
+    </div>
+    <div class="lift__title"><span class="tag">Стеклянный лифт</span><h2 class="h2">Поднимемся<br>на крышу?</h2></div>
+    <div class="lift__doors" id="liftDoors" aria-hidden="true"><i></i><i></i></div>
+    <div class="lift__final" id="liftFinal"><span class="tag">8 этаж</span><b>Добро пожаловать домой</b></div>
+  </div>
+</section>
 
 <!-- ============ FLATS ============ -->
 <section class="sec flats" id="flats">
@@ -371,6 +387,7 @@
 <script src="js/reveal-fx.js"></script>
 <script src="js/boiler.js"></script>
 <script src="js/parking.js"></script>
+<script src="js/lift.js"></script>
 <script src="js/frames.js"></script>
 </body>
 </html>
