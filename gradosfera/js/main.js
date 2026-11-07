@@ -128,13 +128,10 @@
   // hero: появление
   gsap.from('.hero__line > span', { yPercent: 105, duration: 1.4, ease: 'power4.out', stagger: 0.12, delay: 0.15 });
   gsap.from('.hero__lead, .hero__foot, .hero__progress', { opacity: 0, y: 16, duration: 1, delay: 0.7, stagger: 0.1 });
-  gsap.from('.hero__img--day', { scale: 1.12, duration: 2.4, ease: 'power2.out' });
 
   // hero: утро → закат при прокрутке
   var htl = gsap.timeline({ scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom bottom', scrub: 0.6 } });
-  htl.to('.hero__img--eve', { opacity: 1, ease: 'none' }, 0)
-     .to('.hero__img', { scale: 1.08, ease: 'none' }, 0)
-     .to('#heroBar', { scaleY: 1, ease: 'none' }, 0)
+  htl.to('#heroBar', { scaleY: 1, ease: 'none' }, 0)
      .to('.hero__line:first-child > span', { xPercent: -4, ease: 'none' }, 0)
      .to('.hero__line--r > span', { xPercent: 4, ease: 'none' }, 0)
      ;
