@@ -13,7 +13,7 @@ import threading
 import time
 from collections import defaultdict
 
-from flask import Flask, Response, abort, request
+from flask import Flask, Response, abort, redirect, request, send_from_directory
 from waitress import serve
 
 from . import brain, config, db, images, instagram, llm, payments, telegram_bot
@@ -1237,6 +1237,29 @@ def image(code):
     if not item or not item["images"]:
         abort(404)
     return Response(images.jpeg_bytes(item["images"][0]), mimetype="image/jpeg")
+
+
+# Предпросмотр сайтов-проектов, которые лежат в репозитории отдельными папками (к боту не относятся).
+# Открываются по адресу /preview/<папка>/ — так сайт можно смотреть до переезда на свой хостинг.
+PREVIEW_SITES = {"gradosfera"}
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+@app.get("/preview/<site>")
+def preview_root(site):
+    if site not in PREVIEW_SITES:
+        abort(404)
+    return redirect(f"/preview/{site}/", code=301)
+
+
+@app.get("/preview/<site>/")
+@app.get("/preview/<site>/<path:path>")
+def preview(site, path="index.html"):
+    if site not in PREVIEW_SITES:
+        abort(404)
+    resp = send_from_directory(os.path.join(_REPO_ROOT, site), path)
+    resp.headers["X-Robots-Tag"] = "noindex"   # предпросмотр не должен попадать в поиск
+    return resp
 
 
 @app.get("/")
