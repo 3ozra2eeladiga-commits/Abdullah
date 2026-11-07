@@ -17,7 +17,7 @@
     { key: '3a', tab: '3-комнатная', type: '3-комнатная', img: 'img/plans/3k-a.webp', areas: [105.63], note: 'Три комнаты, кухня-гостиная и две ванные зоны.' }
   ];
   var GALLERY = ['img/photo/corner-morning.webp', 'img/photo/closeup.webp', 'img/photo/front.webp', 'img/photo/corner-sunset.webp',
-    'img/photo/yard.webp', 'img/photo/roof.webp', 'img/photo/commerce.webp', 'img/photo/parking.webp'];
+    'img/photo/yard-clean.webp', 'img/photo/roof.webp', 'img/photo/commerce.webp', 'img/photo/parking.webp'];
 
   var fmt = function (a) { return a.toFixed(2).replace('.', ',').replace(/0+$/, '').replace(/,$/, ''); };
 
