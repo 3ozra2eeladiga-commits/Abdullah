@@ -15,20 +15,34 @@
     var cur = 0, want = 0, drawn = -1, raf = 0;
 
     function src(i) { return base + 'f_' + String(i + 1).padStart(3, '0') + '.webp'; }
+    var inflight = 0, MAXQ = 8;
     function load(i) {
       if (imgs[i]) return;
-      var im = new Image(); im.decoding = 'async';
-      im.onload = function () { loaded[i] = true; if (drawn < 0 || Math.abs(i - want) < Math.abs(drawn - want)) kick(); };
-      im.src = src(i); imgs[i] = im;
+      var im = new Image(); im.decoding = 'async'; imgs[i] = im; inflight++;
+      var done = function () {
+        inflight--; loaded[i] = true;
+        if (drawn < 0 || Math.abs(i - want) < Math.abs(drawn - want)) kick();
+        pump();
+      };
+      im.onload = function () { if (im.decode) im.decode().then(done, done); else done(); };
+      im.onerror = function () { inflight--; pump(); };
+      im.src = src(i);
     }
-    // порядок загрузки: первый кадр, потом каждый 8-й (быстро появляется «черновой» проход), потом остальные
-    var order = [0];
-    [8, 4, 2, 1].forEach(function (step) { for (var i = 0; i < count; i += step) if (order.indexOf(i) < 0) order.push(i); });
-    var qi = 0;
-    function pump() { var n = 0; while (qi < order.length && n < 12) { load(order[qi++]); n++; } if (qi < order.length) setTimeout(pump, 25); }
+    // приоритет: кадры рядом с текущим местом, сначала вперёд по ходу прокрутки, потом назад
+    function next() {
+      var c = Math.round(want);
+      for (var d = 0; d < count; d++) {
+        var a = c + d, b = c - d;
+        if (a < count && !imgs[a]) return a;
+        if (d <= 6 && b >= 0 && !imgs[b]) return b;
+      }
+      for (var k = 0; k < count; k++) if (!imgs[k]) return k;
+      return -1;
+    }
+    function pump() { while (inflight < MAXQ) { var i = next(); if (i < 0) return; load(i); } }
     // кадры начинают грузиться, когда раздел близко (первый экран — сразу), чтобы не мешать друг другу
     var begun = false;
-    function begin() { if (begun) return; begun = true; load(0); setTimeout(pump, 50); }
+    function begin() { if (begun) return; begun = true; load(0); pump(); }
     function near() { return section.getBoundingClientRect().top < window.innerHeight * 2.5; }
     if (near()) begin();
 
@@ -46,7 +60,7 @@
       var im = imgs[i]; if (!im) return;
       var cw = cv.width, ch = cv.height, iw = im.naturalWidth, ih = im.naturalHeight;
       var s = Math.max(cw / iw, ch / ih), w = iw * s, h = ih * s;
-      ctx.drawImage(im, (cw - w) / 2, (ch - h) / 2, w, h); drawn = i;
+      ctx.drawImage(im, (cw - w) / 2, (ch - h) / 2, w, h); drawn = i; cv.dataset.frame = i;
     }
     function tick() {
       raf = 0;
@@ -62,7 +76,7 @@
       var r = section.getBoundingClientRect(), len = section.offsetHeight - window.innerHeight;
       var p = len > 0 ? Math.min(1, Math.max(0, -r.top / len)) : 0;
       p = Math.min(1, Math.max(0, (p - start) / span));
-      want = p * (count - 1); kick();
+      want = p * (count - 1); kick(); if (begun) pump();
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', size);
