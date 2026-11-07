@@ -136,23 +136,13 @@
      .to('.hero__line--r > span', { xPercent: 4, ease: 'none' }, 0)
      ;
 
-  // видео первого экрана: кадр = прокрутка внутри первого экрана
+  // первый экран: кадры видео рисует js/frames.js; здесь — надписи поверх
   (function () {
-    var hero = document.getElementById('hero'), v = document.getElementById('heroVideo'), city = document.getElementById('heroCity');
-    if (!v) return;
-    var want = 0, raf = 0, ready = false;
-    function seek() { raf = 0; if (!ready || !v.duration) return; var t = want * (v.duration - 0.05); if (Math.abs(v.currentTime - t) > 0.02) v.currentTime = t; }
-    function onReady() { if (ready) return; ready = true; hero.classList.add('has-video'); v.pause(); seek(); }
-    v.addEventListener('loadeddata', onReady);
-    if (v.readyState >= 2) onReady();
-    var wake = function () { var pr = v.play(); if (pr && pr.then) pr.then(function () { v.pause(); onReady(); seek(); }).catch(function () {}); };
-    window.addEventListener('touchstart', wake, { once: true, passive: true });
+    var hero = document.getElementById('hero'), city = document.getElementById('heroCity');
     window.ScrollTrigger.create({
       trigger: '#hero', start: 'top top', end: 'bottom bottom',
       onUpdate: function (st) {
-        want = Math.min(1, st.progress / 0.97); if (!raf) raf = requestAnimationFrame(seek);
         hero.classList.toggle('is-moving', st.progress > 0.025);
-        // «Моздок» появляется, когда расходятся облака (≈ 10–30% прокрутки)
         var c = st.progress, o = c < 0.06 ? 0 : c < 0.11 ? (c - 0.06) / 0.05 : c < 0.44 ? 1 : c < 0.52 ? (0.52 - c) / 0.08 : 0;
         if (city) { city.style.opacity = o; city.style.transform = 'scale(' + (1.06 - 0.06 * o) + ')'; }
       }
@@ -183,33 +173,11 @@
      .from('.facade__copy', { opacity: 0, y: 40, ease: 'power2.out', duration: 0.4 }, 0.35);
   ftl.fromTo('#facadeVideo', { scale: 1.25 }, { scale: 1, ease: 'power2.inOut' }, 0);
 
-  // видео день → ночь: кадр видео = положение прокрутки внутри раздела «Фасад»
+  // фасад: кадры день → ночь рисует js/frames.js; здесь — полоска «день — ночь»
   (function () {
-    var v = document.getElementById('facadeVideo'), bar = document.getElementById('dnBar');
-    if (!v) return;
-    var want = 0, raf = 0, ready = false;
-    function seek() {
-      raf = 0;
-      if (!ready || !v.duration) return;
-      var t = want * (v.duration - 0.05);
-      if (Math.abs(v.currentTime - t) > 0.02) v.currentTime = t;
-    }
-    function onReady() {
-      if (ready) return; ready = true; v.classList.add('is-ready'); v.pause(); seek();
-    }
-    v.addEventListener('loadeddata', onReady);
-    if (v.readyState >= 2) onReady();
-    // iOS: видео нужно «разбудить» один раз, иначе не отдаёт кадры
-    var wake = function () { var pr = v.play(); if (pr && pr.then) pr.then(function () { v.pause(); onReady(); }).catch(function () {}); };
-    window.addEventListener('touchstart', wake, { once: true, passive: true });
-    window.ScrollTrigger.create({
-      trigger: '#facade', start: 'top top', end: 'bottom bottom',
-      onUpdate: function (st) {
-        want = Math.min(1, Math.max(0, (st.progress - 0.28) / 0.62));
-        if (bar) bar.style.transform = 'scaleX(' + want + ')';
-        if (!raf) raf = requestAnimationFrame(seek);
-      }
-    });
+    var bar = document.getElementById('dnBar');
+    window.ScrollTrigger.create({ trigger: '#facade', start: 'top top', end: 'bottom bottom',
+      onUpdate: function (st) { if (bar) bar.style.transform = 'scaleX(' + Math.min(1, Math.max(0, (st.progress - 0.28) / 0.62)) + ')'; } });
   })();
 
   // бегущая строка
