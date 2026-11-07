@@ -378,12 +378,12 @@
             <g class="safe__lock"><path class="sd" d="M25 30 V25 a7 7 0 0 1 14 0 V30"/><rect class="sd" x="22" y="30" width="20" height="15" rx="3"/><path class="sd" d="M32 36 v4"/></g></svg>
           <div><b>Закрытая территория</b><span>Двор огорожен и охраняется</span></div></li>
         <li><svg class="safe__ic" viewBox="0 0 64 64" aria-hidden="true">
-            <path class="sd" d="M10 12 V24 M10 18 H20"/>
-            <g class="safe__cam"><path class="safe__beam" d="M44 24 L62 40 L62 52 Z"/><rect class="sd" x="20" y="12" width="28" height="13" rx="3" transform="rotate(18 20 18)"/><circle class="safe__rec" cx="24" cy="18" r="1.6"/></g></svg>
+            <path class="sd" d="M8 10 V30 M8 20 H18"/>
+            <g class="safe__cam"><path class="safe__beam" d="M50 30 L64 46 L48 52 Z"/><path class="sd" d="M18 14 L50 24 L46 36 L14 26 Z"/><circle class="sd" cx="47" cy="30" r="3.5"/><circle class="safe__rec" cx="22" cy="21" r="2"/></g></svg>
           <div><b>Видеонаблюдение</b><span>По периметру и во дворе</span></div></li>
         <li><svg class="safe__ic" viewBox="0 0 64 64" aria-hidden="true">
-            <path class="sd" d="M14 8 H50 M32 8 V18 M24 18 H40 L36 26 H28 Z M22 30 L18 34 M42 30 L46 34 M32 30 V34"/>
-            <path class="safe__drop" d="M20 40 c0 3 4 3 4 0 l-2-4 z"/><path class="safe__drop d2" d="M30 42 c0 3 4 3 4 0 l-2-4 z"/><path class="safe__drop d3" d="M40 40 c0 3 4 3 4 0 l-2-4 z"/></svg>
+            <path class="sd" d="M10 8 H54 M32 8 V18 M22 18 H42 L37 28 H27 Z M24 34 L18 40 M40 34 L46 40 M32 34 V41"/>
+            <path class="safe__drop" d="M16 46 c0 4 6 4 6 0 l-3-6 z"/><path class="safe__drop d2" d="M29 48 c0 4 6 4 6 0 l-3-6 z"/><path class="safe__drop d3" d="M42 46 c0 4 6 4 6 0 l-3-6 z"/></svg>
           <div><b>Подземный паркинг</b><span>Система пожаротушения</span></div></li>
       </ul>
     </div>
@@ -470,7 +470,7 @@
 <script src="js/guide.js"></script>
 <script src="js/walk.js"></script>
 <script src="js/biz.js"></script>
-<script>(function(){var s=document.getElementById("safe");if(!s)return;if(!("IntersectionObserver" in window)){s.classList.add("in");return;}var o=new IntersectionObserver(function(e){if(e[0].isIntersecting){s.classList.add("in");o.disconnect();}},{threshold:.35});o.observe(s);})();</script>
+<script>(function(){var s=document.getElementById("safe");if(!s)return;s.classList.add("js");function go(){s.classList.add("in");}if(!("IntersectionObserver" in window)){go();return;}var o=new IntersectionObserver(function(e){if(e[0].isIntersecting){go();o.disconnect();}},{threshold:0,rootMargin:"0px 0px -15% 0px"});o.observe(s);setTimeout(go,6000);})();</script>
 <script src="js/sound.js"></script>
 <script src="js/frames.js"></script>
 </body>

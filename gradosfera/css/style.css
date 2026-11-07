@@ -858,3 +858,13 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 }
 @media (prefers-reduced-motion: reduce) { .safe__ic * { animation: none !important; } }
 .safe ul { background: rgba(16,17,20,.86); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+/* безопасность v2: всё видно и без анимации; рисование — только как украшение */
+.safe li { opacity: 1; transform: none; }
+.safe.js:not(.in) li { opacity: 0; transform: translateY(14px); }
+.safe__ic .sd { stroke-dashoffset: 0; stroke-width: 2; }
+.safe.js:not(.in) .safe__ic .sd { stroke-dashoffset: 160; }
+.safe__ic { width: 64px; height: 64px; padding: 10px; border: 1px solid rgba(200,116,60,.45); border-radius: 50%; box-sizing: border-box; background: rgba(200,116,60,.06); }
+.safe__beam { opacity: 1; }
+.safe__drop { fill: #7fb6ff; }
+@media (max-width: 760px) { .safe li { grid-template-columns: 56px 1fr; } .safe__ic { width: 56px; height: 56px; padding: 9px; } }
