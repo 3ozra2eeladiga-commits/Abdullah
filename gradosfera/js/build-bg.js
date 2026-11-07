@@ -303,6 +303,95 @@
     if (doneFlash > 0) { ctx.fillStyle = 'rgba(255,220,170,' + doneFlash * 0.12 + ')'; ctx.fillRect(0, 0, W, H); doneFlash -= 0.03; }
   }
 
+  /* ---------- заливка бетона: бетономешалка приезжает и льёт струю, которая течёт вниз вместе с прокруткой ---------- */
+  var aboutEl = document.getElementById('about');
+  var pourStart = 0, flowOff = 0, lastTarget = 0, drops = [];
+  function concreteTruck(x, y, s, t, pouring) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    st(COPPER, 0.95, 1.3, 8);
+    ctx.strokeRect(70, -34, 26, 26);                       // кабина справа
+    st(WARM, 0.55, 1, 8); ctx.strokeRect(76, -30, 14, 10);
+    st(COPPER, 0.95, 1.3, 8); line(-6, -8, 98, -8);
+    wheel(6, -1, 8, t); wheel(26, -1, 8, t); wheel(84, -1, 8, t);
+    // барабан
+    ctx.save(); ctx.translate(30, -30); ctx.rotate(0.18);
+    ctx.beginPath(); ctx.ellipse(0, 0, 38, 18, 0, 0, 6.3); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, 0, 38, 18, 0, 0, 6.3); ctx.clip();
+    st(CREAM, 0.4, 1); for (var k = -4; k <= 4; k++) { var off = ((t * 40 + k * 20) % 160) - 80; line(off - 12, -18, off + 12, 18); }
+    ctx.restore();
+    // лоток: опускается, когда начинается заливка
+    st(COPPER, 1, 2.2, 8);
+    var ang = mix(-0.2, 0.9, pouring);
+    var lx = -8, ly = -22, ex = lx - Math.cos(ang) * 30, ey = ly + Math.sin(ang) * 30;
+    line(lx, ly, ex, ey); line(lx, ly - 5, ex, ey - 5);
+    noGlow(); ctx.restore();
+    return { x: x + ex * s, y: y + ey * s };
+  }
+
+  function concrete(t) {
+    if (!aboutEl) return;
+    var r = aboutEl.getBoundingClientRect();
+    var s = mobile ? 0.8 : 1.35;
+    var sx = mobile ? 9 : Math.max(30, W * 0.022);           // где течёт струя
+    var baseY = r.top + (mobile ? 44 : 70);                // машина стоит в начале блока «О доме»
+    var arrive = clamp((H - r.top) / (H * 0.55), 0, 1);
+    var ease = 1 - Math.pow(1 - arrive, 3);
+    var truckX = mix(-140 * s - 140, sx + 14 * s, ease);
+    var pouring = clamp((arrive - 0.9) / 0.1, 0, 1);
+    if (pouring > 0 && !pourStart) pourStart = t;
+    if (pouring === 0 && r.top > H * 0.8) pourStart = 0;
+    var spout = { x: sx, y: baseY - 4 };
+    if (baseY > -80 && baseY < H + 80) spout = concreteTruck(truckX, baseY, s, t, pouring);
+    if (!pourStart) return;
+
+    // скорость течения: базовая + скорость прокрутки
+    var v = Math.abs(target - lastTarget) * 4000; lastTarget = target;
+    flowOff += 1.6 + Math.min(v, 30);
+    var w = mobile ? 10 : 22;
+    var y0 = Math.max(spout.y, -10);
+    var front = spout.y + (t - pourStart) * H * 1.4;      // голова струи падает вниз
+    var poolH = (mobile ? 34 : 64) * seg(prog, 0.88, 1);
+    var y1 = Math.min(front, H - poolH);
+    if (y1 > y0) {
+      // сама струя, слегка колышется
+      var xAt = function (y) { return sx + Math.sin(y * 0.018 + t * 2.6) * (mobile ? 1.4 : 2.6); };
+      ctx.beginPath(); ctx.moveTo(xAt(y0) - w / 2, y0);
+      for (var y = y0; y <= y1; y += 12) ctx.lineTo(xAt(y) - w / 2 - Math.sin(y * 0.05 + t * 5) * 0.8, y);
+      ctx.lineTo(xAt(y1) - w / 2, y1);
+      for (y = y1; y >= y0; y -= 12) ctx.lineTo(xAt(y) + w / 2 + Math.sin(y * 0.04 + t * 4) * 0.8, y);
+      ctx.closePath();
+      var g = ctx.createLinearGradient(sx - w / 2, 0, sx + w / 2, 0);
+      g.addColorStop(0, 'rgba(105,100,94,0.95)'); g.addColorStop(0.45, 'rgba(178,172,163,0.97)'); g.addColorStop(1, 'rgba(92,88,82,0.95)');
+      ctx.fillStyle = g; ctx.fill();
+      // блики и пузыри, бегут вниз
+      ctx.strokeStyle = 'rgba(232,226,216,0.55)'; ctx.lineWidth = mobile ? 1 : 1.5;
+      var span = y1 - y0;
+      for (var k = 0; k < (mobile ? 10 : 18); k++) {
+        var yy = y0 + ((flowOff * (1 + (k % 3) * 0.25) + k * 61) % Math.max(span, 1));
+        var xx = xAt(yy) + ((k % 3) - 1) * w * 0.22;
+        line(xx, yy, xx, yy + 10 + (k % 4) * 4);
+      }
+      // капли и брызги у головы струи
+      if (front < H - poolH && Math.random() < 0.5) drops.push({ x: xAt(front), y: front, vx: (Math.random() - 0.5) * 2, vy: Math.random() * 2, life: 1 });
+    }
+    // лужа-фундамент в самом низу страницы растекается по ширине
+    if (poolH > 0.5) {
+      var pw = W * seg(prog, 0.88, 1);
+      var pg = ctx.createLinearGradient(0, H - poolH, 0, H);
+      pg.addColorStop(0, 'rgba(178,172,163,0.95)'); pg.addColorStop(1, 'rgba(100,96,90,0.95)');
+      ctx.fillStyle = pg; ctx.beginPath(); ctx.moveTo(sx - pw * 0.15, H);
+      ctx.quadraticCurveTo(sx - pw * 0.15, H - poolH, sx + 20, H - poolH);
+      ctx.lineTo(sx + pw, H - poolH); ctx.lineTo(sx + pw + 10, H); ctx.closePath(); ctx.fill();
+      st(COPPER, 0.9, 1.4, 6); line(0, H - poolH - 6, sx + pw + 12, H - poolH - 6); noGlow();   // опалубка
+      if (Math.random() < 0.4) drops.push({ x: sx + (Math.random() - 0.3) * 30, y: H - poolH, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3, life: 1 });
+    }
+    for (var i = drops.length - 1; i >= 0; i--) {
+      var d = drops[i]; d.vy += 0.25; d.x += d.vx; d.y += d.vy; d.life -= 0.04;
+      if (d.life <= 0 || d.y > H) { drops.splice(i, 1); continue; }
+      ctx.fillStyle = 'rgba(170,164,155,' + d.life + ')'; ctx.beginPath(); ctx.arc(d.x, d.y, mobile ? 2 : 3.4, 0, 6.3); ctx.fill();
+    }
+  }
+
   var lastHud = '';
   function frame(now) {
     var t = (now - t0) / 1000;
@@ -328,6 +417,8 @@
     trucks(prog, t);
     excavator(prog, t);
     particles(b.cur, b, t);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);   // бетон рисуется без «камеры»
+    concrete(t);
 
     if (hud) {
       var txt = prog < 0.1 ? 'Котлован' : (b.build < LEVELS ? 'Этаж ' + Math.max(1, level) + ' из ' + LEVELS : (prog < 0.86 ? 'Фасад' : 'Дом готов'));
