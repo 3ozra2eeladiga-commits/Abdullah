@@ -1,4 +1,4 @@
-/* Котельная дома: прокрутка «поднимает» горячую воду по стоякам на все этажи.
+/* Котельная дома: мышка влево-вправо / палец по фото / ползунок «поднимают» горячую воду по стоякам на все этажи.
    0–12% — загорается котельная; 12–62% — отопление по этажам; 62–95% — горячая вода. */
 (function () {
   'use strict';
@@ -23,8 +23,45 @@
     var st = !s1 ? 0 : wp > 0 ? 3 : hp > 0 ? 2 : 1;
     steps.forEach(function (li, i) { li.classList.toggle('is-on', i < st); });
   }
+  // управление: мышка влево-вправо над фото (компьютер), палец по фото (телефон), ползунок под фото
+  var scheme = box.querySelector('.boiler__scheme'), range = document.getElementById('boilerRange');
+  var cur = 0, goal = 0, raf = 0, touched = false;
+  function setGoal(v, user) {
+    goal = clamp(v);
+    if (user && !touched) { touched = true; box.classList.add('touched'); }
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+  function tick() {
+    cur += (goal - cur) * 0.18;
+    if (Math.abs(goal - cur) < 0.001) cur = goal;
+    render(cur);
+    if (range) { range.value = Math.round(cur * 1000); range.style.setProperty('--p', (cur * 100) + '%'); }
+    raf = cur !== goal ? requestAnimationFrame(tick) : 0;
+  }
+  var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (fine) {
+    scheme.addEventListener('mousemove', function (e) { var r = scheme.getBoundingClientRect(); setGoal((e.clientX - r.left) / r.width, true); });
+  }
+  var sx = null, sv = 0;
+  scheme.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; sv = goal; }, { passive: true });
+  scheme.addEventListener('touchmove', function (e) {
+    if (sx === null) return;
+    var dx = e.touches[0].clientX - sx;
+    setGoal(sv + dx / (scheme.clientWidth * 0.85), true);
+  }, { passive: true });
+  scheme.addEventListener('touchend', function () { sx = null; }, { passive: true });
+  if (range) range.addEventListener('input', function () { setGoal(range.value / 1000, true); });
+
+  // при первом появлении — короткая подсказка: вода сама чуть поднимается и опускается
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce || typeof window.ScrollTrigger === 'undefined') { render(1); return; }
-  window.ScrollTrigger.create({ trigger: box, start: 'top 80%', end: 'bottom 55%', onUpdate: function (st) { render(st.progress); } });
   render(0);
+  if (reduce) { setGoal(1); return; }
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (en) {
+      if (!en[0].isIntersecting) return; io.disconnect();
+      setTimeout(function () { if (!touched) setGoal(0.45); }, 400);
+      setTimeout(function () { if (!touched) setGoal(0.12); }, 2600);
+    }, { threshold: 0.5 });
+    io.observe(scheme);
+  }
 })();

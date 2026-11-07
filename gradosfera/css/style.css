@@ -241,12 +241,12 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .fx-wrap { overflow: hidden; }
 .fx-wrap > img { display: block; width: 100%; }
 .fx-clean { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.fx-bp-img { filter: grayscale(1) sepia(1) saturate(2.2) hue-rotate(-12deg) brightness(.42) contrast(1.6); }
+.fx-bp-img { filter: grayscale(1) invert(1) sepia(1) hue-rotate(165deg) saturate(2.2) brightness(.6) contrast(1.5); }
 .fx-grid { position: absolute; inset: 0; pointer-events: none; z-index: 2;
-  background-image: linear-gradient(rgba(201,138,91,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(201,138,91,.35) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(140,215,255,.32) 1px, transparent 1px), linear-gradient(90deg, rgba(140,215,255,.32) 1px, transparent 1px);
   background-size: 28px 28px; mix-blend-mode: screen; }
-.fx-scan { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 3; background: #ffe2b8;
-  box-shadow: 0 0 12px 3px rgba(255,190,120,.9), 0 0 40px 10px rgba(201,138,91,.5); }
+.fx-scan { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 3; background: #eaf8ff;
+  box-shadow: 0 0 12px 3px rgba(150,220,255,.95), 0 0 44px 12px rgba(80,170,255,.5); }
 .fx-cover { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; perspective: 900px; }
 .fx-brick { position: absolute; background: var(--bg); box-shadow: inset 0 0 0 1px rgba(201,138,91,.35); }
 .fx-board { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, #1d1b1a, #252220 60%, #1a1918); box-shadow: inset -1px 0 0 rgba(201,138,91,.5); backface-visibility: hidden; }
@@ -419,3 +419,20 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
   .lb { padding: 60px 10px; }
   .lb__arr { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: none; }
 }
+
+/* котельная: управление пальцем/мышкой */
+.boiler--house .boiler__scheme { touch-action: pan-y; cursor: ew-resize; user-select: none; -webkit-user-select: none; }
+.boiler__hint { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 10px 18px; border-radius: 999px;
+  background: rgba(18,18,20,.78); border: 1px solid rgba(239,231,218,.25); color: var(--cream); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; white-space: nowrap;
+  pointer-events: none; transition: opacity .5s; animation: hintNudge 1.6s ease-in-out infinite; }
+.boiler__hint i { font-style: normal; color: #ffb27a; font-size: 15px; letter-spacing: 0; }
+.boiler--house.touched .boiler__hint { opacity: 0; }
+@keyframes hintNudge { 0%, 100% { transform: translateX(-50%); } 50% { transform: translateX(calc(-50% + 8px)); } }
+.boiler__ctl { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.boiler__ctl input[type="range"] { --p: 0%; height: 4px; background: linear-gradient(#ff8a45, #ff8a45) 0 / var(--p) 100% no-repeat, rgba(239,231,218,.18); }
+.boiler__ctl input[type="range"]::-webkit-slider-thumb { width: 26px; height: 26px; border: 0; background: #ff8a45; box-shadow: 0 0 0 6px rgba(255,138,69,.25), 0 0 18px rgba(255,138,69,.8); }
+.boiler__ctl input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: 0; background: #ff8a45; }
+@media (max-width: 760px) { .boiler__ctl { grid-template-columns: 1fr; gap: 10px; } .boiler__ctl span:last-child { text-align: right; } .boiler__hint { font-size: 9.5px; padding: 8px 12px; } }
+.boiler__ctl input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; border-radius: 4px; outline: none; cursor: pointer; }
+.boiler__ctl input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; border-radius: 50%; }
+.boiler__ctl input[type="range"]::-moz-range-thumb { border-radius: 50%; }
