@@ -804,3 +804,21 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .fcap__btn:hover { border-color: #c8743c; }
 .fcap__go { flex-shrink: 0; padding: 9px 14px; border-radius: 999px; background: #c8743c; color: #fff; font-size: 13px; font-weight: 600; white-space: nowrap; }
 @media (max-width: 760px) { .fcap { font-size: 13px; min-height: 76px; } .fcap__txt b { font-size: 15px; } .fwalk__man { width: 20px; height: 26px; margin: -23px 0 0 -10px; } }
+
+/* коммерция: меняющаяся вывеска */
+.biz { position: relative; margin: 0; overflow: hidden; cursor: pointer; --w: 600px; }
+.card .biz img { aspect-ratio: 2000 / 1116; display: block; }
+.biz__sign { position: absolute; left: 61.5%; top: 51.5%; transform: translate(-50%, -50%) rotate(-9.5deg) skewX(-6deg); white-space: nowrap;
+  font-family: var(--serif); font-size: calc(var(--w) * .036); letter-spacing: .14em; color: #fff3df; line-height: 1;
+  text-shadow: 0 0 4px rgba(255,220,170,.9), 0 0 12px rgba(255,160,80,.75), 0 0 26px rgba(255,140,60,.45); pointer-events: none; }
+.biz.final .biz__sign { color: #ffd2a6; letter-spacing: .2em; }
+.biz__sign.flick { animation: bizFlick .55s steps(1) both; }
+@keyframes bizFlick { 0% { opacity: 1; } 15% { opacity: .15; } 30% { opacity: .9; } 40% { opacity: 0; } 70% { opacity: .4; } 80% { opacity: 1; } 90% { opacity: .6; } 100% { opacity: 1; } }
+.biz__hint { position: absolute; left: 12px; bottom: 10px; padding: 5px 10px; border-radius: 999px; background: rgba(0,0,0,.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  color: #fff; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; }
+.biz__word { color: #ffb27a; font-weight: 600; display: inline-block; }
+.biz__word.flick { animation: bizWord .4s ease; }
+@keyframes bizWord { 0% { opacity: 1; } 45% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: none; } }
+.biz__call { color: #ffb27a; font-size: 14px; font-weight: 600; }
+/* подпись раздела внизу слева не сливается с текстом страницы */
+.build-hud { padding: 6px 10px; margin-left: -10px; border-radius: 999px; background: rgba(16,17,20,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }

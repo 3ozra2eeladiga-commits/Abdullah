@@ -86,7 +86,13 @@
     master.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 1.5);
     clearTimeout(timer); timer = null; step = 0; loop();
   }
-  function wake() { if (ctx && on && !document.hidden && ctx.state !== 'running') { try { ctx.resume(); } catch (e) {} } }
+  function wake() {
+    if (!ctx || !on || document.hidden) return;
+    try { ctx.resume(); } catch (e) {}
+    var t = ctx.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(0, t); master.gain.linearRampToValueAtTime(0.9, t + 1.2);
+    if (!timer) loop();
+  }
+  window.addEventListener('pagehide', function () { if (ctx) { try { master.gain.setValueAtTime(0, ctx.currentTime); ctx.suspend(); } catch (e) {} } });
   function onGesture(e) {
     if (!ctx || !on || ctx.state === 'running') return;
     if (e && btn.contains(e.target)) return;      // нажатие на колонку обработает сама кнопка
@@ -95,7 +101,14 @@
   ['pointerdown', 'touchend', 'keydown'].forEach(function (t) { document.addEventListener(t, onGesture, true); });
   document.addEventListener('visibilitychange', function () {
     if (!ctx || !on) return;
-    if (document.hidden) ctx.suspend(); else wake();
+    if (document.hidden) {
+      // уходим со страницы: сразу глушим и останавливаем мотор, потом «усыпляем» звук — иначе телефон может зациклить последний кусок звука
+      var t = ctx.currentTime;
+      master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(0, t + 0.05);
+      if (eng) { try { eng.o.stop(); eng.o2.stop(); eng.n.stop(); } catch (e) {} eng = null; }
+      clearTimeout(timer); timer = null;
+      setTimeout(function () { if (document.hidden && ctx) ctx.suspend(); }, 120);
+    } else wake();
   });
   window.addEventListener('focus', wake);
   window.addEventListener('pageshow', wake);
@@ -129,7 +142,7 @@
       n.buffer = noise(); n.loop = true; nl.type = 'bandpass'; nl.frequency.value = 180; nl.Q.value = 0.6; ng.gain.value = 0.35;
       o.connect(lp); o2.connect(lp); lp.connect(g); n.connect(nl); nl.connect(ng); ng.connect(g); g.connect(master);
       o.start(); o2.start(); n.start();
-      eng = { o: o, o2: o2, g: g, lp: lp };
+      eng = { o: o, o2: o2, n: n, g: g, lp: lp };
     }
     var t = ctx.currentTime, v = Math.max(0, Math.min(1, level));
     eng.g.gain.setTargetAtTime(v * 0.16, t, 0.12);
