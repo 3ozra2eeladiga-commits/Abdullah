@@ -143,7 +143,7 @@ body.lock { overflow: hidden; }
 .flat__variants { display: flex; flex-wrap: wrap; gap: 8px; }
 .flat__variants button { padding: 9px 14px; border: 1px solid var(--line); font-size: 13px; font-variant-numeric: tabular-nums; transition: border-color .3s, color .3s; }
 .flat__variants button:hover, .flat__variants button.is-active { border-color: var(--copper); color: var(--copper); }
-.extra { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: clamp(60px, 7vw, 100px); }
+.extra { display: grid; grid-template-columns: minmax(0, 640px); gap: 24px; margin-top: clamp(60px, 7vw, 100px); }
 .extra__card { text-align: left; border: 1px solid var(--line); display: grid; grid-template-columns: 42% 1fr; align-items: center; transition: border-color .3s; cursor: zoom-in; }
 .extra__card:hover { border-color: var(--copper); }
 .extra__card img { background: var(--cream); aspect-ratio: 4 / 3; object-fit: contain; width: 100%; padding: 8px; }
