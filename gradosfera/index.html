@@ -27,7 +27,7 @@
     <span class="hdr__name">Новый Квартал</span>
     <span class="hdr__sub">жилой комплекс · Градосфера</span>
   </a>
-  <button class="snd" id="soundBtn" type="button" aria-pressed="false" aria-label="Включить музыку"><i></i><i></i><i></i><span>Звук</span></button>
+  <button class="snd" id="soundBtn" type="button" aria-pressed="false" aria-label="Включить звук"><svg class="snd__ic" viewBox="0 0 24 24" aria-hidden="true"><path class="snd__spk" d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z"/><path class="snd__w1" d="M15.2 9.2a4 4 0 0 1 0 5.6"/><path class="snd__w2" d="M17.8 6.6a7.6 7.6 0 0 1 0 10.8"/><path class="snd__x" d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></svg><span>Звук</span></button>
   <button class="hdr__menu" id="menuBtn" aria-expanded="false" aria-controls="menu"><span class="hdr__menu-txt">Меню</span><span class="hdr__lines"><i></i><i></i></span></button>
 </header>
 
@@ -86,12 +86,11 @@
     </svg>
     <div class="guide__bubble" id="guideBubble"></div>
     <div class="guide__menu" id="guideMenu" role="dialog" aria-label="Помощь">
-      <b>Чем помочь?</b>
-      <a class="gmn" href="tel:+79388153333">📞 Позвонить: +7 (938) 815-33-33</a>
-      <a class="gmn" href="#flats" data-close>📐 Посмотреть планировки</a>
-      <a class="gmn" href="https://yandex.ru/maps/?text=%D0%9C%D0%BE%D0%B7%D0%B4%D0%BE%D0%BA%2C%20%D1%83%D0%BB.%20%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2C%2041" target="_blank" rel="noopener">📍 Как проехать в офис продаж</a>
-      <a class="gmn" href="#terms" data-close>📄 Сроки и документы</a>
-      <button class="gmn gmn--x" type="button" data-close>Спасибо, я сам посмотрю</button>
+      <a class="gmn" href="tel:+79388153333"><em>📞</em>Звонок</a>
+      <a class="gmn" href="#flats" data-close><em>📐</em>Планировки</a>
+      <a class="gmn" href="https://yandex.ru/maps/?text=%D0%9C%D0%BE%D0%B7%D0%B4%D0%BE%D0%BA%2C%20%D1%83%D0%BB.%20%D0%9A%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%2C%2041" target="_blank" rel="noopener"><em>📍</em>Офис</a>
+      <a class="gmn" href="#terms" data-close><em>📄</em>Документы</a>
+      <button class="gmn--x" type="button" data-close aria-label="Закрыть">×</button>
     </div>
   </div>
 </div>

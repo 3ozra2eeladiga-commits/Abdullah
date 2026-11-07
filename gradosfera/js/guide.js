@@ -16,7 +16,7 @@
     ['#boiler',   0.70, 'Своя котельная на весь дом. Проведите по фото — увидите, как идёт тепло.'],
     ['#gallery',  0.60, 'Листайте галерею — здесь все ракурсы дома.'],
     ['#terms',    0.66, 'Сдача — I квартал 2028. Разрешение на строительство — по кнопке ниже.'],
-    ['#contacts', 0.74, 'Остались вопросы? Звоните: <a href="tel:+79388153333">+7 (938) 815-33-33</a> или приезжайте в офис продаж. Нужна помощь — нажмите на меня!']
+    ['#contacts', 0.74, 'Остались вопросы? Звоните: <a href="tel:+79388153333">+7 (938) 815-33-33</a> или приезжайте в офис продаж — покажем всё лично!']
   ];
   var nodes = STOPS.map(function (s) { return document.querySelector(s[0]); });
   var cur = -1, y = 0, timer = 0, moveN = 0;
@@ -57,15 +57,16 @@
   if (bub) bub.addEventListener('click', function () { openMenu(true); });
   if (menu) menu.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) openMenu(false); });
   document.addEventListener('click', function (e) { if (!g.contains(e.target)) openMenu(false); });
-  function helpHint() {
-    clearInterval(helpT);
-    helpT = setInterval(function () {
-      if (cur < 0 || g.classList.contains('menu-open') || bub.classList.contains('is-on') || cur === STOPS.length - 1) return;
-      bub.innerHTML = 'Нужна помощь? Нажмите на меня — подскажу 👋'; bub.classList.add('is-on');
-      setTimeout(function () { if (bub.textContent.indexOf('Нужна помощь') === 0) bub.classList.remove('is-on'); }, 4500);
-    }, 16000);
-  }
-  helpHint();
+  // подсказка «нажмите на меня» — редко: один раз за визит, через 1,5 минуты, если меню ещё не открывали
+  var helped = false;
+  if (man) man.addEventListener('click', function () { helped = true; });
+  helpT = setTimeout(function tryHint() {
+    if (helped) return;
+    if (cur < 0 || g.classList.contains('menu-open') || bub.classList.contains('is-on') || cur === STOPS.length - 1) { helpT = setTimeout(tryHint, 10000); return; }
+    helped = true;
+    bub.innerHTML = 'Если нужна помощь — нажмите на меня 👋'; bub.classList.add('is-on');
+    setTimeout(function () { if (bub.textContent.indexOf('Если нужна') === 0) bub.classList.remove('is-on'); }, 4500);
+  }, 90000);
 
   var raf = 0;
   var settle = 0;
