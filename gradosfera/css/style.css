@@ -436,3 +436,12 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .boiler__ctl input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; border-radius: 4px; outline: none; cursor: pointer; }
 .boiler__ctl input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; border-radius: 50%; }
 .boiler__ctl input[type="range"]::-moz-range-thumb { border-radius: 50%; }
+
+/* фасад: видео день → ночь, крутится прокруткой */
+.facade { height: 340vh; }
+.facade__mask .facade__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.25); will-change: transform; opacity: 0; transition: opacity .4s; }
+.facade__mask .facade__video.is-ready { opacity: 1; }
+.facade__daynight { position: absolute; z-index: 3; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--cream); }
+.facade__daynight i { width: 120px; height: 2px; background: rgba(239,231,218,.25); position: relative; display: block; }
+.facade__daynight b { position: absolute; inset: 0; background: linear-gradient(90deg, #ffd28a, #ff8a45 50%, #6f8cff); transform-origin: left; transform: scaleX(0); }
+@media (max-width: 760px) { .facade { height: 300vh; } }

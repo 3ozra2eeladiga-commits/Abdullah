@@ -110,7 +110,12 @@
   <div class="facade__pin">
     <div class="facade__mask" id="facadeMask">
       <img src="img/photo/closeup.webp" alt="Фасад ЖК «Новый Квартал» снизу вверх" loading="lazy">
+      <video id="facadeVideo" class="facade__video" muted playsinline preload="auto" poster="img/photo/closeup.webp" aria-hidden="true">
+        <source src="video/facade-day-night-720.mp4" type="video/mp4" media="(max-width: 760px)">
+        <source src="video/facade-day-night.mp4" type="video/mp4">
+      </video>
     </div>
+    <div class="facade__daynight" aria-hidden="true"><span>день</span><i><b id="dnBar"></b></i><span>ночь</span></div>
     <div class="facade__copy">
       <h2 class="h2">Фасад, продуманный<br>в&nbsp;каждой линии</h2>
       <p>Стеклянная башня задаёт дому запоминающийся силуэт. Вертикальные световые акценты делают здание узнаваемым днём и особенно впечатляющим ночью.</p>

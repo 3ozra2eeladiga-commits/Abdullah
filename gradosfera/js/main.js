@@ -161,6 +161,36 @@
   ftl.fromTo('#facadeMask', { clipPath: mobile ? 'inset(18% 34% 18% 34%)' : 'inset(14% 44% 14% 44%)' }, { clipPath: 'inset(0% 0% 0% 0%)', ease: 'power2.inOut' }, 0)
      .fromTo('#facadeMask img', { scale: 1.25 }, { scale: 1, ease: 'power2.inOut' }, 0)
      .from('.facade__copy', { opacity: 0, y: 40, ease: 'power2.out', duration: 0.4 }, 0.35);
+  ftl.fromTo('#facadeVideo', { scale: 1.25 }, { scale: 1, ease: 'power2.inOut' }, 0);
+
+  // видео день → ночь: кадр видео = положение прокрутки внутри раздела «Фасад»
+  (function () {
+    var v = document.getElementById('facadeVideo'), bar = document.getElementById('dnBar');
+    if (!v) return;
+    var want = 0, raf = 0, ready = false;
+    function seek() {
+      raf = 0;
+      if (!ready || !v.duration) return;
+      var t = want * (v.duration - 0.05);
+      if (Math.abs(v.currentTime - t) > 0.02) v.currentTime = t;
+    }
+    function onReady() {
+      if (ready) return; ready = true; v.classList.add('is-ready'); v.pause(); seek();
+    }
+    v.addEventListener('loadeddata', onReady);
+    if (v.readyState >= 2) onReady();
+    // iOS: видео нужно «разбудить» один раз, иначе не отдаёт кадры
+    var wake = function () { var pr = v.play(); if (pr && pr.then) pr.then(function () { v.pause(); onReady(); }).catch(function () {}); };
+    window.addEventListener('touchstart', wake, { once: true, passive: true });
+    window.ScrollTrigger.create({
+      trigger: '#facade', start: 'top top', end: 'bottom bottom',
+      onUpdate: function (st) {
+        want = Math.min(1, Math.max(0, (st.progress - 0.28) / 0.62));
+        if (bar) bar.style.transform = 'scaleX(' + want + ')';
+        if (!raf) raf = requestAnimationFrame(seek);
+      }
+    });
+  })();
 
   // бегущая строка
   var row = $('#marq');
