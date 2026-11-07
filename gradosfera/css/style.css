@@ -514,7 +514,7 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .guide.jumping .guide__man { animation: gJump .55s cubic-bezier(.3,0,.4,1); }
 @keyframes gJump { 0% { transform: translateY(0) scale(1, 1); } 12% { transform: translateY(4px) scale(1.1, .85); } 50% { transform: translateY(-46px) rotate(-14deg); } 88% { transform: translateY(2px) scale(1.08, .9); } 100% { transform: none; } }
 .gm-arm--point { transform-origin: 22px 30px; animation: gPoint 1.4s ease-in-out infinite; }
-@keyframes gPoint { 50% { transform: rotate(10deg); } }
+@keyframes gPoint { 50% { transform: rotate(6deg); } }
 .guide__bubble { pointer-events: auto; max-width: 250px; padding: 11px 14px; margin-bottom: 30px; border-radius: 14px 14px 4px 14px; background: #efe7da; color: #1b1410; font: 600 13px/1.4 var(--sans); box-shadow: 0 10px 30px rgba(0,0,0,.45); opacity: 0; transform: translateY(6px) scale(.96); transition: opacity .3s, transform .3s; }
 .guide__bubble.is-on { opacity: 1; transform: none; }
 .guide__bubble a { color: #b5602b; font-weight: 700; text-decoration: underline; }
@@ -763,3 +763,5 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .gmn:hover { background: #b5602b; }
 .gmn--x { position: absolute; top: 4px; right: 6px; width: 22px; height: 22px; border-radius: 50%; color: #fff; font: 400 18px/1 var(--sans); text-shadow: 0 1px 3px rgba(0,0,0,.5); }
 @media (max-width: 760px) { .guide__menu { width: auto; } }
+
+#gmAim { transition: transform .4s; }
