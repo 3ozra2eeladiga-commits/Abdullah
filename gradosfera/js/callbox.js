@@ -2,7 +2,9 @@
    Поэтому на компьютере вместо звонка показываем аккуратное окно с контактами: номер, «скопировать», адрес и часы. На телефоне — обычный звонок. */
 (function () {
   'use strict';
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  // звонить можно только с телефона; на всех остальных устройствах (ноутбуки, в т.ч. с сенсорным экраном) — окно с контактами
+  var phone = /Android|iPhone|iPod|Mobile|Windows Phone/i.test(navigator.userAgent) && Math.min(screen.width, screen.height) < 600;
+  if (phone) return;
   var box = document.createElement('div'); box.className = 'cbx'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Контакты');
   box.innerHTML = '<div class="cbx__card">' +
     '<button class="cbx__x" type="button" aria-label="Закрыть">×</button>' +
