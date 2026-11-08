@@ -107,18 +107,64 @@
 
   /* ---------- галерея + lightbox ---------- */
   var track = $('#galTrack'), lb = $('#lb'), lbImg = $('#lbImg'), list = [], idx = 0;
-  GALLERY.forEach(function (src, i) {
-    var d = document.createElement('div'); d.className = 'gallery__item';
-    d.innerHTML = '<img src="' + src + '" alt="ЖК «Новый Квартал» — фото ' + (i + 1) + '" loading="lazy" draggable="false">';
-    d.addEventListener('click', function () { if (!dragged) openLb(GALLERY, i); });
-    track.appendChild(d);
-  });
-  $$('[data-gal]').forEach(function (b) { b.addEventListener('click', function () { track.scrollBy({ left: +b.dataset.gal * track.clientWidth * 0.7, behavior: 'smooth' }); }); });
-  // перетаскивание мышью
-  var down = false, sx = 0, sl = 0, dragged = false;
-  track.addEventListener('mousedown', function (e) { down = true; dragged = false; sx = e.pageX; sl = track.scrollLeft; track.style.scrollSnapType = 'none'; });
-  window.addEventListener('mouseup', function () { if (down) { down = false; track.style.scrollSnapType = ''; } });
-  track.addEventListener('mousemove', function (e) { if (!down) return; var dx = e.pageX - sx; if (Math.abs(dx) > 5) dragged = true; track.scrollLeft = sl - dx; });
+  // «Стол архитектора»: фото лежат стопкой отпечатков; свайп — верхнее улетает и уходит вниз стопки; нажатие — на весь экран
+  (function () {
+    var stack = $('#deskStack'); if (!stack) return;
+    var CAPS = ['Утро', 'Стеклянная башня', 'Главный фасад', 'Закат', 'Двор без машин', 'Лаунж на крыше', 'Коммерция', 'Паркинг'];
+    var cards = [], order = [], N = GALLERY.length, busy = false;
+    GALLERY.forEach(function (src, i) {
+      var c = document.createElement('figure'); c.className = 'pcard';
+      c.innerHTML = '<img src="' + src + '" alt="ЖК «Новый Квартал» — ' + (CAPS[i] || 'фото') + '" loading="lazy" draggable="false"><figcaption>' + (CAPS[i] || '') + '</figcaption>';
+      c._r = (Math.random() * 12 - 6); c._x = Math.random() * 24 - 12; c._y = Math.random() * 16 - 8; c._i = i;
+      stack.appendChild(c); cards.push(c);
+    });
+    order = cards.slice().reverse();
+    function rest(c, k) { c.style.zIndex = k + 1; c.style.transform = 'translate(-50%,-50%) translate(' + c._x + 'px,' + c._y + 'px) rotate(' + c._r + 'deg)'; }
+    function layout() { order.forEach(rest); var top = order[order.length - 1]; $('#deskN').textContent = (top._i + 1) + ' / ' + N; $('#deskCap').textContent = CAPS[top._i] || ''; }
+    layout();
+    var hinted = false; function hideHint() { if (!hinted) { hinted = true; $('#deskHint').classList.add('is-off'); } }
+    function throwTop(dir) {
+      if (busy) return; busy = true; hideHint();
+      var c = order[order.length - 1];
+      c.style.transition = 'transform .5s cubic-bezier(.3,.6,.3,1), opacity .5s';
+      c.style.transform = 'translate(-50%,-50%) translate(' + dir * window.innerWidth * 0.9 + 'px,-40px) rotate(' + (dir * 32) + 'deg)';
+      c.style.opacity = '0';
+      setTimeout(function () {
+        order.pop(); order.unshift(c);
+        c.style.transition = 'none'; c._r = Math.random() * 12 - 6; layout(); void c.offsetWidth;
+        c.style.transition = 'opacity .45s'; c.style.opacity = '1'; busy = false;
+      }, 480);
+    }
+    function back() {
+      if (busy) return; busy = true; hideHint();
+      var c = order.shift(); order.push(c);
+      c.style.transition = 'none'; c.style.opacity = '0';
+      c.style.transform = 'translate(-50%,-50%) translate(' + (-window.innerWidth * 0.9) + 'px,-40px) rotate(-32deg)'; c.style.zIndex = N + 1; void c.offsetWidth;
+      c.style.transition = 'transform .5s cubic-bezier(.3,.6,.3,1), opacity .4s'; c.style.opacity = '1'; layout();
+      setTimeout(function () { busy = false; }, 500);
+    }
+    var drag = null;
+    stack.addEventListener('pointerdown', function (e) {
+      var c = e.target.closest('.pcard'); if (!c || c !== order[order.length - 1] || busy) return;
+      drag = { c: c, x: e.clientX, y: e.clientY, dx: 0, dy: 0, t: Date.now(), moved: false };
+      c.style.transition = 'none'; try { c.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    stack.addEventListener('pointermove', function (e) {
+      if (!drag) return; drag.dx = e.clientX - drag.x; drag.dy = e.clientY - drag.y;
+      if (Math.abs(drag.dx) > 6) drag.moved = true;
+      var c = drag.c; c.style.transform = 'translate(-50%,-50%) translate(' + (c._x + drag.dx) + 'px,' + (c._y + drag.dy * 0.3) + 'px) rotate(' + (c._r + drag.dx * 0.06) + 'deg)';
+    });
+    function end() {
+      if (!drag) return; var d = drag; drag = null;
+      var v = Math.abs(d.dx) / Math.max(1, Date.now() - d.t);
+      if (Math.abs(d.dx) > 80 || (v > 0.6 && Math.abs(d.dx) > 30)) { throwTop(d.dx > 0 ? 1 : -1); return; }
+      d.c.style.transition = 'transform .35s cubic-bezier(.3,1.4,.5,1)'; rest(d.c, order.length - 1);
+      if (!d.moved && Math.abs(d.dy) < 8) openLb(GALLERY, d.c._i);
+    }
+    stack.addEventListener('pointerup', end);
+    stack.addEventListener('pointercancel', function () { if (drag) drag.moved = true; end(); });
+    $$('[data-gal]').forEach(function (b) { b.addEventListener('click', function () { if (+b.dataset.gal > 0) throwTop(1); else back(); }); });
+  })();
 
   var showLb = function () {
     lbImg.src = list[idx]; lbImg.classList.toggle('is-plan', /plan/.test(list[idx]));
