@@ -107,7 +107,7 @@
     ctx.strokeText(txt, x, y);
     ctx.font = (s * 0.075) + 'px Onest, system-ui, sans-serif';
     ctx.fillStyle = 'rgba(' + COPPER + ',' + (mobile ? 0.2 : 0.24) + ')'; ctx.shadowBlur = 0;
-    ctx.fillText(level >= LEVELS && p > 0.86 ? 'ДОМ ГОТОВ' : 'ЭТАЖ', x + 8, y + s * 0.11);
+    ctx.fillText(level >= LEVELS && p > 0.86 ? 'I КВ. 2028' : 'ЭТАЖ', x + 8, y + s * 0.11);
     ctx.restore();
   }
 
@@ -455,7 +455,7 @@
     ctx = mainCtx;
 
     if (hud) {
-      var txt = prog < 0.1 ? 'Котлован' : (b.build < LEVELS ? 'Этаж ' + Math.max(1, level) + ' из ' + LEVELS : (prog < 0.86 ? 'Фасад' : 'Дом готов'));
+      var txt = prog < 0.1 ? 'Котлован' : (b.build < LEVELS ? 'Этаж ' + Math.max(1, level) + ' из ' + LEVELS : (prog < 0.86 ? 'Фасад' : 'Сдача — I кв. 2028'));
       if (txt !== lastHud) { hud.textContent = txt; lastHud = txt; }
     }
     if (!reduce && !document.hidden) requestAnimationFrame(frame);
