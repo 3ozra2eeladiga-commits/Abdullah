@@ -351,7 +351,10 @@
     if (hand) return { x: x + (hand.x + 7) * s, y: foot + (hand.y - 2) * s };
   }
 
+  var gReact = 0;   // время «нажали на рабочих» — подпрыгивают
+  window.gsGondPoke = function () { gReact = performance.now() / 1000; };
   function gondola(t) {
+    window.gsGond = null;
     if (!aboutEl) return;
     var r = aboutEl.getBoundingClientRect();
     if (!gond.start) { if (r.top < H * 0.18) gond.start = t; else return; }
@@ -398,14 +401,17 @@
     });
     noGlow(); ctx.restore();
 
+    window.gsGond = { x0: x0 + sway, x1: x1 + sway, top: py - 60 * s, bottom: py + 6 };
     // рабочие
     var spots = [0.2, 0.5, 0.8], jobs = ['weld', 'hammer', 'wipe'];
     for (k = 0; k < 3; k++) {
       var tx = x0 + pw * spots[k] + sway;
       var startX = W + 30 + k * 34;
       var wxk = walk < 1 ? mix(startX, tx, clamp(walk * 1.3 - k * 0.15, 0, 1)) : tx;
-      var foot = py - 2 * s - (hop > 0 ? Math.sin(Math.PI * hop) * 20 * s : 0);
+      var rq = Math.max(0, 1 - (t - gReact) / 0.9);   // реакция на нажатие: подпрыгивают
+      var foot = py - 2 * s - (hop > 0 ? Math.sin(Math.PI * hop) * 20 * s : 0) - (rq > 0 ? Math.abs(Math.sin((1 - rq) * Math.PI * 2 + k)) * 14 * s : 0);
       var pose = walk < 1 ? (wxk === tx ? 'hold' : 'walk') : hop > 0 && hop < 1 ? 'hop' : (el < 3.2 || moving ? 'hold' : jobs[k]);
+      if (rq > 0) pose = 'hop';
       var tool = worker(wxk, foot, s, pose, k, t);
       if (pose === 'weld' && tool && Math.random() < 0.18) {
         for (var n = 0; n < 1; n++) gsparks.push({ x: tool.x, y: tool.y, vx: (Math.random() - 0.7) * 1.4, vy: -Math.random() * 1.2, life: 1 });
@@ -434,7 +440,7 @@
     var t = (now - t0) / 1000;
     // пока виден первый экран (видео), фон-стройку не рисуем — телефону легче, видео не дёргается
     var heroEl = document.getElementById('hero');
-    if (heroEl && window.scrollY < heroEl.offsetHeight - window.innerHeight * 0.9) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); if (fctx) fctx.clearRect(0, 0, fg.width, fg.height); if (!reduce && !document.hidden) requestAnimationFrame(frame); return; }
+    if (heroEl && window.scrollY < heroEl.offsetHeight - window.innerHeight * 0.9) { window.gsGond = null; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); if (fctx) fctx.clearRect(0, 0, fg.width, fg.height); if (!reduce && !document.hidden) requestAnimationFrame(frame); return; }
     if (lastNow && GLOW) { if (now - lastNow > 28) slow++; else slow = Math.max(0, slow - 1); if (slow > 20) GLOW = 0; }
     lastNow = now;
     prog += (target - prog) * (reduce ? 1 : 0.2);

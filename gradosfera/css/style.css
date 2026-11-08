@@ -1231,3 +1231,11 @@ html.gd-on canvas { visibility: hidden !important; }
 .cbx__rows span { display: block; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: rgba(239,231,218,.55); margin-bottom: 6px; }
 .cbx__rows b { font-weight: 400; font-size: 15px; line-height: 1.45; color: #efe7da; }
 .cbx__map { color: #ffb27a; font-size: 14px; }
+
+/* реплики рабочих из люльки */
+.gsay { position: fixed; z-index: 70; width: 300px; padding: 10px 14px; border-radius: 14px; background: #f6efe4; color: #1b1410; font: 700 14px/1.35 var(--sans); text-align: center;
+  box-shadow: 0 10px 28px rgba(0,0,0,.45); opacity: 0; transform: translateY(6px) scale(.96); pointer-events: none; transition: opacity .25s, transform .25s; }
+.gsay::after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: #f6efe4; }
+.gsay.on { opacity: 1; transform: none; }
+html.over-gond, html.over-gond * { cursor: pointer !important; }
+.team__say { white-space: normal; width: max-content; max-width: min(92%, 420px); text-align: center; }
