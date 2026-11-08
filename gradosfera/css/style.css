@@ -42,15 +42,15 @@ body.lock { overflow: hidden; }
 .btn--fill:hover { background: var(--cream); border-color: var(--cream); }
 
 /* ---------- фон «стройка» ---------- */
-.build-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-.build-fg { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+.build-bg { position: fixed; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 0; pointer-events: none; }
+.build-fg { position: fixed; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 4; pointer-events: none; }
 main, .ftr { position: relative; z-index: 1; }
 .build-hud { position: fixed; z-index: 2; left: max(var(--gut), var(--safe-l)); bottom: calc(22px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 10px; font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--copper); font-weight: 500; opacity: 0; transition: opacity .5s; pointer-events: none; }
 body.past-hero .build-hud { opacity: 1; }
 .build-hud__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--copper); animation: ping 2.4s infinite; }
 
 /* ---------- header ---------- */
-.hdr { position: fixed; z-index: 60; inset: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: calc(18px + env(safe-area-inset-top, 0px)) max(var(--gut), var(--safe-r)) 18px max(var(--gut), var(--safe-l)); transition: background .4s, padding .4s; }
+.hdr { position: fixed; z-index: 60; top: 0; right: 0; bottom: auto; left: 0; inset: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: calc(18px + env(safe-area-inset-top, 0px)) max(var(--gut), var(--safe-r)) 18px max(var(--gut), var(--safe-l)); transition: background .4s, padding .4s; }
 .hdr::after { content: ""; position: absolute; left: max(var(--gut), var(--safe-l)); right: max(var(--gut), var(--safe-r)); bottom: 0; height: 1px; background: var(--line); }
 .hdr.is-solid { background: rgba(18, 18, 20, .86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-bottom: 12px; }
 .hdr__call { justify-self: start; display: inline-flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: .14em; font-weight: 500; }
@@ -67,7 +67,7 @@ body.past-hero .build-hud { opacity: 1; }
 .hdr__menu[aria-expanded="true"] .hdr__lines i:last-child { top: 5px; width: 28px; transform: rotate(-45deg); }
 
 /* ---------- menu ---------- */
-.menu { position: fixed; inset: 0; z-index: 55; background: var(--bg); clip-path: inset(0 0 100% 0); transition: clip-path .7s cubic-bezier(.77, 0, .18, 1); visibility: hidden; }
+.menu { position: fixed; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 55; background: var(--bg); clip-path: inset(0 0 100% 0); transition: clip-path .7s cubic-bezier(.77, 0, .18, 1); visibility: hidden; }
 .menu.is-open { clip-path: inset(0 0 0 0); visibility: visible; }
 .menu__inner { height: 100%; display: grid; grid-template-columns: 1.4fr 1fr; align-items: end; gap: 40px; padding: 120px max(var(--gut), var(--safe-r)) calc(50px + env(safe-area-inset-bottom, 0px)) max(var(--gut), var(--safe-l)); overflow-y: auto; }
 .menu__list { list-style: none; margin: 0; padding: 0; }
@@ -80,9 +80,9 @@ body.past-hero .build-hud { opacity: 1; }
 /* ---------- hero ---------- */
 .hero { height: 220vh; position: relative; }
 .hero__stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
-.hero__img { position: absolute; inset: -4%; background-size: cover; background-position: center 40%; will-change: transform, opacity; }
+.hero__img { position: absolute; top: -4%; right: -4%; bottom: -4%; left: -4%; inset: -4%; background-size: cover; background-position: center 40%; will-change: transform, opacity; }
 .hero__img--eve { opacity: 0; }
-.hero__shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(24,24,27,.6) 0%, rgba(24,24,27,.1) 24%, rgba(24,24,27,.28) 50%, rgba(24,24,27,.88) 100%), linear-gradient(90deg, rgba(24,24,27,.45) 0%, rgba(24,24,27,0) 55%); }
+.hero__shade { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; background: linear-gradient(180deg, rgba(24,24,27,.6) 0%, rgba(24,24,27,.1) 24%, rgba(24,24,27,.28) 50%, rgba(24,24,27,.88) 100%), linear-gradient(90deg, rgba(24,24,27,.45) 0%, rgba(24,24,27,0) 55%); }
 .hero__title { text-shadow: 0 2px 40px rgba(10, 10, 12, .45); position: absolute; left: max(var(--gut), var(--safe-l)); right: max(var(--gut), var(--safe-r)); bottom: 21vh; font-family: var(--serif); font-size: clamp(64px, 14.5vw, 250px); line-height: .84; text-transform: uppercase; letter-spacing: -.01em; }
 .hero__line { display: block; overflow: hidden; padding-bottom: .04em; }
 .hero__line > span { display: inline-block; }
@@ -114,9 +114,9 @@ body.past-hero .build-hud { opacity: 1; }
 /* ---------- facade reveal ---------- */
 .facade { height: 260vh; position: relative; }
 .facade__pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; display: grid; place-items: center; }
-.facade__mask { position: absolute; inset: 0; clip-path: inset(14% 44% 14% 44%); will-change: clip-path; }
+.facade__mask { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; clip-path: inset(14% 44% 14% 44%); will-change: clip-path; }
 .facade__mask img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.25); will-change: transform; }
-.facade__mask::after { content: ""; position: absolute; inset: 0; background: rgba(18, 18, 20, .45); }
+.facade__mask::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; background: rgba(18, 18, 20, .45); }
 .facade__copy { position: relative; z-index: 2; text-align: center; max-width: 900px; padding-left: max(var(--gut), var(--safe-l)); padding-right: max(var(--gut), var(--safe-r)); display: grid; gap: 26px; justify-items: center; }
 .facade__copy p { max-width: 560px; color: rgba(239, 231, 218, .85); }
 
@@ -129,8 +129,8 @@ body.past-hero .build-hud { opacity: 1; }
 
 /* ---------- marquee ---------- */
 .marq { position: relative; height: clamp(420px, 70vh, 760px); overflow: hidden; display: flex; align-items: flex-end; }
-.marq__bg { position: absolute; inset: -12% 0; background-size: cover; background-position: center; }
-.marq::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, var(--bg) 0%, rgba(24,24,27,.1) 30%, rgba(24,24,27,.2) 70%, var(--bg) 100%); }
+.marq__bg { position: absolute; top: -12%; right: 0; bottom: -12%; left: 0; inset: -12% 0; background-size: cover; background-position: center; }
+.marq::before { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 1; background: linear-gradient(180deg, var(--bg) 0%, rgba(24,24,27,.1) 30%, rgba(24,24,27,.2) 70%, var(--bg) 100%); }
 .marq__row { position: relative; z-index: 2; display: flex; white-space: nowrap; font-family: var(--serif); font-size: clamp(80px, 15vw, 240px); line-height: 1; text-transform: uppercase; padding-bottom: 4vh; will-change: transform; }
 .marq__row span { padding-right: .3em; }
 
@@ -203,8 +203,8 @@ body.past-hero .build-hud { opacity: 1; }
 
 /* ---------- contacts ---------- */
 .contacts { position: relative; overflow: hidden; padding-block: clamp(110px, 14vw, 200px); }
-.contacts__bg { position: absolute; inset: 0; background-size: cover; background-position: center 30%; opacity: .32; }
-.contacts::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, var(--bg) 0%, rgba(24,24,27,.55) 40%, rgba(24,24,27,.7) 100%); }
+.contacts__bg { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; background-size: cover; background-position: center 30%; opacity: .32; }
+.contacts::before { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 1; background: linear-gradient(180deg, var(--bg) 0%, rgba(24,24,27,.55) 40%, rgba(24,24,27,.7) 100%); }
 .contacts__inner { position: relative; z-index: 2; display: grid; gap: clamp(40px, 5vw, 70px); }
 .contacts__cols { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 30px; border-top: 1px solid var(--line); padding-top: 30px; }
 .contacts__cols > div { display: grid; gap: 10px; align-content: start; }
@@ -227,7 +227,7 @@ body.past-hero .build-hud { opacity: 1; }
 body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .fab { display: none; position: fixed; z-index: 50; right: calc(16px + var(--safe-r)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: 56px; height: 56px; border-radius: 50%; background: var(--copper); place-items: center; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
 .fab svg { width: 24px; height: 24px; fill: #1b1410; }
-.lb { position: fixed; inset: 0; z-index: 90; background: rgba(10, 10, 11, .96); display: grid; place-items: center; padding: 70px 80px; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
+.lb { position: fixed; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 90; background: rgba(10, 10, 11, .96); display: grid; place-items: center; padding: 70px 80px; opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
 .lb.is-open { opacity: 1; visibility: visible; }
 .lb img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .lb img.is-plan { background: var(--cream); padding: 3%; }
@@ -240,21 +240,21 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .fx-wrap, .fx-host { position: relative; }
 .fx-wrap { overflow: hidden; }
 .fx-wrap > img { display: block; width: 100%; }
-.fx-clean { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fx-clean { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .fx-bp-img { filter: grayscale(1) invert(1) brightness(.72) contrast(1.45); }
-.fx-grid { position: absolute; inset: 0; pointer-events: none; z-index: 2;
+.fx-grid { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; pointer-events: none; z-index: 2;
   background-image: linear-gradient(rgba(255,255,255,.22) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px);
   background-size: 28px 28px; mix-blend-mode: screen; }
 .fx-scan { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 3; background: #ffffff;
   box-shadow: 0 0 12px 3px rgba(255,255,255,.95), 0 0 44px 12px rgba(255,255,255,.35); }
-.fx-cover { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; perspective: 900px; }
+.fx-cover { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; perspective: 900px; }
 .fx-brick { position: absolute; background: var(--bg); box-shadow: inset 0 0 0 1px rgba(201,138,91,.35); }
 .fx-board { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, #1d1b1a, #252220 60%, #1a1918); box-shadow: inset -1px 0 0 rgba(201,138,91,.5); backface-visibility: hidden; }
 .fx-band { position: absolute; left: 0; right: 0; background: var(--bg); box-shadow: inset 0 1px 0 rgba(201,138,91,.7); }
 .fx-crane { overflow: visible !important; z-index: 3; }
 .fx-cable { position: absolute; left: 50%; bottom: 100%; width: 1px; height: 100vh; background: linear-gradient(transparent, rgba(239,231,218,.7)); }
 .fx-hook { position: absolute; bottom: -2px; left: -7px; width: 14px; height: 10px; border: 1.5px solid var(--copper); border-top: 0; border-radius: 0 0 8px 8px; }
-.fx-weld { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
+.fx-weld { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; overflow: visible; }
 .fx-weld rect { fill: none; stroke: #ffcf99; stroke-width: 2; filter: drop-shadow(0 0 4px rgba(255,180,100,.9)); }
 .fx-spark { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; z-index: 4; pointer-events: none;
   background: #fff4e0; box-shadow: 0 0 10px 4px rgba(255,210,140,1), 0 0 30px 12px rgba(255,150,60,.7); }
@@ -313,7 +313,7 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .boiler--photo .boiler__scheme { position: relative; overflow: hidden; }
 .boiler--photo .boiler__scheme img { width: 100%; height: auto; display: block; transition: filter 1s; }
 .boiler--photo.s1 .boiler__scheme img { filter: brightness(.62) saturate(.8); }
-.boiler--photo .boiler__scheme svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.boiler--photo .boiler__scheme svg { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; width: 100%; height: 100%; }
 .pipe--x { stroke: rgba(255,255,255,.12); stroke-width: 12; stroke-dasharray: 2 10; }
 .boiler--photo .flow { stroke-width: 6; filter: drop-shadow(0 0 6px rgba(255,150,80,.9)); }
 .boiler--photo .flow--cold { filter: drop-shadow(0 0 6px rgba(120,180,240,.9)); }
@@ -395,17 +395,17 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 /* ---------- лифт сквозь дом (js/lift.js) ---------- */
 .lift { position: relative; height: 560vh; }
 .lift__pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: #0d0e10; }
-.lift__shaft { position: absolute; inset: 0; overflow: hidden; }
+.lift__shaft { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; overflow: hidden; }
 .lift__strip { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--n) * 100%); will-change: transform; }
 .lift__slide { position: absolute; left: 0; right: 0; height: calc(100% / var(--n)); bottom: calc(var(--i) * 100% / var(--n)); }
 .lift__slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.lift__slide::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,10,12,.55), rgba(10,10,12,0) 30%, rgba(10,10,12,0) 70%, rgba(10,10,12,.55)); }
+.lift__slide::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; background: linear-gradient(90deg, rgba(10,10,12,.55), rgba(10,10,12,0) 30%, rgba(10,10,12,0) 70%, rgba(10,10,12,.55)); }
 .lift__cap { position: absolute; left: 50%; bottom: 16%; transform: translateX(-50%); z-index: 1; padding: 9px 18px; border-radius: 999px; background: rgba(24,24,27,.72); border: 1px solid rgba(201,138,91,.6); color: #fff; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
 .lift__slab { position: absolute; left: 0; right: 0; height: 9vh; bottom: calc((var(--i) + 1) * 100% / var(--n) - 4.5vh); z-index: 2;
   background: linear-gradient(#1a1a1c, #2a2826 40%, #1a1a1c); box-shadow: 0 -1px 0 var(--copper), 0 1px 0 var(--copper), 0 0 40px rgba(0,0,0,.8); }
 .lift__slab::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: repeating-linear-gradient(90deg, rgba(201,138,91,.5) 0 30px, transparent 30px 60px); }
 /* стекло и рамы кабины */
-.lift__glass { position: absolute; inset: 0; pointer-events: none; z-index: 3;
+.lift__glass { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; pointer-events: none; z-index: 3;
   background: linear-gradient(115deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,.05) 48%, rgba(255,255,255,0) 60%); }
 .lift__glass i { position: absolute; top: 0; bottom: 0; width: 10px; background: linear-gradient(90deg, #111, #3a3633 50%, #111); box-shadow: 0 0 20px rgba(0,0,0,.7); }
 .lift__glass i:nth-child(1) { left: 6%; } .lift__glass i:nth-child(2) { right: 6%; } .lift__glass i:nth-child(3) { left: 0; right: 0; width: auto; height: 10px; top: auto; bottom: 22%; opacity: .7; }
@@ -423,7 +423,7 @@ body.past-hero .fab { opacity: 1; pointer-events: auto; }
 .lift__title { position: absolute; z-index: 7; left: calc(6% + 34px); top: calc(var(--header-h, 76px) + 40px); display: grid; gap: 14px; transition: opacity .5s; text-shadow: 0 2px 30px rgba(0,0,0,.6); }
 .lift.started .lift__title { opacity: 0; }
 /* двери */
-.lift__doors { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.lift__doors { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 5; pointer-events: none; }
 .lift__doors i { position: absolute; top: 0; bottom: 0; width: 50%; background: linear-gradient(90deg, #1f1e1d, #34312e 50%, #1f1e1d); transition: transform .05s linear; }
 .lift__doors i::after { content: ""; position: absolute; top: 18%; bottom: 18%; width: 2px; background: linear-gradient(transparent, var(--copper), transparent); }
 .lift__doors i:nth-child(1) { left: 0; } .lift__doors i:nth-child(1)::after { right: 22px; }
@@ -541,7 +541,7 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .ftype__note { color: var(--muted); font-size: 14px; line-height: 1.5; }
 .ftype__foot { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .ftype__foot b { color: var(--copper); font-weight: 600; }
-.fwin { position: fixed; inset: 0; z-index: 95; background: #101114; overflow-y: auto; opacity: 0; visibility: hidden; transition: opacity .35s, visibility .35s; -webkit-overflow-scrolling: touch; }
+.fwin { position: fixed; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 95; background: #101114; overflow-y: auto; opacity: 0; visibility: hidden; transition: opacity .35s, visibility .35s; -webkit-overflow-scrolling: touch; }
 .fwin.is-open { opacity: 1; visibility: visible; }
 .fwin__inner { max-width: 1360px; margin: 0 auto; padding: calc(24px + env(safe-area-inset-top, 0px)) max(var(--gut), var(--safe-r)) 60px max(var(--gut), var(--safe-l)); display: grid; gap: 28px; }
 .fwin__top { display: flex; justify-content: space-between; align-items: center; }
@@ -661,23 +661,23 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 
 /* фасад: видео день → ночь, крутится прокруткой */
 .facade { height: 340vh; }
-.facade__mask .facade__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.25); will-change: transform; opacity: 0; transition: opacity .4s; }
+.facade__mask .facade__video { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.25); will-change: transform; opacity: 0; transition: opacity .4s; }
 .facade__mask .facade__video.is-ready { opacity: 1; }
 .facade__daynight { position: absolute; z-index: 3; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--cream); }
 .facade__daynight i { width: 120px; height: 2px; background: rgba(239,231,218,.25); position: relative; display: block; }
-.facade__daynight b { position: absolute; inset: 0; background: linear-gradient(90deg, #ffd28a, #ff8a45 50%, #6f8cff); transform-origin: left; transform: scaleX(0); }
+.facade__daynight b { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; background: linear-gradient(90deg, #ffd28a, #ff8a45 50%, #6f8cff); transform-origin: left; transform: scaleX(0); }
 @media (max-width: 760px) { .facade { height: 300vh; } }
 
 /* первый экран: видео (облака → Моздок → ЖК → ночь), крутится прокруткой */
 .hero { height: 520vh; }
-.hero__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hero__video { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .hero__stage { background: #1b1c1e url('../frames/hero/d/f_001.webp') center / cover no-repeat; }
 @media (max-width: 760px) { .hero__stage { background-image: url('../frames/hero/m/f_001.webp'); } }
 .hero.has-video .hero__video { opacity: 1; }
 .hero.has-video .hero__img { opacity: 0 !important; }
 @media (max-width: 760px) { .hero { height: 480vh; } }
 
-.hero__city { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; opacity: 0; color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,.45); }
+.hero__city { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; opacity: 0; color: #fff; text-shadow: 0 4px 30px rgba(0,0,0,.45); }
 .hero__city b { font-family: var(--serif); font-weight: 400; font-size: clamp(54px, 13vw, 190px); line-height: 1; text-transform: uppercase; letter-spacing: .04em; }
 .hero__city span { font-size: clamp(10px, 1.1vw, 14px); letter-spacing: .32em; text-transform: uppercase; opacity: .85; }
 .hero__title, .hero__lead { transition: opacity .45s ease, transform .45s ease; }
@@ -694,8 +694,8 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 
 
 /* фасад: двое рабочих растягивают фото на тросах */
-.pull { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-.pull__ropes { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.pull { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; z-index: 3; pointer-events: none; }
+.pull__ropes { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .pull__ropes line { stroke: #e9d8bf; stroke-width: 2.5; stroke-linecap: round; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
 .pull__side { position: absolute; top: 0; width: clamp(60px, 7vw, 96px); transform: translate(-50%, -100%); will-change: left, top; }
 .pull__side--l .pull__man { transform: scaleX(-1); }
@@ -747,7 +747,7 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .snd span { margin-left: 8px; }
 .snd.is-on { background: rgba(255,138,69,.12); }
 @keyframes sndW { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
-.snd.is-hint::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; border: 1.5px solid #ffb27a; animation: sndRing 1.6s ease-out 2; pointer-events: none; }
+.snd.is-hint::after { content: ""; position: absolute; top: -1px; right: -1px; bottom: -1px; left: -1px; inset: -1px; border-radius: inherit; border: 1.5px solid #ffb27a; animation: sndRing 1.6s ease-out 2; pointer-events: none; }
 @keyframes sndRing { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.35); } }
 @media (max-width: 1024px) { .snd { width: 38px; height: 38px; padding: 0; justify-content: center; } }
 
@@ -767,15 +767,15 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 #gmAim { transition: transform .4s; }
 /* планировка всегда вписывается в рамку (и вертикальные, и горизонтальные) */
 .fwin__body > * { min-width: 0; }
-.fwin__plan img { position: absolute; inset: 6%; width: 88%; height: 88%; max-width: none; max-height: none; }
+.fwin__plan img { position: absolute; top: 6%; right: 6%; bottom: 6%; left: 6%; inset: 6%; width: 88%; height: 88%; max-width: none; max-height: none; }
 .ftypes > * { min-width: 0; }
 .ftype__plan { position: relative; }
-.ftype__plan img { position: absolute; inset: 8%; width: 84%; height: 84%; max-width: none; max-height: none; }
+.ftype__plan img { position: absolute; top: 8%; right: 8%; bottom: 8%; left: 8%; inset: 8%; width: 84%; height: 84%; max-width: none; max-height: none; }
 .about, .life, .gallery { overflow-x: clip; }
 
 /* прогулка по квартире */
 .fwin__left { display: grid; gap: 10px; min-width: 0; }
-.fwalk { position: absolute; inset: 0; pointer-events: none; }
+.fwalk { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; pointer-events: none; }
 .fwalk__man { position: absolute; width: 26px; height: 34px; margin: -30px 0 0 -13px; z-index: 3; filter: drop-shadow(0 3px 3px rgba(0,0,0,.25));
   transition: left 1.05s cubic-bezier(.45,0,.4,1), top 1.05s cubic-bezier(.45,0,.4,1); }
 .fwalk__man.flip { transform: scaleX(-1); }
@@ -791,7 +791,7 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .fwalk.done .fwalk__spot { opacity: 0; }
 @keyframes fSpot { 50% { transform: scale(1.25); } }
 .fwalk__dot { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; pointer-events: auto; cursor: pointer; z-index: 2; }
-.fwalk__dot::after { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: #fff; border: 2px solid #c8743c; box-shadow: 0 0 0 3px rgba(200,116,60,.18); transition: transform .2s; }
+.fwalk__dot::after { content: ""; position: absolute; top: 7px; right: 7px; bottom: 7px; left: 7px; inset: 7px; border-radius: 50%; background: #fff; border: 2px solid #c8743c; box-shadow: 0 0 0 3px rgba(200,116,60,.18); transition: transform .2s; }
 .fwalk__dot:hover::after { transform: scale(1.35); }
 .fwalk__dot.seen::after { background: #c8743c; }
 .fwalk__dot.is-on::after { opacity: 0; }
@@ -910,14 +910,14 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 
 /* точки комнат — заметные: крупнее, оранжевые, с «пульсом» */
 .fwalk__dot { width: 34px; height: 34px; margin: -17px 0 0 -17px; }
-.fwalk__dot::after { inset: 8px; background: #ff7a2f; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
-.fwalk__dot::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 2px solid #ff7a2f; animation: dotPulse 1.8s ease-out infinite; }
+.fwalk__dot::after { top: 8px; right: 8px; bottom: 8px; left: 8px; inset: 8px; background: #ff7a2f; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+.fwalk__dot::before { content: ""; position: absolute; top: 4px; right: 4px; bottom: 4px; left: 4px; inset: 4px; border-radius: 50%; border: 2px solid #ff7a2f; animation: dotPulse 1.8s ease-out infinite; }
 .fwalk__dot:nth-of-type(2n)::before { animation-delay: .6s; } .fwalk__dot:nth-of-type(3n)::before { animation-delay: 1.2s; }
 @keyframes dotPulse { 0% { transform: scale(.7); opacity: .9; } 100% { transform: scale(1.9); opacity: 0; } }
 .fwalk__dot.seen::after { background: #fff; border-color: #ff7a2f; }
 .fwalk__dot.seen::before { animation: none; opacity: 0; }
 .fwalk__dot.is-on::before { animation: none; opacity: 0; }
-@media (max-width: 760px) { .fwalk__dot { width: 30px; height: 30px; margin: -15px 0 0 -15px; } .fwalk__dot::after { inset: 7px; } }
+@media (max-width: 760px) { .fwalk__dot { width: 30px; height: 30px; margin: -15px 0 0 -15px; } .fwalk__dot::after { top: 7px; right: 7px; bottom: 7px; left: 7px; inset: 7px; } }
 /* точки комнат «бьются как сердце»: тук-тук — пауза, с волной и свечением */
 .fwalk__dot::after { animation: dotHeart 1.3s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(255,122,47,.6), 0 2px 8px rgba(0,0,0,.35); }
 .fwalk__dot::before { animation: dotWave 1.3s ease-out infinite; border-width: 3px; }
@@ -988,8 +988,8 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .gallery__track { display: none; }
 .desk { position: relative; margin: 0 max(var(--gut), var(--safe-l)); height: clamp(480px, 46vw, 680px); overflow: hidden; border-radius: 4px;
   background: #2a1d14 url('../img/desk.webp') center / cover no-repeat; box-shadow: inset 0 0 120px rgba(0,0,0,.65); }
-.desk::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 10%, rgba(255,190,120,.18), transparent 55%), linear-gradient(180deg, rgba(10,8,6,.35), rgba(10,8,6,.55)); pointer-events: none; }
-.desk__stack { position: absolute; inset: 0; touch-action: pan-y; }
+.desk::before { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; background: radial-gradient(ellipse at 30% 10%, rgba(255,190,120,.18), transparent 55%), linear-gradient(180deg, rgba(10,8,6,.35), rgba(10,8,6,.55)); pointer-events: none; }
+.desk__stack { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; touch-action: pan-y; }
 .pcard { position: absolute; left: 50%; top: 47%; width: min(74vw, 560px); margin: 0; padding: 10px 10px 0; background: #f6f1e8; box-shadow: 0 18px 40px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
   cursor: grab; user-select: none; -webkit-user-select: none; touch-action: pan-y; will-change: transform; }
 .pcard:active { cursor: grabbing; }
@@ -1055,3 +1055,6 @@ body.snd-on .snd-sw { display: flex; }
 @media (hover: none) {
   html.gs-stop { overflow: hidden !important; }
 }
+
+/* старые iPhone (iOS 15 и ниже) не знают overflow: clip — запасной вариант */
+@supports not (overflow: clip) { .about, .life, .gallery { overflow-x: hidden; } }

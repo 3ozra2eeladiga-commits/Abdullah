@@ -55,9 +55,13 @@
   // ровно на нём (инерция гасится на полсекунды), дальше листаете к следующему разделу.
   if (!fine && !reduce) {
     var py = window.scrollY, cool = {}, stopping = false, html = document.documentElement;
+    // останавливаем только прокрутку пальцем (и её инерцию), а не переходы по меню/ссылкам
+    var lastTouch = 0, navT = 0;
+    ['touchstart', 'touchmove', 'touchend'].forEach(function (ev) { window.addEventListener(ev, function () { lastTouch = Date.now(); }, { passive: true }); });
+    document.addEventListener('click', function (e) { if (e.target.closest('a[href^="#"], [data-close], .gmn')) navT = Date.now(); }, true);
     window.addEventListener('scroll', function () {
       var y = window.scrollY;
-      if (stopping || document.body.classList.contains('lock')) { py = y; return; }
+      if (stopping || document.body.classList.contains('lock') || Date.now() - lastTouch > 2500 || Date.now() - navT < 2000) { py = y; return; }
       var hdr = 64, now = Date.now();
       if (Math.abs(y - py) > window.innerHeight * 0.7) { py = y; return; }   // прыжок (меню, ссылка) — не останавливаем
       for (var i = 0; i < SNAP.length; i++) {
