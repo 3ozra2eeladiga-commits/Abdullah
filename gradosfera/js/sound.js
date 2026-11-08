@@ -30,18 +30,15 @@
         var o = ctx.createOscillator(); o.type = i < 2 ? 'sine' : 'triangle';
         o.frequency.value = hz(m); o.detune.value = det;
         var g = ctx.createGain(); g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(i < 2 ? 0.05 : 0.025, t + 2.5);
-        g.gain.setValueAtTime(i < 2 ? 0.05 : 0.025, t + dur - 2.5);
-        g.gain.linearRampToValueAtTime(0, t + dur + 1.5);
+        g.gain.linearRampToValueAtTime(i < 2 ? 0.03 : 0.016, t + 0.8);
+        g.gain.setValueAtTime(i < 2 ? 0.03 : 0.016, t + Math.max(0.9, dur - 1));
+        g.gain.linearRampToValueAtTime(0, t + dur + 0.8);
         var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
         o.connect(lp); lp.connect(g); g.connect(musicGain); o.start(t); o.stop(t + dur + 2);
       });
     });
     // редкие «капли» пианино сверху
-    for (var k = 0; k < 3; k++) {
-      var m = notes[2 + Math.floor(Math.random() * (notes.length - 2))] + 12;
-      bell(hz(m), t + 0.8 + k * 2.4 + Math.random() * 0.6, 0.035, musicGain);
-    }
+
   }
   function bell(f, t, vol, out) {
     var o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
@@ -51,11 +48,70 @@
     o.connect(g); o2.connect(g2); g2.connect(g); g.connect(out || master);
     o.start(t); o2.start(t); o.stop(t + 2.7); o2.stop(t + 2.7);
   }
+  // ---------- новая музыка: тёплый «deep house / chill» грув, 100 BPM ----------
+  // Bm – G – D – A (цепляющая последовательность), бас, мягкая бочка, хлопок, хэт, «плак»-арпеджио с эхом.
+  // Первые 2 такта — вступление (пэды + арпеджио), потом вступает ритм.
+  var SONG = [[47, 54, 59, 62, 66], [43, 50, 55, 59, 62], [50, 57, 62, 66, 69], [45, 52, 57, 61, 64]];
+  var BPM = 100, S16 = 60 / BPM / 4, nextT = 0, st16 = 0, bar = 0, echo = null;
+  function initEcho() {
+    var d = ctx.createDelay(1); d.delayTime.value = S16 * 3;
+    var fb = ctx.createGain(); fb.gain.value = 0.32;
+    var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+    d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(musicGain);
+    echo = d;
+  }
+  function kick(t) {
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.55, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+    o.connect(g); g.connect(musicGain); o.start(t); o.stop(t + 0.35);
+  }
+  function clap(t) {
+    var n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    n.buffer = noise(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 0.9;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    n.connect(bp); bp.connect(g); g.connect(musicGain); n.start(t, Math.random()); n.stop(t + 0.2);
+  }
+  function hat(t, open) {
+    var n = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g = ctx.createGain();
+    n.buffer = noise(); hp.type = 'highpass'; hp.frequency.value = 7500;
+    var len = open ? 0.16 : 0.04;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(open ? 0.05 : 0.04, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    n.connect(hp); hp.connect(g); g.connect(musicGain); n.start(t, Math.random()); n.stop(t + len + 0.02);
+  }
+  function bass(m, t, dur) {
+    var o = ctx.createOscillator(), o2 = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = 'sawtooth'; o2.type = 'sine'; o.frequency.value = hz(m - 12); o2.frequency.value = hz(m - 24);
+    lp.type = 'lowpass'; lp.frequency.setValueAtTime(700, t); lp.frequency.exponentialRampToValueAtTime(180, t + dur); lp.Q.value = 4;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(musicGain); o.start(t); o2.start(t); o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+  }
+  function pluck(m, t, vol) {
+    var o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = hz(m);
+    lp.type = 'lowpass'; lp.frequency.setValueAtTime(4200, t); lp.frequency.exponentialRampToValueAtTime(700, t + 0.25);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    o.connect(lp); lp.connect(g); g.connect(musicGain); if (echo) g.connect(echo); o.start(t); o.stop(t + 0.45);
+  }
+  var ARP = [0, 2, 3, 4, 3, 2, 1, 2, 0, 2, 3, 4, 3, 4, 2, 1];          // рисунок арпеджио по нотам аккорда
+  var BASSP = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0];        // ритм баса
+  function tick16(t) {
+    var ch = SONG[bar % SONG.length], groove = bar >= 2, k = st16;
+    if (k === 0) pad(ch.map(function (m) { return m + 12; }), t, 60 / BPM * 4 + 0.5);
+    pluck(ch[ARP[k]] + 24, t, k % 4 === 0 ? 0.07 : 0.045);
+    if (groove) {
+      if (k % 4 === 0) kick(t);
+      if (k === 4 || k === 12) clap(t);
+      if (k % 2 === 1) hat(t, k === 7 || k === 15);
+      if (BASSP[k]) bass(ch[0], t, S16 * 2.2);
+    }
+    st16 = (st16 + 1) % 16; if (st16 === 0) bar++;
+  }
   function loop() {
-    var dur = 8;
-    pad(CHORDS[step % CHORDS.length], ctx.currentTime + 0.05, dur);
-    step++;
-    timer = setTimeout(loop, dur * 1000);
+    if (!echo) initEcho();
+    if (nextT < ctx.currentTime) nextT = ctx.currentTime + 0.06;
+    while (nextT < ctx.currentTime + 0.15) { tick16(nextT); nextT += S16; }
+    timer = setTimeout(loop, 30);
   }
   function setOn(v) {
     on = v;
@@ -81,10 +137,10 @@
   // Поэтому пробуем возобновить сразу, а при первом касании страницы — пересоздаём звук заново (это разрешено только по касанию).
   function rebuild() {
     try { ctx.close(); } catch (e) {}
-    ctx = null; eng = null; noiseBuf = null; rope = null;
+    ctx = null; eng = null; noiseBuf = null; rope = null; echo = null; nextT = 0;
     init(); ctx.resume();
     master.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 1.5);
-    clearTimeout(timer); timer = null; step = 0; loop();
+    clearTimeout(timer); timer = null; st16 = 0; bar = 0; loop();
   }
   function wake() {
     if (!ctx || !on || document.hidden) return;
