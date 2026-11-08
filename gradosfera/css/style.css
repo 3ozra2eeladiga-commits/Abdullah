@@ -1068,3 +1068,14 @@ img, canvas { -webkit-touch-callout: none; -webkit-user-drag: none; }
 @media (max-width: 760px) { .fwin__crumbs { display: none; } .fwin__back { font-size: 12px; padding: 9px 14px; } }
 /* на ПК «Моздок» над новым видео не нужен */
 .hero__city { display: none !important; }
+
+/* землетрясение в конце сайта */
+.gs-quake { animation: gsQuake .7s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes gsQuake {
+  10%, 90% { transform: translate3d(-2px, 1px, 0) rotate(-.15deg); }
+  20%, 80% { transform: translate3d(4px, -2px, 0) rotate(.2deg); }
+  30%, 50%, 70% { transform: translate3d(-7px, 2px, 0) rotate(-.3deg); }
+  40%, 60% { transform: translate3d(7px, -1px, 0) rotate(.3deg); }
+}
+.team__bang { fill: #ffb27a; font: 800 16px var(--sans); opacity: 0; }
+.team.is-open .for-rest, .team.is-closed .for-work { display: none; }

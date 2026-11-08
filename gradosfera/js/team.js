@@ -25,30 +25,69 @@
   // анимация — через JS (надёжно во всех браузерах телефона, включая встроенные): пар, Z, дыхание, печать
   var zz = box.querySelectorAll('.tr__zz text'), steam = box.querySelectorAll('.tr__steam'), rh = box.querySelectorAll('.tr__hd'),
       type = box.querySelectorAll('.tw__type'), click = box.querySelectorAll('.tw__click'), scr = box.querySelectorAll('.tw__screen'),
-      wh = box.querySelectorAll('.tw__hd'), vis = false, raf = 0;
+      wh = box.querySelectorAll('.tw__hd'), vis = false, raf = 0, shock = 0;
+  // восклицательные знаки над головами (появляются, когда «землетрясение»)
+  var NS = 'http://www.w3.org/2000/svg', svg = box.querySelector('.team__svg'), bang = [];
+  [[60, 52], [190, 52], [320, 52], [94, 56], [224, 56], [354, 56]].forEach(function (xy, k) {
+    var tx = document.createElementNS(NS, 'text'); tx.setAttribute('x', xy[0]); tx.setAttribute('y', xy[1]);
+    tx.setAttribute('class', 'team__bang ' + (k < 3 ? 'for-rest' : 'for-work')); tx.textContent = k < 3 ? '!?' : '?'; svg.appendChild(tx); bang.push(tx);
+  });
+  window.gsTeamShock = function () { shock = performance.now(); if (vis && !raf) raf = requestAnimationFrame(anim); };
   function anim(now) {
     raf = 0; if (!vis) return; var t = now / 1000, i, ph, a;
+    var q = shock ? Math.max(0, 1 - (now - shock) / 2600) : 0;     // сила испуга
+    var look = q > 0 ? Math.sin((1 - q) * Math.PI * 4) * 4 * Math.min(1, q * 3) : 0;   // смотрят вправо-влево
+    for (i = 0; i < bang.length; i++) bang[i].style.opacity = q > 0.15 ? Math.min(1, q * 2).toFixed(2) : 0;
     if (box.classList.contains('is-closed')) {
       for (i = 0; i < zz.length; i++) {                      // Z летят вверх-вправо и тают
         var man = Math.floor(i / 3), k = i % 3; ph = (t / (2.8 + man * 0.35) + k / 3 + man * 0.21) % 1;
         a = ph < 0.15 ? ph / 0.15 : ph > 0.7 ? (1 - ph) / 0.3 : 1;
         zz[i].setAttribute('transform', 'translate(' + (24 * ph).toFixed(1) + ' ' + (-44 * ph).toFixed(1) + ') rotate(' + (-12 + 24 * ph).toFixed(1) + ' ' + zz[i].getAttribute('x') + ' 60)');
-        zz[i].style.opacity = a.toFixed(2);
+        zz[i].style.opacity = (a * (1 - Math.min(1, q * 2.5))).toFixed(2);
       }
       for (i = 0; i < steam.length; i++) {                   // пар над кружками
         ph = (t / 2.2 + i * 0.37) % 1; a = Math.sin(ph * Math.PI);
         steam[i].setAttribute('transform', 'translate(' + (Math.sin(t * 2 + i) * 1.2).toFixed(1) + ' ' + (3 - 12 * ph).toFixed(1) + ')');
         steam[i].style.opacity = (a * 0.9).toFixed(2);
       }
-      for (i = 0; i < rh.length; i++) rh[i].setAttribute('transform', 'translate(0 ' + (Math.sin(t * 1.9 + i * 1.3) * 1.6).toFixed(1) + ')');  // дышат, посапывают
+      for (i = 0; i < rh.length; i++) rh[i].setAttribute('transform', 'translate(' + (look * 1.4).toFixed(1) + ' ' + (Math.sin(t * 1.9 + i * 1.3) * 1.6 * (1 - q) - 9 * Math.min(1, q * 2)).toFixed(1) + ')');  // дышат; при испуге — вскидывают голову и озираются
     } else {
-      for (i = 0; i < type.length; i++) type[i].setAttribute('transform', 'translate(' + (Math.sin(t * 31 + i) > 0 ? 1 : 0) + ' ' + (-2.5 * Math.abs(Math.sin(t * 15 + i * 2))).toFixed(1) + ')');
-      for (i = 0; i < click.length; i++) click[i].style.opacity = Math.sin(t * 14 + i * 2) > 0.3 ? 1 : 0;
+      for (i = 0; i < type.length; i++) type[i].setAttribute('transform', q > 0.2 ? 'translate(-3 -4)' : 'translate(' + (Math.sin(t * 31 + i) > 0 ? 1 : 0) + ' ' + (-2.5 * Math.abs(Math.sin(t * 15 + i * 2))).toFixed(1) + ')');
+      for (i = 0; i < click.length; i++) click[i].style.opacity = q > 0.2 ? 0 : (Math.sin(t * 14 + i * 2) > 0.3 ? 1 : 0);
       for (i = 0; i < scr.length; i++) scr[i].style.opacity = (0.8 + 0.2 * Math.sin(t * 6 + i)).toFixed(2);
-      for (i = 0; i < wh.length; i++) wh[i].setAttribute('transform', 'translate(0 ' + (Math.sin(t * 2.4 + i) * 1).toFixed(1) + ')');
+      for (i = 0; i < wh.length; i++) wh[i].setAttribute('transform', 'translate(' + (look * (i % 2 ? -1 : 1)).toFixed(1) + ' ' + (Math.sin(t * 2.4 + i) * 1 - 2 * Math.min(1, q * 2)).toFixed(1) + ')');
     }
     raf = requestAnimationFrame(anim);
   }
   if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { vis = e[0].isIntersecting; if (vis && !raf) raf = requestAnimationFrame(anim); }).observe(box);
   else { vis = true; raf = requestAnimationFrame(anim); }
+})();
+
+/* Конец сайта: человек пытается листать дальше — страница «трясётся», люди в офисе пугаются */
+(function () {
+  'use strict';
+  var last = 0, acc = 0, ty = null;
+  function atEnd() { return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4; }
+  function quake() {
+    var now = Date.now(); if (now - last < 3000) return; last = now;
+    var m = document.querySelector('main') || document.body;
+    m.classList.remove('gs-quake'); void m.offsetWidth; m.classList.add('gs-quake');
+    setTimeout(function () { m.classList.remove('gs-quake'); }, 750);
+    if (navigator.vibrate) try { navigator.vibrate([40, 30, 60]); } catch (e) {}
+    if (window.gsSfx && window.gsSfx.bump) window.gsSfx.bump();
+    // офис не виден (внизу подвал) — мягко подводим к нему, чтобы было видно, как люди пугаются
+    var team = document.getElementById('team'), r = team && team.getBoundingClientRect();
+    if (team && (r.bottom < 0 || r.top > window.innerHeight * 0.85)) {
+      var y = window.scrollY + r.top - (window.innerHeight - r.height) / 2;
+      if (window.gsLenis) window.gsLenis.scrollTo(y, { duration: 0.8 }); else window.scrollTo({ top: y, behavior: 'smooth' });
+      setTimeout(function () { if (window.gsTeamShock) window.gsTeamShock(); }, 650);
+    } else if (window.gsTeamShock) window.gsTeamShock();
+  }
+  window.addEventListener('wheel', function (e) {
+    if (e.deltaY <= 0 || !atEnd()) { acc = 0; return; }
+    acc += e.deltaY; if (acc > 220) { acc = 0; quake(); }
+  }, { passive: true });
+  window.addEventListener('touchstart', function (e) { ty = atEnd() ? e.touches[0].clientY : null; }, { passive: true });
+  window.addEventListener('touchmove', function (e) { if (ty !== null && atEnd() && ty - e.touches[0].clientY > 70) { ty = null; quake(); } }, { passive: true });
+  window.addEventListener('keydown', function (e) { if ((e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') && atEnd()) quake(); });
 })();
