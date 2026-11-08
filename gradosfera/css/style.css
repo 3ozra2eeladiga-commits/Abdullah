@@ -1014,3 +1014,5 @@ body.snd-on .snd-sw { display: flex; }
 .snd-sw button.is-on { background: #c8743c; color: #fff; opacity: 1; }
 @media (max-width: 1024px) { .snd-sw { left: auto; right: calc(max(var(--gut), var(--safe-r)) + 64px + 46px); } }
 @media (max-width: 760px) { .snd-sw { left: auto; right: max(var(--gut), var(--safe-r)); top: calc(100% + 8px); transform: none; flex-direction: row; background: rgba(16,17,20,.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); } }
+
+.snd-sw, body.snd-on .snd-sw { display: none !important; }

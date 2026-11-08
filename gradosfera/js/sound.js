@@ -110,8 +110,8 @@
     }
     st16 = (st16 + 1) % 16; if (st16 === 0) bar++;
   }
-  var TRACK = '2'; try { TRACK = localStorage.getItem('gs-track') || '2'; } catch (e) {}
-  var qs = /[?&]music=(\d)/.exec(location.search); if (qs) TRACK = qs[1] === '1' ? '1' : '2';
+  var TRACK = '1';   // на сайте — спокойная музыка; варианты выбираются отдельно (переключатель скрыт)
+  var qs = /[?&]music=(\d)/.exec(location.search); if (qs) TRACK = qs[1] === '2' ? '2' : '1';
   function loop() {
     if (TRACK === '1') {                          // спокойная: длинные аккорды раз в 8 с
       pad(CHORDS[step % CHORDS.length], ctx.currentTime + 0.05, 8, true); step++;
