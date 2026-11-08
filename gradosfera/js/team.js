@@ -62,3 +62,36 @@
   if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { vis = e[0].isIntersecting; if (vis && !raf) raf = requestAnimationFrame(anim); }).observe(box);
   else { vis = true; raf = requestAnimationFrame(anim); }
 })();
+
+/* Кликни по ребятам 10 раз: каждое нажатие — вздрагивают; на 10-м — паника, разбегаются,
+   потом возвращаются на места и ворчат «Больше так не делай!» */
+(function () {
+  'use strict';
+  var box = document.getElementById('team'), svg = box && box.querySelector('.team__svg'); if (!svg) return;
+  var n = 0, busy = false, resetT = 0;
+  var say = document.createElement('div'); say.className = 'team__say'; box.appendChild(say);
+  var PHRASES_REST = ['Больше так не делай! 😤', 'Эй, мы же отдыхаем! 😠', 'Ну всё, проснулись… спасибо 🙄'];
+  var PHRASES_WORK = ['Больше так не делай! 😤', 'Мы работаем, вообще-то! 😠', 'Чуть ноутбук не уронил! 😅'];
+  var k = 0;
+  function talk(t, ms) { say.textContent = t; say.classList.add('on'); setTimeout(function () { say.classList.remove('on'); }, ms); }
+  svg.style.cursor = 'pointer';
+  svg.addEventListener('click', function () {
+    if (busy) return;
+    n++; clearTimeout(resetT); resetT = setTimeout(function () { n = 0; }, 6000);   // считаем подряд идущие нажатия
+    if (window.gsTeamShock) window.gsTeamShock();
+    box.classList.remove('poke'); void box.offsetWidth; box.classList.add('poke');
+    if (n === 5) talk('Эй… что это было? 🤨', 1600);
+    if (n === 8) talk('Хватит! 😬', 1400);
+    if (n < 10) return;
+    n = 0; busy = true;
+    box.classList.add('panic'); talk('А-а-а! Землетрясение!!! 😱', 1500);
+    if (window.gsSfx && window.gsSfx.bump) window.gsSfx.bump();
+    setTimeout(function () { box.classList.remove('panic'); box.classList.add('back'); }, 2600);
+    setTimeout(function () {
+      box.classList.remove('back');
+      var rest = box.classList.contains('is-closed'), list = rest ? PHRASES_REST : PHRASES_WORK;
+      talk(list[k++ % list.length], 3200);
+      busy = false;
+    }, 4400);
+  });
+})();
