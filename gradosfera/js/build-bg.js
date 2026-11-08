@@ -408,8 +408,8 @@
       var tx = x0 + pw * spots[k] + sway;
       var startX = W + 30 + k * 34;
       var wxk = walk < 1 ? mix(startX, tx, clamp(walk * 1.3 - k * 0.15, 0, 1)) : tx;
-      var rq = Math.max(0, 1 - (t - gReact) / 0.9);   // реакция на нажатие: подпрыгивают
-      var foot = py - 2 * s - (hop > 0 ? Math.sin(Math.PI * hop) * 20 * s : 0) - (rq > 0 ? Math.abs(Math.sin((1 - rq) * Math.PI * 2 + k)) * 14 * s : 0);
+      var rq = Math.max(0, 1 - (t - gReact) / 0.6);   // реакция на нажатие: подпрыгивают
+      var foot = py - 2 * s - (hop > 0 ? Math.sin(Math.PI * hop) * 20 * s : 0) - (rq > 0 ? Math.sin((1 - rq) * Math.PI) * 12 * s : 0);
       var pose = walk < 1 ? (wxk === tx ? 'hold' : 'walk') : hop > 0 && hop < 1 ? 'hop' : (el < 3.2 || moving ? 'hold' : jobs[k]);
       if (rq > 0) pose = 'hop';
       var tool = worker(wxk, foot, s, pose, k, t);
