@@ -1038,3 +1038,7 @@ body.snd-on .snd-sw { display: flex; }
 .team.is-open .team__call::before { content: "📞 "; }
 @keyframes callPulse { 0% { box-shadow: 0 0 0 0 rgba(47,179,107,.55); } 100% { box-shadow: 0 0 0 14px rgba(47,179,107,0); } }
 @media (max-width: 760px) { .team__svg { margin: 0 -6px; width: calc(100% + 12px); } }
+
+/* рабочие с тросом: лицом к фото, тянут на себя, шагают назад, носки к зданию */
+.pull__side--l .pull__man { transform: rotate(-8deg); transform-origin: 50% 100%; }
+.pull__side--r .pull__man { transform: scaleX(-1) rotate(-8deg); transform-origin: 50% 100%; }
