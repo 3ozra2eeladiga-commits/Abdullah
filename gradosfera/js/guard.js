@@ -52,7 +52,8 @@
   // горячие клавиши панели разработчика и «просмотр кода»
   document.addEventListener('keydown', function (e) {
     var k = (e.key || '').toLowerCase(), mod = e.ctrlKey || e.metaKey;
-    if (e.key === 'F12' || (mod && e.shiftKey && (k === 'i' || k === 'j' || k === 'c')) || (mod && e.altKey && (k === 'i' || k === 'j' || k === 'c')) || (mod && k === 'u') || (mod && k === 's')) {
+    var devKeys = 'ijckem';   // I J C — Chrome/Яндекс/Edge; K E M — Firefox (консоль, сеть, адаптив)
+    if (e.key === 'F12' || (mod && e.shiftKey && devKeys.indexOf(k) >= 0) || (mod && e.altKey && devKeys.indexOf(k) >= 0) || (mod && (k === 'u' || k === 's' || k === 'p'))) {
       e.preventDefault(); e.stopPropagation();
       ov.classList.remove('boom'); void ov.offsetWidth; ov.classList.add('boom', 'on');
       setTimeout(function () { if (!open) ov.classList.remove('on', 'boom'); }, 1900);
