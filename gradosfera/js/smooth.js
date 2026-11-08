@@ -24,7 +24,7 @@
   }
   // «блоки»: после остановки прокрутки, если начало раздела рядом (до 28% экрана) — мягко доводим к нему.
   // Внутри разделов-анимаций (видео, фасад, лифт) не вмешиваемся.
-  var SNAP = ['#about', '#facade', '.arch', '#lift', '#flats', '#life', '#parking', '#boiler', '#safe', '#gallery', '#terms', '#contacts'];
+  var SNAP = ['#about', '#facade', '.arch', '#lift', '#flats', '#life', '#parking', '#boiler', '#safe', '#gallery', '#terms', '#contacts', '#finale'];
   var snapT = 0, snapping = false, lastY = window.scrollY, touching = false;
   window.addEventListener('touchstart', function () { touching = true; }, { passive: true });
   window.addEventListener('touchend', function () { touching = false; }, { passive: true });

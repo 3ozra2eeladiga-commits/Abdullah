@@ -1079,3 +1079,23 @@ img, canvas { -webkit-touch-callout: none; -webkit-user-drag: none; }
 }
 .team__bang { fill: #ffb27a; font: 800 16px var(--sans); opacity: 0; }
 .team.is-open .for-rest, .team.is-closed .for-work { display: none; }
+
+/* ===== финал: свет в окнах ===== */
+.fin { position: relative; overflow: hidden; padding: clamp(60px, 9vw, 120px) 0 clamp(70px, 9vw, 110px); text-align: center; }
+.fin__sky { position: absolute; inset: 0; top: 0; right: 0; bottom: 0; left: 0; background: radial-gradient(ellipse at 50% 80%, rgba(255,170,90,.10), transparent 60%); transition: opacity 1.2s; opacity: .4; pointer-events: none; }
+.fin.all .fin__sky { opacity: 1; background: radial-gradient(ellipse at 50% 75%, rgba(255,170,90,.28), transparent 62%); }
+.fin__inner { position: relative; display: grid; justify-items: center; gap: 18px; }
+.fin__house { width: min(560px, 92vw); height: auto; overflow: visible; }
+.fin__body { fill: #14151a; stroke: rgba(239,231,218,.25); stroke-width: 1; }
+.fin__roof { stroke: #c98a5b; stroke-width: 3; }
+.fin__tower { fill: #191b21; stroke: rgba(239,231,218,.35); stroke-width: 1; }
+.fin__ground { stroke: rgba(201,138,91,.6); stroke-width: 1.5; }
+.fin__w { fill: #22242b; transition: fill .5s, filter .5s; }
+.fin__w.on { fill: #ffc98a; filter: drop-shadow(0 0 5px rgba(255,190,110,.75)); }
+.fin__count { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.fin__count b { color: #ffb27a; font-weight: 600; }
+.fin__title { opacity: .25; transform: translateY(10px); transition: opacity .8s, transform .8s; }
+.fin__title span { color: #ffb27a; }
+.fin.all .fin__title { opacity: 1; transform: none; }
+.fin__call { opacity: 0; transform: translateY(10px); transition: opacity .8s .2s, transform .8s .2s; pointer-events: none; }
+.fin.all .fin__call { opacity: 1; transform: none; pointer-events: auto; }

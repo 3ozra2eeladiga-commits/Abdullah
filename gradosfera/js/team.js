@@ -62,32 +62,3 @@
   if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { vis = e[0].isIntersecting; if (vis && !raf) raf = requestAnimationFrame(anim); }).observe(box);
   else { vis = true; raf = requestAnimationFrame(anim); }
 })();
-
-/* Конец сайта: человек пытается листать дальше — страница «трясётся», люди в офисе пугаются */
-(function () {
-  'use strict';
-  var last = 0, acc = 0, ty = null;
-  function atEnd() { return window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4; }
-  function quake() {
-    var now = Date.now(); if (now - last < 3000) return; last = now;
-    var m = document.querySelector('main') || document.body;
-    m.classList.remove('gs-quake'); void m.offsetWidth; m.classList.add('gs-quake');
-    setTimeout(function () { m.classList.remove('gs-quake'); }, 750);
-    if (navigator.vibrate) try { navigator.vibrate([40, 30, 60]); } catch (e) {}
-    if (window.gsSfx && window.gsSfx.bump) window.gsSfx.bump();
-    // офис не виден (внизу подвал) — мягко подводим к нему, чтобы было видно, как люди пугаются
-    var team = document.getElementById('team'), r = team && team.getBoundingClientRect();
-    if (team && (r.bottom < 0 || r.top > window.innerHeight * 0.85)) {
-      var y = window.scrollY + r.top - (window.innerHeight - r.height) / 2;
-      if (window.gsLenis) window.gsLenis.scrollTo(y, { duration: 0.8 }); else window.scrollTo({ top: y, behavior: 'smooth' });
-      setTimeout(function () { if (window.gsTeamShock) window.gsTeamShock(); }, 650);
-    } else if (window.gsTeamShock) window.gsTeamShock();
-  }
-  window.addEventListener('wheel', function (e) {
-    if (e.deltaY <= 0 || !atEnd()) { acc = 0; return; }
-    acc += e.deltaY; if (acc > 220) { acc = 0; quake(); }
-  }, { passive: true });
-  window.addEventListener('touchstart', function (e) { ty = atEnd() ? e.touches[0].clientY : null; }, { passive: true });
-  window.addEventListener('touchmove', function (e) { if (ty !== null && atEnd() && ty - e.touches[0].clientY > 70) { ty = null; quake(); } }, { passive: true });
-  window.addEventListener('keydown', function (e) { if ((e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') && atEnd()) quake(); });
-})();
