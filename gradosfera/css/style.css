@@ -1022,7 +1022,19 @@ body.snd-on .snd-sw { display: flex; }
   .build-hud { display: none !important; }              /* «Этаж N из 8» — на телефоне убрано (цифра этажа есть на фоне) */
   .build-fg { display: none !important; }               /* люлька с рабочими справа — только на компьютере */
   .mate { transition: opacity .35s, transform .35s; }
-  body.reading .mate { opacity: 0; transform: translateY(-10px); pointer-events: none; }   /* качели прячутся, пока читаете */
   .guide { transition: opacity .35s; }
   .guide:not(.awake):not(.menu-open) { opacity: 0 !important; pointer-events: none; }  /* гид появляется только когда говорит */
 }
+
+/* офис v3: живее */
+.tr__steam { stroke: rgba(255,240,225,.85) !important; stroke-width: 2 !important; animation: trSteam2 2.2s ease-in-out infinite; }
+.tr:nth-child(2) .tr__steam { animation-delay: .7s; } .tr:nth-child(3) .tr__steam { animation-delay: 1.4s; }
+@keyframes trSteam2 { 0% { opacity: 0; transform: translateY(4px) scaleY(.8); } 35% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px) scaleY(1.15); } }
+.tr__zz text { font-size: 16px; fill: #ffc28f; }
+.tr__zz text:nth-child(2) { font-size: 21px; } .tr__zz text:nth-child(3) { font-size: 27px; }
+.tr .tw__head { transform-box: fill-box; transform-origin: 50% 100%; animation: snore 3.2s ease-in-out infinite; }
+@keyframes snore { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(1.5px) rotate(-4deg); } }
+.team.is-open .team__call { background: #2fb36b; border-color: #2fb36b; color: #fff; box-shadow: 0 0 0 0 rgba(47,179,107,.6); animation: callPulse 1.8s ease-out infinite; }
+.team.is-open .team__call::before { content: "📞 "; }
+@keyframes callPulse { 0% { box-shadow: 0 0 0 0 rgba(47,179,107,.55); } 100% { box-shadow: 0 0 0 14px rgba(47,179,107,0); } }
+@media (max-width: 760px) { .team__svg { margin: 0 -6px; width: calc(100% + 12px); } }

@@ -20,11 +20,6 @@
     if (on) { clearInterval(t); m.classList.remove('demand'); }
     else { setTimeout(demand, 600); loop(); }
   };
-  // на телефоне качели не висят над текстом: видны на первом экране и когда звук выключен и строитель возмущается
-  var hero = document.getElementById('hero');
-  function reading() { var past = hero ? window.scrollY > hero.offsetHeight - window.innerHeight * 0.6 : window.scrollY > 400; document.body.classList.toggle('reading', past && !m.classList.contains('demand')); }
-  window.addEventListener('scroll', reading, { passive: true }); reading();
-  var _d = demand; demand = function () { if (document.body.classList.contains('reading') && window.innerWidth <= 760) return; _d(); };
   m.classList.add('grumpy');
   first = setTimeout(demand, 2200);
   loop();

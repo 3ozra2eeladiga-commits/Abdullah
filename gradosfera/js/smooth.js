@@ -22,6 +22,34 @@
       .observe(document.body, { attributes: true, attributeFilter: ['class'] });
     window.gsLenis = lenis;
   }
+  // «блоки»: после остановки прокрутки, если начало раздела рядом (до 28% экрана) — мягко доводим к нему.
+  // Внутри разделов-анимаций (видео, фасад, лифт) не вмешиваемся.
+  var SNAP = ['#about', '#facade', '.arch', '#lift', '#flats', '#life', '#parking', '#boiler', '#safe', '#gallery', '#terms', '#contacts'];
+  var snapT = 0, snapping = false, lastY = window.scrollY, touching = false;
+  window.addEventListener('touchstart', function () { touching = true; }, { passive: true });
+  window.addEventListener('touchend', function () { touching = false; }, { passive: true });
+  function inside(sel) {          // мы внутри «закреплённого» раздела (после его начала и до конца)?
+    var el = document.querySelector(sel); if (!el) return false;
+    var r = el.getBoundingClientRect(); return r.top < -40 && r.bottom > window.innerHeight + 40;
+  }
+  function trySnap() {
+    if (snapping || touching || document.body.classList.contains('lock')) return;
+    if (inside('#hero') || inside('#facade') || inside('#lift')) return;
+    var vh = window.innerHeight, best = null, bd = 1e9, hdr = 64;
+    SNAP.forEach(function (sel) {
+      var el = document.querySelector(sel); if (!el) return;
+      var d = el.getBoundingClientRect().top - hdr; if (Math.abs(d) < vh * 0.28 && Math.abs(d) > 6 && Math.abs(d) < Math.abs(bd)) { bd = d; best = el; }
+    });
+    if (!best) return;
+    snapping = true;
+    var to = window.scrollY + bd;
+    if (lenis) lenis.scrollTo(to, { duration: 0.7, onComplete: function () { snapping = false; } });
+    else { window.scrollTo({ top: to, behavior: 'smooth' }); setTimeout(function () { snapping = false; }, 800); }
+  }
+  if (!reduce) window.addEventListener('scroll', function () {
+    if (snapping) return; clearTimeout(snapT); snapT = setTimeout(trySnap, fine ? 160 : 260);
+  }, { passive: true });
+
   // лифт: мягкая доводка до этажа
   if (ST && document.getElementById('lift') && !reduce) {
     window.addEventListener('load', function () {
