@@ -1058,3 +1058,4 @@ body.snd-on .snd-sw { display: flex; }
 
 /* старые iPhone (iOS 15 и ниже) не знают overflow: clip — запасной вариант */
 @supports not (overflow: clip) { .about, .life, .gallery { overflow-x: hidden; } }
+img, canvas { -webkit-touch-callout: none; -webkit-user-drag: none; }
