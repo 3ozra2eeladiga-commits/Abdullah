@@ -11,6 +11,7 @@
   function upd() {
     raf = 0;
     var r = sec.getBoundingClientRect(), vh = window.innerHeight;
+    document.body.classList.toggle('at-end', r.top < vh * 0.9);   // внизу сайта плашка «Этаж/Сдача» прячется — не перекрывает подвал
     var y = window.scrollY, max = document.documentElement.scrollHeight - vh;
     var startY = y + r.top - vh * 0.9;                 // начало: раздел показался снизу
     var endY = Math.min(max, y + r.bottom - vh);       // конец: раздел целиком на экране

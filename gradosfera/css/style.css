@@ -1099,3 +1099,9 @@ img, canvas { -webkit-touch-callout: none; -webkit-user-drag: none; }
 .fin.all .fin__title { opacity: 1; transform: none; }
 .fin__call { opacity: 0; transform: translateY(10px); transition: opacity .8s .2s, transform .8s .2s; pointer-events: none; }
 .fin.all .fin__call { opacity: 1; transform: none; pointer-events: auto; }
+
+/* внизу сайта плавающая плашка не закрывает текст подвала; подвал читается лучше */
+body.at-end .build-hud { opacity: 0 !important; }
+.ftr, .ftr p, .ftr small, .ftr a { color: rgba(239,231,218,.82); }
+.ftr__grid span, .ftr__fine { color: rgba(239,231,218,.72); }
+.ftr { position: relative; z-index: 3; background: rgba(14,15,18,.92); }
