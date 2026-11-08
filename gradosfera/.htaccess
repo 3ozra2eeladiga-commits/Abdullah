@@ -28,6 +28,12 @@ RewriteCond %{HTTP_HOST} ^gradosfera\.com$ [NC]
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteRule ^ https://gradosfera.com%{REQUEST_URI} [R=301,L]
 
+# ---- защита от «хотлинка»: наши фото и кадры видео не открываются на чужих сайтах ----
+RewriteCond %{HTTP_REFERER} !^$
+RewriteCond %{HTTP_REFERER} !^https?://(www\.)?gradosfera\.com [NC]
+RewriteCond %{HTTP_REFERER} !^https?://ci910477\.tw1\.ru [NC]
+RewriteRule \.(webp|png|jpe?g|mp4)$ - [F,NC,L]
+
 # ---- скорость: сжатие и кэш ----
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml
