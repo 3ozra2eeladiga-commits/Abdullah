@@ -1020,7 +1020,7 @@ body.snd-on .snd-sw { display: flex; }
 /* ===== порядок на телефоне: ничего мелкого не наезжает на текст ===== */
 @media (max-width: 760px) {
   .build-hud { display: none !important; }              /* «Этаж N из 8» — на телефоне убрано (цифра этажа есть на фоне) */
-  .build-fg { display: none !important; }               /* люлька с рабочими справа — только на компьютере */
+  .build-fg { opacity: .95; }                            /* люлька с рабочими — и на телефоне */
   .mate { transition: opacity .35s, transform .35s; }
   .guide { transition: opacity .35s; }
   .guide:not(.awake):not(.menu-open) { opacity: 0 !important; pointer-events: none; }  /* гид появляется только когда говорит */

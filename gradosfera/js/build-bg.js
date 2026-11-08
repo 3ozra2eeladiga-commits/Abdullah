@@ -359,7 +359,7 @@
     var r = aboutEl.getBoundingClientRect();
     if (!gond.start) { if (r.top < H * 0.18) gond.start = t; else return; }
     if (r.top > H * 0.6) { gond.start = 0; gsparks.length = 0; return; }   // вернулись на первый экран — сценка начнётся заново
-    var s = mobile ? 0.45 : 1;
+    var s = mobile ? 0.6 : 1;
     var pw = 140 * s, x1 = W - (mobile ? 4 : 18), x0 = x1 - pw;
     var el = t - gond.start;
     var topY = H * (mobile ? 0.2 : 0.2), cruise = H * (mobile ? 0.46 : 0.42);
