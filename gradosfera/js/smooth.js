@@ -51,6 +51,30 @@
     if (snapping) return; clearTimeout(snapT); snapT = setTimeout(trySnap, fine ? 160 : 260);
   }, { passive: true });
 
+  // «блоки» на телефоне: когда при прокрутке начало раздела доходит до шапки — прокрутка останавливается
+  // ровно на нём (инерция гасится на полсекунды), дальше листаете к следующему разделу.
+  if (!fine && !reduce) {
+    var py = window.scrollY, cool = {}, stopping = false, html = document.documentElement;
+    window.addEventListener('scroll', function () {
+      var y = window.scrollY;
+      if (stopping || document.body.classList.contains('lock')) { py = y; return; }
+      var hdr = 64, now = Date.now();
+      if (Math.abs(y - py) > window.innerHeight * 0.7) { py = y; return; }   // прыжок (меню, ссылка) — не останавливаем
+      for (var i = 0; i < SNAP.length; i++) {
+        var el = document.querySelector(SNAP[i]); if (!el) continue;
+        var line = el.getBoundingClientRect().top + y - hdr;
+        var crossed = (py < line - 2 && y >= line - 2) || (py > line + 2 && y <= line + 2);
+        if (crossed && !(cool[i] > now)) {
+          cool[i] = now + 1500; stopping = true;
+          html.classList.add('gs-stop'); window.scrollTo(0, line);
+          setTimeout(function () { html.classList.remove('gs-stop'); stopping = false; py = window.scrollY; }, 550);
+          break;
+        }
+      }
+      py = y;
+    }, { passive: true });
+  }
+
   // лифт: мягкая доводка до этажа
   if (ST && document.getElementById('lift') && !reduce) {
     window.addEventListener('load', function () {

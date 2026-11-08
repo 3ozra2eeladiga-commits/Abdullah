@@ -1053,6 +1053,5 @@ body.snd-on .snd-sw { display: flex; }
 
 /* «блоки» на телефоне: прокрутка сама притормаживает у начала каждого раздела */
 @media (hover: none) {
-  html { scroll-snap-type: y proximity; scroll-padding-top: 64px; }
-  #about, #facade, .arch, #lift, #flats, #life, #parking, #boiler, #safe, #gallery, #terms, #contacts { scroll-snap-align: start; }
+  html.gs-stop { overflow: hidden !important; }
 }
