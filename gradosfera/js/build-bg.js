@@ -79,7 +79,7 @@
     }
     var g = ctx.createRadialGradient(G.x0 + G.bw / 2, G.gy, 0, G.x0 + G.bw / 2, G.gy, Math.max(W, H) * 0.9);
     g.addColorStop(0, 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + c[3] + ')');
-    g.addColorStop(1, 'rgba(18,18,20,0)');
+    g.addColorStop(1, 'rgba(24,24,27,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     // звёзды ночью
     var night = seg(p, 0.82, 0.97);
@@ -118,7 +118,7 @@
     var dig = seg(p, 0, 0.1), depth = G.fh * 1.2 * dig;
     if (depth > 1) {
       var a = G.x0 - 20, b = G.x0 + G.bw + 20;
-      ctx.fillStyle = 'rgb(18,18,20)'; ctx.fillRect(a - 10, G.gy + 1, b - a + 20, depth + 16);
+      ctx.fillStyle = 'rgb(24,24,27)'; ctx.fillRect(a - 10, G.gy + 1, b - a + 20, depth + 16);
       st(COPPER, 0.7, 1.2, 8);
       ctx.beginPath(); ctx.moveTo(a - 12, G.gy); ctx.lineTo(a, G.gy + depth); ctx.lineTo(b, G.gy + depth); ctx.lineTo(b + 12, G.gy); ctx.stroke(); noGlow();
       if (p > 0.09) { st(COPPER, 0.4, 1); for (var k = a + 6; k < b - 6; k += 10) line(k, G.gy + depth - 6, k + 6, G.gy + depth - 1); }
@@ -194,8 +194,8 @@
         var sw = bw * clamp((f - 0.6) / 0.4, 0, 1);
         st(COPPER, 1, 1.8, 10); line(x0 - 6, yb - fh, x0 - 6 + sw + 12 * (sw / bw), yb - fh);
         if (f < 1) { // яркая «головка» рисующейся плиты
-          ctx.fillStyle = 'rgba(' + HOT + ',0.95)'; ctx.shadowColor = 'rgba(' + HOT + ',1)'; ctx.shadowBlur = GLOW ? 18 : 0;
-          ctx.beginPath(); ctx.arc(x0 - 6 + sw, yb - fh, 2.6, 0, 6.3); ctx.fill();
+          ctx.fillStyle = 'rgba(' + HOT + ',0.6)'; ctx.shadowColor = 'rgba(' + HOT + ',0.6)'; ctx.shadowBlur = GLOW ? 8 : 0;
+          ctx.beginPath(); ctx.arc(x0 - 6 + sw, yb - fh, 2, 0, 6.3); ctx.fill();
         }
       }
       if (f < 1) cur = { x: x0 + bw * clamp((f - 0.6) / 0.4, 0, 1), y: f > 0.6 ? yb - fh : yb - colH, active: true };
@@ -269,39 +269,40 @@
   /* ---------- частицы ---------- */
   function particles(cur, b, t) {
     if (cur.active && !reduce) {
-      for (var k = 0; k < (mobile ? 2 : 4); k++) sparks.push({ x: cur.x, y: cur.y, vx: (Math.random() - 0.5) * 4.5, vy: -Math.random() * 3.8 - 0.5, life: 1, w: 1.4 });
-      if (Math.random() < 0.06) flashes.push({ x: cur.x, y: cur.y, life: 1 });
+      // сварка — спокойнее: реже, медленнее, мягче (раньше мешала читать)
+      if (Math.random() < (mobile ? 0.25 : 0.35)) sparks.push({ x: cur.x, y: cur.y, vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 1.8 - 0.3, life: 1, w: 1.1 });
+      if (Math.random() < 0.008) flashes.push({ x: cur.x, y: cur.y, life: 1 });
     }
     // салют, когда дом готов
     if (prog > 0.96 && !fired) {
       fired = true; doneFlash = 1;
       for (var n = 0; n < 4; n++) {
         var cx = G.x0 + G.bw * (0.15 + n * 0.25), cy = b.top - G.fh * (1.5 + (n % 2));
-        for (var m = 0; m < 50; m++) { var ang = m / 50 * 6.283, sp = 2 + Math.random() * 3; sparks.push({ x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 1.4, w: 1.6 }); }
+        for (var m = 0; m < 22; m++) { var ang = m / 22 * 6.283, sp = 1.2 + Math.random() * 1.6; sparks.push({ x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 1.4, w: 1.6 }); }
       }
     }
     if (prog < 0.9) fired = false;
     ctx.lineCap = 'round';
     for (var i = sparks.length - 1; i >= 0; i--) {
-      var s = sparks[i]; s.vy += 0.1; s.vx *= 0.99; s.x += s.vx; s.y += s.vy; s.life -= 0.022;
+      var s = sparks[i]; s.vy += 0.05; s.vx *= 0.99; s.x += s.vx; s.y += s.vy; s.life -= 0.02;
       if (s.life <= 0 || s.y > G.gy + 4) { sparks.splice(i, 1); continue; }
       var L = Math.min(1, s.life);
-      ctx.strokeStyle = 'rgba(255,' + Math.round(160 + 80 * L) + ',110,' + L + ')'; ctx.lineWidth = s.w;
+      ctx.strokeStyle = 'rgba(255,' + Math.round(160 + 60 * L) + ',120,' + (L * 0.5) + ')'; ctx.lineWidth = s.w;
       ctx.shadowBlur = 0;
-      line(s.x, s.y, s.x - s.vx * 2.4, s.y - s.vy * 2.4);
+      line(s.x, s.y, s.x - s.vx * 1.6, s.y - s.vy * 1.6);
     }
     noGlow(); ctx.lineCap = 'butt';
     for (i = flashes.length - 1; i >= 0; i--) {
-      var f = flashes[i]; f.life -= 0.08; if (f.life <= 0) { flashes.splice(i, 1); continue; }
-      var g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 70 * f.life + 10);
-      g.addColorStop(0, 'rgba(255,230,190,' + 0.55 * f.life + ')'); g.addColorStop(1, 'rgba(255,200,120,0)');
+      var f = flashes[i]; f.life -= 0.05; if (f.life <= 0) { flashes.splice(i, 1); continue; }
+      var g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 34 * f.life + 8);
+      g.addColorStop(0, 'rgba(255,230,190,' + 0.18 * f.life + ')'); g.addColorStop(1, 'rgba(255,200,120,0)');
       ctx.fillStyle = g; ctx.fillRect(f.x - 90, f.y - 90, 180, 180);
     }
     for (i = dust.length - 1; i >= 0; i--) {
       var d = dust[i]; d.x += d.vx; d.y += d.vy; d.life -= 0.012; if (d.life <= 0) { dust.splice(i, 1); continue; }
       ctx.fillStyle = 'rgba(' + COPPER + ',' + 0.28 * d.life + ')'; ctx.beginPath(); ctx.arc(d.x, d.y, 1.8 + (1 - d.life) * 4, 0, 6.3); ctx.fill();
     }
-    if (doneFlash > 0) { ctx.fillStyle = 'rgba(255,220,170,' + doneFlash * 0.12 + ')'; ctx.fillRect(0, 0, W, H); doneFlash -= 0.03; }
+    if (doneFlash > 0) { ctx.fillStyle = 'rgba(255,220,170,' + doneFlash * 0.04 + ')'; ctx.fillRect(0, 0, W, H); doneFlash -= 0.03; }
   }
 
   /* ---------- фасадная люлька с тремя рабочими справа ----------
@@ -405,17 +406,17 @@
       var foot = py - 2 * s - (hop > 0 ? Math.sin(Math.PI * hop) * 20 * s : 0);
       var pose = walk < 1 ? (wxk === tx ? 'hold' : 'walk') : hop > 0 && hop < 1 ? 'hop' : (el < 3.2 || moving ? 'hold' : jobs[k]);
       var tool = worker(wxk, foot, s, pose, k, t);
-      if (pose === 'weld' && tool && Math.random() < 0.8) {
-        for (var n = 0; n < 2; n++) gsparks.push({ x: tool.x, y: tool.y, vx: (Math.random() - 0.7) * 3, vy: -Math.random() * 2.5, life: 1 });
+      if (pose === 'weld' && tool && Math.random() < 0.18) {
+        for (var n = 0; n < 1; n++) gsparks.push({ x: tool.x, y: tool.y, vx: (Math.random() - 0.7) * 1.4, vy: -Math.random() * 1.2, life: 1 });
       }
       if (pose === 'hammer' && tool && Math.abs(Math.sin(t * 7 + k)) < 0.12) gsparks.push({ x: tool.x, y: tool.y, vx: Math.random() * 1.5, vy: -Math.random() * 1.5, life: 0.6 });
     }
     ctx.lineCap = 'round';
     for (var i = gsparks.length - 1; i >= 0; i--) {
-      var p = gsparks[i]; p.vy += 0.12; p.x += p.vx; p.y += p.vy; p.life -= 0.035;
+      var p = gsparks[i]; p.vy += 0.06; p.x += p.vx; p.y += p.vy; p.life -= 0.03;
       if (p.life <= 0 || p.y > H) { gsparks.splice(i, 1); continue; }
-      ctx.strokeStyle = 'rgba(255,' + Math.round(170 + 70 * p.life) + ',110,' + p.life + ')'; ctx.lineWidth = 1.3;
-      line(p.x, p.y, p.x - p.vx * 2.2, p.y - p.vy * 2.2);
+      ctx.strokeStyle = 'rgba(255,' + Math.round(170 + 60 * p.life) + ',120,' + (p.life * 0.55) + ')'; ctx.lineWidth = 1;
+      line(p.x, p.y, p.x - p.vx * 1.5, p.y - p.vy * 1.5);
     }
     ctx.lineCap = 'butt';
   }
