@@ -1042,3 +1042,17 @@ body.snd-on .snd-sw { display: flex; }
 /* рабочие с тросом: лицом к фото, тянут на себя, шагают назад, носки к зданию */
 .pull__side--l .pull__man { transform: rotate(-8deg); transform-origin: 50% 100%; }
 .pull__side--r .pull__man { transform: scaleX(-1) rotate(-8deg); transform-origin: 50% 100%; }
+
+/* офис v4: анимацию ведёт JS — CSS-анимации этих элементов выключены */
+.tr__zz text, .tr__steam, .tw__type, .tw__click, .tw__screen, .tw__head, .tr .tw__head, .tr .tw__vest { animation: none !important; }
+.tr__zz text { opacity: 0; }
+.team__svg .tr__body { stroke: #f07832; stroke-width: 13; }
+.team__svg .tr__leg { stroke: #efe7da; }
+.team__svg .tr__eye { stroke: #1b1410; stroke-width: 1.4; }
+.tw__click { opacity: 0; }
+
+/* «блоки» на телефоне: прокрутка сама притормаживает у начала каждого раздела */
+@media (hover: none) {
+  html { scroll-snap-type: y proximity; scroll-padding-top: 64px; }
+  #about, #facade, .arch, #lift, #flats, #life, #parking, #boiler, #safe, #gallery, #terms, #contacts { scroll-snap-align: start; }
+}

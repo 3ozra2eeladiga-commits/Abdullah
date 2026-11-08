@@ -46,7 +46,8 @@
     if (lenis) lenis.scrollTo(to, { duration: 0.7, onComplete: function () { snapping = false; } });
     else { window.scrollTo({ top: to, behavior: 'smooth' }); setTimeout(function () { snapping = false; }, 800); }
   }
-  if (!reduce) window.addEventListener('scroll', function () {
+  // на телефоне «блоки» делает сам браузер (CSS scroll-snap) — это плавнее и надёжнее; JS-доводка только на компьютере
+  if (!reduce && fine) window.addEventListener('scroll', function () {
     if (snapping) return; clearTimeout(snapT); snapT = setTimeout(trySnap, fine ? 160 : 260);
   }, { passive: true });
 
