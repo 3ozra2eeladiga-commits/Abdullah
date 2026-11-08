@@ -1006,3 +1006,11 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 @media (max-width: 760px) { .desk { height: 520px; background-image: url('../img/desk-m.webp'); } .pcard { width: 82vw; top: 45%; } .pcard img { aspect-ratio: 4 / 3; } }
 
 html, body { transition: background-color .3s linear; }
+
+/* переключатель музыки 1 · 2 (виден, когда звук включён) */
+.snd-sw { position: absolute; top: 50%; transform: translateY(-50%); left: calc(max(var(--gut), var(--safe-l)) + 210px + 118px); display: none; gap: 4px; padding: 3px; border-radius: 999px; border: 1px solid rgba(239,231,218,.25); background: rgba(255,255,255,.05); }
+body.snd-on .snd-sw { display: flex; }
+.snd-sw button { width: 26px; height: 26px; border-radius: 50%; color: var(--cream); font: 600 12px var(--sans); opacity: .6; }
+.snd-sw button.is-on { background: #c8743c; color: #fff; opacity: 1; }
+@media (max-width: 1024px) { .snd-sw { left: auto; right: calc(max(var(--gut), var(--safe-r)) + 64px + 46px); } }
+@media (max-width: 760px) { .snd-sw { left: auto; right: max(var(--gut), var(--safe-r)); top: calc(100% + 8px); transform: none; flex-direction: row; background: rgba(16,17,20,.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); } }

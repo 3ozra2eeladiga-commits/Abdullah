@@ -24,21 +24,24 @@
     musicGain = ctx.createGain(); musicGain.gain.value = 0.5;
     musicGain.connect(master); musicGain.connect(verb);
   }
-  function pad(notes, t, dur) {
+  function pad(notes, t, dur, calm) {
+    var A = calm ? 2.5 : 0.8, v1 = calm ? 0.05 : 0.03, v2 = calm ? 0.025 : 0.016, R = calm ? 1.5 : 0.8;
     notes.forEach(function (m, i) {
       [-4, 4].forEach(function (det) {
         var o = ctx.createOscillator(); o.type = i < 2 ? 'sine' : 'triangle';
         o.frequency.value = hz(m); o.detune.value = det;
         var g = ctx.createGain(); g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(i < 2 ? 0.03 : 0.016, t + 0.8);
-        g.gain.setValueAtTime(i < 2 ? 0.03 : 0.016, t + Math.max(0.9, dur - 1));
-        g.gain.linearRampToValueAtTime(0, t + dur + 0.8);
+        g.gain.linearRampToValueAtTime(i < 2 ? v1 : v2, t + A);
+        g.gain.setValueAtTime(i < 2 ? v1 : v2, t + Math.max(A + 0.1, dur - A));
+        g.gain.linearRampToValueAtTime(0, t + dur + R);
         var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
-        o.connect(lp); lp.connect(g); g.connect(musicGain); o.start(t); o.stop(t + dur + 2);
+        o.connect(lp); lp.connect(g); g.connect(musicGain); o.start(t); o.stop(t + dur + R + 0.5);
       });
     });
-    // редкие «капли» пианино сверху
-
+    if (calm) for (var k = 0; k < 3; k++) {          // редкие «капли» пианино сверху
+      var m = notes[2 + Math.floor(Math.random() * (notes.length - 2))] + 12;
+      bell(hz(m), t + 0.8 + k * 2.4 + Math.random() * 0.6, 0.035, musicGain);
+    }
   }
   function bell(f, t, vol, out) {
     var o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
@@ -51,8 +54,9 @@
   // ---------- новая музыка: тёплый «deep house / chill» грув, 100 BPM ----------
   // Bm – G – D – A (цепляющая последовательность), бас, мягкая бочка, хлопок, хэт, «плак»-арпеджио с эхом.
   // Первые 2 такта — вступление (пэды + арпеджио), потом вступает ритм.
-  var SONG = [[47, 54, 59, 62, 66], [43, 50, 55, 59, 62], [50, 57, 62, 66, 69], [45, 52, 57, 61, 64]];
-  var BPM = 100, S16 = 60 / BPM / 4, nextT = 0, st16 = 0, bar = 0, echo = null;
+  // Dmaj7 – Bm7 – Gmaj7 – A: тепло и светло
+  var SONG = [[50, 57, 61, 62, 66], [47, 54, 57, 59, 62], [43, 50, 54, 55, 59], [45, 52, 55, 57, 61]];
+  var BPM = 96, S16 = 60 / BPM / 4, nextT = 0, st16 = 0, bar = 0, echo = null;
   function initEcho() {
     var d = ctx.createDelay(1); d.delayTime.value = S16 * 3;
     var fb = ctx.createGain(); fb.gain.value = 0.32;
@@ -62,14 +66,14 @@
   }
   function kick(t) {
     var o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = 'sine'; o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.55, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+    o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.1);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.28, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
     o.connect(g); g.connect(musicGain); o.start(t); o.stop(t + 0.35);
   }
   function clap(t) {
     var n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
     n.buffer = noise(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 0.9;
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
     n.connect(bp); bp.connect(g); g.connect(musicGain); n.start(t, Math.random()); n.stop(t + 0.2);
   }
   function hat(t, open) {
@@ -93,29 +97,46 @@
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
     o.connect(lp); lp.connect(g); g.connect(musicGain); if (echo) g.connect(echo); o.start(t); o.stop(t + 0.45);
   }
-  var ARP = [0, 2, 3, 4, 3, 2, 1, 2, 0, 2, 3, 4, 3, 4, 2, 1];          // рисунок арпеджио по нотам аккорда
+  var ARP = [0, 3, 2, 4, 1, 3, 2, 4, 0, 3, 2, 4, 3, 2, 1, 2];          // рисунок арпеджио по нотам аккорда
   var BASSP = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0];        // ритм баса
   function tick16(t) {
     var ch = SONG[bar % SONG.length], groove = bar >= 2, k = st16;
     if (k === 0) pad(ch.map(function (m) { return m + 12; }), t, 60 / BPM * 4 + 0.5);
-    pluck(ch[ARP[k]] + 24, t, k % 4 === 0 ? 0.07 : 0.045);
-    if (groove) {
-      if (k % 4 === 0) kick(t);
+    if (k % 2 === 0 || k === 7 || k === 15) pluck(ch[ARP[k]] + 24, t, k % 4 === 0 ? 0.065 : 0.04);
+    if (groove) {                                   // ритм лёгкий, без баса
+      if (k === 0 || k === 8 || k === 10) kick(t);
       if (k === 4 || k === 12) clap(t);
-      if (k % 2 === 1) hat(t, k === 7 || k === 15);
-      if (BASSP[k]) bass(ch[0], t, S16 * 2.2);
+      if (k % 2 === 1) hat(t, k === 15);
     }
     st16 = (st16 + 1) % 16; if (st16 === 0) bar++;
   }
+  var TRACK = '2'; try { TRACK = localStorage.getItem('gs-track') || '2'; } catch (e) {}
+  var qs = /[?&]music=(\d)/.exec(location.search); if (qs) TRACK = qs[1] === '1' ? '1' : '2';
   function loop() {
+    if (TRACK === '1') {                          // спокойная: длинные аккорды раз в 8 с
+      pad(CHORDS[step % CHORDS.length], ctx.currentTime + 0.05, 8, true); step++;
+      timer = setTimeout(loop, 8000); return;
+    }
     if (!echo) initEcho();
     if (nextT < ctx.currentTime) nextT = ctx.currentTime + 0.06;
     while (nextT < ctx.currentTime + 0.15) { tick16(nextT); nextT += S16; }
     timer = setTimeout(loop, 30);
   }
+  function setTrack(n) {
+    TRACK = n; try { localStorage.setItem('gs-track', n); } catch (e) {}
+    sw.querySelectorAll('button').forEach(function (b) { b.classList.toggle('is-on', b.dataset.t === n); });
+    if (on && ctx) { clearTimeout(timer); timer = null; st16 = 0; bar = 0; step = 0; nextT = 0;
+      master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(0, ctx.currentTime); master.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 1.2); loop(); }
+  }
+  // переключатель «1 · 2» рядом с колонкой — появляется, когда звук включён
+  var sw = document.createElement('div'); sw.className = 'snd-sw'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'Выбор музыки');
+  sw.innerHTML = '<button type="button" data-t="1" aria-label="Спокойная музыка">1</button><button type="button" data-t="2" aria-label="Ритмичная музыка">2</button>';
+  btn.insertAdjacentElement('afterend', sw);
+  sw.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setTrack(b.dataset.t); });
+  sw.querySelectorAll('button').forEach(function (b) { b.classList.toggle('is-on', b.dataset.t === TRACK); });
   function setOn(v) {
     on = v;
-    btn.classList.toggle('is-on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.classList.toggle('is-on', on); btn.setAttribute('aria-pressed', on ? 'true' : 'false'); document.body.classList.toggle('snd-on', on);
     btn.querySelector('span').textContent = on ? 'Звук вкл' : 'Звук';
     try { localStorage.setItem('gs-sound', on ? '1' : '0'); } catch (e) {}
     if (window.gsMate) window.gsMate(on);
