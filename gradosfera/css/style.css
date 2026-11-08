@@ -1212,3 +1212,6 @@ body.at-end .build-fg { opacity: 0 !important; transition: opacity .4s; }
 .gd__msg small { font-size: 13px; color: rgba(239,231,218,.6); }
 html.gd-on canvas { visibility: hidden !important; }
 .gd__shards { position: absolute; inset: 0; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none; }
+
+.stat--q b { font-size: clamp(48px, 6.4vw, 104px); white-space: nowrap; }
+@media (max-width: 760px) { .stat--q b { font-size: 52px; } }
