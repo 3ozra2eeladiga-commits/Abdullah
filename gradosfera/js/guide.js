@@ -12,9 +12,9 @@
     ['#lift',     0.58, 'Листайте — едем на крышу'],
     ['#flats',    0.66, 'Нажмите на карточку'],
     ['#life',     0.62, 'Всё для жителей'],
-    ['#parking',  0.70, 'Проведите пальцем по фото'],
+    ['#parking',  0.70, ''],   // у схемы своя подсказка — гид молчит, чтобы не накладываться
     ['#boiler',   0.70, 'Проведите — пойдёт тепло'],
-    ['#gallery',  0.60, 'Свайпайте фото на столе'],
+    ['#gallery',  0.60, ''],   // у стола своя подсказка
     ['#terms',    0.66, 'Сдача — I кв. 2028'],
     ['#contacts', 0.74, '<a href="tel:+79388153333">Позвонить нам</a>']
   ];
@@ -95,6 +95,7 @@
     idleT = setTimeout(function () {
       if (Date.now() - lastScroll < 1200) { sayWhenIdle(); return; }
       var i = pendingTxt; if (i !== cur || said[i]) return;
+      if (!STOPS[i][2]) { said[i] = true; return; }
       said[i] = true; bub.innerHTML = STOPS[i][2]; bub.classList.add('is-on'); g.classList.add('awake');
       clearTimeout(timer); timer = setTimeout(function () { if (i !== STOPS.length - 1) { bub.classList.remove('is-on'); setTimeout(function () { if (!bub.classList.contains('is-on')) g.classList.remove('awake'); }, 600); } }, 3200);
     }, Math.max(150, wait));
