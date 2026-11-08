@@ -83,7 +83,7 @@
     if (helped) return;
     if (cur < 0 || g.classList.contains('menu-open') || bub.classList.contains('is-on') || cur === STOPS.length - 1) { helpT = setTimeout(tryHint, 10000); return; }
     helped = true;
-    bub.innerHTML = 'Нужна помощь? Нажмите на меня'; bub.classList.add('is-on');
+    bub.innerHTML = 'Нужна помощь? Нажмите на меня'; bub.classList.add('is-on'); g.classList.add('awake');
     setTimeout(function () { if (bub.textContent.indexOf('Нужна помощь') === 0) bub.classList.remove('is-on'); }, 4500);
   }, 90000);
 
@@ -95,13 +95,13 @@
     idleT = setTimeout(function () {
       if (Date.now() - lastScroll < 1200) { sayWhenIdle(); return; }
       var i = pendingTxt; if (i !== cur || said[i]) return;
-      said[i] = true; bub.innerHTML = STOPS[i][2]; bub.classList.add('is-on');
-      clearTimeout(timer); timer = setTimeout(function () { if (i !== STOPS.length - 1) bub.classList.remove('is-on'); }, 3200);
+      said[i] = true; bub.innerHTML = STOPS[i][2]; bub.classList.add('is-on'); g.classList.add('awake');
+      clearTimeout(timer); timer = setTimeout(function () { if (i !== STOPS.length - 1) { bub.classList.remove('is-on'); setTimeout(function () { if (!bub.classList.contains('is-on')) g.classList.remove('awake'); }, 600); } }, 3200);
     }, Math.max(150, wait));
   }
   window.addEventListener('scroll', function () {
     lastScroll = Date.now();
-    if (bub.classList.contains('is-on') && !g.classList.contains('menu-open') && cur !== STOPS.length - 1) bub.classList.remove('is-on');
+    if (bub.classList.contains('is-on') && !g.classList.contains('menu-open') && cur !== STOPS.length - 1) { bub.classList.remove('is-on'); g.classList.remove('awake'); }
     if (pendingTxt >= 0 && !said[pendingTxt]) sayWhenIdle();
   }, { passive: true });
 

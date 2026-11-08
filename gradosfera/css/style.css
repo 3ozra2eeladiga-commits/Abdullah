@@ -1016,3 +1016,13 @@ body.snd-on .snd-sw { display: flex; }
 @media (max-width: 760px) { .snd-sw { left: auto; right: max(var(--gut), var(--safe-r)); top: calc(100% + 8px); transform: none; flex-direction: row; background: rgba(16,17,20,.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); } }
 
 .snd-sw, body.snd-on .snd-sw { display: none !important; }
+
+/* ===== порядок на телефоне: ничего мелкого не наезжает на текст ===== */
+@media (max-width: 760px) {
+  .build-hud { display: none !important; }              /* «Этаж N из 8» — на телефоне убрано (цифра этажа есть на фоне) */
+  .build-fg { display: none !important; }               /* люлька с рабочими справа — только на компьютере */
+  .mate { transition: opacity .35s, transform .35s; }
+  body.reading .mate { opacity: 0; transform: translateY(-10px); pointer-events: none; }   /* качели прячутся, пока читаете */
+  .guide { transition: opacity .35s; }
+  .guide:not(.awake):not(.menu-open) { opacity: 0 !important; pointer-events: none; }  /* гид появляется только когда говорит */
+}
