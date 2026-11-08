@@ -11,7 +11,6 @@ DirectoryIndex index.html
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
   Header always set Cross-Origin-Opener-Policy "same-origin"
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
-  # включить ПОСЛЕ того, как заработает https (сертификат выпущен):
   # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>
 # скрытые и служебные файлы не отдаём
@@ -20,10 +19,14 @@ DirectoryIndex index.html
 </FilesMatch>
 
 # ---- https и адрес без www (включить после выпуска SSL-сертификата) ----
-# RewriteEngine On
-# RewriteCond %{HTTPS} off [OR]
-# RewriteCond %{HTTP_HOST} ^www\. [NC]
-# RewriteRule ^ https://gradosfera.com%{REQUEST_URI} [R=301,L]
+RewriteEngine On
+# www → без www
+RewriteCond %{HTTP_HOST} ^www\.gradosfera\.com$ [NC]
+RewriteRule ^ https://gradosfera.com%{REQUEST_URI} [R=301,L]
+# http → https (у Timeweb https определяется по X-Forwarded-Proto)
+RewriteCond %{HTTP_HOST} ^gradosfera\.com$ [NC]
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteRule ^ https://gradosfera.com%{REQUEST_URI} [R=301,L]
 
 # ---- скорость: сжатие и кэш ----
 <IfModule mod_deflate.c>
