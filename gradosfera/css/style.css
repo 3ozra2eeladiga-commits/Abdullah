@@ -1059,3 +1059,12 @@ body.snd-on .snd-sw { display: flex; }
 /* старые iPhone (iOS 15 и ниже) не знают overflow: clip — запасной вариант */
 @supports not (overflow: clip) { .about, .life, .gallery { overflow-x: hidden; } }
 img, canvas { -webkit-touch-callout: none; -webkit-user-drag: none; }
+
+/* окно квартир: всегда видна кнопка «Назад» и крестик; на ПК прокрутка внутри окна */
+.fwin__top { position: sticky; top: 0; z-index: 5; margin: 0 -8px; padding: 10px 8px; background: rgba(16,17,20,.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); gap: 14px; }
+.fwin__back { padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; color: var(--cream); font-size: 13px; letter-spacing: .04em; white-space: nowrap; }
+.fwin__back:hover { background: var(--cream); color: var(--bg); }
+.fwin__crumbs { flex: 1; }
+@media (max-width: 760px) { .fwin__crumbs { display: none; } .fwin__back { font-size: 12px; padding: 9px 14px; } }
+/* на ПК «Моздок» над новым видео не нужен */
+.hero__city { display: none !important; }

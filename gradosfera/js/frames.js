@@ -6,8 +6,11 @@
   var mobile = window.matchMedia('(max-width: 760px)').matches;
 
   function FrameScroller(cv) {
-    var base = cv.getAttribute('data-frames') + (mobile ? '/m/' : '/d/');
-    var count = +((mobile && cv.getAttribute('data-count-m')) || cv.getAttribute('data-count'));
+    // data-desk-m: на компьютере показываем те же вертикальные кадры (по центру, по бокам — размытый фон)
+    var useM = mobile || cv.hasAttribute('data-desk-m'), fit = !mobile && cv.hasAttribute('data-desk-m');
+    var base = cv.getAttribute('data-frames') + (useM ? '/m/' : '/d/');
+    var count = +((useM && cv.getAttribute('data-count-m')) || cv.getAttribute('data-count'));
+    var tiny = document.createElement('canvas'); tiny.width = 48; tiny.height = 27; var tctx = tiny.getContext('2d');
     var section = document.querySelector(cv.getAttribute('data-section'));
     var start = +(cv.getAttribute('data-start') || 0), span = +(cv.getAttribute('data-span') || 1);
     var ctx = cv.getContext('2d');
@@ -60,6 +63,15 @@
       var im = imgs[i]; if (!im) return;
       var cw = cv.width, ch = cv.height, iw = im.naturalWidth, ih = im.naturalHeight;
       var s = Math.max(cw / iw, ch / ih), w = iw * s, h = ih * s;
+      if (fit) {
+        // размытый фон: кадр в крошечный холст и обратно на весь экран (работает во всех браузерах)
+        tctx.drawImage(im, 0, (ih - iw * 27 / 48) / 2, iw, iw * 27 / 48, 0, 0, 48, 27);
+        ctx.imageSmoothingEnabled = true; ctx.drawImage(tiny, 0, 0, cw, ch);
+        ctx.fillStyle = 'rgba(10,10,14,.45)'; ctx.fillRect(0, 0, cw, ch);
+        var s2 = ch / ih, w2 = iw * s2;
+        ctx.drawImage(im, (cw - w2) / 2, 0, w2, ch);
+        drawn = i; cv.dataset.frame = i; return;
+      }
       ctx.drawImage(im, (cw - w) / 2, (ch - h) / 2, w, h); drawn = i; cv.dataset.frame = i;
     }
     function tick() {
