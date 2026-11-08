@@ -1140,3 +1140,36 @@ body.at-end .build-fg { opacity: 0 !important; transition: opacity .4s; }
 .ftr__grid, .ftr__fine { position: relative; z-index: 1; }
 @media (max-width: 760px) { .ftr__beam { width: 900px; } .ftr__beam--2 { width: 650px; } }
 @media (prefers-reduced-motion: reduce) { .ftr__beam { animation: none; transform: rotate(-30deg); } }
+
+/* ===== бригада в самом низу: техника и строители едут слева направо без остановки ===== */
+.parade { position: relative; height: 84px; margin-top: 18px; overflow: hidden; pointer-events: none; }
+.parade__ground { position: absolute; left: 0; right: 0; bottom: 6px; height: 2px; background: linear-gradient(90deg, transparent, rgba(201,138,91,.6) 8%, rgba(201,138,91,.6) 92%, transparent); }
+.parade__ground::after { content: ""; position: absolute; left: 0; right: 0; top: 4px; height: 6px; background: repeating-linear-gradient(90deg, rgba(201,138,91,.25) 0 10px, transparent 10px 22px); animation: groundMove 1.2s linear infinite; }
+@keyframes groundMove { to { background-position: 22px 0; } }
+.parade__it { position: absolute; bottom: 8px; left: 0; animation: march 46s linear infinite; animation-delay: calc(var(--i) * -4.6s); will-change: transform; }
+@keyframes march { from { transform: translateX(-200px); } to { transform: translateX(calc(100vw + 40px)); } }
+.parade svg { display: block; height: 64px; width: auto; overflow: visible; }
+.parade .pw { height: 52px; animation: bob .5s ease-in-out infinite alternate; }
+@keyframes bob { to { transform: translateY(-2px); } }
+.parade path, .parade circle, .parade rect, .parade ellipse { fill: none; stroke: #e9d8bf; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.parade .vest { fill: #f07832; stroke: none; } .parade .face { fill: #f3d9bd; stroke: #1b1410; stroke-width: 1.2; }
+.parade .hat { fill: #ffb000; stroke: #ffb000; stroke-width: 1.5; }
+.parade .tool, .parade .toolf { stroke: #c98a5b; } .parade .toolf { fill: #c98a5b; }
+.parade .brick { fill: #b5532b; stroke: #6d2e15; stroke-width: 1; }
+.parade .body { fill: rgba(240,120,50,.85); stroke: #c86426; } .parade .cab { fill: #d9b48a; stroke: #8a6a4f; } .parade .glass { fill: #ffd9a8; stroke: none; }
+.parade .track { fill: #2a2b30; stroke: #8a6a4f; } .parade .chassis { stroke: #8a6a4f; stroke-width: 3; }
+.parade .wh, .parade .wheel { fill: #1b1c20; stroke: #c98a5b; stroke-width: 2.5; stroke-dasharray: 4 3; animation: wheelSpin .6s linear infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes wheelSpin { to { transform: rotate(360deg); } }
+.parade .stripe { stroke: rgba(255,255,255,.6); } .parade .sand { fill: #c9a06b; stroke: #a07a4a; } .parade .drumr { fill: #6b6d75; stroke: #c98a5b; }
+.parade .drum .stripe { animation: drumRoll 1.4s linear infinite; }
+@keyframes drumRoll { to { transform: translateX(-22px); } }
+.parade .drum { clip-path: ellipse(46px 20px at 62px 40px); }
+.parade .arm { transform-box: view-box; transform-origin: 70px 42px; animation: armDig 2.2s ease-in-out infinite; }
+@keyframes armDig { 50% { transform: rotate(10deg); } }
+.parade .pl1, .parade .pl2 { transform-box: view-box; animation: legA .5s ease-in-out infinite alternate; }
+.parade .pl1 { transform-origin: 20px 36px; } .parade .pl2 { transform-origin: 20px 36px; animation-direction: alternate-reverse; }
+@keyframes legA { from { transform: rotate(-14deg); } to { transform: rotate(14deg); } }
+@media (max-width: 760px) { .parade { height: 66px; } .parade svg { height: 48px; } .parade .pw { height: 40px; } .parade__it { animation-name: marchM; animation-duration: 60s; animation-delay: calc(var(--i) * -6s); } }
+@media (prefers-reduced-motion: reduce) { .parade__it { animation-duration: 120s; } }
+
+@keyframes marchM { from { transform: translateX(-200px); } to { transform: translateX(calc(100vw + 1050px)); } }
