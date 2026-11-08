@@ -41,11 +41,21 @@
     if (v) { ov.classList.remove('boom'); void ov.offsetWidth; ov.classList.add('boom', 'on'); hide(true); }
     else { ov.classList.remove('on', 'boom'); hide(false); }
   }
+  var tripped = 0;
   function check() {
     var dpr = window.devicePixelRatio, d = diff();
     if (dpr !== lastDpr) { lastDpr = dpr; base = d; return; }      // это масштаб страницы (Ctrl +/−), а не панель
-    setOpen(d.w - base.w > 160 || d.h - base.h > 160);
+    setOpen(d.w - base.w > 160 || d.h - base.h > 160 || Date.now() - tripped < 3000);
   }
+  // ловушка: пока панель разработчика открыта (в любом виде, даже отдельным окном), браузер останавливается на «debugger» —
+  // замечаем паузу и включаем «взрыв». Обычным посетителям это никак не мешает: без панели строка ничего не делает.
+  setInterval(function () {
+    var t0 = Date.now();
+    (function () {}).constructor('debugger')();
+    if (Date.now() - t0 > 120) { tripped = Date.now(); check(); }
+  }, 800);
+  // правая кнопка мыши (меню «Исследовать», «Исходный код», «Сохранить как») — отключена на всём сайте
+  document.addEventListener('contextmenu', function (e) { e.preventDefault(); }, true);
   window.addEventListener('resize', check);
   setInterval(check, 1000);
 
