@@ -14,4 +14,6 @@ if command -v rsync >/dev/null 2>&1; then
 else
   cp -a "$REPO/gradosfera/." "$WEB/"
 fi
+# сброс кэша браузера: подставляем номер версии в ссылки на css/js (?v=__V__)
+sed -i "s/__V__/$(git rev-parse --short HEAD)/g" "$WEB/index.html"
 echo "$(date '+%F %T') сайт обновлён до $(git rev-parse --short HEAD)" >> "$HOME/deploy.log"

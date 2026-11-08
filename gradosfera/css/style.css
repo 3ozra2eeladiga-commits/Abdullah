@@ -1105,3 +1105,24 @@ body.at-end .build-hud { opacity: 0 !important; }
 .ftr, .ftr p, .ftr small, .ftr a { color: rgba(239,231,218,.82); }
 .ftr__grid span, .ftr__fine { color: rgba(239,231,218,.72); }
 .ftr { position: relative; z-index: 3; background: rgba(14,15,18,.92); }
+
+/* подвал: всегда поверх фона, люлька не мешает */
+body.at-end .build-fg { opacity: 0 !important; transition: opacity .4s; }
+.ftr { background: #0e0f12 !important; }
+.ftr, .ftr a, .ftr span, .ftr__fine { color: #e9e1d4 !important; }
+.ftr nav a:hover, .ftr a:hover { color: #ffb27a !important; }
+/* логотип «Градосфера» светится: лучи и свечение за знаком, по названию пробегает блик */
+.ftr__logo { position: relative; display: inline-grid; place-items: center; }
+.ftr__logo img { position: relative; z-index: 1; filter: drop-shadow(0 0 6px rgba(255,178,110,.55)); animation: logoGlow 3.2s ease-in-out infinite; }
+@keyframes logoGlow { 50% { filter: drop-shadow(0 0 14px rgba(255,178,110,.95)) brightness(1.15); } }
+.ftr__rays { position: absolute; width: 150px; height: 150px; left: 50%; top: 50%; margin: -75px 0 0 -75px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255,175,95,.45) 0%, rgba(255,175,95,.12) 35%, transparent 65%), repeating-conic-gradient(from 0deg, rgba(255,190,120,.16) 0deg 6deg, transparent 6deg 22deg);
+  -webkit-mask: radial-gradient(circle, #000 30%, transparent 68%); mask: radial-gradient(circle, #000 30%, transparent 68%);
+  animation: raysSpin 18s linear infinite, raysPulse 3.2s ease-in-out infinite; opacity: 0; transition: opacity 1s; }
+.ftr.lit .ftr__rays { opacity: 1; }
+@keyframes raysSpin { to { transform: rotate(360deg); } }
+@keyframes raysPulse { 50% { scale: 1.15; } }
+.ftr__name { background: linear-gradient(100deg, #e9e1d4 0%, #e9e1d4 40%, #ffd9ae 50%, #e9e1d4 60%, #e9e1d4 100%); background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent !important; animation: nameShine 4.5s ease-in-out infinite; }
+@keyframes nameShine { 0% { background-position: 120% 0; } 60%, 100% { background-position: -30% 0; } }
+@media (prefers-reduced-motion: reduce) { .ftr__rays, .ftr__logo img, .ftr__name { animation: none; } }
