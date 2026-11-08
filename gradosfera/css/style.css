@@ -2,7 +2,7 @@
    Тёмный «кирпичный» графит, кремовый текст, медный акцент (из логотипа).
    Крупная классическая антиква Forum + гротеск Onest. */
 :root {
-  --bg: #18181b;
+  --bg: rgb(15,18,27);
   --bg-2: #212125;
   --line: rgba(239, 231, 218, .14);
   --cream: #efe7da;
@@ -1004,3 +1004,5 @@ body.lock .mate, body.lock .guide { opacity: 0 !important; }
 .desk__n { font-size: 12px; letter-spacing: .18em; color: #ffb27a; }
 .desk__cap { font-family: var(--serif); font-size: 18px; text-transform: uppercase; letter-spacing: .06em; }
 @media (max-width: 760px) { .desk { height: 520px; background-image: url('../img/desk-m.webp'); } .pcard { width: 82vw; top: 45%; } .pcard img { aspect-ratio: 4 / 3; } }
+
+html, body { transition: background-color .3s linear; }

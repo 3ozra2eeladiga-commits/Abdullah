@@ -69,7 +69,8 @@
   /* ---------- небо ---------- */
   function sky(p, t) {
     // цвет горизонта: рассвет (медь) → день (холодный) → закат (тёплый) → ночь (синий)
-    var stops = [[0, [201, 120, 70, 0.22]], [0.35, [120, 140, 160, 0.10]], [0.7, [220, 110, 60, 0.22]], [0.9, [40, 60, 120, 0.22]], [1, [30, 45, 100, 0.2]]];
+    // ночь → глубокая ночь → предрассветная сирень → рассвет (тёплое свечение у горизонта)
+    var stops = [[0, [40, 60, 130, 0.22]], [0.4, [50, 50, 120, 0.16]], [0.7, [140, 80, 140, 0.24]], [0.88, [230, 120, 80, 0.38]], [1, [255, 160, 90, 0.55]]];
     var c = stops[0][1];
     for (var k = 0; k < stops.length - 1; k++) {
       if (p >= stops[k][0] && p <= stops[k + 1][0]) {
@@ -82,7 +83,7 @@
     g.addColorStop(1, 'rgba(24,24,27,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     // звёзды ночью
-    var night = seg(p, 0.82, 0.97);
+    var night = 1 - seg(p, 0.35, 0.75);
     if (night > 0) {
       stars.forEach(function (s) {
         var tw = 0.5 + 0.5 * Math.sin(t * 2 + s.ph);
@@ -421,6 +422,13 @@
     ctx.lineCap = 'butt';
   }
 
+  // цвет фона всего сайта: ночь (вверху) → рассвет (внизу)
+  var BG = [[0, [15, 18, 27]], [0.45, [21, 21, 33]], [0.75, [38, 28, 40]], [0.92, [62, 40, 38]], [1, [78, 50, 40]]], lastBg = '';
+  function pageBg(p) {
+    var c = BG[0][1];
+    for (var k = 0; k < BG.length - 1; k++) if (p >= BG[k][0] && p <= BG[k + 1][0]) { var q = (p - BG[k][0]) / (BG[k + 1][0] - BG[k][0]); c = BG[k][1].map(function (v, n) { return Math.round(mix(v, BG[k + 1][1][n], q)); }); }
+    var s = 'rgb(' + c.join(',') + ')'; if (s !== lastBg) { document.documentElement.style.setProperty('--bg', s); lastBg = s; }
+  }
   var lastHud = '';
   function frame(now) {
     var t = (now - t0) / 1000;
@@ -430,6 +438,7 @@
     if (lastNow && GLOW) { if (now - lastNow > 28) slow++; else slow = Math.max(0, slow - 1); if (slow > 20) GLOW = 0; }
     lastNow = now;
     prog += (target - prog) * (reduce ? 1 : 0.2);
+    pageBg(prog);
     var level = prog < 0.1 ? 0 : Math.min(LEVELS, Math.ceil(seg(prog, 0.1, 0.72) * LEVELS));
     if (level !== lastLevel) { if (lastLevel >= 0) bump = 1; lastLevel = level; }
     bump *= 0.92;
