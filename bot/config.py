@@ -128,6 +128,13 @@ def is_staff(user_id):
     return False
 
 
+def biz_ignored(user):
+    """Этому клиенту бот в Telegram магазина не отвечает (shop.json → biz_ignore: ники без @ или ID)."""
+    lst = {str(x).lower().lstrip("@") for x in SHOP.get("biz_ignore", [])}
+    u = user or {}
+    return str(u.get("id")) in lst or (u.get("username") or "").lower() in lst
+
+
 def temp_staff_ids():
     """ID сотрудников с действующим временным доступом (temp_staff.json)."""
     from datetime import datetime, timezone

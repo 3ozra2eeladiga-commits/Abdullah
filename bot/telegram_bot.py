@@ -730,6 +730,8 @@ def _handle_business(update, deliver):
 
     # Режим «только свои»: пока бот не готов, отвечает лишь разрешённым (Абдулла, хозяйка);
     # остальным клиентам молчит — им отвечают флористы сами.
+    if from_id == chat_id and config.biz_ignored(msg.get("from")):
+        return                       # этому человеку бот не отвечает никогда (shop.json → biz_ignore)
     if from_id == chat_id and not biz_allowed(chat_id):
         _biz_remember(msg.get("from", {}))
         return
