@@ -11,7 +11,20 @@
   var io = new IntersectionObserver(function (es) {
     es.forEach(function (e) { var v = e.target; if (e.isIntersecting) { if (!reduce) play(v); else load(v); } else if (v.dataset.ok) v.pause(); });
   }, { rootMargin: '300px 0px' });
-  vids.forEach(function (v) { v.addEventListener('loadeddata', function () { v.classList.add('on'); }); io.observe(v); });
+  vids.forEach(function (v) {
+    v.addEventListener('loadeddata', function () { v.classList.add('on'); });
+    v.addEventListener('playing', function () { v.classList.add('on'); });
+    io.observe(v);
+  });
+  // iPhone в режиме энергосбережения (и некоторые встроенные браузеры) не запускают видео сами —
+  // запускаем при первом касании/прокрутке пальцем: видео, которое сейчас на экране
+  function kick() {
+    vids.forEach(function (v) {
+      var r = v.getBoundingClientRect(); if (reduce || r.bottom < -300 || r.top > window.innerHeight + 300) return;
+      if (v.paused) play(v);
+    });
+  }
+  ['touchstart', 'touchend', 'click'].forEach(function (ev) { document.addEventListener(ev, kick, { passive: true, capture: true }); });
   // пузыри над строителем, который тащит тяжёлое: позиция в долях кадра (x, y) в начале и в конце отрезка времени
   var SAY = {
     d: [[1.5, 4.5, 'Уф, тяжело! 😅', .35, .43, .40, .43], [6.5, 9, 'Ещё чуть-чуть…', .44, .43, .47, .43], [12, 15, 'Тащим обратно! 💪', .47, .43, .41, .43]],

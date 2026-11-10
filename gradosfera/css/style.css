@@ -1443,7 +1443,9 @@ video.dvid.on { opacity: 1; }
 .parade__say::after { content: ""; position: absolute; left: 30%; bottom: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: rgba(244,239,230,.92); }
 .parade .parade__boss.talk .parade__say { opacity: 1; transform: translateX(-30%) scale(1); }
 @media (max-width: 760px) { .parade { height: 96px; } .parade__boss { left: 58%; } .parade .pboss { height: 44px; } .parade .parade__say { font-size: 11px; max-width: 160px; } }
-/* галерея: фон — медленно распускающаяся краска (медь, золото, молочный) вместо стола */
-.desk, .gallery .desk { background: #0b0a09 url('../img/ink.jpg') center / cover no-repeat; }
-.desk::before { background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.15), rgba(0,0,0,.45) 75%); }
-@media (max-width: 760px) { .desk, .gallery .desk { background-image: url('../img/ink.jpg'); } }
+/* галерея: фон — живой чертёж (синька): сетка и медные линии домов, кранов, размеров сами дорисовываются */
+.desk, .gallery .desk { background: #10141d; }
+.desk::before { background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0), rgba(0,0,0,.3) 85%); }
+.desk, .gallery .desk { background: radial-gradient(ellipse at 50% 40%, #1a2233, #0f131c 75%); }
+.desk__bp { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+@media (max-width: 760px) { .desk, .gallery .desk { background-image: none; } }
