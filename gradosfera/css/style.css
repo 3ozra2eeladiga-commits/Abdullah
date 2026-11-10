@@ -1239,3 +1239,26 @@ html.gd-on canvas { visibility: hidden !important; }
 .gsay.on { opacity: 1; transform: none; }
 html.over-gond, html.over-gond * { cursor: pointer !important; }
 .team__say { white-space: normal; width: max-content; max-width: min(92%, 420px); text-align: center; }
+
+/* ===== живой стол архитектора: фон «Квартир» и галереи ===== */
+video.dvid { position: absolute; inset: 0; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s; pointer-events: none; }
+video.dvid.on { opacity: 1; }
+.flats { position: relative; overflow: hidden; }
+.flats__bg { position: absolute; inset: 0; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; background: #2a1d14 url('../img/desk.webp') center / cover no-repeat; }
+.flats__bg::after { content: ""; position: absolute; inset: 0; top: 0; right: 0; bottom: 0; left: 0;
+  background: linear-gradient(180deg, rgba(14,12,10,.86) 0%, rgba(14,12,10,.55) 22%, rgba(14,12,10,.45) 60%, rgba(14,12,10,.85) 100%); }
+.flats > .wrap { position: relative; z-index: 1; }
+@media (max-width: 760px) { .flats__bg { background-image: url('../img/desk-m.webp'); } }
+/* карточки квартир — как листы чертежей, лежащие на столе */
+.ftype { background: #f4efe6; color: #1f1813; border: 0; box-shadow: 0 18px 40px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.35); }
+.ftype:nth-child(4n+1) { transform: rotate(-1.2deg); } .ftype:nth-child(4n+2) { transform: rotate(.9deg) translateY(8px); }
+.ftype:nth-child(4n+3) { transform: rotate(-.6deg) translateY(-4px); } .ftype:nth-child(4n+4) { transform: rotate(1.3deg) translateY(6px); }
+.ftype:hover { transform: rotate(0) translateY(-6px) !important; box-shadow: 0 26px 50px rgba(0,0,0,.55); }
+.ftype__plan { background: #fbf8f2; border-bottom: 1px solid #e3d8c7; }
+.ftype__name, .ftype__area { color: #1f1813; }
+.ftype__note { color: #5d4d40; }
+.ftype__foot { border-top-color: #e3d8c7; color: #7a6656; }
+.ftype__foot b { color: #b5602b; }
+.desk > video.dvid { z-index: 0; }
+.desk .desk__stack, .desk .desk__hint, .desk .desk__bar { z-index: 2; }
+.desk::before { z-index: 1; }
