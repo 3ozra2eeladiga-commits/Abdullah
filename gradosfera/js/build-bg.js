@@ -316,19 +316,26 @@
   var fctx = fg.getContext('2d');
   var gond = { start: 0, v: 0, lastY: window.scrollY }, gsparks = [];
 
-  function worker(x, foot, s, pose, k, t, phase) {
-    // pose: walk | hop | hold | weld | hammer | wipe
+  function worker(x, foot, s, pose, k, t, lamp) {
+    // pose: walk | hop | hold | weld | hammer | wipe;  lamp — рабочий из люльки: ярче и с фонариком на каске
+    var ga = G.a; if (lamp) G.a = 1;
     ctx.save(); ctx.translate(x, foot); ctx.scale(s, s);
+    if (lamp) {   // луч фонарика вперёд, на стену (мерцает чуть-чуть)
+      var fl = 0.22 + Math.sin(t * 9 + k * 2) * 0.03;
+      var lg = ctx.createLinearGradient(5, -37, 46, -37);
+      lg.addColorStop(0, 'rgba(255,236,170,' + (fl + 0.25) + ')'); lg.addColorStop(1, 'rgba(255,236,170,0)');
+      ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(5, -38); ctx.lineTo(46, -52); ctx.lineTo(46, -22); ctx.closePath(); ctx.fill();
+    }
     var lw = 1.6;
     var legA = pose === 'walk' ? Math.sin(t * 10 + k) * 0.5 : 0;
     // ноги
     st(CREAM, 0.9, lw); line(0, -14, Math.sin(legA) * 8, 0); line(0, -14, -Math.sin(legA) * 8, 0);
     // корпус + жилет
     line(0, -14, 0, -30);
-    ctx.fillStyle = 'rgba(240,120,50,' + 0.85 * G.a + ')'; ctx.fillRect(-4, -29, 8, 12);
+    ctx.fillStyle = lamp ? '#ff7a1a' : 'rgba(240,120,50,' + 0.85 * G.a + ')'; ctx.fillRect(-4, -29, 8, 12);
     // голова и каска
     st(CREAM, 0.9, lw); ctx.beginPath(); ctx.arc(0, -35, 4.2, 0, 6.3); ctx.stroke();
-    ctx.fillStyle = 'rgba(' + COPPER + ',' + G.a + ')'; ctx.beginPath(); ctx.arc(0, -36.5, 5, Math.PI, 0); ctx.fill(); ctx.fillRect(-6.5, -37, 13, 1.8);
+    ctx.fillStyle = lamp ? '#ffc21a' : 'rgba(' + COPPER + ',' + G.a + ')'; ctx.beginPath(); ctx.arc(0, -36.5, 5, Math.PI, 0); ctx.fill(); ctx.fillRect(-6.5, -37, 13, 1.8);
     // руки
     st(CREAM, 0.9, lw);
     var sh = { x: 0, y: -27 }, hand;
@@ -347,12 +354,18 @@
       line(sh.x, sh.y, wx, wy); line(sh.x, sh.y, -6, -18);
       st(CREAM, 0.9, 2); line(wx, wy - 4, wx, wy + 4);
     }
-    noGlow(); ctx.restore();
+    if (lamp) {   // сам фонарик на каске
+      ctx.fillStyle = '#fff6d8'; ctx.shadowColor = 'rgba(255,230,150,1)'; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(4.6, -37.6, 1.9, 0, 6.3); ctx.fill(); ctx.shadowBlur = 0;
+    }
+    noGlow(); ctx.restore(); G.a = ga;
     if (hand) return { x: x + (hand.x + 7) * s, y: foot + (hand.y - 2) * s };
   }
 
   var gReact = 0;   // время «нажали на рабочих» — подпрыгивают
   window.gsGondPoke = function () { gReact = performance.now() / 1000; };
+  var gFall = -99;   // время «тряхнули телефон» — рабочие падают и повисают на страховке, потом забираются обратно
+  window.gsGondFall = function () { var n = performance.now() / 1000; if (n - gFall < 4.6 || !window.gsGond) return false; gFall = n; return true; };
   function gondola(t) {
     window.gsGond = null;
     if (!aboutEl) return;
@@ -412,7 +425,17 @@
       var foot = py - 2 * s - (hop > 0 ? Math.sin(Math.PI * hop) * 20 * s : 0) - (rq > 0 ? Math.sin((1 - rq) * Math.PI) * 12 * s : 0);
       var pose = walk < 1 ? (wxk === tx ? 'hold' : 'walk') : hop > 0 && hop < 1 ? 'hop' : (el < 3.2 || moving ? 'hold' : jobs[k]);
       if (rq > 0) pose = 'hop';
-      var tool = worker(wxk, foot, s, pose, k, t);
+      var fe = t - gFall - k * 0.12, fo = 0;
+      if (fe > 0 && fe < 4.2) {
+        if (fe < 0.45) fo = Math.pow(fe / 0.45, 2) * 74;                                  // падают
+        else if (fe < 3) fo = 74 + Math.sin((fe - 0.45) * 9) * 10 * Math.exp(-(fe - 0.45) * 1.6);   // повисли на страховке, качаются
+        else fo = 74 * (1 - (fe - 3) / 1.2);                                              // забираются обратно
+        fo *= s; pose = fe < 3 ? 'hop' : 'hold';
+        st(CREAM, 0.85, 1); line(tx, py - 26 * s, wxk + Math.sin(fe * 3 + k) * 3 * s, foot + fo - 40 * s);   // страховочный трос
+        wxk += Math.sin(fe * 3 + k) * 3 * s;
+      }
+      var tool = worker(wxk, foot + fo, s, pose, k, t, true);
+      if (fo) tool = null;
       if (pose === 'weld' && tool && Math.random() < 0.18) {
         for (var n = 0; n < 1; n++) gsparks.push({ x: tool.x, y: tool.y, vx: (Math.random() - 0.7) * 1.4, vy: -Math.random() * 1.2, life: 1 });
       }
