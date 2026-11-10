@@ -24,7 +24,7 @@
   }
   // «блоки»: после остановки прокрутки, если начало раздела рядом (до 28% экрана) — мягко доводим к нему.
   // Внутри разделов-анимаций (видео, фасад, лифт) не вмешиваемся.
-  var SNAP = ['#about', '#facade', '.arch', '#lift', '#flats', '#life', '#parking', '#boiler', '#safe', '#gallery', '#terms', '#contacts', '#finale'];
+  var SNAP = ['#about', '.stats', '#facade', '.arch', '#lift', '#flats', '#life', '#parking', '#boiler', '#safe', '#gallery', '#terms', '#contacts', '#finale'];
   var snapT = 0, snapping = false, lastY = window.scrollY, touching = false;
   window.addEventListener('touchstart', function () { touching = true; }, { passive: true });
   window.addEventListener('touchend', function () { touching = false; }, { passive: true });
@@ -69,9 +69,9 @@
         var line = el.getBoundingClientRect().top + y - hdr;
         var crossed = (py < line - 2 && y >= line - 2) || (py > line + 2 && y <= line + 2);
         if (crossed && !(cool[i] > now)) {
-          cool[i] = now + 1500; stopping = true;
+          cool[i] = now + 2500; stopping = true;
           html.classList.add('gs-stop'); window.scrollTo(0, line);
-          setTimeout(function () { html.classList.remove('gs-stop'); stopping = false; py = window.scrollY; }, 550);
+          setTimeout(function () { html.classList.remove('gs-stop'); stopping = false; py = window.scrollY; }, 950);   // пауза ~1 с — чтобы не листали «ракетой»
           break;
         }
       }
