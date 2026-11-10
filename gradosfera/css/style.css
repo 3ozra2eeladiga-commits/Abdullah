@@ -1295,3 +1295,18 @@ video.dvid.on { opacity: 1; }
 .flats .ftype { background: rgba(246,241,232,.74); backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px); }
 .flats .ftype__plan { background: rgba(252,249,243,.55); }
 .flats .ftype__plan img { mix-blend-mode: multiply; }
+
+/* гид «выглядывает» из-за края экрана, наклоняется, говорит — и уходит обратно */
+.guide { transition: opacity .3s, transform .6s cubic-bezier(.3,1.3,.5,1); transform: translateX(170px); }
+.guide.peek { transform: none; }
+.guide .guide__man { transition: transform .6s cubic-bezier(.3,1.3,.5,1); transform-origin: 50% 100%; }
+.guide.peek .guide__man { transform: rotate(-14deg); animation: peekLean 2.4s ease-in-out .6s infinite; }
+@keyframes peekLean { 50% { transform: rotate(-6deg); } }
+.guide:not(.peek) .guide__bubble { opacity: 0 !important; }
+.gpk { color: #ffb27a; font-weight: 800; }
+@media (max-width: 760px) {
+  .guide { transform: translateX(-130px); }
+  .guide.peek { transform: none; }
+  .guide.peek .guide__man { transform: rotate(14deg); animation-name: peekLeanM; }
+  @keyframes peekLeanM { 50% { transform: rotate(6deg); } }
+}

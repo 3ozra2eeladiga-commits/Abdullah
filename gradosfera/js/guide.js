@@ -84,11 +84,25 @@
     if (helped) return;
     if (cur < 0 || g.classList.contains('menu-open') || bub.classList.contains('is-on') || cur === STOPS.length - 1) { helpT = setTimeout(tryHint, 10000); return; }
     helped = true;
-    bub.innerHTML = 'Нужна помощь? Нажмите на меня'; bub.classList.add('is-on'); g.classList.add('awake');
-    setTimeout(function () { if (bub.textContent.indexOf('Нужна помощь') === 0) bub.classList.remove('is-on'); }, 4500);
+    peek('Если нужна помощь — нажмите на меня');
   }, 90000);
 
   var pendingTxt = -1, lastScroll = 0, idleT = 0, said = {};
+  // «выглядывает»: выезжает из-за края экрана, говорит коротко, «Не отвлекаю 🙂» — и прячется обратно
+  var BYE = ['Не отвлекаю 🙂', 'Всё, ухожу 😉', 'Смотрите дальше 👌', 'Не мешаю 🙂'], bi = 0;
+  function peek(html, stay) {
+    clearTimeout(timer);
+    g.classList.add('awake', 'peek'); bub.classList.remove('is-on');
+    timer = setTimeout(function () {
+      bub.innerHTML = '<span class="gpk">Смотрите! </span>' + html; bub.classList.add('is-on');
+      if (stay) return;
+      timer = setTimeout(function () {
+        bub.textContent = BYE[bi++ % BYE.length];
+        timer = setTimeout(hidePeek, 1300);
+      }, 3600);
+    }, 550);
+  }
+  function hidePeek() { clearTimeout(timer); bub.classList.remove('is-on'); g.classList.remove('peek'); setTimeout(function () { if (!g.classList.contains('peek')) g.classList.remove('awake'); }, 650); }
   function sayWhenIdle() {
     clearTimeout(idleT);
     if (pendingTxt < 0 || said[pendingTxt]) return;
@@ -97,13 +111,12 @@
       if (Date.now() - lastScroll < 1200) { sayWhenIdle(); return; }
       var i = pendingTxt; if (i !== cur || said[i]) return;
       if (!STOPS[i][2]) { said[i] = true; return; }
-      said[i] = true; bub.innerHTML = STOPS[i][2]; bub.classList.add('is-on'); g.classList.add('awake');
-      clearTimeout(timer); timer = setTimeout(function () { if (i !== STOPS.length - 1) { bub.classList.remove('is-on'); setTimeout(function () { if (!bub.classList.contains('is-on')) g.classList.remove('awake'); }, 600); } }, 4200);
+      said[i] = true; peek(STOPS[i][2], i === STOPS.length - 1);
     }, Math.max(150, wait));
   }
   window.addEventListener('scroll', function () {
     lastScroll = Date.now();
-    if (bub.classList.contains('is-on') && !g.classList.contains('menu-open') && cur !== STOPS.length - 1) { bub.classList.remove('is-on'); g.classList.remove('awake'); }
+    if (g.classList.contains('peek') && !g.classList.contains('menu-open') && cur !== STOPS.length - 1) hidePeek();
     if (pendingTxt >= 0 && !said[pendingTxt]) sayWhenIdle();
   }, { passive: true });
 
