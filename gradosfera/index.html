@@ -286,6 +286,39 @@
   </div>
 </section>
 
+<!-- ============ НОВОСТИ КВАРТАЛА: строитель-репортёр с микрофоном ============ -->
+<section class="sec news" id="news" aria-label="Новости квартала">
+  <div class="wrap news__box">
+    <div class="news__studio">
+      <svg class="news__man" id="newsMan" viewBox="0 0 160 220" aria-hidden="true">
+        <ellipse cx="80" cy="212" rx="46" ry="6" fill="rgba(0,0,0,.35)"/>
+        <rect x="58" y="150" width="16" height="58" rx="6" fill="#2b2f3a"/><rect x="86" y="150" width="16" height="58" rx="6" fill="#2b2f3a"/>
+        <rect x="52" y="204" width="24" height="9" rx="4" fill="#1a1a1d"/><rect x="84" y="204" width="24" height="9" rx="4" fill="#1a1a1d"/>
+        <path d="M46 96 Q80 84 114 96 L118 156 Q80 164 42 156 Z" fill="#2f3542"/>
+        <path d="M54 94 L66 158 L56 158 L46 98 Z M106 94 L94 158 L104 158 L114 98 Z" fill="#f07a2a"/>
+        <path d="M58 132 H70 M90 132 H102" stroke="#ffe08a" stroke-width="4"/>
+        <g class="nm-armL"><path d="M48 100 Q30 128 40 150" stroke="#2f3542" stroke-width="13" fill="none" stroke-linecap="round"/><circle cx="40" cy="152" r="7" fill="#f2c6a0"/></g>
+
+        <defs><radialGradient id="nmMic" cx=".35" cy=".35" r=".7"><stop offset="0" stop-color="#bbb"/><stop offset="1" stop-color="#333"/></radialGradient></defs>
+        <circle cx="80" cy="62" r="26" fill="#f2c6a0"/>
+        <path d="M52 56 Q54 28 80 28 Q106 28 108 56 Z" fill="#ffc21a"/><rect x="48" y="53" width="64" height="7" rx="3.5" fill="#f2b000"/><rect x="77" y="28" width="6" height="26" rx="3" fill="#f2b000"/>
+        <g class="nm-eyes"><circle cx="70" cy="66" r="3" fill="#1b1410"/><circle cx="90" cy="66" r="3" fill="#1b1410"/></g>
+        <circle cx="64" cy="74" r="4" fill="#f59a8a" opacity=".55"/><circle cx="96" cy="74" r="4" fill="#f59a8a" opacity=".55"/>
+        <ellipse class="nm-mouth" cx="80" cy="78" rx="6" ry="2.5" fill="#7a2e22"/>
+        <g class="nm-armR"><path d="M112 102 Q130 116 110 108" stroke="#2f3542" stroke-width="13" fill="none" stroke-linecap="round"/>
+          <rect x="101" y="86" width="6" height="20" rx="3" fill="#222" transform="rotate(28 104 96)"/><rect x="98" y="92" width="12" height="7" rx="2" fill="#c8743c" transform="rotate(28 104 96)"/>
+          <circle cx="99" cy="86" r="7" fill="url(#nmMic)"/><circle cx="108" cy="106" r="7" fill="#f2c6a0"/></g>
+      </svg>
+    </div>
+    <div class="news__screen">
+      <div class="news__top"><span class="news__live"><i></i>Эфир</span><span class="news__ttl">Новости квартала</span></div>
+      <p class="news__say" id="newsSay" aria-live="polite"></p>
+      <div class="news__nav"><button type="button" class="news__btn" data-nstep="-1" aria-label="Предыдущая новость">←</button><span class="news__dots" id="newsDots"></span><button type="button" class="news__btn" data-nstep="1" aria-label="Следующая новость">→</button></div>
+    </div>
+  </div>
+  <div class="news__ticker" aria-hidden="true"><div class="news__run" id="newsRun"></div></div>
+</section>
+
 <!-- ============ LIFE ============ -->
 <section class="sec life" id="life">
   <div class="wrap">
@@ -584,6 +617,7 @@
 <script src="js/walk.js?v=__V__"></script>
 <script src="js/biz.js?v=__V__"></script>
 <script src="js/team.js?v=__V__"></script>
+<script src="js/news.js?v=__V__"></script>
 <script src="js/finale.js?v=__V__"></script>
 <script src="js/safe.js?v=__V__"></script>
 <script src="js/guard.js?v=__V__"></script>
