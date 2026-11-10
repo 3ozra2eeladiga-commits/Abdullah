@@ -290,7 +290,8 @@
 <section class="sec news" id="news" aria-label="Новости квартала">
   <div class="wrap news__box">
     <div class="news__studio">
-      <svg class="news__man" id="newsMan" viewBox="0 0 160 220" aria-hidden="true">
+      <span class="news__ask" id="newsAsk"></span>
+      <svg class="news__man" id="newsMan" role="button" tabindex="0" aria-label="Нажмите — репортёр расскажет новость" viewBox="0 0 160 220" aria-hidden="true">
         <ellipse cx="80" cy="212" rx="46" ry="6" fill="rgba(0,0,0,.35)"/>
         <rect x="58" y="150" width="16" height="58" rx="6" fill="#2b2f3a"/><rect x="86" y="150" width="16" height="58" rx="6" fill="#2b2f3a"/>
         <rect x="52" y="204" width="24" height="9" rx="4" fill="#1a1a1d"/><rect x="84" y="204" width="24" height="9" rx="4" fill="#1a1a1d"/>
@@ -310,13 +311,12 @@
           <circle cx="99" cy="86" r="7" fill="url(#nmMic)"/><circle cx="108" cy="106" r="7" fill="#f2c6a0"/></g>
       </svg>
     </div>
-    <div class="news__screen">
-      <div class="news__top"><span class="news__live"><i></i>Эфир</span><span class="news__ttl">Новости квартала</span></div>
-      <p class="news__say" id="newsSay" aria-live="polite"></p>
-      <div class="news__nav"><button type="button" class="news__btn" data-nstep="-1" aria-label="Предыдущая новость">←</button><span class="news__dots" id="newsDots"></span><button type="button" class="news__btn" data-nstep="1" aria-label="Следующая новость">→</button></div>
-    </div>
+    <button type="button" class="news__screen" id="newsScreen" aria-label="Включить новости">
+      <span class="news__top"><span class="news__live"><i></i>Эфир</span><span class="news__ttl">Новости квартала</span></span>
+      <span class="news__say" id="newsSay" aria-live="polite"></span>
+      <span class="news__off"><b>Нет сигнала</b><small>нажмите на репортёра — он всё расскажет</small></span>
+    </button>
   </div>
-  <div class="news__ticker" aria-hidden="true"><div class="news__run" id="newsRun"></div></div>
 </section>
 
 <!-- ============ LIFE ============ -->

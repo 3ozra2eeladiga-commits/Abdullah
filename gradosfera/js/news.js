@@ -1,43 +1,52 @@
-/* Новости квартала: строитель-репортёр с микрофоном «читает» новости — текст печатается, рот двигается.
-   Новости листаются сами (когда раздел на экране) или стрелками. Внизу — бегущая строка. */
+/* Новости квартала: строитель-репортёр с микрофоном. Сам ничего не рассказывает — зазывает:
+   «Нажмите на меня!», стучит по микрофону, подпрыгивает, стучит в телевизор, зевает от скуки.
+   Нажали — телевизор включается, он «болтает» одну новость, потом экран гаснет: «Ещё? Нажмите!» */
 (function () {
   'use strict';
   var box = document.getElementById('news'), say = document.getElementById('newsSay'), man = document.getElementById('newsMan');
-  if (!box || !say) return;
+  var ask = document.getElementById('newsAsk'), scr = document.getElementById('newsScreen');
+  if (!box || !say || !man || !ask) return;
   var NEWS = [
     '🎁 Скоро акция! Оформите квартиру до Нового года — и получите подарок от «Градосферы».',
     '🥧 Живёте у нас — и самые вкусные осетинские пироги совсем рядом. Горячие, с пылу с жару!',
     '🏗 Строим быстро и сдаём в срок: сдача — I квартал 2028. Покупаете сейчас — заезжаете вовремя.'
   ];
-  var dots = document.getElementById('newsDots'), run = document.getElementById('newsRun');
-  NEWS.forEach(function (n, i) { var d = document.createElement('i'); d.addEventListener('click', function () { show(i); }); dots.appendChild(d); });
-  var line = NEWS.map(function (n) { return '<span>' + n + '</span>'; }).join('');
-  run.innerHTML = line + line;   // две копии — бесконечная строка
-  var cur = -1, typeT = 0, nextT = 0, visible = false;
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function show(i) {
-    cur = (i + NEWS.length) % NEWS.length;
-    Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === cur); });
-    clearTimeout(typeT); clearTimeout(nextT);
-    var txt = NEWS[cur], k = 0;
-    if (reduce) { say.textContent = txt; return; }
-    box.classList.add('talking'); say.textContent = '';
-    (function type() {
-      k += 1; say.textContent = Array.from(txt).slice(0, k).join('');
-      if (k < Array.from(txt).length) typeT = setTimeout(type, 34);
-      else { box.classList.remove('talking'); if (visible) nextT = setTimeout(function () { show(cur + 1); }, 4200); }
-    })();
+  var ASK = [
+    ['Нажмите на меня! 👆', 'hop'], ['Раз-раз… меня слышно? 🎤', 'tapmic'], ['Скучно? Нажмите — расскажу новость!', 'knock'],
+    ['У меня свежие новости! Жмите!', 'hop'], ['Ну нажмите же… 🥺', 'bored'], ['Эй! Я тут! Новости! 📢', 'tapmic']
+  ];
+  var MORE = ['Ещё новость? Нажмите! 😉', 'Это не всё! Нажмите ещё 👆', 'Новости кончились… но могу повторить! 😄'];
+  var cur = 0, ai = 0, busy = false, visible = false, askT = 0, typeT = 0, offT = 0;
+  function act(name) { box.classList.remove('hop', 'tapmic', 'knock', 'bored'); void man.getBoundingClientRect(); if (name) box.classList.add(name); }
+  function setAsk(txt) { ask.classList.remove('on'); setTimeout(function () { ask.textContent = txt; ask.classList.add('on'); }, 180); }
+  function beg() {
+    clearTimeout(askT); if (busy) return;
+    if (visible) { var a = ASK[ai++ % ASK.length]; setAsk(a[0]); act(a[1]); }
+    askT = setTimeout(beg, 3600);
   }
-  box.addEventListener('click', function (e) { var b = e.target.closest('[data-nstep]'); if (b) show(cur + +b.getAttribute('data-nstep')); });
-  if (man) man.addEventListener('click', function () { show(cur + 1); });
+  function tell() {
+    if (busy) return; busy = true; clearTimeout(askT); clearTimeout(offT); ask.classList.remove('on'); act('');
+    box.classList.add('tv-on');
+    var txt = Array.from(NEWS[cur]), k = 0, n = cur; cur = (cur + 1) % NEWS.length;
+    say.textContent = '';
+    setTimeout(function () {
+      box.classList.add('talking');
+      (function type() {
+        k += 1; say.textContent = txt.slice(0, k).join('');
+        if (k < txt.length) { typeT = setTimeout(type, 36); return; }
+        box.classList.remove('talking');
+        offT = setTimeout(function () {
+          box.classList.remove('tv-on'); busy = false;
+          setAsk(n === NEWS.length - 1 ? MORE[2] : MORE[n % 2]); act('hop');
+          askT = setTimeout(beg, 4200);
+        }, 3200);
+      })();
+    }, 450);
+  }
+  man.addEventListener('click', tell);
+  man.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tell(); } });
+  if (scr) scr.addEventListener('click', tell);
   if ('IntersectionObserver' in window) {
-    new IntersectionObserver(function (es) {
-      es.forEach(function (e) {
-        visible = e.isIntersecting;
-        if (visible && cur < 0) show(0);
-        else if (visible && !box.classList.contains('talking')) { clearTimeout(nextT); nextT = setTimeout(function () { show(cur + 1); }, 3000); }
-        else if (!visible) clearTimeout(nextT);
-      });
-    }, { threshold: 0.35 }).observe(box);
-  } else show(0);
+    new IntersectionObserver(function (es) { es.forEach(function (e) { visible = e.isIntersecting; if (visible && !busy) { clearTimeout(askT); askT = setTimeout(beg, 500); } }); }, { threshold: 0.3 }).observe(box);
+  } else { visible = true; beg(); }
 })();

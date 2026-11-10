@@ -1385,16 +1385,6 @@ video.dvid.on { opacity: 1; }
 @keyframes nmLive { 50% { opacity: .2; } }
 .news__ttl { color: var(--muted); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; }
 .news__say { min-height: 3.6em; margin: 0; font-family: var(--serif); font-size: clamp(20px, 2.2vw, 30px); line-height: 1.25; color: #f4efe6; }
-.news__nav { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
-.news__btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: none; color: #f4efe6; cursor: pointer; }
-.news__btn:hover { border-color: var(--copper); color: var(--copper); }
-.news__dots { display: flex; gap: 7px; } .news__dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.25); cursor: pointer; transition: background .3s, width .3s; }
-.news__dots i.on { width: 22px; border-radius: 4px; background: var(--copper); }
-.news__ticker { position: relative; overflow: hidden; background: #c8743c; color: #1b1410; white-space: nowrap; }
-.news__run { display: inline-flex; animation: nmRun 38s linear infinite; }
-.news__run span { padding: 11px 34px; font: 600 14px/1 var(--sans, sans-serif); }
-.news__run span::after { content: "•"; margin-left: 34px; opacity: .6; }
-@keyframes nmRun { to { transform: translateX(-50%); } }
 @media (max-width: 760px) {
   .news__box { grid-template-columns: 1fr; gap: 6px; padding-bottom: 26px; }
   .news__man { width: 110px; }
@@ -1403,4 +1393,38 @@ video.dvid.on { opacity: 1; }
   .news__screen::before { left: 50%; top: -12px; margin: 0 0 0 -12px; border: 12px solid transparent; border-top: 0; border-bottom-color: #1d2028; }
   .news__say { font-size: 20px; min-height: 5em; }
 }
-@media (prefers-reduced-motion: reduce) { .news__run { animation: none; } }
+/* репортёр зазывает; телевизор включается только по нажатию */
+.news__screen { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.news__screen > .news__top { display: flex; transition: opacity .3s; }
+.news__screen > .news__say { display: block; transition: opacity .3s; }
+.news:not(.tv-on) .news__screen > .news__top, .news:not(.tv-on) .news__screen > .news__say { opacity: 0; }
+.news__off { position: absolute; inset: 0; top: 0; right: 0; bottom: 0; left: 0; display: grid; place-content: center; gap: 6px; text-align: center; border-radius: inherit;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 3px), radial-gradient(circle at 50% 50%, #2a2d36, #101115);
+  transition: opacity .35s, transform .35s; }
+.news__off::before { content: ""; position: absolute; inset: 0; top: 0; right: 0; bottom: 0; left: 0; opacity: .18; border-radius: inherit;
+  background: repeating-radial-gradient(circle at 30% 40%, #fff 0 1px, transparent 1px 3px); animation: nmStatic .25s steps(3) infinite; }
+@keyframes nmStatic { 33% { transform: translate(3px, -2px); } 66% { transform: translate(-2px, 3px); } }
+.news__off b { position: relative; font: 400 26px/1 var(--serif); letter-spacing: .12em; text-transform: uppercase; color: #cfc7bb; }
+.news__off small { position: relative; font-size: 13px; color: #8f877c; }
+.news.tv-on .news__off { opacity: 0; transform: scaleY(.02); pointer-events: none; }
+.news__screen:hover .news__off b { color: var(--copper); }
+.news__ask { position: absolute; z-index: 2; left: 50%; top: 0; width: max-content; max-width: 220px; padding: 9px 13px; border-radius: 14px; background: #fff; color: #1b1410;
+  font: 600 14px/1.25 var(--sans, sans-serif); text-align: center; box-shadow: 0 10px 24px rgba(0,0,0,.35); transform: translate(-50%, 0) scale(.6); opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; }
+.news__ask::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: #fff; }
+.news__ask.on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.news__studio { padding-top: 70px; }
+.news.hop .news__man { animation: nmHop .9s cubic-bezier(.3,1.6,.5,1) 2; }
+@keyframes nmHop { 0%, 100% { transform: none; } 40% { transform: translateY(-26px) rotate(-4deg); } 70% { transform: translateY(0) scaleY(.94); } }
+.news.hop .news__man .nm-armL { animation: nmWave .25s ease-in-out 6 alternate; }
+.news.tapmic .news__man .nm-armR { transform-box: fill-box; transform-origin: 80% 100%; animation: nmTap .16s ease-in-out 8 alternate; }
+@keyframes nmTap { to { transform: translate(-3px, 3px) rotate(-6deg); } }
+.news.knock .news__man { animation: nmKnock .5s ease-in-out 3; }
+@keyframes nmKnock { 50% { transform: translateX(14px) rotate(6deg); } }
+.news.knock .news__screen { animation: nmShake .5s ease-in-out 3; }
+@keyframes nmShake { 50% { transform: translateX(2px) rotate(.3deg); } 60% { transform: translateX(-2px); } }
+.news.bored .news__man { animation: nmBored 2.4s ease-in-out 1; }
+@keyframes nmBored { 30%, 70% { transform: translateY(8px) scaleY(.93) rotate(-3deg); } }
+.news.bored .news__man .nm-mouth { animation: nmTalk .9s ease-in-out 2 alternate; }
+.news.tv-on .news__man { animation: nmBob 1.2s ease-in-out infinite; }
+@media (max-width: 760px) { .news__studio { padding-top: 64px; } .news__ask { max-width: 200px; font-size: 13px; } .news__off b { font-size: 20px; } .news__screen { min-height: 190px; } }
+.news__man:focus:not(:focus-visible), .news__screen:focus:not(:focus-visible) { outline: none; }
