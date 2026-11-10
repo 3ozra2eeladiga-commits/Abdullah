@@ -1428,3 +1428,18 @@ video.dvid.on { opacity: 1; }
 .news.tv-on .news__man { animation: nmBob 1.2s ease-in-out infinite; }
 @media (max-width: 760px) { .news__studio { padding-top: 64px; } .news__ask { max-width: 200px; font-size: 13px; } .news__off b { font-size: 20px; } .news__screen { min-height: 190px; } }
 .news__man:focus:not(:focus-visible), .news__screen:focus:not(:focus-visible) { outline: none; }
+/* прораб в параде: стоит и подгоняет, облачко маленькое и редкое */
+.parade { height: 116px; }
+.parade__boss { position: absolute; z-index: 3; left: 70%; bottom: 8px; }
+.parade .pboss { height: 56px; }
+.parade .hatw { fill: #f4f1ea; stroke: #f4f1ea; stroke-width: 1.5; }
+.parade .board { fill: #c9a06b; stroke: #8a6a4f; stroke-width: 1; }
+.parade .horn { fill: #e9d8bf; stroke: #c98a5b; stroke-width: 1.2; }
+.parade .pboss__arm { transform-box: view-box; transform-origin: 28px 25px; }
+.parade__boss.talk .pboss__arm { animation: bossHorn .35s ease-in-out infinite alternate; }
+@keyframes bossHorn { to { transform: rotate(-10deg); } }
+.parade .parade__say { position: absolute; display: block; letter-spacing: 0; text-transform: none; left: 50%; bottom: 100%; margin-bottom: 4px; width: max-content; max-width: 190px; padding: 5px 9px; border-radius: 10px; background: rgba(244,239,230,.92); color: #1b1410 !important;
+  font: 600 11.5px/1.2 var(--sans, sans-serif); transform: translateX(-30%) scale(.7); transform-origin: 30% 100%; opacity: 0; transition: opacity .3s, transform .3s; }
+.parade__say::after { content: ""; position: absolute; left: 30%; bottom: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: rgba(244,239,230,.92); }
+.parade .parade__boss.talk .parade__say { opacity: 1; transform: translateX(-30%) scale(1); }
+@media (max-width: 760px) { .parade { height: 96px; } .parade__boss { left: 58%; } .parade .pboss { height: 44px; } .parade .parade__say { font-size: 11px; max-width: 160px; } }
