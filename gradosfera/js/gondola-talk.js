@@ -64,7 +64,7 @@
     var a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
     if (last) {
       var d = Math.abs(a.x - last.x) + Math.abs(a.y - last.y) + Math.abs(a.z - last.z), now = Date.now();
-      if (d > 22) { hits.push(now); hits = hits.filter(function (h) { return now - h < 700; }); if (hits.length >= 3) { hits = []; fall(); } }
+      if (d > 14) { hits.push(now); hits = hits.filter(function (h) { return now - h < 900; }); if (hits.length >= 2) { hits = []; fall(); } }
     }
     last = { x: a.x, y: a.y, z: a.z };
   }
@@ -72,11 +72,20 @@
     if (typeof DeviceMotionEvent.requestPermission === 'function') {   // iPhone: разрешение — один раз, после предупреждения
       var asked = false;
       document.addEventListener('touchend', function () {
-        if (asked || !warned) return; asked = true;
+        if (asked || !window.gsGond) return; asked = true;
         DeviceMotionEvent.requestPermission().then(function (r) { if (r === 'granted') window.addEventListener('devicemotion', onMotion); }).catch(function () {});
       }, true);
     } else window.addEventListener('devicemotion', onMotion);
   }
+  // «тряска» прокруткой — работает везде, даже где браузер не даёт датчик движения (например, внутри Telegram):
+  // быстро подёргать страницу пальцем вверх-вниз, пока люлька на экране
+  var sy = window.scrollY, sdir = 0, sflips = [];
+  window.addEventListener('scroll', function () {
+    if (!window.gsGond) { sflips = []; sy = window.scrollY; return; }
+    var y = window.scrollY, nd = y > sy + 2 ? 1 : y < sy - 2 ? -1 : 0; sy = y; if (!nd) return;
+    if (sdir && nd !== sdir) { var now = Date.now(); sflips.push(now); sflips = sflips.filter(function (f) { return now - f < 1500; }); if (sflips.length >= 3) { sflips = []; fall(); } }
+    sdir = nd;
+  }, { passive: true });
   // компьютер: быстро подёргать мышкой над люлькой
   var px = 0, dir = 0, flips = [];
   document.addEventListener('mousemove', function (e) {
