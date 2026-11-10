@@ -1449,3 +1449,18 @@ video.dvid.on { opacity: 1; }
 .desk, .gallery .desk { background: radial-gradient(ellipse at 50% 40%, #1a2233, #0f131c 75%); }
 .desk__bp { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 @media (max-width: 760px) { .desk, .gallery .desk { background-image: none; } }
+/* «Вечер на крыше»: три кадра и переписка соседей */
+.rstory { position: relative; display: block !important; aspect-ratio: 4 / 3; overflow: hidden; cursor: pointer; background: #14161c; }
+.card .rstory img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; opacity: 0; transform: scale(1.06); transition: opacity 1.6s ease, transform 7s ease-out; }
+.card .rstory img.on { opacity: 1; transform: scale(1); }
+.rstory::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 55%; background: linear-gradient(180deg, transparent, rgba(8,9,12,.6)); pointer-events: none; }
+.rstory__time { position: absolute; z-index: 2; left: 12px; top: 12px; padding: 5px 10px; border-radius: 999px; background: rgba(12,13,17,.6); color: #f4efe6; font: 600 12px/1 var(--sans, sans-serif); letter-spacing: .08em; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.rstory__chat { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: 30px; display: flex !important; flex-direction: column; gap: 6px !important; }
+.rstory__msg { max-width: 82%; padding: 8px 12px; border-radius: 16px; font: 500 14px/1.3 var(--sans, sans-serif); opacity: 0; transform: translateY(10px) scale(.92); transition: opacity .35s, transform .35s cubic-bezier(.3,1.5,.5,1); box-shadow: 0 6px 16px rgba(0,0,0,.3); }
+.rstory__msg.on { opacity: 1; transform: none; }
+.rstory__msg--a { align-self: flex-start; background: #f6efe4; color: #1b1410; border-bottom-left-radius: 5px; }
+.rstory__msg--b { align-self: flex-end; background: #c8743c; color: #fff; border-bottom-right-radius: 5px; }
+.rstory__dots { position: absolute; z-index: 2; left: 0; right: 0; bottom: 10px; display: flex; justify-content: center; gap: 6px; }
+.rstory__dots i { width: 18px; height: 3px; border-radius: 2px; background: rgba(255,255,255,.35); transition: background .4s; }
+.rstory__dots i.on { background: #fff; }
+.rstory:focus:not(:focus-visible) { outline: none; }
