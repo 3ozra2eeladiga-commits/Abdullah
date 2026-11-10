@@ -1262,3 +1262,24 @@ video.dvid.on { opacity: 1; }
 .desk > video.dvid { z-index: 0; }
 .desk .desk__stack, .desk .desk__hint, .desk .desk__bar { z-index: 2; }
 .desk::before { z-index: 1; }
+/* телефон: листы маленькие, собраны стопками 2×2 на столе — видно видео с рукой */
+@media (max-width: 760px) {
+  .flats .ftypes { grid-template-columns: 1fr 1fr; gap: 18px 14px; padding: 26px 4px 34px; }
+  .flats .ftype__plan { aspect-ratio: 1 / 1; padding: 6%; }
+  .flats .ftype__body { gap: 4px; padding: 10px 10px 10px; }
+  .flats .ftype__name { font-size: 13px; letter-spacing: .02em; }
+  .flats .ftype__area { font-size: 21px; }
+  .flats .ftype__area small { font-size: 11px; }
+  .flats .ftype__note { display: none; }
+  .flats .ftype__foot { margin-top: 2px; padding-top: 7px; font-size: 9.5px; letter-spacing: .1em; }
+  .flats .ftype__foot span:empty { display: none; }
+  .flats .ftype:nth-child(4n+1) { transform: rotate(-3deg); } .flats .ftype:nth-child(4n+2) { transform: rotate(2.5deg) translateY(14px); }
+  .flats .ftype:nth-child(4n+3) { transform: rotate(2deg) translateY(-6px); } .flats .ftype:nth-child(4n+4) { transform: rotate(-2.5deg) translateY(10px); }
+}
+@media (max-width: 760px) {
+  .flats .ftypes { max-width: 300px; margin: 0 auto; gap: 16px 12px; padding: 40px 0 60px; }
+  .flats .ftype__plan { aspect-ratio: 1 / .82; }
+  .flats .ftype__name { font-size: 11.5px; } .flats .ftype__area { font-size: 18px; }
+  .flats .ftype__foot { font-size: 8.5px; }
+}
+@media (max-width: 760px) { .flats .ftype__foot span { display: none; } .flats .ftype__foot { justify-content: flex-start; } }
