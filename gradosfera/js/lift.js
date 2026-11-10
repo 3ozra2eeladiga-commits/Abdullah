@@ -11,7 +11,10 @@
   // плавные остановки: на каждом этаже лифт чуть «задерживается»
   function travel(t) { var x = t * (N - 1), k = Math.floor(x), f = x - k; if (k >= N - 1) return N - 1; f = f < .3 ? 0 : (f - .3) / .7; var e = f < .5 ? 4 * f * f * f : 1 - Math.pow(-2 * f + 2, 3) / 2; return k + e; }
   function render(p) {
-    var d = clamp(p / 0.08);
+    // двери открываются всегда красиво (по времени ~0,9 с), даже если раздел пролистали быстро
+    var d = Math.max(clamp(p / 0.08), doorOpen);
+    if (p > 0.005 && !doorStart) { doorStart = performance.now(); doorLoop(); }
+    if (p <= 0.001 && doorStart && performance.now() - doorStart > 1000) { doorStart = 0; doorOpen = 0; }
     doors[0].style.transform = 'translateX(' + (-d * 100) + '%)';
     doors[1].style.transform = 'translateX(' + (d * 100) + '%)';
     var pos = travel(clamp((p - 0.06) / 0.86));           // 0 … N-1
@@ -27,11 +30,25 @@
     if (!stopped && Math.abs(pos - idx) > 0.3) lastStop = -1;
     box.classList.toggle('started', p > 0.1);
   }
+  var doorStart = 0, doorOpen = 0;
+  function doorLoop() {
+    if (!doorStart) return;
+    var k = clamp((performance.now() - doorStart) / 900); doorOpen = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    render(cur); if (k < 1) requestAnimationFrame(doorLoop);
+  }
   function tick() { raf = 0; cur += (want - cur) * 0.22; if (Math.abs(want - cur) < 0.0005) cur = want; render(cur); if (cur !== want) raf = requestAnimationFrame(tick); }
   function onScroll() {
     var r = box.getBoundingClientRect(), len = box.offsetHeight - window.innerHeight;
     want = len > 0 ? clamp(-r.top / len) : 0; if (!raf) raf = requestAnimationFrame(tick);
   }
+  // фото лифта грузим заранее (за 2–3 экрана до раздела), чтобы при быстрой прокрутке кабина не была пустой
+  var imgs = Array.prototype.slice.call(strip.querySelectorAll('img'));
+  function preload() { imgs.forEach(function (im) { im.loading = 'eager'; if (!im.complete) { var x = new Image(); x.src = im.currentSrc || im.src; } }); }
+  if ('IntersectionObserver' in window) {
+    var pio = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { preload(); pio.disconnect(); } }, { rootMargin: '2500px 0px' });
+    pio.observe(box);
+  } else preload();
+  window.addEventListener('load', function () { setTimeout(preload, 1500); });
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
   render(0); onScroll();
