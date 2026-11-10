@@ -1443,3 +1443,7 @@ video.dvid.on { opacity: 1; }
 .parade__say::after { content: ""; position: absolute; left: 30%; bottom: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: rgba(244,239,230,.92); }
 .parade .parade__boss.talk .parade__say { opacity: 1; transform: translateX(-30%) scale(1); }
 @media (max-width: 760px) { .parade { height: 96px; } .parade__boss { left: 58%; } .parade .pboss { height: 44px; } .parade .parade__say { font-size: 11px; max-width: 160px; } }
+/* галерея: фон — медленно распускающаяся краска (медь, золото, молочный) вместо стола */
+.desk, .gallery .desk { background: #0b0a09 url('../img/ink.jpg') center / cover no-repeat; }
+.desk::before { background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.15), rgba(0,0,0,.45) 75%); }
+@media (max-width: 760px) { .desk, .gallery .desk { background-image: url('../img/ink.jpg'); } }
