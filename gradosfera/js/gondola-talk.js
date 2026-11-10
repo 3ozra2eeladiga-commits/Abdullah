@@ -29,72 +29,46 @@
   }, { passive: true });
 })();
 
-/* Тряска: рабочие в люльке иногда просят «Не трясите телефон — упадём!». Тряхнули телефон — правда падают,
-   повисают на страховке и забираются обратно. На компьютере «тряска» — быстро подёргать мышкой над люлькой.
-   На iPhone Apple требует разрешение на датчик движения — спрашиваем один раз, при касании экрана после предупреждения. */
+/* Быстрая прокрутка: рабочие в люльке иногда просят «Не листайте так быстро — упадём!».
+   Пролистали резко — правда падают, повисают на страховке и забираются обратно.
+   Говорят и падают ТОЛЬКО когда люльку видно (в конце сайта, где она спрятана, — молчат). */
 (function () {
   'use strict';
-  var touch = window.matchMedia('(hover: none)').matches;
   var say = document.createElement('div'); say.className = 'gsay'; document.body.appendChild(say);
-  var hideT = 0, seen = 0, warned = false, lastWarn = 0;
   say.style.width = 'auto'; say.style.maxWidth = '300px';
+  var hideT = 0, seen = 0, warned = false, lastWarn = 0;
+  function visible() { return !!window.gsGond && !document.body.classList.contains('at-end') && !document.body.classList.contains('lock'); }
   function talk(txt, ms) {
-    var g = window.gsGond; if (!g) return;
+    var g = window.gsGond; if (!g || !visible()) return;
     say.textContent = txt;
-    say.style.left = Math.max(10, Math.min(window.innerWidth - 310, (g.x0 + g.x1) / 2 - 150)) + 'px';
     say.style.top = Math.max(70, g.top - 56) + 'px';
     say.classList.remove('on'); void say.offsetWidth; say.classList.add('on');
     say.style.left = Math.max(10, Math.min(window.innerWidth - say.offsetWidth - 10, (g.x0 + g.x1) / 2 - say.offsetWidth / 2)) + 'px';
     clearTimeout(hideT); hideT = setTimeout(function () { say.classList.remove('on'); }, ms || 2600);
   }
-  var WARN = touch ? ['Не трясите телефон — упадём! 😨', 'Только не трясите! Мы на высоте 😬'] : ['Не дёргайте мышкой — упадём! 😨', 'Только не трясите! Мы на высоте 😬'];
-  var wi = 0;
+  // если люлька спряталась — облачко сразу убираем
+  setInterval(function () { if (!visible()) say.classList.remove('on'); }, 300);
+  var WARN = ['Не листайте так быстро — упадём! 😨', 'Потише, пожалуйста! Мы на высоте 😬'], wi = 0;
   setInterval(function () {
-    if (!window.gsGond) { seen = 0; return; }
+    if (!visible()) { seen = 0; return; }
     seen++; var now = Date.now();
-    if ((seen === 6 && !warned) || (warned && now - lastWarn > 40000 && seen > 6)) { warned = true; lastWarn = now; talk(WARN[wi++ % WARN.length]); }
+    if ((seen === 5 && !warned) || (warned && now - lastWarn > 40000 && seen > 5)) { warned = true; lastWarn = now; talk(WARN[wi++ % WARN.length]); }
   }, 1000);
   function fall() {
-    if (!window.gsGondFall || !window.gsGondFall()) return;
-    if (navigator.vibrate) try { navigator.vibrate(120); } catch (e) {}
+    if (!visible() || !window.gsGondFall || !window.gsGondFall()) return;
+    if (navigator.vibrate) try { navigator.vibrate(100); } catch (e) {}
     talk('Аааа! 😱', 1800);
-    setTimeout(function () { talk('Фух! Говорили же — не трясите! 😅', 2800); }, 3300);
+    setTimeout(function () { talk('Фух! Говорили же — не так быстро! 😅', 2800); }, 3300);
   }
-  // датчик движения (телефон)
-  var last = null, hits = [];
-  function onMotion(e) {
-    var a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
-    if (last) {
-      var d = Math.abs(a.x - last.x) + Math.abs(a.y - last.y) + Math.abs(a.z - last.z), now = Date.now();
-      if (d > 14) { hits.push(now); hits = hits.filter(function (h) { return now - h < 900; }); if (hits.length >= 2) { hits = []; fall(); } }
-    }
-    last = { x: a.x, y: a.y, z: a.z };
-  }
-  if (touch && window.DeviceMotionEvent) {
-    if (typeof DeviceMotionEvent.requestPermission === 'function') {   // iPhone: разрешение — один раз, после предупреждения
-      var asked = false;
-      document.addEventListener('touchend', function () {
-        if (asked || !window.gsGond) return; asked = true;
-        DeviceMotionEvent.requestPermission().then(function (r) { if (r === 'granted') window.addEventListener('devicemotion', onMotion); }).catch(function () {});
-      }, true);
-    } else window.addEventListener('devicemotion', onMotion);
-  }
-  // «тряска» прокруткой — работает везде, даже где браузер не даёт датчик движения (например, внутри Telegram):
-  // быстро подёргать страницу пальцем вверх-вниз, пока люлька на экране
-  var sy = window.scrollY, sdir = 0, sflips = [];
+  // скорость прокрутки: резкий рывок (пальцем или колёсиком) — падают; переходы по меню не считаются
+  var smp = [], navT = 0;
+  document.addEventListener('click', function (e) { if (e.target.closest('a[href^="#"]')) navT = Date.now(); }, true);
+  var LIM = window.matchMedia('(hover: none)').matches ? 3.5 : 2.8;   // пикселей в миллисекунду (средняя скорость за ~0,1–0,3 с)
   window.addEventListener('scroll', function () {
-    if (!window.gsGond) { sflips = []; sy = window.scrollY; return; }
-    var y = window.scrollY, nd = y > sy + 2 ? 1 : y < sy - 2 ? -1 : 0; sy = y; if (!nd) return;
-    if (sdir && nd !== sdir) { var now = Date.now(); sflips.push(now); sflips = sflips.filter(function (f) { return now - f < 1500; }); if (sflips.length >= 3) { sflips = []; fall(); } }
-    sdir = nd;
-  }, { passive: true });
-  // компьютер: быстро подёргать мышкой над люлькой
-  var px = 0, dir = 0, flips = [];
-  document.addEventListener('mousemove', function (e) {
-    var g = window.gsGond; if (!g) return;
-    if (e.clientX < g.x0 - 60 || e.clientX > g.x1 + 60 || e.clientY < g.top - 80 || e.clientY > g.bottom + 60) { flips = []; return; }
-    var nd = e.clientX > px ? 1 : e.clientX < px ? -1 : dir; px = e.clientX;
-    if (nd !== dir && dir !== 0) { var now = Date.now(); flips.push(now); flips = flips.filter(function (f) { return now - f < 900; }); if (flips.length >= 6) { flips = []; fall(); } }
-    dir = nd;
+    var y = window.scrollY, t = performance.now();
+    if (!visible() || Date.now() - navT < 2500 || y <= 0 || y + window.innerHeight >= document.documentElement.scrollHeight - 2) { smp = []; return; }
+    smp.push([t, y]); while (smp.length && t - smp[0][0] > 300) smp.shift();
+    var span = t - smp[0][0], dist = Math.abs(y - smp[0][1]);
+    if (span >= 60 && dist < window.innerHeight * 2.5 && dist / span > LIM) { smp = []; fall(); }
   }, { passive: true });
 })();
