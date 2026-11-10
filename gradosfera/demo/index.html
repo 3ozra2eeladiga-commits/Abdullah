@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Квартира 45,64 м² — макет</title>
+<link rel="stylesheet" href="../css/fonts.css">
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<div class="app" id="app">
+  <video id="intro" class="intro" src="intro-4564.mp4" muted playsinline preload="auto"></video>
+  <div id="stage" class="stage"></div>
+  <div class="say" id="say"></div>
+  <div class="hud">
+    <div class="hud__t"><b>1-комнатная · 45,64 м²</b><span id="hudStep">Чертёж оживает…</span></div>
+    <div class="hud__btns">
+      <button type="button" id="btnReplay">↻ Заново</button>
+      <button type="button" id="btnFree">Осмотреть самому</button>
+    </div>
+  </div>
+  <div class="note">Пример расстановки мебели. Квартира сдаётся без отделки. Покрутите макет пальцем или мышкой.</div>
+  <div class="tap" id="tap">▶ Смотреть, как оживает квартира</div>
+</div>
+<script src="three.min.js"></script>
+<script src="OrbitControls.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

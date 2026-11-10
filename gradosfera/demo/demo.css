@@ -1,0 +1,24 @@
+:root { --bg: #e9e4dc; --ink: #1b1410; --acc: #c8743c; }
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: Onest, system-ui, sans-serif; overflow: hidden; }
+.app { position: fixed; inset: 0; }
+.stage, .intro { position: absolute; inset: 0; width: 100%; height: 100%; }
+.intro { object-fit: contain; background: #f2efe9; z-index: 2; transition: opacity .9s; }
+.intro.gone { opacity: 0; pointer-events: none; }
+.stage canvas { display: block; touch-action: none; }
+.say { position: absolute; z-index: 4; left: 0; top: 0; max-width: min(320px, 78vw); padding: 10px 14px; border-radius: 14px; background: #fff; color: var(--ink);
+  font: 600 15px/1.35 Onest, sans-serif; box-shadow: 0 10px 28px rgba(0,0,0,.18); transform: translate(-50%, calc(-100% - 18px)); opacity: 0; transition: opacity .25s; pointer-events: none; }
+.say::after { content: ""; position: absolute; left: 50%; bottom: -7px; margin-left: -7px; border: 7px solid transparent; border-bottom: 0; border-top-color: #fff; }
+.say.on { opacity: 1; }
+.hud { position: absolute; z-index: 5; left: 16px; right: 16px; top: calc(14px + env(safe-area-inset-top, 0px)); display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; pointer-events: none; }
+.hud__t { display: grid; gap: 2px; padding: 10px 14px; border-radius: 12px; background: rgba(255,255,255,.85); backdrop-filter: blur(6px); }
+.hud__t b { font: 400 20px/1.1 Forum, serif; letter-spacing: .04em; text-transform: uppercase; }
+.hud__t span { font-size: 13px; color: #6b5a4c; }
+.hud__btns { display: flex; gap: 8px; pointer-events: auto; }
+.hud__btns button { padding: 10px 14px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font: 600 13px Onest, sans-serif; cursor: pointer; }
+.hud__btns button:hover { background: var(--acc); }
+.note { position: absolute; z-index: 5; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: max-content; max-width: 92vw; padding: 8px 14px; border-radius: 999px;
+  background: rgba(27,20,16,.75); color: #fff; font-size: 12.5px; text-align: center; }
+.tap { position: absolute; z-index: 6; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 16px 26px; border-radius: 999px; background: var(--acc); color: #fff; font: 700 16px Onest, sans-serif; cursor: pointer; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+.tap.gone { display: none; }
+@media (max-width: 600px) { .hud__t b { font-size: 17px; } .hud__btns button { padding: 9px 12px; font-size: 12px; } .say { font-size: 14px; } }
