@@ -37,12 +37,14 @@
   var touch = window.matchMedia('(hover: none)').matches;
   var say = document.createElement('div'); say.className = 'gsay'; document.body.appendChild(say);
   var hideT = 0, seen = 0, warned = false, lastWarn = 0;
+  say.style.width = 'auto'; say.style.maxWidth = '300px';
   function talk(txt, ms) {
     var g = window.gsGond; if (!g) return;
     say.textContent = txt;
     say.style.left = Math.max(10, Math.min(window.innerWidth - 310, (g.x0 + g.x1) / 2 - 150)) + 'px';
     say.style.top = Math.max(70, g.top - 56) + 'px';
     say.classList.remove('on'); void say.offsetWidth; say.classList.add('on');
+    say.style.left = Math.max(10, Math.min(window.innerWidth - say.offsetWidth - 10, (g.x0 + g.x1) / 2 - say.offsetWidth / 2)) + 'px';
     clearTimeout(hideT); hideT = setTimeout(function () { say.classList.remove('on'); }, ms || 2600);
   }
   var WARN = touch ? ['Не трясите телефон — упадём! 😨', 'Только не трясите! Мы на высоте 😬'] : ['Не дёргайте мышкой — упадём! 😨', 'Только не трясите! Мы на высоте 😬'];
