@@ -55,17 +55,32 @@
   Object.keys(VARIANTS).forEach(function (k) { VARIANTS[k].sort(function (a, b) { return a.area - b.area; }); });
 
   var ft = $('#ftypes');
+  // планировки висят на стальном тросе на зажимах, как фото на просушке; покачиваются; трос можно тянуть вбок
+  ft.classList.add('rope');
+  ft.innerHTML = '<div class="rope__track"><svg class="rope__cable" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 6 Q50 34 100 6"/></svg></div>';
+  var track = ft.firstChild;
   TYPES.forEach(function (t, ti) {
     var v = VARIANTS[t.key] || [], min = v[0].area, max = v[v.length - 1].area, img = (v.find(function (x) { return x.img; }) || {}).img;
-    var c = document.createElement('button'); c.type = 'button'; c.className = 'ftype fade';
+    var c = document.createElement('button'); c.type = 'button'; c.className = 'ftype'; c.style.setProperty('--i', ti);
     c.innerHTML = '<span class="ftype__plan">' + (img ? '<img src="' + img + '" alt="Планировка: ' + t.name + '" loading="lazy">' : '<i>Планировка по запросу</i>') + '</span>' +
       '<span class="ftype__body"><span class="ftype__name">' + t.name + '</span>' +
       '<span class="ftype__area">' + (min === max ? fmt(min) : fmt(min) + '–' + fmt(max)) + '<small>м²</small></span>' +
       '<span class="ftype__note">' + t.note + '</span>' +
       '<span class="ftype__foot"><span>' + (t.key === '1' ? '' : v.length + ' ' + (v.length === 1 ? 'вариант' : v.length < 5 ? 'варианта' : 'вариантов')) + '</span><b>Смотреть →</b></span></span>';
-    c.addEventListener('click', function () { openWin(ti, 0); });
-    ft.appendChild(c);
+    c.insertAdjacentHTML('afterbegin', '<i class="ftype__clip" aria-hidden="true"></i>');
+    c.addEventListener('click', function () {   // лист «сдёргивают» с троса — и он открывается
+      if (c.classList.contains('pulled')) return;
+      c.classList.add('pulled'); setTimeout(function () { openWin(ti, 0); c.classList.remove('pulled'); }, 330);
+    });
+    track.appendChild(c);
   });
+
+  if ('IntersectionObserver' in window) {
+    var rio = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { ft.classList.add('in'); rio.disconnect(); } }); }, { threshold: 0.2 });
+    rio.observe(ft);
+  } else ft.classList.add('in');
+  // подсказка «тяните →» исчезает, как только потянули трос
+  var sl0 = null; ft.addEventListener('scroll', function () { if (sl0 === null) sl0 = ft.scrollLeft; else if (Math.abs(ft.scrollLeft - sl0) > 40) ft.classList.add('moved'); }, { passive: true });
 
   var win = $('#fwin'), wt = 0, wv = 0;
   document.body.appendChild(win);   // окно поверх всего сайта (вне слоя main)
