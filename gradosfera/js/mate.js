@@ -17,9 +17,18 @@
   var sw = m.querySelector('.swings'); if (sw) { sw.style.pointerEvents = 'auto'; sw.style.cursor = 'pointer'; sw.addEventListener('click', function () { btn.click(); }); }
   window.gsMate = function (on) {
     m.classList.toggle('on', on); m.classList.toggle('grumpy', !on);
-    if (on) { clearInterval(t); m.classList.remove('demand'); }
+    if (on) { clearInterval(t); m.classList.remove('demand', 'shouting'); }
     else { setTimeout(demand, 600); loop(); }
   };
+  // пока звук выключен и человек листает — возмущается: тычет в колонку и кричит «Включите звук!»
+  var shout = document.createElement('span'); shout.className = 'mate__shout'; shout.textContent = 'Включите звук! 🔊'; m.appendChild(shout);
+  var lastDem = 0, stopT = 0;
+  window.addEventListener('scroll', function () {
+    if (m.classList.contains('on')) return;
+    m.classList.add('shouting');
+    if (Date.now() - lastDem > 2600) { lastDem = Date.now(); demand(); }
+    clearTimeout(stopT); stopT = setTimeout(function () { m.classList.remove('shouting'); }, 1600);
+  }, { passive: true });
   m.classList.add('grumpy');
   first = setTimeout(demand, 2200);
   loop();

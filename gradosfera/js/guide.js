@@ -6,22 +6,23 @@
   var rope = document.getElementById('guideRope'), line = rope && rope.querySelector('line'), mate = document.getElementById('mate');
   if (!g || !body) return;
   var mobile = window.matchMedia('(max-width: 760px)').matches;
-  var STOPS = [   // коротко: 3–6 слов, чтобы облачко было маленьким
-    ['#about',    0.70, 'Привет! Покажу дом 👋'],
-    ['#facade',   0.62, 'Ночью фасад светится ✨'],
-    ['#lift',     0.58, 'Листайте — едем на крышу'],
-    ['#flats',    0.66, 'Нажмите на карточку'],
-    ['#life',     0.62, 'Всё для жителей'],
-    ['#parking',  0.70, ''],   // у схемы своя подсказка — гид молчит, чтобы не накладываться
-    ['#boiler',   0.70, 'Проведите — пойдёт тепло'],
-    ['#gallery',  0.60, ''],   // у стола своя подсказка
-    ['#terms',    0.66, 'Сдача — I кв. 2028'],
-    ['#contacts', 0.74, '<a href="tel:+79388153333">Позвонить нам</a>']
+  var STOPS = [   // у каждого места — короткое пояснение (говорит только когда вы остановились, потом прячется)
+    ['#about',    0.70, 'Привет! «Новый Квартал» — 8 этажей бизнес-класса в центре Моздока 👋'],
+    ['#facade',   0.62, 'Ночью фасад подсвечен — дом видно издалека ✨'],
+    ['#lift',     0.58, 'Листайте — лифт везёт от паркинга до крыши'],
+    ['#flats',    0.66, 'Нажмите на лист — откроются планировки и площади'],
+    ['#life',     0.62, 'Двор без машин, лаунж на крыше, магазины внизу'],
+    ['#parking',  0.70, 'Подземный паркинг — лифт прямо до вашего этажа'],
+    ['#boiler',   0.70, 'Своя котельная — тепло и горячая вода без перебоев'],
+    ['#safe',     0.70, 'Закрытый двор, камеры и пожаротушение'],
+    ['#gallery',  0.60, 'Все ракурсы дома — листайте фото на столе'],
+    ['#terms',    0.66, 'Сдача — I кв. 2028. Разрешение — по кнопке ниже'],
+    ['#contacts', 0.74, 'Остались вопросы? <a href="tel:+79388153333">Позвонить нам</a>']
   ];
   var nodes = STOPS.map(function (s) { return document.querySelector(s[0]); });
   // куда показывает рука у каждой остановки: главный элемент раздела
   var AIM = {'#about': '#about h2', '#facade': '#facadeVideo', '#lift': '#lift', '#flats': '#ftypes', '#life': '#life',
-             '#parking': '#parking', '#boiler': '#boiler', '#gallery': '#gallery', '#terms': '#terms', '#contacts': '#contacts'};
+             '#parking': '#parking', '#boiler': '#boiler', '#safe': '#safe', '#gallery': '#gallery', '#terms': '#terms', '#contacts': '#contacts'};
   var all = document.getElementById('gmAll'), aim = document.getElementById('gmAim'), man0 = g.querySelector('.guide__man');
   function point() {
     if (cur < 0 || !aim || !man0) return;
@@ -97,7 +98,7 @@
       var i = pendingTxt; if (i !== cur || said[i]) return;
       if (!STOPS[i][2]) { said[i] = true; return; }
       said[i] = true; bub.innerHTML = STOPS[i][2]; bub.classList.add('is-on'); g.classList.add('awake');
-      clearTimeout(timer); timer = setTimeout(function () { if (i !== STOPS.length - 1) { bub.classList.remove('is-on'); setTimeout(function () { if (!bub.classList.contains('is-on')) g.classList.remove('awake'); }, 600); } }, 3200);
+      clearTimeout(timer); timer = setTimeout(function () { if (i !== STOPS.length - 1) { bub.classList.remove('is-on'); setTimeout(function () { if (!bub.classList.contains('is-on')) g.classList.remove('awake'); }, 600); } }, 4200);
     }, Math.max(150, wait));
   }
   window.addEventListener('scroll', function () {
