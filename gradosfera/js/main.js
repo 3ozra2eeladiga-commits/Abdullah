@@ -8,8 +8,11 @@
 
   /* ---------- данные ---------- */
   var FLATS = [
-    { key: '1a', tab: '1-комнатная', type: '1-комнатная', img: 'img/plans/1k-a.webp', areas: [45.45, 45.58, 45.64, 46.5, 46.51, 46.86, 46.89, 48.3], note: 'Отдельная кухня, лоджия. Восемь вариантов площади.' },
-    { key: '1b', tab: '1-комнатная · 47,69', type: '1-комнатная', img: 'img/plans/1k-b.webp', areas: [47.69], note: 'Отдельная кухня, просторная прихожая и балкон из зала.' },
+    // 1-комнатные: 4 утверждённые планировки (ТЗ заказчика), у каждой площади — своя планировка
+    { key: '1a', tab: '1-комнатная', type: '1-комнатная', img: 'img/plans/1k-4564.webp', areas: [45.64] },
+    { key: '1b', tab: '1-комнатная', type: '1-комнатная', img: 'img/plans/1k-4650.webp', areas: [46.50] },
+    { key: '1c', tab: '1-комнатная', type: '1-комнатная', img: 'img/plans/1k-4689.webp', areas: [46.89] },
+    { key: '1d', tab: '1-комнатная', type: '1-комнатная', img: 'img/plans/1k-4826.webp', areas: [48.26] },
     { key: 'e2', tab: 'Евро-2', type: 'Евро-двушка', img: 'img/plans/e2-a.webp', areas: [52.06], note: 'Спальня 14,62 м², комната с мини-кухней 18,38 м², балкон.' },
     { key: '2a', tab: '2-комнатная', type: '2-комнатная', img: 'img/plans/2k-a.webp', areas: [64.78, 68.5, 69.49], note: 'Две изолированные комнаты, просторная кухня.' },
     { key: '2b', tab: '2-комнатная · 76–81', type: '2-комнатная', img: 'img/plans/2k-b.webp', areas: [76.19, 76.25, 77.56, 81.37], note: 'Вытянутая планировка вдоль фасада, много окон.' },
@@ -19,7 +22,7 @@
   var GALLERY = ['img/photo/corner-morning.webp', 'img/photo/closeup.webp', 'img/photo/front.webp', 'img/photo/corner-sunset.webp',
     'img/photo/yard-clean.webp', 'img/photo/roof.webp', 'img/photo/commerce.webp', 'img/photo/parking.webp'];
 
-  var fmt = function (a) { return a.toFixed(2).replace('.', ',').replace(/0+$/, '').replace(/,$/, ''); };
+  var fmt = function (a) { return a.toFixed(2).replace('.', ','); };
 
   /* ---------- шапка и меню ---------- */
   var hdr = $('#hdr'), menu = $('#menu'), btn = $('#menuBtn');
@@ -59,27 +62,18 @@
       '<span class="ftype__body"><span class="ftype__name">' + t.name + '</span>' +
       '<span class="ftype__area">' + (min === max ? fmt(min) : fmt(min) + '–' + fmt(max)) + '<small>м²</small></span>' +
       '<span class="ftype__note">' + t.note + '</span>' +
-      '<span class="ftype__foot"><span>' + v.length + ' ' + (v.length === 1 ? 'вариант' : v.length < 5 ? 'варианта' : 'вариантов') + '</span><b>Смотреть →</b></span></span>';
+      '<span class="ftype__foot"><span>' + (t.key === '1' ? '' : v.length + ' ' + (v.length === 1 ? 'вариант' : v.length < 5 ? 'варианта' : 'вариантов')) + '</span><b>Смотреть →</b></span></span>';
     c.addEventListener('click', function () { openWin(ti, 0); });
     ft.appendChild(c);
   });
 
   var win = $('#fwin'), wt = 0, wv = 0;
   document.body.appendChild(win);   // окно поверх всего сайта (вне слоя main)
-  var tbar = $('#fwTypes');
-  TYPES.forEach(function (t, ti) {
-    var v = VARIANTS[t.key];
-    var b = document.createElement('button'); b.type = 'button'; b.className = 'fwt';
-    b.innerHTML = '<b>' + t.short + '</b><small>от ' + fmt(v[0].area) + ' м²</small>';
-    b.addEventListener('click', function () { show(ti, 0); });
-    tbar.appendChild(b);
-  });
   function show(ti, vi) {
     var t = TYPES[ti], v = VARIANTS[t.key]; wt = ti; wv = (vi + v.length) % v.length;
     var cur = v[wv];
     $('#fwTitle').innerHTML = t.name + '<br>' + fmt(cur.area) + ' м²';
     $('#fwCrumb').textContent = t.name;
-    $$('.fwt', tbar).forEach(function (b, i) { b.classList.toggle('is-on', i === ti); });
     var img = $('#fwImg');
     if (cur.img) { img.hidden = false; img.src = cur.img; img.alt = 'Планировка: ' + t.name + ', ' + fmt(cur.area) + ' м²'; $('#fwNoImg').hidden = true; }
     else { img.hidden = true; img.removeAttribute('src'); $('#fwNoImg').hidden = false; }
