@@ -1054,6 +1054,7 @@ body.snd-on .snd-sw { display: flex; }
 /* «блоки» на телефоне: прокрутка сама притормаживает у начала каждого раздела */
 @media (hover: none) {
   html.gs-stop { overflow: hidden !important; }
+  html.gs-stop body { overflow: visible !important; }   /* иначе «закреплённые» разделы (лифт, фасад, главное видео) на время паузы исчезают */
 }
 
 /* старые iPhone (iOS 15 и ниже) не знают overflow: clip — запасной вариант */
