@@ -99,7 +99,7 @@
     else { img.hidden = true; img.removeAttribute('src'); $('#fwNoImg').hidden = false; }
     $('#fwCount').textContent = v.length > 1 ? (wv + 1) + ' / ' + v.length : '';
     $$('.fwin__arr').forEach(function (a) { a.style.display = v.length > 1 ? '' : 'none'; });
-    $('#fwSpecs').innerHTML = '<div><dt>Тип</dt><dd>' + nm + '</dd></div><div><dt>Площадь общая</dt><dd>' + fmt(cur.area) + ' м²</dd></div><div><dt>Вариант</dt><dd>' + (wv + 1) + ' из ' + v.length + '</dd></div><div><dt>Сдача</dt><dd>I кв. 2028</dd></div>';
+    $('#fwSpecs').innerHTML = '<div><dt>Тип</dt><dd>' + nm + '</dd></div><div><dt>Площадь общая</dt><dd>' + fmt(cur.area) + ' м²</dd></div><div><dt>Высота потолков</dt><dd>3,2 м</dd></div>';
     $('#fwNote').textContent = cur.note || t.note;
     var ar = $('#fwAreas'); ar.innerHTML = '';
     v.forEach(function (x, k) { var b = document.createElement('button'); b.type = 'button'; b.textContent = fmt(x.area) + ' м²'; if (k === wv) b.classList.add('is-on'); b.addEventListener('click', function () { show(ti, k); }); ar.appendChild(b); });
