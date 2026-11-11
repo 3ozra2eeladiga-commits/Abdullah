@@ -1489,3 +1489,4 @@ video.dvid.on { opacity: 1; }
 @keyframes swhUp { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 70% { transform: translateY(-46px); opacity: 1; } 100% { transform: translateY(-46px); opacity: 0; } }
 @keyframes swhTrail { 0%, 15% { top: 66px; height: 0; opacity: 0; } 70% { top: 22px; height: 46px; opacity: .9; } 100% { top: 22px; height: 46px; opacity: 0; } }
 .swh__txt { padding: 7px 14px; border-radius: 999px; background: rgba(12,13,17,.7); color: #f4efe6; font: 600 13px/1.2 var(--sans, sans-serif); letter-spacing: .04em; white-space: nowrap; }
+.parade__boss .pboss__arm { animation: bossHorn 1.2s ease-in-out infinite alternate; }
