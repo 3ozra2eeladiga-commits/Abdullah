@@ -1471,3 +1471,21 @@ video.dvid.on { opacity: 1; }
 .flats .rope .ftype:nth-child(3) { margin-top: 26px; }
 @media (max-width: 760px) { .rope__track { grid-template-columns: repeat(3, 62vw); gap: 7vw; } .flats .rope .ftype:nth-child(3) { margin-top: 10px; } }
 .fcap[hidden], .fwalk[hidden] { display: none !important; }
+/* телефон: ползунки с большой зоной для пальца */
+@media (hover: none) {
+  .boiler__ctl input[type="range"] { height: 52px; touch-action: pan-y; border-radius: 0;
+    background: linear-gradient(#ff8a45, #ff8a45) 0 50% / var(--p) 8px no-repeat, linear-gradient(rgba(239,231,218,.22), rgba(239,231,218,.22)) 0 50% / 100% 8px no-repeat; }
+  .boiler__ctl input[type="range"]::-webkit-slider-thumb { width: 44px; height: 44px; box-shadow: 0 0 0 8px rgba(255,138,69,.25), 0 0 22px rgba(255,138,69,.9); }
+  .boiler__ctl input[type="range"]::-moz-range-thumb { width: 44px; height: 44px; }
+}
+/* подсказка «Листайте вниз» с пальцем */
+.swh { position: fixed; z-index: 60; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; pointer-events: none; opacity: 0; transition: opacity .4s; }
+.swh.on { opacity: 1; }
+.swh__track { position: relative; display: block; width: 54px; height: 96px; border-radius: 28px; background: rgba(12,13,17,.55); border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.swh__finger { position: absolute; left: 50%; top: 56px; margin-left: -15px; width: 30px; font: normal 28px/1 sans-serif; text-align: center; }
+.swh__trail { position: absolute; left: 50%; top: 20px; width: 4px; height: 0; margin-left: -2px; border-radius: 2px; background: linear-gradient(#e9b678, rgba(233,182,120,0)); }
+.swh.on .swh__finger { animation: swhUp 1.5s cubic-bezier(.4,0,.2,1) infinite; }
+.swh.on .swh__trail { animation: swhTrail 1.5s cubic-bezier(.4,0,.2,1) infinite; }
+@keyframes swhUp { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } 70% { transform: translateY(-46px); opacity: 1; } 100% { transform: translateY(-46px); opacity: 0; } }
+@keyframes swhTrail { 0%, 15% { top: 66px; height: 0; opacity: 0; } 70% { top: 22px; height: 46px; opacity: .9; } 100% { top: 22px; height: 46px; opacity: 0; } }
+.swh__txt { padding: 7px 14px; border-radius: 999px; background: rgba(12,13,17,.7); color: #f4efe6; font: 600 13px/1.2 var(--sans, sans-serif); letter-spacing: .04em; white-space: nowrap; }
