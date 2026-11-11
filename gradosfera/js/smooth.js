@@ -54,6 +54,9 @@
   // «блоки» на телефоне: когда при прокрутке начало раздела доходит до шапки — прокрутка останавливается
   // ровно на нём (инерция гасится на полсекунды), дальше листаете к следующему разделу.
   if (!fine && !reduce) {
+    // на телефоне не тормозим у «закреплённых» разделов (фасад, лифт) — там своя анимация от прокрутки,
+    // и остановка выглядит как рывок; зато добавлена короткая пауза у листов с планировками
+    var SNAP_M = SNAP.filter(function (s) { return s !== '#facade' && s !== '#lift' && s !== '#flats'; }).concat(['#ftypes']);   // у «Квартир» тормозим прямо на листах, а не на заголовке (две остановки подряд = рывок)
     var py = window.scrollY, cool = {}, stopping = false, html = document.documentElement, lastStopT = 0;
     // останавливаем только прокрутку пальцем (и её инерцию), а не переходы по меню/ссылкам
     var lastTouch = 0, navT = 0;
@@ -64,8 +67,8 @@
       if (stopping || document.body.classList.contains('lock') || Date.now() - lastTouch > 2500 || Date.now() - navT < 2000) { py = y; return; }
       var hdr = 64, now = Date.now();
       if (Math.abs(y - py) > window.innerHeight * 0.7) { py = y; return; }   // прыжок (меню, ссылка) — не останавливаем
-      for (var i = 0; i < SNAP.length; i++) {
-        var el = document.querySelector(SNAP[i]); if (!el) continue;
+      for (var i = 0; i < SNAP_M.length; i++) {
+        var el = document.querySelector(SNAP_M[i]); if (!el) continue;
         var line = el.getBoundingClientRect().top + y - hdr;
         var crossed = (py < line - 2 && y >= line - 2) || (py > line + 2 && y <= line + 2);
         if (crossed && !(cool[i] > now) && now - lastStopT > 900) {
