@@ -13,11 +13,16 @@
     { key: '1b', tab: '1-комнатная', type: '1-комнатная', img: 'img/plans/1k-4650.webp', areas: [46.50] },
     { key: '1c', tab: '1-комнатная', type: '1-комнатная', img: 'img/plans/1k-4689.webp', areas: [46.89] },
     { key: '1d', tab: '1-комнатная', type: '1-комнатная', img: 'img/plans/1k-4826.webp', areas: [48.26] },
-    { key: 'e2', tab: 'Евро-2', type: 'Евро-двушка', img: 'img/plans/e2-a.webp', areas: [52.06], note: 'Спальня 14,62 м², комната с мини-кухней 18,38 м², балкон.' },
-    { key: '2a', tab: '2-комнатная', type: '2-комнатная', img: 'img/plans/2k-a.webp', areas: [64.78, 68.5, 69.49], note: 'Две изолированные комнаты, просторная кухня.' },
-    { key: '2b', tab: '2-комнатная · 76–81', type: '2-комнатная', img: 'img/plans/2k-b.webp', areas: [76.19, 76.25, 77.56, 81.37], note: 'Вытянутая планировка вдоль фасада, много окон.' },
-    { key: '2c', tab: '2-комнатная · 86,68', type: '2-комнатная', img: 'img/plans/2k-c.webp', areas: [86.68], note: 'Самая большая двушка в доме.' },
-    { key: '3a', tab: '3-комнатная', type: '3-комнатная', img: 'img/plans/3k-a.webp', areas: [105.63], note: 'Три комнаты, кухня-гостиная и две ванные зоны.' }
+    // 2-комнатные: евродвушка (перенесена сюда по ТЗ заказчика) + 7 утверждённых планировок, у каждой площади — своя
+    { key: '2e', type: '2-комнатная', label: 'Евро-двушка', img: 'img/plans/e2-a.webp', areas: [52.06], note: 'Евро-двушка: спальня 14,62 м², комната с мини-кухней 18,38 м², балкон.' },
+    { key: '2a', type: '2-комнатная', img: 'img/plans/2k-6445.webp', areas: [64.45] },
+    { key: '2b', type: '2-комнатная', img: 'img/plans/2k-6850.webp', areas: [68.50] },
+    { key: '2c', type: '2-комнатная', img: 'img/plans/2k-6949.webp', areas: [69.49] },
+    { key: '2d', type: '2-комнатная', img: 'img/plans/2k-7564.webp', areas: [75.64], note: 'Двусторонняя (разносторонняя) квартира. Окна выходят во двор и на улицу.' },
+    { key: '2f', type: '2-комнатная', img: 'img/plans/2k-7625.webp', areas: [76.25], note: 'Двусторонняя (разносторонняя) квартира. Окна выходят во двор и на улицу.' },
+    { key: '2g', type: '2-комнатная', img: 'img/plans/2k-8137.webp', areas: [81.37], note: 'Двусторонняя (разносторонняя) квартира. Окна выходят во двор и на улицу.' },
+    { key: '2h', type: '2-комнатная', img: 'img/plans/2k-8656.webp', areas: [86.56] },
+    { key: '3a', type: '3-комнатная', img: 'img/plans/3k-10444.webp', areas: [104.44] }
   ];
   var GALLERY = ['img/photo/corner-morning.webp', 'img/photo/closeup.webp', 'img/photo/front.webp', 'img/photo/corner-sunset.webp',
     'img/photo/yard-clean.webp', 'img/photo/roof.webp', 'img/photo/commerce.webp', 'img/photo/parking.webp'];
@@ -42,15 +47,14 @@
   /* ---------- квартиры: карточки по типам + отдельное окно с вариантами (как на хороших сайтах ЖК) ---------- */
   var TYPES = [
     { key: '1', short: '1К', name: '1-комнатная', note: 'Для одного или пары. Компактная планировка с отдельной кухней.' },
-    { key: 'e2', short: 'Е2', name: 'Евро-двушка', note: 'Спальня и кухня-гостиная — современный формат.' },
     { key: '2', short: '2К', name: '2-комнатная', note: 'Две изолированные комнаты — для семьи или с кабинетом.' },
     { key: '3', short: '3К', name: '3-комнатная', note: 'Самая просторная квартира в доме — для большой семьи.' }
   ];
   var VARIANTS = {};
   FLATS.forEach(function (f) {
-    var key = f.key === 'e2' ? 'e2' : f.key.charAt(0);
+    var key = f.key.charAt(0);
     (VARIANTS[key] = VARIANTS[key] || []);
-    f.areas.forEach(function (ar) { VARIANTS[key].push({ area: ar, img: f.img }); });
+    f.areas.forEach(function (ar) { VARIANTS[key].push({ area: ar, img: f.img, label: f.label, note: f.note }); });
   });
   Object.keys(VARIANTS).forEach(function (k) { VARIANTS[k].sort(function (a, b) { return a.area - b.area; }); });
 
@@ -60,7 +64,7 @@
   ft.innerHTML = '<div class="rope__track"><svg class="rope__cable" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 6 Q50 34 100 6"/></svg></div>';
   var track = ft.firstChild;
   TYPES.forEach(function (t, ti) {
-    var v = VARIANTS[t.key] || [], min = v[0].area, max = v[v.length - 1].area, img = (v.find(function (x) { return x.img; }) || {}).img;
+    var v = VARIANTS[t.key] || [], min = v[0].area, max = v[v.length - 1].area, img = (v.find(function (x) { return x.img && !x.label; }) || v[0] || {}).img;
     var c = document.createElement('button'); c.type = 'button'; c.className = 'ftype'; c.style.setProperty('--i', ti);
     c.innerHTML = '<span class="ftype__plan">' + (img ? '<img src="' + img + '" alt="Планировка: ' + t.name + '" loading="lazy">' : '<i>Планировка по запросу</i>') + '</span>' +
       '<span class="ftype__body"><span class="ftype__name">' + t.name + '</span>' +
@@ -87,15 +91,16 @@
   function show(ti, vi) {
     var t = TYPES[ti], v = VARIANTS[t.key]; wt = ti; wv = (vi + v.length) % v.length;
     var cur = v[wv];
-    $('#fwTitle').innerHTML = t.name + '<br>' + fmt(cur.area) + ' м²';
+    var nm = cur.label || t.name;
+    $('#fwTitle').innerHTML = nm + '<br>' + fmt(cur.area) + ' м²';
     $('#fwCrumb').textContent = t.name;
     var img = $('#fwImg');
-    if (cur.img) { img.hidden = false; img.src = cur.img; img.alt = 'Планировка: ' + t.name + ', ' + fmt(cur.area) + ' м²'; $('#fwNoImg').hidden = true; }
+    if (cur.img) { img.hidden = false; img.src = cur.img; img.alt = 'Планировка: ' + nm + ', ' + fmt(cur.area) + ' м²'; $('#fwNoImg').hidden = true; }
     else { img.hidden = true; img.removeAttribute('src'); $('#fwNoImg').hidden = false; }
     $('#fwCount').textContent = v.length > 1 ? (wv + 1) + ' / ' + v.length : '';
     $$('.fwin__arr').forEach(function (a) { a.style.display = v.length > 1 ? '' : 'none'; });
-    $('#fwSpecs').innerHTML = '<div><dt>Тип</dt><dd>' + t.name + '</dd></div><div><dt>Площадь общая</dt><dd>' + fmt(cur.area) + ' м²</dd></div><div><dt>Вариант</dt><dd>' + (wv + 1) + ' из ' + v.length + '</dd></div><div><dt>Сдача</dt><dd>I кв. 2028</dd></div>';
-    $('#fwNote').textContent = t.note;
+    $('#fwSpecs').innerHTML = '<div><dt>Тип</dt><dd>' + nm + '</dd></div><div><dt>Площадь общая</dt><dd>' + fmt(cur.area) + ' м²</dd></div><div><dt>Вариант</dt><dd>' + (wv + 1) + ' из ' + v.length + '</dd></div><div><dt>Сдача</dt><dd>I кв. 2028</dd></div>';
+    $('#fwNote').textContent = cur.note || t.note;
     var ar = $('#fwAreas'); ar.innerHTML = '';
     v.forEach(function (x, k) { var b = document.createElement('button'); b.type = 'button'; b.textContent = fmt(x.area) + ' м²'; if (k === wv) b.classList.add('is-on'); b.addEventListener('click', function () { show(ti, k); }); ar.appendChild(b); });
   }

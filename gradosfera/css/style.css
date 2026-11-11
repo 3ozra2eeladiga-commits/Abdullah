@@ -1465,3 +1465,9 @@ video.dvid.on { opacity: 1; }
 .rstory__dots i { width: 18px; height: 3px; border-radius: 2px; background: rgba(255,255,255,.35); transition: background .4s; }
 .rstory__dots i.on { background: #fff; }
 .rstory:focus:not(:focus-visible) { outline: none; }
+/* три типа квартир на тросе (евродвушка теперь внутри двухкомнатных) */
+.rope__track { grid-template-columns: repeat(3, minmax(0, 360px)); justify-content: center; gap: 4%; }
+.flats .rope .ftype:nth-child(4) { margin-top: 0; }
+.flats .rope .ftype:nth-child(3) { margin-top: 26px; }
+@media (max-width: 760px) { .rope__track { grid-template-columns: repeat(3, 62vw); gap: 7vw; } .flats .rope .ftype:nth-child(3) { margin-top: 10px; } }
+.fcap[hidden], .fwalk[hidden] { display: none !important; }
