@@ -54,7 +54,7 @@
   // «блоки» на телефоне: когда при прокрутке начало раздела доходит до шапки — прокрутка останавливается
   // ровно на нём (инерция гасится на полсекунды), дальше листаете к следующему разделу.
   if (!fine && !reduce) {
-    var py = window.scrollY, cool = {}, stopping = false, html = document.documentElement;
+    var py = window.scrollY, cool = {}, stopping = false, html = document.documentElement, lastStopT = 0;
     // останавливаем только прокрутку пальцем (и её инерцию), а не переходы по меню/ссылкам
     var lastTouch = 0, navT = 0;
     ['touchstart', 'touchmove', 'touchend'].forEach(function (ev) { window.addEventListener(ev, function () { lastTouch = Date.now(); }, { passive: true }); });
@@ -68,10 +68,11 @@
         var el = document.querySelector(SNAP[i]); if (!el) continue;
         var line = el.getBoundingClientRect().top + y - hdr;
         var crossed = (py < line - 2 && y >= line - 2) || (py > line + 2 && y <= line + 2);
-        if (crossed && !(cool[i] > now)) {
+        if (crossed && !(cool[i] > now) && now - lastStopT > 900) {
           cool[i] = now + 2500; stopping = true;
           html.classList.add('gs-stop'); window.scrollTo(0, line);
-          setTimeout(function () { html.classList.remove('gs-stop'); stopping = false; py = window.scrollY; }, 950);   // пауза ~1 с — чтобы не листали «ракетой»
+          lastStopT = now;
+          setTimeout(function () { html.classList.remove('gs-stop'); stopping = false; py = window.scrollY; }, 280);   // только гасим инерцию: остановились — и сразу можно листать дальше, сайт не «залипает»
           break;
         }
       }
