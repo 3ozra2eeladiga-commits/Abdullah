@@ -1625,3 +1625,17 @@ video.dvid.on { opacity: 1; }
 .gt__done .btn { min-height: 44px; border-color: #2c1a06; color: #2c1a06; }
 .gt__done p { margin: 0; font-size: 13px; line-height: 1.45; color: #4a3520; }
 body.gt-open .fab, body.gt-open .build-fg, body.gt-open .build-hud, body.gt-open .guide, body.gt-open .mate { visibility: hidden; }
+/* билет: настоящее фото подарка */
+.gt__under { grid-template-columns: 112px 1fr; align-items: start; }
+.gt__photo { display: block; width: 100%; height: auto; border-radius: 4px; filter: drop-shadow(0 8px 14px rgba(60,35,10,.25)); }
+.gt__prize.won .gt__photo { animation: gtPop .7s cubic-bezier(.3,1.6,.5,1); }
+@keyframes gtPop { 0% { transform: scale(.85); } 100% { transform: none; } }
+.gt__prize.won::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent); transform: skewX(-20deg); animation: gtShine 1.4s ease-out 1; pointer-events: none; }
+.gt__spec { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 8px; }
+.gt__spec li { font-size: 12px; line-height: 1.4; color: #5a4632; padding-left: 10px; border-left: 2px solid #d9a066; }
+.gt__spec b { display: block; color: #2c1a06; font-size: 12.5px; }
+.gt__more { border-radius: 10px; background: rgba(255,250,240,.7); padding: 10px 14px; }
+.gt__more summary { cursor: pointer; font: 600 13.5px var(--sans); color: #2c1a06; }
+.gt__gal { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 8px; }
+.gt__gal img { width: 100%; border-radius: 6px; }
+.gt__more p { margin: 0; font-size: 12.5px; line-height: 1.45; color: #4a3520; }
