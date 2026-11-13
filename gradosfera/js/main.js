@@ -57,6 +57,13 @@
     f.areas.forEach(function (ar) { VARIANTS[key].push({ area: ar, img: f.img, label: f.label, note: f.note }); });
   });
   Object.keys(VARIANTS).forEach(function (k) { VARIANTS[k].sort(function (a, b) { return a.area - b.area; }); });
+  // список всех квартир для калькулятора рассрочки (js/calc.js)
+  window.gsFlatList = [];
+  [['1', '1-комнатная'], ['2', '2-комнатная'], ['3', '3-комнатная']].forEach(function (t) {
+    (VARIANTS[t[0]] || []).forEach(function (v) { window.gsFlatList.push({ name: v.label || t[1], area: v.area }); });
+  });
+  var PRICE_M2 = 88000;   // цена за м² при полной оплате (ответ заказчика 13.11)
+  var mln = function (x) { return (Math.round(x / 10000) / 100).toFixed(2).replace('.', ',') + ' млн ₽'; };
 
   var ft = $('#ftypes');
   // планировки висят на стальном тросе на зажимах, как фото на просушке; покачиваются; трос можно тянуть вбок
@@ -69,6 +76,7 @@
     c.innerHTML = '<span class="ftype__plan">' + (img ? '<img src="' + img + '" alt="Планировка: ' + t.name + '" loading="lazy">' : '<i>Планировка по запросу</i>') + '</span>' +
       '<span class="ftype__body"><span class="ftype__name">' + t.name + '</span>' +
       '<span class="ftype__area">' + (min === max ? fmt(min) : fmt(min) + '–' + fmt(max)) + '<small>м²</small></span>' +
+      '<span class="ftype__price">от ' + mln(min * PRICE_M2) + '</span>' +
       '<span class="ftype__note">' + t.note + '</span>' +
       '<span class="ftype__foot"><span>' + (t.key === '1' ? '' : v.length + ' ' + (v.length === 1 ? 'вариант' : v.length < 5 ? 'варианта' : 'вариантов')) + '</span><b>Смотреть →</b></span></span>';
     c.insertAdjacentHTML('afterbegin', '<i class="ftype__clip" aria-hidden="true"></i>');
@@ -99,7 +107,8 @@
     else { img.hidden = true; img.removeAttribute('src'); $('#fwNoImg').hidden = false; }
     $('#fwCount').textContent = v.length > 1 ? (wv + 1) + ' / ' + v.length : '';
     $$('.fwin__arr').forEach(function (a) { a.style.display = v.length > 1 ? '' : 'none'; });
-    $('#fwSpecs').innerHTML = '<div><dt>Тип</dt><dd>' + nm + '</dd></div><div><dt>Площадь общая</dt><dd>' + fmt(cur.area) + ' м²</dd></div><div><dt>Высота потолков</dt><dd>3,2 м</dd></div>';
+    $('#fwSpecs').innerHTML = '<div><dt>Тип</dt><dd>' + nm + '</dd></div><div><dt>Площадь общая</dt><dd>' + fmt(cur.area) + ' м²</dd></div><div><dt>Высота потолков</dt><dd>3,2 м</dd></div><div><dt>Цена</dt><dd>от ' + mln(cur.area * PRICE_M2) + '</dd></div>';
+    var cb = $('#fwCalc'); if (cb) cb.setAttribute('data-area', cur.area);
     $('#fwNote').textContent = cur.note || t.note;
     var ar = $('#fwAreas'); ar.innerHTML = '';
     v.forEach(function (x, k) { var b = document.createElement('button'); b.type = 'button'; b.textContent = fmt(x.area) + ' м²'; if (k === wv) b.classList.add('is-on'); b.addEventListener('click', function () { show(ti, k); }); ar.appendChild(b); });

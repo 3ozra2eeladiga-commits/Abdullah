@@ -7,7 +7,7 @@
   if (!touch) return;
 
   // ---------- 1. ползунки ----------
-  Array.prototype.forEach.call(document.querySelectorAll('.boiler__ctl input[type="range"]'), function (inp) {
+  Array.prototype.forEach.call(document.querySelectorAll('.boiler__ctl input[type="range"], .pay__f input[type="range"]'), function (inp) {
     var sx = 0, sy = 0, mode = '';
     function setFrom(x) {
       var r = inp.getBoundingClientRect(), pad = 20, k = Math.min(1, Math.max(0, (x - r.left - pad) / (r.width - pad * 2)));
