@@ -287,7 +287,7 @@
   </div>
 </section>
 
-<!-- ============ РАССРОЧКА: калькулятор ============ -->
+<!-- ============ РАССРОЧКА: калькулятор + золотой билет ============ -->
 <section class="sec pay" id="pay">
   <div class="wrap">
     <div class="sec-head"><h2 class="h2 split">Рассрочка</h2></div>
@@ -297,24 +297,41 @@
         <label class="pay__f"><span>Квартира</span><select id="cFlat"></select></label>
         <label class="pay__f"><span>Первый взнос <output id="oDown"></output></span><input type="range" id="cDown" min="10" max="100" step="5" value="30"></label>
         <label class="pay__f" id="fMonths"><span>Срок <output id="oMonths"></output></span><input type="range" id="cMonths" min="6" max="60" step="6" value="36"></label>
-        <div class="pay__res">
-          <div><span>Цена за м²</span><b id="oM2"></b></div>
-          <div><span>Стоимость квартиры</span><b id="oTotal"></b></div>
+        <div class="pay__board" aria-live="polite">
           <div class="pay__month" id="rMonth"><span>Платёж в месяц</span><b id="oMonth"></b></div>
+          <div class="pay__row"><span>Цена за м²</span><b id="oM2"></b></div>
+          <div class="pay__row"><span>Первый взнос</span><b id="oFirst"></b></div>
+          <div class="pay__row"><span>Стоимость квартиры</span><b id="oTotal"></b></div>
         </div>
         <p class="pay__nudge" id="oNudge"></p>
-        <p class="pay__note">Расчёт примерный и не является публичной офертой. Точную сумму и график платежей подскажет менеджер.</p>
+        <p class="pay__note">Предварительный расчёт, не является публичной офертой. График платежей подтвердит менеджер.</p>
       </div>
       <div class="pay__side">
+        <div class="pay__scene" aria-hidden="true">
+          <svg viewBox="0 0 400 300" id="payScene">
+            <defs><linearGradient id="psGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#e3b04b"/><stop offset="1" stop-color="#a8701c"/></linearGradient></defs>
+            <path class="ps-ground" d="M0 286 H400"/>
+            <!-- кран -->
+            <g class="ps-crane"><path d="M70 286 V40 M84 286 V40"/><path d="M70 280 L84 270 M70 260 L84 250 M70 240 L84 230 M70 220 L84 210 M70 200 L84 190 M70 180 L84 170 M70 160 L84 150 M70 140 L84 130 M70 120 L84 110 M70 100 L84 90 M70 80 L84 70 M70 60 L84 50"/>
+              <path d="M40 40 H330 M40 52 H330 M77 18 L40 40 M77 18 L330 40 M77 18 V40"/><rect x="34" y="44" width="22" height="18" class="ps-cw"/></g>
+            <g id="psHook"><path class="ps-rope" id="psRope" d="M250 52 V150"/><g id="psLoad" transform="translate(250 150)"><path class="ps-hk" d="M-6 0 Q0 10 6 0"/><path class="ps-sl" d="M-30 26 L0 6 L30 26"/><rect x="-34" y="26" width="68" height="34" rx="2" class="ps-pal"/><text x="0" y="49" text-anchor="middle" id="psPct">30%</text></g></g>
+            <!-- табличка с ценой за м² -->
+            <g class="ps-sign"><path d="M150 52 V70 M196 52 V70"/><rect x="132" y="70" width="82" height="34" rx="3"/><text x="173" y="92" text-anchor="middle" id="psM2">93 000 ₽</text><text x="173" y="66" text-anchor="middle" class="ps-sm">за м²</text></g>
+            <!-- дом: этажи = годы рассрочки -->
+            <g id="psHouse" transform="translate(300 286)"></g>
+          </svg>
+          <span class="pay__scap" id="psCap">Срок 3 года — 3 этажа</span>
+        </div>
         <div class="pay__tiers" id="payTiers">
           <span class="tag">Цена за м² зависит от взноса</span>
           <div data-t="100"><span>Полная оплата</span><b>88 000 ₽</b></div>
-          <div data-t="50"><span>Взнос от 50%</span><b>90 000 ₽</b></div>
-          <div data-t="30"><span>Взнос от 30%</span><b>93 000 ₽</b></div>
-          <div data-t="10"><span>Взнос от 10%</span><b>95 000 ₽</b></div>
+          <div data-t="50"><span>Взнос 50%</span><b>90 000 ₽</b></div>
+          <div data-t="30"><span>Взнос 30%</span><b>93 000 ₽</b></div>
+          <div data-t="20"><span>Взнос 20%</span><b>94 000 ₽</b></div>
+          <div data-t="10"><span>Взнос 10%</span><b>95 000 ₽</b></div>
         </div>
         <form class="pay__form" id="payForm" novalidate>
-          <b class="pay__ft">Оставьте номер — перезвоним и рассчитаем точно</b>
+          <b class="pay__ft">Оставьте номер — перезвоним и рассчитаем график</b>
           <input type="text" name="name" placeholder="Ваше имя" autocomplete="name" maxlength="80" required>
           <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel" maxlength="20" required>
           <input type="text" name="website" class="pay__hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -324,8 +341,50 @@
         </form>
       </div>
     </div>
+    <!-- кран опускает золотой билет -->
+    <div class="gtd" id="gtDrop" hidden>
+      <i class="gtd__rope"></i>
+      <button type="button" class="gtd__ticket" id="gtOpen"><span class="gtd__shine"></span><b>Золотой билет</b><small id="gtDropTxt">Вам выпал подарок — нажмите!</small></button>
+    </div>
   </div>
 </section>
+
+<!-- ============ ЗОЛОТОЙ БИЛЕТ (окно) ============ -->
+<div class="gt" id="gt" role="dialog" aria-modal="true" aria-label="Золотой билет" hidden>
+  <div class="gt__card">
+    <button type="button" class="gt__x" data-gtclose aria-label="Закрыть">×</button>
+    <div class="gt__head"><span>★ Новый Квартал ★</span><b>Золотой билет</b><small>Подарок за покупку квартиры</small></div>
+    <div class="gt__prize" id="gtPrize">
+      <div class="gt__under">
+        <svg class="gt__wm" viewBox="0 0 120 200" aria-hidden="true">
+          <rect x="10" y="4" width="100" height="92" rx="6" class="wm-body"/><rect x="10" y="4" width="100" height="16" rx="6" class="wm-panel"/><circle cx="92" cy="12" r="4" class="wm-knob"/><rect x="22" y="9" width="30" height="5" rx="2" class="wm-disp"/>
+          <circle cx="60" cy="58" r="30" class="wm-door"/><g class="wm-drum dr1"><circle cx="60" cy="58" r="22" class="wm-glass"/><path d="M60 40 v36 M42 58 h36" class="wm-lines"/></g>
+          <rect x="6" y="98" width="108" height="8" rx="2" class="wm-shelf"/>
+          <rect x="10" y="108" width="100" height="88" rx="6" class="wm-body"/><rect x="10" y="108" width="100" height="16" rx="6" class="wm-panel"/><circle cx="92" cy="116" r="4" class="wm-knob"/><rect x="22" y="113" width="30" height="5" rx="2" class="wm-disp"/>
+          <circle cx="60" cy="160" r="28" class="wm-door"/><g class="wm-drum dr2"><circle cx="60" cy="160" r="20" class="wm-glass"/><path d="M60 144 v32 M44 160 h32" class="wm-lines"/></g>
+        </svg>
+        <div class="gt__pname"><span class="tag">Ваш подарок</span><b>Комплект De’Longhi в колонну</b><small>Стиральная машина MARSELLA L&nbsp;1025&nbsp;V + сушильная машина DTD&nbsp;8105&nbsp;H VERANO + соединитель с выдвижной полкой</small></div>
+      </div>
+      <canvas class="gt__scratch" id="gtScratch"></canvas>
+      <span class="gt__hint" id="gtHint">👆 Сотрите пальцем</span>
+    </div>
+    <div class="gt__after" id="gtAfter" hidden>
+      <div class="gt__timer"><span>Подарок ваш, если оформите покупку за</span><b id="gtTimer">48:00:00</b><small>договор полной оплаты или первый взнос по рассрочке</small></div>
+      <form class="gt__form" id="gtForm" novalidate>
+        <input type="text" name="name" placeholder="Ваше имя" autocomplete="name" maxlength="80" required>
+        <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel" maxlength="20" required>
+        <button class="btn btn--fill" type="submit">Забрать подарок</button>
+        <p class="gt__msg" id="gtMsg" aria-live="polite"></p>
+      </form>
+      <div class="gt__done" id="gtDone" hidden>
+        <span>Ваш код</span>
+        <b class="gt__code" id="gtCode">ЗБ-0000-0000</b>
+        <button type="button" class="btn" id="gtCopy">Скопировать код</button>
+        <p>Мы позвоним вам в рабочее время (пн–сб 10:00–17:00). Покажите этот код менеджеру в офисе продаж — ул. Кирова, 41, каб. 117.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ============ LIFE ============ -->
 <section class="sec life" id="life">

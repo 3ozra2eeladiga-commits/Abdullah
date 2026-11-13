@@ -1527,3 +1527,101 @@ video.dvid.on { opacity: 1; }
 .ftype__price { color: #b5602b; font-size: 14px; font-weight: 600; letter-spacing: .02em; }
 @media (max-width: 900px) { .pay__grid { grid-template-columns: 1fr; } .pay__calc, .pay__tiers, .pay__form { padding: 20px 18px; } }
 .pay__lead .tag { display: inline-block; margin-bottom: 10px; }
+/* ===== Рассрочка v2: табло, сцена с краном, золотой билет ===== */
+.pay__board { display: grid; gap: 2px; padding: 18px 20px; border-radius: 6px; background: #0e0f12; border: 1px solid rgba(201,138,91,.35); box-shadow: inset 0 0 40px rgba(201,138,91,.08); }
+.pay__board > div { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 6px 0; color: var(--muted); font-size: 14px; }
+.pay__board > div[hidden] { display: none; }
+.pay__board b { color: var(--cream); font: 400 21px/1.1 var(--serif); }
+.pay__board .pay__month { flex-direction: column; align-items: flex-start; gap: 4px; padding-bottom: 12px; border-bottom: 1px dashed rgba(201,138,91,.3); margin-bottom: 4px; }
+.pay__board .pay__month b { font-size: clamp(38px, 4vw, 52px); color: #ffb26b; text-shadow: 0 0 18px rgba(255,150,70,.45); font-variant-numeric: tabular-nums; }
+.pay__scene { position: relative; background: rgba(23,24,27,.82); border: 1px solid var(--line); border-radius: 6px; padding: 10px 10px 34px; }
+.pay__scene svg { display: block; width: 100%; height: auto; overflow: visible; }
+.pay__scene path, .pay__scene rect { fill: none; stroke: var(--copper); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pay__scene .ps-ground { stroke: rgba(201,138,91,.5); }
+.pay__scene .ps-cw { fill: rgba(201,138,91,.25); }
+.pay__scene .ps-rope { stroke: #e9d8bf; stroke-width: 1.2; }
+.pay__scene #psLoad, .pay__scene #psRope { transition: transform .5s cubic-bezier(.3,1.4,.5,1), d .5s; }
+.pay__scene .ps-pal { fill: rgba(255,138,69,.9); stroke: #ffb26b; }
+.pay__scene text { fill: #fff; font: 700 15px var(--sans); stroke: none; }
+.pay__scene .ps-sign rect { fill: #0e0f12; stroke: #ffb26b; }
+.pay__scene .ps-sign text { fill: #ffb26b; font: 400 16px var(--serif); }
+.pay__scene .ps-sign .ps-sm { fill: var(--muted); font: 500 9px var(--sans); letter-spacing: .14em; }
+.pay__scene .ps-fl { opacity: .14; transition: opacity .5s; }
+.pay__scene .ps-fl.on { opacity: 1; }
+.pay__scene .ps-fl .ps-fb { fill: rgba(201,138,91,.08); }
+.pay__scene .ps-fl.on .ps-w { fill: rgba(255,214,150,.75); stroke: #ffd696; }
+.pay__scene .ps-fl.lit .ps-w { fill: #ffd696; filter: drop-shadow(0 0 4px rgba(255,214,150,.9)); }
+.pay__scap { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: var(--muted); font-size: 13px; }
+/* билет на тросе крана */
+.gtd { position: relative; display: grid; justify-items: center; margin-top: 10px; height: 0; overflow: visible; }
+.gtd[hidden] { display: none; }
+.gtd__rope { position: absolute; top: -40px; left: 50%; width: 2px; height: 0; background: #e9d8bf; transition: height .9s cubic-bezier(.3,1.3,.5,1); }
+.gtd.on { height: 150px; }
+.gtd.on .gtd__rope { height: 46px; }
+.gtd__ticket { position: absolute; top: 6px; display: grid; gap: 4px; justify-items: center; width: min(320px, 86vw); padding: 18px 20px; border: 0; border-radius: 10px; cursor: pointer; overflow: hidden; color: #3a2309;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='10' cy='10' r='1' fill='%23a8701c' opacity='.35'/%3E%3C/svg%3E"), linear-gradient(135deg, #ffe9a8, #e3b04b 45%, #fff1b8 55%, #b07a26);
+  box-shadow: 0 16px 40px rgba(0,0,0,.5), 0 0 30px rgba(255,200,90,.35); transform: translateY(-160px) rotate(-6deg); opacity: 0; transition: transform 1s cubic-bezier(.3,1.4,.5,1), opacity .4s; }
+.gtd.on .gtd__ticket { transform: none; opacity: 1; animation: gtSwing 3.2s ease-in-out 1s infinite; }
+@keyframes gtSwing { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+.gtd__ticket::before, .gtd__ticket::after { content: ""; position: absolute; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 50%; background: var(--bg, #121317); }
+.gtd__ticket::before { left: -9px; } .gtd__ticket::after { right: -9px; }
+.gtd__ticket b { font: 400 26px/1 var(--serif); letter-spacing: .08em; text-transform: uppercase; }
+.gtd__ticket small { font: 600 13px var(--sans); }
+.gtd__shine { position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); transform: skewX(-20deg); animation: gtShine 2.6s ease-in-out infinite; }
+@keyframes gtShine { 0% { left: -40%; } 60%, 100% { left: 130%; } }
+/* окно билета */
+.gt { position: fixed; z-index: 400; inset: 0; top: 0; right: 0; bottom: 0; left: 0; display: grid; place-items: center; padding: 16px; background: rgba(6,7,9,.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity .35s; overflow-y: auto; }
+.gt[hidden] { display: none; }
+.gt.on { opacity: 1; }
+.gt__card { position: relative; width: min(440px, 100%); padding: 22px 20px 24px; border-radius: 16px; color: #2c1a06;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 24 L24 0' stroke='%23a8701c' stroke-opacity='.12'/%3E%3C/svg%3E"), linear-gradient(150deg, #fff3c4, #f0c45e 40%, #ffeaa3 55%, #c48a2c);
+  box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(255,200,90,.25); transform: translateY(30px) scale(.94); transition: transform .45s cubic-bezier(.3,1.4,.5,1); }
+.gt.on .gt__card { transform: none; }
+.gt__card::before { content: ""; position: absolute; inset: 8px; top: 8px; right: 8px; bottom: 8px; left: 8px; border: 2px dashed rgba(90,55,15,.35); border-radius: 11px; pointer-events: none; }
+.gt__x { position: absolute; z-index: 3; top: 10px; right: 12px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(60,35,10,.15); color: #2c1a06; font-size: 24px; line-height: 1; cursor: pointer; }
+.gt__head { display: grid; justify-items: center; gap: 2px; text-align: center; margin-bottom: 14px; }
+.gt__head span { font: 700 11px var(--sans); letter-spacing: .3em; text-transform: uppercase; opacity: .7; }
+.gt__head b { font: 400 34px/1 var(--serif); text-transform: uppercase; letter-spacing: .06em; }
+.gt__head small { font: 500 13px var(--sans); opacity: .8; }
+.gt__prize { position: relative; border-radius: 10px; overflow: hidden; background: #fbf6ea; min-height: 230px; box-shadow: inset 0 0 0 1px rgba(90,55,15,.25); }
+.gt__under { display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: center; padding: 16px; }
+.gt__wm { width: 100%; height: auto; }
+.gt__wm .wm-body { fill: #fff; stroke: #b9b2a6; stroke-width: 1.5; }
+.gt__wm .wm-panel { fill: #eceae4; stroke: #b9b2a6; stroke-width: 1.2; }
+.gt__wm .wm-knob { fill: #d7d2c7; stroke: #8f887c; }
+.gt__wm .wm-disp { fill: #2c3340; }
+.gt__wm .wm-door { fill: #dfe3e8; stroke: #8f887c; stroke-width: 2; }
+.gt__wm .wm-glass { fill: #9fb4c8; stroke: #6e8296; }
+.gt__wm .wm-lines { stroke: rgba(255,255,255,.7); stroke-width: 2; }
+.gt__wm .wm-shelf { fill: #cfc9bd; stroke: #8f887c; }
+.gt__wm .wm-drum { transform-box: fill-box; transform-origin: center; }
+.gt__prize.won .wm-drum { animation: wmSpin 1.6s linear infinite; }
+.gt__prize.won .dr2 { animation-duration: 2.4s; animation-direction: reverse; }
+@keyframes wmSpin { to { transform: rotate(360deg); } }
+.gt__pname { display: grid; gap: 6px; color: #2c1a06; }
+.gt__pname .tag { color: #a8641f; }
+.gt__pname b { font: 400 23px/1.1 var(--serif); }
+.gt__pname small { font-size: 12.5px; line-height: 1.45; color: #5a4632; }
+.gt__scratch { position: absolute; inset: 0; top: 0; left: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; transition: opacity .6s; }
+.gt__scratch.gone { opacity: 0; pointer-events: none; }
+.gt__hint { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 6px 12px; border-radius: 999px; background: rgba(40,22,6,.75); color: #fff; font: 600 13px var(--sans); pointer-events: none; animation: gtHint 1.4s ease-in-out infinite; transition: opacity .3s; }
+.gt__hint.off { opacity: 0; animation: none; }
+@keyframes gtHint { 50% { transform: translateX(-50%) translateY(-5px); } }
+.gt__spark { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; border-radius: 50%; background: #ffd27a; box-shadow: 0 0 8px #ff9a3c; animation: gtSpark 1.1s ease-out forwards; pointer-events: none; }
+@keyframes gtSpark { to { transform: translate(var(--x), var(--y)); opacity: 0; } }
+.gt__after { display: grid; gap: 14px; margin-top: 14px; }
+.gt__after[hidden] { display: none; }
+.gt__timer { display: grid; justify-items: center; gap: 2px; padding: 12px; border-radius: 10px; background: #1a1206; color: #ffd27a; text-align: center; }
+.gt__timer span, .gt__timer small { color: rgba(255,226,170,.75); font-size: 12.5px; }
+.gt__timer b { font: 400 40px/1.1 var(--serif); letter-spacing: .06em; font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(255,170,60,.6); }
+.gt__form { display: grid; gap: 10px; }
+.gt__form[hidden], .gt__done[hidden] { display: none; }
+.gt__form input { min-height: 50px; padding: 0 14px; border: 1px solid rgba(90,55,15,.4); border-radius: 8px; background: #fffaf0; color: #2c1a06; font: 400 16px var(--sans); }
+.gt__form .btn--fill { background: #2c1a06; border-color: #2c1a06; color: #ffd27a; }
+.gt__msg { margin: 0; min-height: 1.2em; font-size: 13.5px; } .gt__msg.err { color: #9b2414; }
+.gt__done { display: grid; justify-items: center; gap: 8px; text-align: center; }
+.gt__done > span { font: 600 12px var(--sans); letter-spacing: .2em; text-transform: uppercase; opacity: .7; }
+.gt__code { padding: 10px 18px; border: 2px dashed #2c1a06; border-radius: 8px; font: 700 26px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; background: #fffaf0; }
+.gt__done .btn { min-height: 44px; border-color: #2c1a06; color: #2c1a06; }
+.gt__done p { margin: 0; font-size: 13px; line-height: 1.45; color: #4a3520; }
+body.gt-open .fab, body.gt-open .build-fg, body.gt-open .build-hud, body.gt-open .guide, body.gt-open .mate { visibility: hidden; }
