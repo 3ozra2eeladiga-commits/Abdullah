@@ -2,7 +2,7 @@
    Цена за м²: полная оплата 88 000; взнос 50% — 90 000; 30% — 93 000; 20% — 94 000; 10% — 95 000;
    между этими точками цена меняется плавно. Срок — до 60 месяцев, платежи ежемесячные, равные.
    Сцена: кран поднимает поддон с % взноса, табличка — цена за м², дом достраивается по годам срока.
-   Золотой билет: кран опускает билет → стираешь пальцем → подарок → имя и телефон → личный код (48 часов). */
+   Золотой билет: кран опускает билет → стираешь пальцем → подарок → имя и телефон → личный код (24 часа). */
 (function () {
   'use strict';
   var sel = document.getElementById('cFlat'), down = document.getElementById('cDown'), months = document.getElementById('cMonths');
@@ -92,7 +92,10 @@
     var p = +down.value, opt = sel.options[sel.selectedIndex];
     return (opt ? opt.textContent : '') + '; взнос ' + p + '%' + (p < 100 ? '; срок ' + months.value + ' мес.; платёж ' + $('oMonth').textContent : '; полная оплата') + '; цена м² ' + $('oM2').textContent + '; итого ' + $('oTotal').textContent;
   }
+  // демо-версия (предпросмотр для заказчика): заявки никуда не уходят, всё остальное — как на сайте
+  var DEMO = /\/preview\//.test(location.pathname) || window.GS_DEMO;
   function send(data, msg, ok) {
+    if (DEMO) { msg.textContent = 'Отправляем…'; return new Promise(function (r) { setTimeout(function () { ok({ ok: true }); r(); }, 700); }); }
     msg.textContent = 'Отправляем…'; msg.className = msg.className.replace(/ (ok|err)/g, '');
     return fetch('send.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
       .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
@@ -116,7 +119,7 @@
   }
 
   // ---------- ЗОЛОТОЙ БИЛЕТ ----------
-  var drop = $('gtDrop'), gt = $('gt'), KEY = 'gsTicket', HOURS = 48;
+  var drop = $('gtDrop'), gt = $('gt'), KEY = 'gsTicket', HOURS = 24;
   if (!drop || !gt) return;
   document.body.appendChild(gt);   // окно — поверх всего сайта (вне слоёв страницы)
   var st = {}; try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
