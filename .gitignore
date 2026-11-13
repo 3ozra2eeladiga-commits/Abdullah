@@ -4,7 +4,3 @@ __pycache__/
 .venv/
 cache/
 flowerbot.zip
-
-# заявки с сайта и настройки формы — только на хостинге
-gs-leads.csv
-gs-config.php

@@ -276,54 +276,13 @@
             <p class="muted" id="fwNote"></p>
             <span class="tag">Варианты площади</span>
             <div class="fwin__areas" id="fwAreas"></div>
-            <a class="btn btn--fill" href="#pay" id="fwCalc" data-fclose>Рассчитать рассрочку</a>
-            <a class="btn" href="tel:+79388153333">Позвонить в отдел продаж</a>
+            <a class="btn btn--fill" href="tel:+79388153333">Узнать цену — позвонить</a>
           </div>
         </div>
       </div>
     </div>
 
     <p class="fine">Планировки носят информационный характер.</p>
-  </div>
-</section>
-
-<!-- ============ РАССРОЧКА: калькулятор ============ -->
-<section class="sec pay" id="pay">
-  <div class="wrap">
-    <div class="sec-head"><h2 class="h2 split">Рассрочка</h2></div>
-    <p class="lead pay__lead"><span class="tag">От застройщика · без банков и ипотеки</span><br>Первый взнос — от 10%, срок — до 5 лет. Чем больше первый взнос, тем дешевле квадратный метр.</p>
-    <div class="pay__grid">
-      <div class="pay__calc">
-        <label class="pay__f"><span>Квартира</span><select id="cFlat"></select></label>
-        <label class="pay__f"><span>Первый взнос <output id="oDown"></output></span><input type="range" id="cDown" min="10" max="100" step="5" value="30"></label>
-        <label class="pay__f" id="fMonths"><span>Срок <output id="oMonths"></output></span><input type="range" id="cMonths" min="6" max="60" step="6" value="36"></label>
-        <div class="pay__res">
-          <div><span>Цена за м²</span><b id="oM2"></b></div>
-          <div><span>Стоимость квартиры</span><b id="oTotal"></b></div>
-          <div class="pay__month" id="rMonth"><span>Платёж в месяц</span><b id="oMonth"></b></div>
-        </div>
-        <p class="pay__nudge" id="oNudge"></p>
-        <p class="pay__note">Расчёт примерный и не является публичной офертой. Точную сумму и график платежей подскажет менеджер.</p>
-      </div>
-      <div class="pay__side">
-        <div class="pay__tiers" id="payTiers">
-          <span class="tag">Цена за м² зависит от взноса</span>
-          <div data-t="100"><span>Полная оплата</span><b>88 000 ₽</b></div>
-          <div data-t="50"><span>Взнос от 50%</span><b>90 000 ₽</b></div>
-          <div data-t="30"><span>Взнос от 30%</span><b>93 000 ₽</b></div>
-          <div data-t="10"><span>Взнос от 10%</span><b>95 000 ₽</b></div>
-        </div>
-        <form class="pay__form" id="payForm" novalidate>
-          <b class="pay__ft">Оставьте номер — перезвоним и рассчитаем точно</b>
-          <input type="text" name="name" placeholder="Ваше имя" autocomplete="name" maxlength="80" required>
-          <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel" maxlength="20" required>
-          <input type="text" name="website" class="pay__hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <button class="btn btn--fill" type="submit">Перезвоните мне</button>
-          <p class="pay__msg" id="payMsg" aria-live="polite"></p>
-          <small class="pay__agree">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</small>
-        </form>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -654,7 +613,6 @@
 <script src="js/vendor/lenis.min.js"></script>
 <script src="js/smooth.js?v=__V__"></script>
 <script src="js/main.js?v=__V__"></script>
-<script src="js/calc.js?v=__V__"></script>
 <script src="js/build-bg.js?v=__V__"></script>
 <script src="js/reveal-fx.js?v=__V__"></script>
 <script src="js/boiler.js?v=__V__"></script>
