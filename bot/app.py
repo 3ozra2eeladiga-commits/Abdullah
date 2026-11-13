@@ -1241,7 +1241,9 @@ def image(code):
 
 # Предпросмотр сайтов-проектов, которые лежат в репозитории отдельными папками (к боту не относятся).
 # Открываются по адресу /preview/<папка>/ — так сайт можно смотреть до переезда на свой хостинг.
-PREVIEW_SITES = {"gradosfera"}
+PREVIEW_SITES = {"gradosfera", "gradosfera-demo"}
+# демо-копия: в папке лежат только изменённые файлы, остальное берётся из основного сайта
+PREVIEW_FALLBACK = {"gradosfera-demo": "gradosfera"}
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -1257,7 +1259,10 @@ def preview_root(site):
 def preview(site, path="index.html"):
     if site not in PREVIEW_SITES:
         abort(404)
-    resp = send_from_directory(os.path.join(_REPO_ROOT, site), path)
+    folder = os.path.join(_REPO_ROOT, site)
+    if site in PREVIEW_FALLBACK and not os.path.isfile(os.path.join(folder, path)):
+        folder = os.path.join(_REPO_ROOT, PREVIEW_FALLBACK[site])
+    resp = send_from_directory(folder, path)
     resp.headers["X-Robots-Tag"] = "noindex"   # предпросмотр не должен попадать в поиск
     return resp
 
