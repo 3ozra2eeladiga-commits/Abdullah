@@ -13,11 +13,17 @@ if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'gk-lib.php') { http_respons
 // данные храним в домашней папке хостинга; если хостинг туда не пускает (open_basedir) —
 // в закрытой папке gk-data внутри сайта (снаружи доступ запрещён, автообновление её не трогает)
 function gk_home() {
+    // пробуем по-настоящему записать файл: is_writable на хостинге иногда врёт (open_basedir)
+    $try = function ($d) {
+        if (!@is_dir($d) && !@mkdir($d, 0700, true)) return false;
+        $p = $d . '/.gk-probe';
+        if (@file_put_contents($p, '1') === false) return false;
+        @unlink($p); return true;
+    };
     $up = dirname(__DIR__);
-    if (@is_dir($up) && @is_writable($up)) return $up;
+    if (@is_file($up . '/gs-config.php') || $try($up)) return $up;
     $d = __DIR__ . '/gk-data';
-    if (!is_dir($d)) @mkdir($d, 0700, true);
-    if (!is_file($d . '/.htaccess')) @file_put_contents($d . '/.htaccess', "Require all denied\nDeny from all\n");
+    if ($try($d) && !is_file($d . '/.htaccess')) @file_put_contents($d . '/.htaccess', "Require all denied\nDeny from all\n");
     return $d;
 }
 define('GK_HOME', gk_home());

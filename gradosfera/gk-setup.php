@@ -29,7 +29,7 @@ if (!$linked && isset($_POST['token'])) {
     $old['telegram_token'] = $tok;
     if (empty($old['email_to'])) $old['email_to'] = 'grado.sfera@mail.ru';
     $w = @file_put_contents(GK_HOME . '/gs-config.php', "<?php\n// настройки бота ЖК «Новый Квартал» (создано gk-setup.php)\nreturn " . var_export($old, true) . ";\n", LOCK_EX);
-    if (!$w) page('Не удалось сохранить', '<p class="err">Хостинг не дал записать файл настроек. Сообщите об этом — исправим.</p>');
+    if (!$w) { $e = error_get_last(); page('Не удалось сохранить', '<p class="err">Хостинг не дал записать файл настроек в ' . htmlspecialchars(basename(dirname(GK_HOME)) . '/' . basename(GK_HOME)) . ' (' . htmlspecialchars($e['message'] ?? '') . ').</p><p>Сообщите об этом — исправим.</p>'); }
     header('Location: gk-setup.php', true, 303); exit;
 }
 $form = '<form method="post" class="c"><p>Вставьте токен бота — длинную строку из сообщения BotFather (вида <b>7123456789:AAH…</b>):</p><p><input name="token" type="password" autocomplete="off" required style="width:100%;box-sizing:border-box;padding:12px;font:16px monospace;border-radius:8px;border:1px solid #555;background:#111;color:#fff"></p><p><button>Сохранить токен</button></p><p style="font-size:13px;color:#999">Токен сохранится на хостинге в закрытом файле — снаружи его не прочитать.</p></form>';
