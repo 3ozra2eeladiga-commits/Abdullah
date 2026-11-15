@@ -15,9 +15,29 @@ function page($title, $body) {
        . "<h1>{$title}</h1>{$body}";
     exit;
 }
-if (empty($cfg['telegram_token'])) page('Шаг 1: токен не найден', '<p class="err">Файл <b>gs-config.php</b> с токеном бота не найден в домашней папке хостинга (рядом с public_html).</p><p>Создайте его по инструкции и обновите эту страницу.</p>');
+// Шаг 1: токен можно вставить прямо здесь (пока бот ещё не подключён к группе)
+$linked = !empty(gk_json_read('gs-chat.json')['chat_id']);
+if (!$linked && isset($_POST['token'])) {
+    $tok = trim((string)$_POST['token']);
+    $ok = false;
+    if (preg_match('/^\d{6,12}:[A-Za-z0-9_-]{30,}$/', $tok) && function_exists('curl_init')) {
+        $ch = curl_init('https://api.telegram.org/bot' . $tok . '/getMe');
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 12]);
+        $r = json_decode((string)curl_exec($ch), true); curl_close($ch);
+        $ok = !empty($r['ok']);
+    }
+    if (!$ok) page('Токен не подошёл', '<p class="err">Telegram не принял этот токен. Скопируйте его из сообщения BotFather целиком (вида 7123456789:AAH…) и попробуйте ещё раз.</p><p><a href="gk-setup.php" style="color:#c98a5b">← Назад</a></p>');
+    $old = is_array($cfg) ? $cfg : [];
+    unset($old['chat_id']);
+    $old['telegram_token'] = $tok;
+    if (empty($old['email_to'])) $old['email_to'] = 'grado.sfera@mail.ru';
+    file_put_contents(GK_HOME . '/gs-config.php', "<?php\n// настройки бота ЖК «Новый Квартал» (создано gk-setup.php)\nreturn " . var_export($old, true) . ";\n", LOCK_EX);
+    header('Location: gk-setup.php', true, 303); exit;
+}
+$form = '<form method="post" class="c"><p>Вставьте токен бота — длинную строку из сообщения BotFather (вида <b>7123456789:AAH…</b>):</p><p><input name="token" type="password" autocomplete="off" required style="width:100%;box-sizing:border-box;padding:12px;font:16px monospace;border-radius:8px;border:1px solid #555;background:#111;color:#fff"></p><p><button>Сохранить токен</button></p><p style="font-size:13px;color:#999">Токен сохранится на хостинге в закрытом файле — снаружи его не прочитать.</p></form>';
+if (empty($cfg['telegram_token'])) page('Шаг 1: токен бота', $form);
 $me = gk_tg('getMe', []);
-if (empty($me['ok'])) page('Токен не подошёл', '<p class="err">Telegram не принял токен. Проверьте, что он скопирован целиком, без пробелов.</p>');
+if (empty($me['ok'])) page('Токен не подошёл', '<p class="err">Telegram не принимает сохранённый токен. Вставьте его заново:</p>' . $form);
 $bot = '@' . $me['result']['username'];
 
 if (!empty($cfg['chat_id'])) {
