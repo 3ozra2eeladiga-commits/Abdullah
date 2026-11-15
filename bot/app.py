@@ -1241,7 +1241,7 @@ def image(code):
 
 # Предпросмотр сайтов-проектов, которые лежат в репозитории отдельными папками (к боту не относятся).
 # Открываются по адресу /preview/<папка>/ — так сайт можно смотреть до переезда на свой хостинг.
-PREVIEW_SITES = {"gradosfera", "gradosfera-demo"}
+PREVIEW_SITES = {"gradosfera", "gradosfera-demo", "gk-tour"}   # gk-tour — черновик 3D-модели, только закрытый просмотр
 # демо-копия: в папке лежат только изменённые файлы, остальное берётся из основного сайта
 PREVIEW_FALLBACK = {"gradosfera-demo": "gradosfera"}
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
