@@ -4,3 +4,9 @@ __pycache__/
 .venv/
 cache/
 flowerbot.zip
+
+# данные ботa ЖК (только на хостинге)
+gs-leads.csv
+gs-config.php
+gs-chat.json
+gs-tickets.json
