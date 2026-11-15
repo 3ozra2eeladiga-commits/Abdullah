@@ -10,8 +10,15 @@ $cfg = gk_cfg();
 $secret = substr(hash('sha256', ($cfg['telegram_token'] ?? '') . '|gk-webhook'), 0, 40);
 if (empty($cfg['telegram_token']) || ($_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'] ?? '') !== $secret) { http_response_code(403); exit; }
 $u = json_decode((string)file_get_contents('php://input'), true);
+// сразу отвечаем Telegram «принято», а работаем уже после — иначе он ждёт, считает это ошибкой и шлёт то же сообщение повторно
 http_response_code(200);
+ignore_user_abort(true); set_time_limit(90);
+if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+else { header('Content-Length: 0'); header('Connection: close'); @ob_end_flush(); flush(); }
 if (!is_array($u)) exit;
+// одно и то же обновление обрабатываем один раз
+$uidUp = (string)($u['update_id'] ?? '');
+if ($uidUp !== '' && !gk_json_update('gs-updates.json', function (&$seen) use ($uidUp) { if (isset($seen[$uidUp])) return false; $seen[$uidUp] = time(); if (count($seen) > 300) $seen = array_slice($seen, -200, null, true); return true; })) exit;
 
 const B_LEADS = '📋 Заявки', B_TICKETS = '🎫 Билеты', B_CHECK = '🔍 Проверить код', B_STATS = '📊 Статистика';
 function menu() { return ['keyboard' => [[['text' => B_LEADS], ['text' => B_TICKETS]], [['text' => B_CHECK], ['text' => B_STATS]]], 'resize_keyboard' => true, 'is_persistent' => true]; }

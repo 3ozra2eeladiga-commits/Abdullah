@@ -64,14 +64,19 @@ function gk_tg_raw($token, $method, $params) {
     $urls = ['https://api.telegram.org/bot' . $token . '/' . $method,
              'https://186-246-61-173.sslip.io/tg-relay/bot' . $token . '/' . $method];
     $last = '';
+    // если недавно напрямую не достучались — 10 минут сразу идём через реле (не ждём тайм-аут)
+    $flag = GK_HOME . '/.tg-direct-down';
+    if (@is_file($flag) && time() - @filemtime($flag) < 600) array_shift($urls);
     foreach ($urls as $i => $url) {
+        $relay = strpos($url, 'tg-relay') !== false;
         $ch = curl_init($url);
-        curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => $i ? 8 : 5, CURLOPT_TIMEOUT => $i ? 25 : 12,
+        curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => $relay ? 8 : 4, CURLOPT_TIMEOUT => $relay ? 25 : 10,
             CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_HTTPHEADER => ['Content-Type: application/json'], CURLOPT_POSTFIELDS => $body]);
         $res = curl_exec($ch); $err = curl_error($ch); curl_close($ch);
         $j = json_decode((string)$res, true);
         if (is_array($j) && isset($j['ok'])) return $j;
         $last = $err ?: 'пустой ответ';
+        if (!$relay) @touch($flag);
     }
     return ['ok' => false, 'description' => 'нет связи с Telegram', 'net' => $last];
 }
