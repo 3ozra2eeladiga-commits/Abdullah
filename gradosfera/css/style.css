@@ -1716,3 +1716,16 @@ body.gt-open .fab, body.gt-open .build-fg, body.gt-open .build-hud, body.gt-open
 .gtd__ticket .ny-sprig { left: -8px; top: -14px; width: 64px; transform: scaleX(-1) rotate(-8deg); }
 .ny-sprig--card { left: -12px; top: -20px; width: 78px; transform: scaleX(-1) rotate(-10deg); }
 @media (prefers-reduced-motion: reduce) { .pay::after, .gt::before, .mm__santa, .ny-sprig circle { animation: none; } }
+/* ёлка в офисе (блок «Команда» внизу) */
+.team__svg .team__tree path, .team__svg .team__tree circle { stroke-width: 1.4; }
+.team__svg .tt__fir { fill: #2f6b45 !important; stroke: #1f4a2f !important; }
+.team__svg .tt__trunk { fill: #6b4426 !important; stroke: #4a2e18 !important; }
+.team__svg .tt__pot { fill: #b5602b !important; stroke: #7a3e1a !important; }
+.team__svg .tt__garland { fill: none !important; stroke: #ffd696 !important; stroke-width: 1.6; stroke-dasharray: 2 4; animation: ttLights 1.2s linear infinite; }
+@keyframes ttLights { to { stroke-dashoffset: -12; } }
+.team__svg .tt__ball { stroke: none !important; animation: ttTwinkle 2.4s ease-in-out infinite; }
+.team__svg .tt__b1 { fill: #e0414a !important; } .team__svg .tt__b2 { fill: #ffc94a !important; animation-delay: -.8s; } .team__svg .tt__b3 { fill: #6fb6ff !important; animation-delay: -1.6s; }
+@keyframes ttTwinkle { 50% { opacity: .55; } }
+.team__svg .tt__star { fill: #ffd27a !important; stroke: #e3a33b !important; filter: drop-shadow(0 0 4px rgba(255,210,120,.9)); }
+.team__svg .tt__gift { fill: #c8343a !important; stroke: #ffd27a !important; }
+.team__svg .tt__gift2 { fill: #e3b04b !important; stroke: #fff2c8 !important; }
