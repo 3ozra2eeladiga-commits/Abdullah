@@ -1,7 +1,7 @@
 /* Калькулятор рассрочки + «Золотой билет» (данные заказчика 13.11).
    Цена за м²: полная оплата 88 000; взнос 50% — 90 000; 30% — 93 000; 20% — 94 000; 10% — 95 000;
    между этими точками цена меняется плавно. Срок — до 60 месяцев, платежи ежемесячные, равные.
-   Сцена: кран поднимает поддон с % взноса, табличка — цена за м², дом достраивается по годам срока.
+   Сцена: кран поднимает поддон с % взноса, табличка — цена за м².
    Золотой билет: кран опускает билет → стираешь пальцем → подарок → имя и телефон → личный код (24 часа). */
 (function () {
   'use strict';
@@ -40,9 +40,6 @@
     if (rope) rope.setAttribute('d', 'M250 52 V' + y.toFixed(1));
     if ($('psPct')) $('psPct').textContent = p + '%';
     if ($('psM2')) $('psM2').textContent = m2.toLocaleString('ru-RU').replace(/,/g, ' ') + ' ₽';
-    var full = p === 100, yrsN = full ? 0 : Math.ceil(n / 12);
-    floors.forEach(function (fl, i) { fl.classList.toggle('on', full || i < yrsN); fl.classList.toggle('lit', full); });
-    if ($('psCap')) $('psCap').textContent = full ? 'Полная оплата — дом ваш сразу 🔑' : 'Срок ' + (n % 12 ? n + ' мес.' : n / 12 + ' ' + yrs(n / 12)) + ' — ' + yrsN + ' ' + (yrsN === 1 ? 'этаж' : yrsN < 5 ? 'этажа' : 'этажей');
   }
 
   function setP(inp) { inp.style.setProperty('--p', ((inp.value - inp.min) / (inp.max - inp.min) * 100) + '%'); }
