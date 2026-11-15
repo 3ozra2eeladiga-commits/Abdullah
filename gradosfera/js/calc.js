@@ -133,6 +133,7 @@
   document.body.appendChild(gt);   // окно — поверх всего сайта (вне слоёв страницы)
   var st = {}; try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  var dev = ''; try { dev = localStorage.getItem('gsDev') || ''; if (!dev) { dev = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('gsDev', dev); } } catch (e) {}
   var dropped = false;
   function dropTicket() {
     if (dropped) return; dropped = true;
@@ -147,12 +148,13 @@
       es.forEach(function (e) { clearTimeout(seenT); if (e.isIntersecting) seenT = setTimeout(dropTicket, 3000); });
     }, { threshold: 0.35 }).observe(document.querySelector('.pay__calc') || pay);
   }
-  function left() { return st.until ? st.until - Date.now() : st.opened ? st.opened + HOURS * 3600e3 - Date.now() : HOURS * 3600e3; }
+  // срок считает сервер (24 часа, а если выпадает на выходной/вечер — до 17:00 рабочего дня); до получения кода — просто «24:00:00»
+  function left() { return st.until ? st.until - Date.now() : HOURS * 3600e3; }
   var tick = 0;
   function timer() {
     var ms = Math.max(0, left()), s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
     $('gtTimer').textContent = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (ss < 10 ? '0' : '') + ss;
-    if (!ms) $('gtTimer').textContent = 'время вышло';
+    if (st.until && !ms) $('gtTimer').textContent = 'срок истёк';
   }
   function openGt() {
     gt.hidden = false; void gt.offsetWidth; gt.classList.add('on'); document.body.classList.add('lock', 'gt-open');
@@ -218,16 +220,21 @@
   // забрать подарок: имя + телефон → личный код
   var gform = $('gtForm'), gmsg = $('gtMsg');
   mask(gform.elements.phone);
-  function showCode() { gform.hidden = true; $('gtDone').hidden = false; $('gtCode').textContent = st.code; $('gtDropTxt').textContent = 'Ваш билет ' + st.code; }
+  function showCode() {
+    gform.hidden = true; $('gtDone').hidden = false; $('gtCode').textContent = st.code; $('gtDropTxt').textContent = 'Ваш билет ' + st.code;
+    var note = $('gtNote'), expired = st.until && st.until < Date.now();
+    if (note) note.textContent = expired ? 'Срок этого билета истёк. Позвоните нам — подскажем, какие сейчас есть предложения: +7 (938) 815-33-33.'
+      : (st.repeat ? 'На этот номер билет уже был выдан — показываем тот же код. ' : '') + (st.untilText ? 'Действует до ' + st.untilText + '. ' : '') + 'Мы позвоним вам в рабочее время (пн–сб 10:00–17:00). Покажите этот код менеджеру в офисе продаж — ул. Кирова, 41, каб. 117.';
+  }
   gform.addEventListener('submit', function (e) {
     e.preventDefault();
     var name = gform.elements.name.value.trim(), digits = gform.elements.phone.value.replace(/\D/g, '');
     if (!name) { gmsg.textContent = 'Напишите, пожалуйста, имя'; gmsg.className = 'gt__msg err'; return; }
     if (digits.length !== 11) { gmsg.textContent = 'Проверьте номер телефона'; gmsg.className = 'gt__msg err'; return; }
     // код создаёт и запоминает сервер (24 часа, один билет на номер телефона)
-    send({ kind: 'ticket', name: name, phone: digits, details: calcText() }, gmsg, function (r) {
+    send({ kind: 'ticket', name: name, phone: digits, details: calcText(), dev: dev }, gmsg, function (r) {
       if (!r || !r.code) { gmsg.textContent = 'Не получилось выдать билет. Позвоните нам: +7 (938) 815-33-33'; gmsg.className = 'gt__msg err'; return; }
-      st.code = r.code; st.name = name; if (r.until) st.until = r.until; save(); gmsg.textContent = ''; showCode(); timer();
+      st.code = r.code; st.name = name; if (r.until) st.until = r.until; st.untilText = r.untilText || ''; st.repeat = !!r.repeat; st.status = r.status; save(); gmsg.textContent = ''; showCode(); timer();
     });
   });
   $('gtCopy').addEventListener('click', function () {

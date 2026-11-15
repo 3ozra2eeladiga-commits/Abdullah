@@ -28,6 +28,19 @@ function gk_home() {
 }
 define('GK_HOME', gk_home());
 define('GK_TICKET_HOURS', 24);
+// офис продаж: пн–сб 10:00–17:00 (Москва)
+function gk_msk($ts) { $d = new DateTime('@' . $ts); $d->setTimezone(new DateTimeZone('Europe/Moscow')); return $d; }
+function gk_is_work($ts) { $d = gk_msk($ts); $m = (int)$d->format('G') * 60 + (int)$d->format('i'); return (int)$d->format('N') <= 6 && $m >= 600 && $m < 1020; }
+/** срок билета: 24 часа; если он выпадает на нерабочее время — до 17:00 этого рабочего дня, а в воскресенье — до понедельника 17:00 */
+function gk_deadline($issued) {
+    $t = $issued + GK_TICKET_HOURS * 3600;
+    if (gk_is_work($t)) return $t;
+    $d = gk_msk($t);
+    if ((int)$d->format('N') === 7) $d->modify('+1 day');
+    $d->setTime(17, 0, 0);
+    return $d->getTimestamp();
+}
+function gk_wday($ts) { $n = ['', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']; $d = gk_msk($ts); return $n[(int)$d->format('N')] . ' ' . $d->format('d.m, H:i'); }
 
 function gk_cfg() {
     static $c = null;
@@ -116,7 +129,7 @@ function gk_left($until) {
     return 'осталось ' . intdiv($m, 60) . ' ч ' . ($m % 60) . ' мин';
 }
 function gk_fmt_phone($d) { return sprintf('+7 (%s) %s-%s-%s', substr($d, 1, 3), substr($d, 4, 3), substr($d, 7, 2), substr($d, 9, 2)); }
-function gk_date($ts) { $d = new DateTime('@' . $ts); $d->setTimezone(new DateTimeZone('Europe/Moscow')); return $d->format('d.m H:i'); }
+function gk_date($ts) { return gk_wday($ts); }
 function gk_new_code() {
     $A = 'ABCEHKMPTX23456789'; $s = '';
     for ($i = 0; $i < 8; $i++) $s .= $A[random_int(0, strlen($A) - 1)];

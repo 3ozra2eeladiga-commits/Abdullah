@@ -51,19 +51,30 @@ $res = ['ok' => true];
 
 if ($kind === 'ticket') {
     // один билет на номер: если действующий уже есть — возвращаем его же
-    $ticket = gk_json_update('gs-tickets.json', function (&$all) use ($digits, $name, $phone, $details, $demo) {
+    $dev = preg_replace('/[^a-z0-9]/i', '', (string)($in['dev'] ?? '')); $dev = substr($dev, 0, 40);
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    // один билет на номер телефона НАВСЕГДА: повторный запрос возвращает тот же код и тот же срок (даже если он уже истёк)
+    $ticket = gk_json_update('gs-tickets.json', function (&$all) use ($digits, $name, $phone, $details, $demo, $dev, $ip) {
         foreach ($all as $code => $t) {
-            if (($t['digits'] ?? '') === $digits && gk_ticket_status($t) === 'ok') return [$code, $t, false];
+            if (($t['digits'] ?? '') === $digits) return [$code, $t, false, []];
+        }
+        // тот же телефон/компьютер или тот же интернет-адрес уже получал билет на другой номер — отметим для менеджера
+        $same = [];
+        foreach ($all as $code => $t) {
+            if (($dev !== '' && ($t['dev'] ?? '') === $dev) || ($ip !== '' && ($t['ip'] ?? '') === $ip && time() - $t['issued'] < 7 * 86400)) $same[] = $code . ' (' . $t['name'] . ', ' . $t['phone'] . ')';
         }
         do { $code = gk_new_code(); } while (isset($all[$code]));
         $now = time();
-        $all[$code] = ['name' => $name, 'phone' => $phone, 'digits' => $digits, 'issued' => $now, 'until' => $now + GK_TICKET_HOURS * 3600, 'details' => $details, 'demo' => $demo];
-        return [$code, $all[$code], true];
+        $all[$code] = ['name' => $name, 'phone' => $phone, 'digits' => $digits, 'issued' => $now, 'until' => gk_deadline($now), 'details' => $details, 'demo' => $demo, 'dev' => $dev, 'ip' => $ip];
+        if ($same) $all[$code]['same'] = $same;
+        return [$code, $all[$code], true, $same];
     });
     if (!$ticket) fail('Не получилось выдать билет. Позвоните нам: +7 (938) 815-33-33', 500);
-    list($code, $t, $isNew) = $ticket;
-    $res['code'] = $code; $res['until'] = $t['until'] * 1000; $res['issued'] = $t['issued'] * 1000;
-    $text = "{$tag}🎫 Золотой билет {$code}" . ($isNew ? '' : ' (повторный запрос)') . "\n👤 {$name}\n📞 {$phone}\n🎁 Комплект De’Longhi (стиральная + сушильная)\n⏳ Действует до " . gk_date($t['until']) . ($details ? "\n🧮 {$details}" : '') . "\n\nПроверить код: кнопка «🔍 Проверить код» в боте.";
+    list($code, $t, $isNew, $same) = $ticket;
+    $res['code'] = $code; $res['until'] = $t['until'] * 1000; $res['issued'] = $t['issued'] * 1000; $res['status'] = gk_ticket_status($t);
+    $res['untilText'] = gk_wday($t['until']); $res['repeat'] = !$isNew;
+    $text = "{$tag}🎫 Золотой билет {$code}" . ($isNew ? '' : ' — ПОВТОРНЫЙ запрос (выдан ' . gk_date($t['issued']) . ')') . "\n👤 {$name}\n📞 {$phone}\n🎁 Комплект De’Longhi (стиральная + сушильная)\n⏳ Действует до " . gk_date($t['until']) . ($details ? "\n🧮 {$details}" : '')
+          . ($same ? "\n\n⚠️ С этого же устройства или интернета уже получали билет:\n" . implode("\n", array_slice($same, 0, 3)) : '');
 } else {
     $text = "{$tag}📞 Перезвонить: рассрочка\n👤 {$name}\n📞 {$phone}" . ($details ? "\n🧮 {$details}" : '');
 }
@@ -78,6 +89,7 @@ gk_json_update('gs-leads.json', function (&$all) use ($kind, $name, $phone, $det
 $fh = @fopen(GK_HOME . '/gs-leads.csv', 'a');
 if ($fh) { flock($fh, LOCK_EX); fputcsv($fh, [date('d.m.Y H:i'), $demo ? 'ДЕМО' : '', $kind, $name, $phone, $res['code'] ?? '', $details], ';'); flock($fh, LOCK_UN); fclose($fh); }
 
+if (!gk_is_work(time())) $text .= "\n\n🌙 Заявка в нерабочее время — перезвонить в ближайший рабочий день с 10:00.";
 gk_send_group($text);
 // почта — запасной канал, если указана в настройках
 $cfg = gk_cfg();
