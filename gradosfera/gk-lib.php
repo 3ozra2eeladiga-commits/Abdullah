@@ -31,12 +31,15 @@ define('GK_TICKET_HOURS', 24);
 // офис продаж: пн–сб 10:00–17:00 (Москва)
 function gk_msk($ts) { $d = new DateTime('@' . $ts); $d->setTimezone(new DateTimeZone('Europe/Moscow')); return $d; }
 function gk_is_work($ts) { $d = gk_msk($ts); $m = (int)$d->format('G') * 60 + (int)$d->format('i'); return (int)$d->format('N') <= 6 && $m >= 600 && $m < 1020; }
-/** срок билета: 24 часа; если он выпадает на нерабочее время — до 17:00 этого рабочего дня, а в воскресенье — до понедельника 17:00 */
+/** срок билета: НЕ МЕНЬШЕ 24 часов. Если 24 часа кончаются в нерабочее время — срок до 17:00 ближайшего рабочего дня
+ *  (вечер → до 17:00 следующего рабочего дня, раннее утро → до 17:00 этого дня, воскресенье → до понедельника 17:00). */
 function gk_deadline($issued) {
     $t = $issued + GK_TICKET_HOURS * 3600;
     if (gk_is_work($t)) return $t;
     $d = gk_msk($t);
-    if ((int)$d->format('N') === 7) $d->modify('+1 day');
+    $m = (int)$d->format('G') * 60 + (int)$d->format('i');
+    if ((int)$d->format('N') <= 6 && $m >= 1020) $d->modify('+1 day');   // после 17:00 — на следующий день
+    if ((int)$d->format('N') === 7) $d->modify('+1 day');                // воскресенье — на понедельник
     $d->setTime(17, 0, 0);
     return $d->getTimestamp();
 }

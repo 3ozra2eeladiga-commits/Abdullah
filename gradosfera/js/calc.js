@@ -133,7 +133,20 @@
   document.body.appendChild(gt);   // окно — поверх всего сайта (вне слоёв страницы)
   var st = {}; try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
-  var dev = ''; try { dev = localStorage.getItem('gsDev') || ''; if (!dev) { dev = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('gsDev', dev); } } catch (e) {}
+  // метка устройства: хранится и в памяти браузера, и в cookie (на 2 года) — чтобы с одного устройства нельзя было взять второй билет
+  var dev = '';
+  try { dev = localStorage.getItem('gsDev') || ''; } catch (e) {}
+  if (!dev) { var mc = document.cookie.match(/(?:^|; )gsDev=([a-z0-9]+)/); if (mc) dev = mc[1]; }
+  if (!dev) dev = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  try { localStorage.setItem('gsDev', dev); } catch (e) {}
+  document.cookie = 'gsDev=' + dev + '; max-age=63072000; path=/; SameSite=Lax';
+  // «отпечаток» браузера (модель экрана, язык, часовой пояс, рисование) — вместе с интернет-адресом узнаёт то же устройство даже после очистки
+  var fp = (function () {
+    var s = [navigator.userAgent, navigator.language, screen.width + 'x' + screen.height + 'x' + (window.devicePixelRatio || 1), new Date().getTimezoneOffset(), navigator.hardwareConcurrency || '', navigator.platform || ''].join('|');
+    try { var c = document.createElement('canvas'), x = c.getContext('2d'); c.width = 200; c.height = 40; x.textBaseline = 'top'; x.font = '16px Arial'; x.fillStyle = '#c98a5b'; x.fillRect(2, 2, 60, 20); x.fillStyle = '#123'; x.fillText('Новый Квартал ✓ 2028', 4, 8); s += c.toDataURL(); } catch (e) {}
+    var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
+    return h.toString(36);
+  })();
   var dropped = false;
   function dropTicket() {
     if (dropped) return; dropped = true;
@@ -224,7 +237,7 @@
     gform.hidden = true; $('gtDone').hidden = false; $('gtCode').textContent = st.code; $('gtDropTxt').textContent = 'Ваш билет ' + st.code;
     var note = $('gtNote'), expired = st.until && st.until < Date.now();
     if (note) note.textContent = expired ? 'Срок этого билета истёк. Позвоните нам — подскажем, какие сейчас есть предложения: +7 (938) 815-33-33.'
-      : (st.repeat ? 'На этот номер билет уже был выдан — показываем тот же код. ' : '') + (st.untilText ? 'Действует до ' + st.untilText + '. ' : '') + 'Мы позвоним вам в рабочее время (пн–сб 10:00–17:00). Покажите этот код менеджеру в офисе продаж — ул. Кирова, 41, каб. 117.';
+      : (st.repeat ? (st.why === 'device' ? 'С этого устройства золотой билет уже получали — второй выдать нельзя, показываем тот же код. ' : 'На этот номер билет уже был выдан — показываем тот же код. ') : '') + (st.untilText ? 'Действует до ' + st.untilText + '. ' : '') + 'Мы позвоним вам в рабочее время (пн–сб 10:00–17:00). Покажите этот код менеджеру в офисе продаж — ул. Кирова, 41, каб. 117.';
   }
   gform.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -232,9 +245,9 @@
     if (!name) { gmsg.textContent = 'Напишите, пожалуйста, имя'; gmsg.className = 'gt__msg err'; return; }
     if (digits.length !== 11) { gmsg.textContent = 'Проверьте номер телефона'; gmsg.className = 'gt__msg err'; return; }
     // код создаёт и запоминает сервер (24 часа, один билет на номер телефона)
-    send({ kind: 'ticket', name: name, phone: digits, details: calcText(), dev: dev }, gmsg, function (r) {
+    send({ kind: 'ticket', name: name, phone: digits, details: calcText(), dev: dev, fp: fp }, gmsg, function (r) {
       if (!r || !r.code) { gmsg.textContent = 'Не получилось выдать билет. Позвоните нам: +7 (938) 815-33-33'; gmsg.className = 'gt__msg err'; return; }
-      st.code = r.code; st.name = name; if (r.until) st.until = r.until; st.untilText = r.untilText || ''; st.repeat = !!r.repeat; st.status = r.status; save(); gmsg.textContent = ''; showCode(); timer();
+      st.code = r.code; st.name = name; if (r.until) st.until = r.until; st.untilText = r.untilText || ''; st.repeat = !!r.repeat; st.why = r.why || ''; st.status = r.status; save(); gmsg.textContent = ''; showCode(); timer();
     });
   });
   $('gtCopy').addEventListener('click', function () {
