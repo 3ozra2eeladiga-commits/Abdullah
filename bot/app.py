@@ -1267,6 +1267,30 @@ def preview(site, path="index.html"):
     return resp
 
 
+# Реле для сайта ЖК «Новый Квартал»: российский хостинг иногда не может достучаться до api.telegram.org,
+# тогда его бот (gk-lib.php) шлёт запрос сюда, а сервер бота пересылает его в Telegram.
+# Пропускаются только вызовы Bot API (бот/метод по шаблону), ответ Telegram возвращается как есть.
+_TG_RELAY_PATH = re.compile(r"^bot\d{6,12}:[A-Za-z0-9_-]{30,}/[A-Za-z]{3,40}$")
+
+
+@app.post("/tg-relay/<path:path>")
+def tg_relay(path):
+    if not _TG_RELAY_PATH.match(path):
+        abort(404)
+    import urllib.request
+    body = request.get_data(cache=False)[:65536]
+    req = urllib.request.Request("https://api.telegram.org/" + path, data=body or b"{}",
+                                 headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return Response(r.read(), status=r.status, mimetype="application/json")
+    except urllib.error.HTTPError as e:   # Telegram ответил ошибкой (неверный токен и т.п.) — отдаём как есть
+        return Response(e.read(), status=e.code, mimetype="application/json")
+    except Exception as e:
+        log.warning("tg-relay: %s", e)
+        return Response(json.dumps({"ok": False, "description": "relay error"}), status=502, mimetype="application/json")
+
+
 @app.get("/")
 def health():
     by_city = ", ".join(f"{name}: {len(c.by_code)}" for name, c in catalog.by_city.items())

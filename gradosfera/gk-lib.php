@@ -41,16 +41,28 @@ function gk_json_update($name, callable $fn) {
     fflush($fh); flock($fh, LOCK_UN); fclose($fh);
     return $res;
 }
+/** запрос к Telegram Bot API: сначала напрямую, а если хостинг не достучался — через сервер бота (реле) */
+function gk_tg_raw($token, $method, $params) {
+    if (!function_exists('curl_init')) return ['ok' => false, 'description' => 'curl выключен', 'net' => 'нет модуля curl'];
+    $body = json_encode($params ?: new stdClass(), JSON_UNESCAPED_UNICODE);
+    $urls = ['https://api.telegram.org/bot' . $token . '/' . $method,
+             'https://186-246-61-173.sslip.io/tg-relay/bot' . $token . '/' . $method];
+    $last = '';
+    foreach ($urls as $i => $url) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => $i ? 8 : 5, CURLOPT_TIMEOUT => $i ? 25 : 12,
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, CURLOPT_HTTPHEADER => ['Content-Type: application/json'], CURLOPT_POSTFIELDS => $body]);
+        $res = curl_exec($ch); $err = curl_error($ch); curl_close($ch);
+        $j = json_decode((string)$res, true);
+        if (is_array($j) && isset($j['ok'])) return $j;
+        $last = $err ?: 'пустой ответ';
+    }
+    return ['ok' => false, 'description' => 'нет связи с Telegram', 'net' => $last];
+}
 function gk_tg($method, $params) {
     $cfg = gk_cfg();
-    if (empty($cfg['telegram_token']) || !function_exists('curl_init')) return null;
-    $ch = curl_init('https://api.telegram.org/bot' . $cfg['telegram_token'] . '/' . $method);
-    curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 12,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => json_encode($params, JSON_UNESCAPED_UNICODE)]);
-    $res = curl_exec($ch); curl_close($ch);
-    $j = json_decode((string)$res, true);
-    return is_array($j) ? $j : null;
+    if (empty($cfg['telegram_token'])) return null;
+    return gk_tg_raw($cfg['telegram_token'], $method, $params);
 }
 function gk_send_group($text, $extra = []) {
     $cfg = gk_cfg();

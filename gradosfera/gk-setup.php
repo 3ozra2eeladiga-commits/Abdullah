@@ -21,12 +21,8 @@ if (!$linked && isset($_POST['token'])) {
     $tok = preg_replace('/\s+/u', '', (string)$_POST['token']);   // убираем пробелы и переносы, которые бывают при копировании
     $back = '<p><a href="gk-setup.php" style="color:#c98a5b">← Назад</a></p>';
     if (!preg_match('/^\d{6,12}:[A-Za-z0-9_-]{30,}$/', $tok)) page('Это не похоже на токен', '<p class="err">Токен выглядит так: <b>цифры</b>, затем <b>двоеточие</b>, затем длинная строка из букв и цифр, например<br><code>7123456789:AAHk3x…</code> (всего около 46 знаков).</p><p>Вы вставили ' . mb_strlen($tok) . ' знаков' . (strpos($tok, ':') === false ? ', и в них нет двоеточия' : '') . '. Скопируйте токен из сообщения BotFather целиком.</p>' . $back);
-    if (!function_exists('curl_init')) page('Ошибка хостинга', '<p class="err">На хостинге выключен модуль curl — напишите в поддержку Timeweb.</p>');
-    $ch = curl_init('https://api.telegram.org/bot' . $tok . '/getMe');
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15]);
-    $raw = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
-    $r = json_decode((string)$raw, true);
-    if ($raw === false || !is_array($r)) page('Нет связи с Telegram', '<p class="err">Хостинг не смог достучаться до Telegram (' . htmlspecialchars($err ?: 'код ' . $code) . ').</p><p>Сообщите об этом — исправим. Токен при этом может быть правильным.</p>' . $back);
+    $r = gk_tg_raw($tok, 'getMe', []);
+    if (!empty($r['net'])) page('Нет связи с Telegram', '<p class="err">Ни хостинг, ни запасной сервер не достучались до Telegram (' . htmlspecialchars($r['net']) . ').</p><p>Попробуйте ещё раз через минуту. Если повторится — сообщите.</p>' . $back);
     if (empty($r['ok'])) page('Telegram не принял токен', '<p class="err">Telegram ответил: ' . htmlspecialchars($r['description'] ?? 'ошибка') . '.</p><p>Скорее всего, токен скопирован не полностью или его заменили у BotFather. Откройте BotFather → /mybots → ваш бот → API Token и скопируйте заново.</p>' . $back);
     $old = is_array($cfg) ? $cfg : [];
     unset($old['chat_id']);
