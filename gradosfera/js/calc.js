@@ -2,7 +2,7 @@
    Цена за м²: полная оплата 88 000; взнос 50% — 90 000; 30% — 93 000; 20% — 94 000; 10% — 95 000;
    между этими точками цена меняется плавно. Срок — до 60 месяцев, платежи ежемесячные, равные.
    Сцена: кран поднимает поддон с % взноса, табличка — цена за м².
-   Золотой билет: кран опускает билет → стираешь пальцем → подарок → имя и телефон → личный код (24 часа). */
+   Золотой билет: кран опускает билет → стираешь пальцем → подарок → имя и телефон → личный код (48 часов). */
 (function () {
   'use strict';
   var sel = document.getElementById('cFlat'), down = document.getElementById('cDown'), months = document.getElementById('cMonths');
@@ -128,11 +128,13 @@
   }
 
   // ---------- ЗОЛОТОЙ БИЛЕТ ----------
-  var drop = $('gtDrop'), gt = $('gt'), KEY = 'gsTicket', HOURS = 24;
+  var drop = $('gtDrop'), gt = $('gt'), KEY = 'gsTicket', HOURS = 48;
   if (!drop || !gt) return;
   document.body.appendChild(gt);   // окно — поверх всего сайта (вне слоёв страницы)
   var st = {}; try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  // срок билета продлён с 24 до 48 ч — у тех, кто получил билет раньше, тоже показываем новый срок (точный срок всё равно у сервера)
+  if (st.until && st.opened && st.until - st.opened < 40 * 3600e3) { st.until = Math.max(st.until, st.opened + 48 * 3600e3); st.untilText = ''; save(); }
   // метка устройства: хранится и в памяти браузера, и в cookie (на 2 года) — чтобы с одного устройства нельзя было взять второй билет
   var dev = '';
   try { dev = localStorage.getItem('gsDev') || ''; } catch (e) {}
@@ -161,7 +163,7 @@
       es.forEach(function (e) { clearTimeout(seenT); if (e.isIntersecting) seenT = setTimeout(dropTicket, 3000); });
     }, { threshold: 0.35 }).observe(document.querySelector('.pay__calc') || pay);
   }
-  // срок считает сервер (24 часа, а если выпадает на выходной/вечер — до 17:00 рабочего дня); до получения кода — просто «24:00:00»
+  // срок считает сервер (48 часов, а если выпадает на выходной/вечер — до 17:00 рабочего дня); до получения кода — просто «24:00:00»
   function left() { return st.until ? st.until - Date.now() : HOURS * 3600e3; }
   var tick = 0;
   function timer() {
@@ -244,7 +246,7 @@
     var name = gform.elements.name.value.trim(), digits = gform.elements.phone.value.replace(/\D/g, '');
     if (!name) { gmsg.textContent = 'Напишите, пожалуйста, имя'; gmsg.className = 'gt__msg err'; return; }
     if (digits.length !== 11) { gmsg.textContent = 'Проверьте номер телефона'; gmsg.className = 'gt__msg err'; return; }
-    // код создаёт и запоминает сервер (24 часа, один билет на номер телефона)
+    // код создаёт и запоминает сервер (48 часов, один билет на номер телефона)
     send({ kind: 'ticket', name: name, phone: digits, details: calcText(), dev: dev, fp: fp }, gmsg, function (r) {
       if (!r || !r.code) { gmsg.textContent = 'Не получилось выдать билет. Позвоните нам: +7 (938) 815-33-33'; gmsg.className = 'gt__msg err'; return; }
       st.code = r.code; st.name = name; if (r.until) st.until = r.until; st.untilText = r.untilText || ''; st.repeat = !!r.repeat; st.why = r.why || ''; st.status = r.status; save(); gmsg.textContent = ''; showCode(); timer();

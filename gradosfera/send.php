@@ -78,9 +78,9 @@ if ($kind === 'ticket') {
     });
     if (!$ticket) fail('Не получилось выдать билет. Позвоните нам: +7 (938) 815-33-33', 500);
     list($code, $t, $isNew, $same, $why) = $ticket;
-    $res['code'] = $code; $res['until'] = $t['until'] * 1000; $res['issued'] = $t['issued'] * 1000; $res['status'] = gk_ticket_status($t);
-    $res['untilText'] = gk_wday($t['until']); $res['repeat'] = !$isNew; $res['why'] = $why;
-    $text = "{$tag}🎫 Золотой билет {$code}" . ($isNew ? '' : ($why === 'device' ? " — ⛔ ПОПЫТКА ВЗЯТЬ ВТОРОЙ БИЛЕТ с того же устройства\nВвели: {$name}, {$phone}\nБилет был выдан " . gk_date($t['issued']) . " на: {$t['name']}, {$t['phone']}" : ' — повторный запрос (выдан ' . gk_date($t['issued']) . ')')) . "\n👤 " . ($why === 'device' ? $t['name'] : $name) . "\n📞 " . ($why === 'device' ? $t['phone'] : $phone) . "\n🎁 Комплект De’Longhi (стиральная + сушильная)\n⏳ Действует до " . gk_date($t['until']) . ($details ? "\n🧮 {$details}" : '')
+    $res['code'] = $code; $res['until'] = gk_until($t) * 1000; $res['issued'] = $t['issued'] * 1000; $res['status'] = gk_ticket_status($t);
+    $res['untilText'] = gk_wday(gk_until($t)); $res['repeat'] = !$isNew; $res['why'] = $why;
+    $text = "{$tag}🎫 Золотой билет {$code}" . ($isNew ? '' : ($why === 'device' ? " — ⛔ ПОПЫТКА ВЗЯТЬ ВТОРОЙ БИЛЕТ с того же устройства\nВвели: {$name}, {$phone}\nБилет был выдан " . gk_date($t['issued']) . " на: {$t['name']}, {$t['phone']}" : ' — повторный запрос (выдан ' . gk_date($t['issued']) . ')')) . "\n👤 " . ($why === 'device' ? $t['name'] : $name) . "\n📞 " . ($why === 'device' ? $t['phone'] : $phone) . "\n🎁 Комплект De’Longhi (стиральная + сушильная)\n⏳ Действует до " . gk_date(gk_until($t)) . ($details ? "\n🧮 {$details}" : '')
           . ($same ? "\n\n⚠️ С этого же устройства или интернета уже получали билет:\n" . implode("\n", array_slice($same, 0, 3)) : '');
 } else {
     $text = "{$tag}📞 Перезвонить: рассрочка\n👤 {$name}\n📞 {$phone}" . ($details ? "\n🧮 {$details}" : '');

@@ -88,9 +88,9 @@ if ($text === B_TICKETS) {
     $all = gk_json_read('gs-tickets.json'); $act = [];
     foreach ($all as $c => $t) if (gk_ticket_status($t) === 'ok') $act[$c] = $t;
     if (!$act) { say($chat, '🎫 Действующих билетов сейчас нет.'); exit; }
-    uasort($act, function ($a, $b) { return $a['until'] - $b['until']; });
+    uasort($act, function ($a, $b) { return gk_until($a) - gk_until($b); });
     $s = "🎫 Действующие билеты (" . count($act) . "):\n";
-    foreach ($act as $c => $t) $s .= "\n{$c}" . (!empty($t['demo']) ? ' 🧪' : '') . "\n   👤 {$t['name']}, {$t['phone']}\n   ⏳ " . gk_left($t['until']) . " (до " . gk_date($t['until']) . ")\n";
+    foreach ($act as $c => $t) $s .= "\n{$c}" . (!empty($t['demo']) ? ' 🧪' : '') . "\n   👤 {$t['name']}, {$t['phone']}\n   ⏳ " . gk_left(gk_until($t)) . " (до " . gk_date(gk_until($t)) . ")\n";
     say($chat, $s); exit;
 }
 if ($text === B_STATS) {

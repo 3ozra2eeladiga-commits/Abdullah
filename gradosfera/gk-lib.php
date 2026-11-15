@@ -27,7 +27,7 @@ function gk_home() {
     return $d;
 }
 define('GK_HOME', gk_home());
-define('GK_TICKET_HOURS', 24);
+define('GK_TICKET_HOURS', 48);
 // офис продаж: пн–сб 10:00–17:00 (Москва)
 function gk_msk($ts) { $d = new DateTime('@' . $ts); $d->setTimezone(new DateTimeZone('Europe/Moscow')); return $d; }
 function gk_is_work($ts) { $d = gk_msk($ts); $m = (int)$d->format('G') * 60 + (int)$d->format('i'); return (int)$d->format('N') <= 6 && $m >= 600 && $m < 1020; }
@@ -150,15 +150,17 @@ function gk_norm_code($s) {
     if (strlen($body) === 8) $body = substr($body, 0, 4) . '-' . substr($body, 4);
     return 'ЗБ-' . $body;
 }
+/** действующий срок билета: если правило поменялось (24 → 48 ч), уже выданные билеты тоже получают новый, более долгий срок */
+function gk_until($t) { return max((int)($t['until'] ?? 0), gk_deadline((int)$t['issued'])); }
 function gk_ticket_status($t) {
     if (!empty($t['used'])) return 'used';
-    if (time() > $t['until']) return 'expired';
+    if (time() > gk_until($t)) return 'expired';
     return 'ok';
 }
 function gk_ticket_text($code, $t) {
     $st = gk_ticket_status($t);
     $head = ['ok' => '✅ Билет действителен', 'used' => '☑️ Билет уже погашен', 'expired' => '⌛ Билет просрочен'][$st];
-    $s = "{$head}\n🎫 {$code}\n👤 {$t['name']}, {$t['phone']}\nВыдан: " . gk_date($t['issued']) . "\nДействует до: " . gk_date($t['until']);
+    $s = "{$head}\n🎫 {$code}\n👤 {$t['name']}, {$t['phone']}\nВыдан: " . gk_date($t['issued']) . "\nДействует до: " . gk_date(gk_until($t));
     if ($st === 'used') $s .= "\nПогасил(а): " . ($t['used_by'] ?? '—') . ', ' . gk_date($t['used']);
     if (!empty($t['details'])) $s .= "\nРасчёт: {$t['details']}";
     return $s;
