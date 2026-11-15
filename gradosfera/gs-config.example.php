@@ -1,8 +1,6 @@
 <?php
-// ОБРАЗЕЦ. Настоящий файл: на хостинге В ДОМАШНЕЙ ПАПКЕ (рядом с public_html), имя gs-config.php. В git не кладём.
+// ОБРАЗЕЦ. Настоящий файл называется gs-config.php и лежит на хостинге В ДОМАШНЕЙ ПАПКЕ (рядом с public_html), не в git.
 return [
-    'telegram_token'    => '',          // токен бота от @BotFather
-    'telegram_chat_ids' => [],          // id чатов/групп отдела продаж, например ['-1001234567890']
-    'email_to'          => '',          // почта отдела продаж (можно вместо Telegram или вместе)
-    'email_from'        => 'noreply@gradosfera.com',
+    'telegram_token' => 'СЮДА_ТОКЕН_ОТ_BOTFATHER',
+    'email_to'       => '',   // запасная почта для копий заявок, например 'grado.sfera@mail.ru'
 ];

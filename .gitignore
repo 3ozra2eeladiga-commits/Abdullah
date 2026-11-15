@@ -5,6 +5,8 @@ __pycache__/
 cache/
 flowerbot.zip
 
-# заявки с сайта и настройки формы — только на хостинге
+# данные ботa ЖК (только на хостинге)
 gs-leads.csv
 gs-config.php
+gs-chat.json
+gs-tickets.json
