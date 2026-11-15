@@ -58,9 +58,19 @@
     if (!full) $('oMonth').textContent = rub(Math.round(rest / n / 100) * 100);
     var next = null; for (var i = 0; i < PTS.length; i++) if (PTS[i][0] > p) { next = PTS[i]; break; }
     $('oNudge').textContent = next ? (next[0] === 100 ? 'При полной оплате' : 'При взносе ' + next[0] + '%') + ' метр дешевле на ' + rub(m2 - next[1]) + ' — квартира дешевле на ' + rub(area * (m2 - next[1])) : 'Самая выгодная цена — при полной оплате 👍';
+    var mln = function (x) { return (Math.round(x / 10000) / 100).toFixed(2).replace('.', ',') + ' млн'; };
+    $('oLine').textContent = (m2 / 1000).toLocaleString('ru-RU') + ' тыс./м² · взнос ' + mln(first) + ' · итого ' + mln(total) + ' ₽';
+    Array.prototype.forEach.call(document.querySelectorAll('#payTicks [data-p]'), function (el) { el.classList.toggle('on', +el.getAttribute('data-p') === p); });
     Array.prototype.forEach.call(document.querySelectorAll('#payTiers [data-t]'), function (el) { el.classList.toggle('on', +el.getAttribute('data-t') === p); });
     setP(down); setP(months); scene(p, n, m2);
   }
+  // метки взноса под ползунком: нажал — выбран этот взнос
+  Array.prototype.forEach.call(document.querySelectorAll('#payTicks [data-p]'), function (b) {
+    b.addEventListener('click', function () { down.value = b.getAttribute('data-p'); down.dispatchEvent(new Event('input')); });
+  });
+  // форма на телефоне свёрнута в одну кнопку — раскрывается по нажатию
+  var ft = $('payFt'), pf = $('payForm');
+  if (ft && pf) { pf.classList.add('closed'); ft.addEventListener('click', function () { pf.classList.remove('closed'); var i = pf.querySelector('input[name=name]'); if (i) setTimeout(function () { i.focus(); }, 50); }); }
   var touched = false;
   [sel, down, months].forEach(function (el) {
     el.addEventListener('input', function () { calc(); if (!touched) { touched = true; setTimeout(dropTicket, 1200); } });

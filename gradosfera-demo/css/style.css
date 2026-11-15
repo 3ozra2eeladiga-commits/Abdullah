@@ -1639,6 +1639,55 @@ body.gt-open .fab, body.gt-open .build-fg, body.gt-open .build-hud, body.gt-open
 .gt__gal { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 8px; }
 .gt__gal img { width: 100%; border-radius: 6px; }
 .gt__more p { margin: 0; font-size: 12.5px; line-height: 1.45; color: #4a3520; }
+/* ===== рассрочка: метки взноса, компактная строка, свёрнутая форма ===== */
+.pay__ticks { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: -14px; }
+.pay__ticks button { display: grid; gap: 1px; padding: 6px 2px; border: 1px solid var(--line); border-radius: 6px; background: none; color: var(--muted); font: 600 12px var(--sans); cursor: pointer; transition: border-color .2s, color .2s, background .2s; }
+.pay__ticks button b { font: 400 13px var(--serif); color: var(--cream); }
+.pay__ticks button.on { border-color: var(--copper); background: rgba(201,138,91,.15); color: #ffb26b; }
+.pay__line { display: none; margin: 0; color: var(--muted); font-size: 13px; }
+.pay__ft { padding: 0; border: 0; background: none; color: var(--cream); text-align: left; font: 400 22px/1.2 var(--serif); cursor: default; }
+@media (min-width: 761px) { .pay__form.closed > * { display: revert; } .pay__form.closed .pay__hp { display: none; } }
+/* телефон: всё самое важное на одном экране */
+@media (max-width: 760px) {
+  .pay__lead { margin-bottom: 18px; font-size: 15px; }
+  .pay__calc { gap: 18px; padding: 16px 14px; }
+  .pay__f { gap: 6px; }
+  .pay__f > span { font-size: 11px; }
+  .pay__f select { min-height: 46px; font-size: 15px; }
+  .pay__ticks { margin-top: -8px; gap: 4px; }
+  .pay__ticks button { padding: 5px 0; font-size: 11px; } .pay__ticks button b { font-size: 12px; }
+  .pay__board { padding: 12px 14px; }
+  .pay__board .pay__row { display: none; }
+  .pay__board .pay__month { border-bottom: 0; padding-bottom: 2px; margin-bottom: 0; }
+  .pay__board .pay__month b { font-size: 38px; }
+  .pay__line { display: block; }
+  .pay__nudge { margin-top: -6px; font-size: 13px; }
+  .pay__note { font-size: 11px; }
+  .pay__scene, .pay__tiers { display: none; }
+  .pay__side { gap: 0; margin-top: 12px; }
+  .pay__form { padding: 0; border: 0; background: none; }
+  .pay__form.closed > :not(.pay__ft) { display: none; }
+  .pay__form .pay__ft { cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 18px; border-radius: 4px; background: var(--copper); color: #1b1410; font: 600 12px var(--sans); letter-spacing: .14em; text-transform: uppercase; text-align: center; }
+  .pay__form:not(.closed) .pay__ft { background: none; color: var(--cream); font: 400 18px/1.2 var(--serif); letter-spacing: 0; text-transform: none; min-height: 0; justify-content: flex-start; padding: 6px 0; }
+  /* билет на телефоне — компактнее */
+  .gt { padding: 10px; align-items: start; }
+  .gt__card { padding: 16px 14px 18px; }
+  .gt__head { margin-bottom: 10px; }
+  .gt__head b { font-size: 28px; } .gt__head small { display: none; }
+  .gt__prize { min-height: 0; }
+  .gt__under { grid-template-columns: 76px 1fr; gap: 12px; padding: 12px; align-items: center; }
+  .gt__pname b { font-size: 19px; }
+  .gt__pname small { font-size: 12px; }
+  .gt__under .gt__spec { display: none; }
+  .gt__after { gap: 10px; margin-top: 10px; }
+  .gt__more { padding: 8px 12px; }
+  .gt__timer { grid-template-columns: 1fr auto; justify-items: start; align-items: center; gap: 0 10px; padding: 10px 14px; text-align: left; }
+  .gt__timer span { font-size: 12px; } .gt__timer b { grid-row: span 2; font-size: 30px; } .gt__timer small { font-size: 11px; }
+  .gt__form { gap: 8px; } .gt__form input { min-height: 46px; }
+  .gt__done p { font-size: 12px; }
+}
+.gt__spec--m { display: none; }
+@media (max-width: 760px) { .gt__spec--m { display: grid; margin: 10px 0 0; } }
 
 .demo-bar { position: fixed; z-index: 500; left: 50%; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: max-content; max-width: 92vw; padding: 7px 14px; border-radius: 999px; background: #ffd27a; color: #2c1a06; font: 600 12px/1.3 var(--sans); text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,.4); }
 .demo-bar a { text-decoration: underline; }
