@@ -140,6 +140,13 @@
     if (st.code) $('gtDropTxt').textContent = 'Ваш билет ' + st.code;
   }
   if (st.opened) setTimeout(function () { dropTicket(); }, 600);   // билет уже открывали — он остаётся
+  // билет приезжает и сам: человек побыл у калькулятора ~3 секунды (даже если ничего не трогал)
+  if ('IntersectionObserver' in window) {
+    var seenT = 0, pay = $('pay');
+    new IntersectionObserver(function (es) {
+      es.forEach(function (e) { clearTimeout(seenT); if (e.isIntersecting) seenT = setTimeout(dropTicket, 3000); });
+    }, { threshold: 0.35 }).observe(document.querySelector('.pay__calc') || pay);
+  }
   function left() { return st.until ? st.until - Date.now() : st.opened ? st.opened + HOURS * 3600e3 - Date.now() : HOURS * 3600e3; }
   var tick = 0;
   function timer() {
