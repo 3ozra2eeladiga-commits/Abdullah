@@ -4,6 +4,6 @@
 if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'gk-staff.php') { http_response_code(404); exit; }
 return [
     1247310515,     // Абдулла
-    815981729,      // сотрудник (добавлен 15.11)
+    815981729,      // Камил — хозяин
     // 987654321,   // Ольга
 ];
