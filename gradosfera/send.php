@@ -63,11 +63,17 @@ if ($kind === 'ticket') {
     if (!$ticket) fail('Не получилось выдать билет. Позвоните нам: +7 (938) 815-33-33', 500);
     list($code, $t, $isNew) = $ticket;
     $res['code'] = $code; $res['until'] = $t['until'] * 1000; $res['issued'] = $t['issued'] * 1000;
-    $text = "{$tag}🎫 Золотой билет {$code}" . ($isNew ? '' : ' (повторный запрос)') . "\n👤 {$name}\n📞 {$phone}\n🎁 Комплект De’Longhi (стиральная + сушильная)\n⏳ Действует до " . gk_date($t['until']) . ($details ? "\n🧮 {$details}" : '') . "\n\nПроверить код: написать его боту в личные сообщения.";
+    $text = "{$tag}🎫 Золотой билет {$code}" . ($isNew ? '' : ' (повторный запрос)') . "\n👤 {$name}\n📞 {$phone}\n🎁 Комплект De’Longhi (стиральная + сушильная)\n⏳ Действует до " . gk_date($t['until']) . ($details ? "\n🧮 {$details}" : '') . "\n\nПроверить код: кнопка «🔍 Проверить код» в боте.";
 } else {
     $text = "{$tag}📞 Перезвонить: рассрочка\n👤 {$name}\n📞 {$phone}" . ($details ? "\n🧮 {$details}" : '');
 }
 
+// журнал заявок для бота (кнопка «Заявки»)
+gk_json_update('gs-leads.json', function (&$all) use ($kind, $name, $phone, $details, $demo, $res) {
+    $all[] = ['t' => time(), 'kind' => $kind, 'name' => $name, 'phone' => $phone, 'code' => $res['code'] ?? '', 'details' => $details, 'demo' => $demo];
+    if (count($all) > 1000) $all = array_slice($all, -1000);
+    return true;
+});
 // журнал (страховка: ни одна заявка не потеряется, даже если Telegram недоступен)
 $fh = @fopen(GK_HOME . '/gs-leads.csv', 'a');
 if ($fh) { flock($fh, LOCK_EX); fputcsv($fh, [date('d.m.Y H:i'), $demo ? 'ДЕМО' : '', $kind, $name, $phone, $res['code'] ?? '', $details], ';'); flock($fh, LOCK_UN); fclose($fh); }

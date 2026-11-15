@@ -16,7 +16,7 @@ function page($title, $body) {
     exit;
 }
 // Шаг 1: токен можно вставить прямо здесь (пока бот ещё не подключён к группе)
-$linked = !empty(gk_json_read('gs-chat.json')['chat_id']);
+$linked = !empty(gk_json_read('gs-chat.json')['linked']) || !empty(gk_json_read('gs-chat.json')['chat_id']);
 if (!$linked && isset($_POST['token'])) {
     $tok = preg_replace('/\s+/u', '', (string)$_POST['token']);   // убираем пробелы и переносы, которые бывают при копировании
     $back = '<p><a href="gk-setup.php" style="color:#c98a5b">← Назад</a></p>';
@@ -38,7 +38,7 @@ $me = gk_tg('getMe', []);
 if (empty($me['ok'])) page('Токен не подошёл', '<p class="err">Telegram не принимает сохранённый токен. Вставьте его заново:</p>' . $form);
 $bot = '@' . $me['result']['username'];
 
-if (!empty($cfg['chat_id'])) {
+if (!empty(gk_json_read('gs-chat.json')['linked']) || !empty($cfg['chat_id'])) {
     $hook = gk_tg('getWebhookInfo', []);
     page('✅ Бот подключён', '<div class="c"><p>Бот: <b>' . htmlspecialchars($bot) . '</b></p><p>Группа заявок: <b>' . htmlspecialchars(gk_json_read('gs-chat.json')['title'] ?? '') . '</b></p><p>Приём сообщений: ' . (!empty($hook['result']['url']) ? '<span class="ok">включён</span>' : '<span class="err">не включён</span>') . '</p></div><p>Менять ничего не нужно. Чтобы подключить другую группу — удалите файл gs-chat.json на хостинге и откройте эту страницу снова.</p>');
 }
@@ -51,18 +51,24 @@ foreach (($up['result'] ?? []) as $x) {
     $c = $x['my_chat_member']['chat'] ?? ($x['message']['chat'] ?? null);
     if ($c && in_array($c['type'], ['group', 'supergroup'], true)) $groups[$c['id']] = $c['title'] ?? 'Группа';
 }
-$pick = $_POST['chat'] ?? '';
-if ($pick !== '' && isset($groups[$pick])) {
-    gk_json_update('gs-chat.json', function (&$d) use ($pick, $groups) { $d = ['chat_id' => (string)$pick, 'title' => $groups[$pick]]; return true; });
-    $url = 'https://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['SCRIPT_NAME']) . '/gk-bot.php';
-    $url = str_replace('//gk-bot', '/gk-bot', $url);
+function gk_hook() {
+    $cfg = gk_cfg();
+    $url = 'https://' . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/gk-bot.php';
     $secret = substr(hash('sha256', $cfg['telegram_token'] . '|gk-webhook'), 0, 40);
-    $wh = gk_tg('setWebhook', ['url' => $url, 'secret_token' => $secret, 'allowed_updates' => ['message', 'callback_query']]);
-    $cfg2 = gk_cfg();
-    gk_tg('sendMessage', ['chat_id' => $pick, 'text' => "✅ Бот подключён к сайту ЖК «Новый Квартал».\nСюда будут приходить заявки и золотые билеты.\n\nЧтобы проверить код билета — напишите его боту {$bot} в личные сообщения (сначала нажмите «Старт»)."]);
-    page('✅ Готово!', '<div class="c"><p class="ok">Группа «' . htmlspecialchars($groups[$pick]) . '» подключена.</p><p>Приём сообщений: ' . (!empty($wh['ok']) ? '<span class="ok">включён</span>' : '<span class="err">ошибка: ' . htmlspecialchars($wh['description'] ?? '') . '</span>') . '</p><p>В группу пришло проверочное сообщение — посмотрите в Telegram.</p></div>');
+    return gk_tg('setWebhook', ['url' => $url, 'secret_token' => $secret, 'allowed_updates' => ['message', 'callback_query'], 'drop_pending_updates' => true]);
 }
-if (!$groups) page('Шаг 2: группа не найдена', '<div class="c"><p>Бот ' . htmlspecialchars($bot) . ' пока не видит ни одной группы.</p><ol><li>Добавьте бота в группу заявок (или удалите и добавьте снова).</li><li>Напишите в группе: <b>/start@' . htmlspecialchars($me['result']['username']) . '</b></li><li>Обновите эту страницу.</li></ol></div>');
+$pick = $_POST['chat'] ?? '';
+if ($pick === 'none') {   // без группы: заявки приходят каждому сотруднику в личку
+    gk_json_update('gs-chat.json', function (&$d) { $d = ['chat_id' => '', 'title' => 'без группы — в личку сотрудникам', 'linked' => time()]; return true; });
+    $wh = gk_hook();
+    page('✅ Готово!', '<div class="c"><p class="ok">Бот подключён без группы: заявки будут приходить в личные сообщения сотрудникам из списка.</p><p>Приём сообщений: ' . (!empty($wh['ok']) ? '<span class="ok">включён</span>' : '<span class="err">ошибка</span>') . '</p><p>Откройте бота ' . htmlspecialchars($bot) . ' и нажмите «Старт».</p></div>');
+}
+if ($pick !== '' && isset($groups[$pick])) {
+    gk_json_update('gs-chat.json', function (&$d) use ($pick, $groups) { $d = ['chat_id' => (string)$pick, 'title' => $groups[$pick], 'linked' => time()]; return true; });
+    $wh = gk_hook();
+    gk_tg('sendMessage', ['chat_id' => $pick, 'text' => "✅ Бот подключён к сайту ЖК «Новый Квартал».\nСюда будут приходить заявки и золотые билеты.\n\nПроверка кодов и списки заявок — в личке у бота {$bot} (кнопки внизу)."]);
+    page('✅ Готово!', '<div class="c"><p class="ok">Группа «' . htmlspecialchars($groups[$pick]) . '» подключена.</p><p>Приём сообщений: ' . (!empty($wh['ok']) ? '<span class="ok">включён</span>' : '<span class="err">ошибка: ' . htmlspecialchars($wh['description'] ?? '') . '</span>') . '</p><p>В группу пришло проверочное сообщение.</p></div>');
+}
 $opts = '';
-foreach ($groups as $id => $title) $opts .= '<p><button name="chat" value="' . htmlspecialchars($id) . '">Подключить «' . htmlspecialchars($title) . '»</button></p>';
-page('Шаг 3: выберите группу заявок', '<p>Бот: <b>' . htmlspecialchars($bot) . '</b></p><form method="post" class="c">' . $opts . '</form>');
+foreach ($groups as $id => $title) $opts .= '<p><button name="chat" value="' . htmlspecialchars($id) . '">Подключить группу «' . htmlspecialchars($title) . '»</button></p>';
+page('Шаг 2: куда присылать заявки', '<p>Бот: <b>' . htmlspecialchars($bot) . '</b></p><form method="post" class="c">' . ($opts ?: '<p>Групп с ботом не найдено. Чтобы заявки шли в группу — добавьте туда бота, напишите в группе <b>/start@' . htmlspecialchars($me['result']['username']) . '</b> и обновите страницу.</p>') . '<p><button name="chat" value="none" style="background:#3a3d46;color:#efe7da">Без группы — в личку сотрудникам</button></p></form>');

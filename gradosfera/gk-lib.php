@@ -74,11 +74,35 @@ function gk_tg($method, $params) {
     if (empty($cfg['telegram_token'])) return null;
     return gk_tg_raw($cfg['telegram_token'], $method, $params);
 }
+function gk_staff() {
+    $f = __DIR__ . '/gk-staff.php';
+    $l = is_file($f) ? (require $f) : [];
+    return array_map('strval', is_array($l) ? $l : []);
+}
+function gk_is_staff($id) { return in_array((string)$id, gk_staff(), true); }
+/** уведомление: в группу заявок (если подключена) — иначе каждому сотруднику в личку */
 function gk_send_group($text, $extra = []) {
     $cfg = gk_cfg();
-    if (empty($cfg['chat_id'])) return false;
-    $r = gk_tg('sendMessage', array_merge(['chat_id' => $cfg['chat_id'], 'text' => $text, 'disable_web_page_preview' => true], $extra));
-    return !empty($r['ok']);
+    $to = !empty($cfg['chat_id']) ? [$cfg['chat_id']] : gk_staff();
+    $ok = false;
+    foreach ($to as $chat) {
+        $r = gk_tg('sendMessage', array_merge(['chat_id' => $chat, 'text' => $text, 'disable_web_page_preview' => true], $extra));
+        if (!empty($r['ok'])) $ok = true;
+    }
+    return $ok;
+}
+function gk_ago($ts) {
+    $m = max(0, intdiv(time() - $ts, 60));
+    if ($m < 1) return 'только что';
+    if ($m < 60) return $m . ' мин назад';
+    $h = intdiv($m, 60);
+    if ($h < 24) return $h . ' ч ' . ($m % 60) . ' мин назад';
+    return intdiv($h, 24) . ' дн назад';
+}
+function gk_left($until) {
+    $m = intdiv($until - time(), 60);
+    if ($m <= 0) return 'истёк';
+    return 'осталось ' . intdiv($m, 60) . ' ч ' . ($m % 60) . ' мин';
 }
 function gk_fmt_phone($d) { return sprintf('+7 (%s) %s-%s-%s', substr($d, 1, 3), substr($d, 4, 3), substr($d, 7, 2), substr($d, 9, 2)); }
 function gk_date($ts) { $d = new DateTime('@' . $ts); $d->setTimezone(new DateTimeZone('Europe/Moscow')); return $d->format('d.m H:i'); }
