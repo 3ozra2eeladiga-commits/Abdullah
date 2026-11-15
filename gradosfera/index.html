@@ -276,7 +276,8 @@
             <p class="muted" id="fwNote"></p>
             <span class="tag">Варианты площади</span>
             <div class="fwin__areas" id="fwAreas"></div>
-            <a class="btn btn--fill" href="tel:+79388153333">Узнать цену — позвонить</a>
+            <a class="btn btn--fill" href="#pay" id="fwCalc" data-fclose>Рассчитать рассрочку</a>
+            <a class="btn" href="tel:+79388153333">Позвонить в отдел продаж</a>
           </div>
         </div>
       </div>
@@ -285,6 +286,111 @@
     <p class="fine">Планировки носят информационный характер.</p>
   </div>
 </section>
+
+<!-- ============ РАССРОЧКА: калькулятор + золотой билет ============ -->
+<section class="sec pay" id="pay">
+  <div class="wrap">
+    <div class="sec-head"><h2 class="h2 split">Рассрочка</h2></div>
+    <p class="lead pay__lead"><span class="tag">От застройщика · без банков и ипотеки</span><br>Взнос от 10%, срок до 5 лет. Больше взнос — дешевле метр.</p>
+    <div class="pay__grid">
+      <div class="pay__calc">
+        <label class="pay__f"><span>Квартира</span><select id="cFlat"></select></label>
+        <label class="pay__f"><span>Первый взнос <output id="oDown"></output></span><input type="range" id="cDown" min="10" max="100" step="5" value="30"></label>
+        <div class="pay__ticks" id="payTicks"><button type="button" data-p="10">10%<b>95 т.</b></button><button type="button" data-p="20">20%<b>94 т.</b></button><button type="button" data-p="30">30%<b>93 т.</b></button><button type="button" data-p="50">50%<b>90 т.</b></button><button type="button" data-p="100">100%<b>88 т.</b></button></div>
+        <label class="pay__f" id="fMonths"><span>Срок <output id="oMonths"></output></span><input type="range" id="cMonths" min="6" max="60" step="6" value="36"></label>
+        <div class="pay__board" aria-live="polite">
+          <div class="pay__month" id="rMonth"><span>Платёж в месяц</span><b id="oMonth"></b></div>
+          <p class="pay__line" id="oLine"></p>
+          <div class="pay__row"><span>Цена за м²</span><b id="oM2"></b></div>
+          <div class="pay__row"><span>Первый взнос</span><b id="oFirst"></b></div>
+          <div class="pay__row"><span>Стоимость квартиры</span><b id="oTotal"></b></div>
+        </div>
+        <p class="pay__nudge" id="oNudge"></p>
+        <p class="pay__note">Предварительный расчёт, не является публичной офертой. График платежей подтвердит менеджер.</p>
+      </div>
+      <div class="pay__side">
+        <div class="pay__scene" aria-hidden="true">
+          <svg viewBox="0 0 400 300" id="payScene">
+            <defs><linearGradient id="psGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".5" stop-color="#e3b04b"/><stop offset="1" stop-color="#a8701c"/></linearGradient></defs>
+            <path class="ps-ground" d="M0 286 H400"/>
+            <!-- кран -->
+            <g class="ps-crane"><path d="M70 286 V40 M84 286 V40"/><path d="M70 280 L84 270 M70 260 L84 250 M70 240 L84 230 M70 220 L84 210 M70 200 L84 190 M70 180 L84 170 M70 160 L84 150 M70 140 L84 130 M70 120 L84 110 M70 100 L84 90 M70 80 L84 70 M70 60 L84 50"/>
+              <path d="M40 40 H330 M40 52 H330 M77 18 L40 40 M77 18 L330 40 M77 18 V40"/><rect x="34" y="44" width="22" height="18" class="ps-cw"/></g>
+            <g id="psHook"><path class="ps-rope" id="psRope" d="M250 52 V150"/><g id="psLoad" transform="translate(250 150)"><path class="ps-hk" d="M-6 0 Q0 10 6 0"/><path class="ps-sl" d="M-30 26 L0 6 L30 26"/><rect x="-34" y="26" width="68" height="34" rx="2" class="ps-pal"/><text x="0" y="49" text-anchor="middle" id="psPct">30%</text></g></g>
+            <!-- табличка с ценой за м² -->
+            <g class="ps-sign"><path d="M150 52 V70 M196 52 V70"/><rect x="132" y="70" width="82" height="34" rx="3"/><text x="173" y="92" text-anchor="middle" id="psM2">93 000 ₽</text><text x="173" y="66" text-anchor="middle" class="ps-sm">за м²</text></g>
+          </svg>
+          <span class="pay__scap">Чем выше взнос — тем ниже цена за м²</span>
+        </div>
+        <div class="pay__tiers" id="payTiers">
+          <span class="tag">Цена за м² зависит от взноса</span>
+          <div data-t="100"><span>Полная оплата</span><b>88 000 ₽</b></div>
+          <div data-t="50"><span>Взнос 50%</span><b>90 000 ₽</b></div>
+          <div data-t="30"><span>Взнос 30%</span><b>93 000 ₽</b></div>
+          <div data-t="20"><span>Взнос 20%</span><b>94 000 ₽</b></div>
+          <div data-t="10"><span>Взнос 10%</span><b>95 000 ₽</b></div>
+        </div>
+        <form class="pay__form" id="payForm" novalidate>
+          <button type="button" class="pay__ft" id="payFt">Перезвоните мне — рассчитаем график</button>
+          <input type="text" name="name" placeholder="Ваше имя" autocomplete="name" maxlength="80" required>
+          <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel" maxlength="20" required>
+          <input type="text" name="website" class="pay__hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <button class="btn btn--fill" type="submit">Перезвоните мне</button>
+          <p class="pay__msg" id="payMsg" aria-live="polite"></p>
+          <small class="pay__agree">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</small>
+        </form>
+      </div>
+    </div>
+    <!-- кран опускает золотой билет -->
+    <div class="gtd" id="gtDrop" hidden>
+      <i class="gtd__rope"></i>
+      <button type="button" class="gtd__ticket" id="gtOpen"><span class="gtd__shine"></span><b>Золотой билет</b><small id="gtDropTxt">Вам выпал подарок — нажмите!</small></button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ЗОЛОТОЙ БИЛЕТ (окно) ============ -->
+<div class="gt" id="gt" role="dialog" aria-modal="true" aria-label="Золотой билет" hidden>
+  <div class="gt__card">
+    <button type="button" class="gt__x" data-gtclose aria-label="Закрыть">×</button>
+    <div class="gt__head"><span>★ Новый Квартал ★</span><b>Золотой билет</b><small>Подарок за покупку квартиры</small></div>
+    <div class="gt__prize" id="gtPrize">
+      <div class="gt__under">
+        <img class="gt__photo" width="573" height="1532" src="img/gift/delonghi-column.webp" alt="Комплект De’Longhi: сушильная машина DTD 8105 H VERANO на стиральной машине MARSELLA L 1025 V">
+        <div class="gt__pname"><span class="tag">Ваш подарок</span><b>Комплект De’Longhi в колонну</b><small>Стиральная + сушильная машина + соединитель с выдвижной полкой</small>
+          <ul class="gt__spec">
+            <li><b>Стиральная MARSELLA L&nbsp;1025&nbsp;V</b>загрузка до 10,5&nbsp;кг · отжим 1200&nbsp;об/мин · инверторный мотор · функция пара · 14 программ</li>
+            <li><b>Сушильная DTD&nbsp;8105&nbsp;H VERANO</b>загрузка 8&nbsp;кг · тепловой насос · класс A++ · 15 программ · подсветка барабана</li>
+          </ul></div>
+      </div>
+      <canvas class="gt__scratch" id="gtScratch"></canvas>
+      <span class="gt__hint" id="gtHint">👆 Сотрите пальцем</span>
+    </div>
+    <div class="gt__after" id="gtAfter" hidden>
+      <details class="gt__more"><summary>Подробнее о подарке</summary>
+        <ul class="gt__spec gt__spec--m">
+          <li><b>Стиральная MARSELLA L&nbsp;1025&nbsp;V</b>до 10,5&nbsp;кг · 1200&nbsp;об/мин · инвертор · пар · 14 программ</li>
+          <li><b>Сушильная DTD&nbsp;8105&nbsp;H VERANO</b>8&nbsp;кг · тепловой насос · A++ · 15 программ</li>
+        </ul>
+        <div class="gt__gal"><img src="img/gift/delonghi-washer-info.webp" alt="Стиральная машина De’Longhi MARSELLA L 1025: характеристики" loading="lazy"><img src="img/gift/delonghi-dryer-info.webp" alt="Сушильная машина De’Longhi DTD 8105 H VERANO: характеристики" loading="lazy"></div>
+        <p>Комплект ставится в колонну: сушильная машина сверху, между ними — соединитель с выдвижной полкой для корзины с бельём. Гарантия производителя — 3 года.</p>
+      </details>
+      <div class="gt__timer"><span>Подарок ваш, если оформите покупку за</span><b id="gtTimer">24:00:00</b><small>договор полной оплаты или первый взнос по рассрочке</small></div>
+      <form class="gt__form" id="gtForm" novalidate>
+        <input type="text" name="name" placeholder="Ваше имя" autocomplete="name" maxlength="80" required>
+        <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel" maxlength="20" required>
+        <button class="btn btn--fill" type="submit">Забрать подарок</button>
+        <p class="gt__msg" id="gtMsg" aria-live="polite"></p>
+      </form>
+      <div class="gt__done" id="gtDone" hidden>
+        <span>Ваш код</span>
+        <b class="gt__code" id="gtCode">ЗБ-0000-0000</b>
+        <button type="button" class="btn" id="gtCopy">Скопировать код</button>
+        <p>Мы позвоним вам в рабочее время (пн–сб 10:00–17:00). Покажите этот код менеджеру в офисе продаж — ул. Кирова, 41, каб. 117.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ============ LIFE ============ -->
 <section class="sec life" id="life">
@@ -613,6 +719,7 @@
 <script src="js/vendor/lenis.min.js"></script>
 <script src="js/smooth.js?v=__V__"></script>
 <script src="js/main.js?v=__V__"></script>
+<script src="js/calc.js?v=__V__"></script>
 <script src="js/build-bg.js?v=__V__"></script>
 <script src="js/reveal-fx.js?v=__V__"></script>
 <script src="js/boiler.js?v=__V__"></script>
