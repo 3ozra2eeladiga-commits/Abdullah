@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0f121b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Новый Квартал — 3D-модель дома</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/tour.css">
+</head>
+<body class="mode-day">
+<div class="app" id="app">
+  <canvas id="gl" class="gl" aria-label="3D-модель дома. Вращайте пальцем или мышкой, нажмите на этаж."></canvas>
+
+  <header class="top">
+    <img class="top__logo" src="img/logo-sm.png" alt="" width="60" height="40">
+    <div class="top__t">
+      <b id="tName">Новый Квартал</b>
+      <span id="tSub"></span>
+    </div>
+  </header>
+
+  <!-- выбор этажа: дублирует нажатие на дом -->
+  <nav class="rail" id="rail" aria-label="Этажи"></nav>
+
+  <!-- День / Ночь / Облака -->
+  <div class="modes" role="group" aria-label="Время суток">
+    <button type="button" data-mode="day" class="is-on"><i class="ic ic-sun"></i>День</button>
+    <button type="button" data-mode="night"><i class="ic ic-moon"></i>Ночь</button>
+    <button type="button" data-mode="clouds"><i class="ic ic-cloud"></i>Облака</button>
+  </div>
+
+  <div class="tools">
+    <button type="button" id="btnHome" title="Вернуть общий вид">Общий вид</button>
+    <button type="button" id="btnFull" title="На весь экран">На весь экран</button>
+  </div>
+
+  <div class="hint" id="hint"><i class="hint__hand"></i><span>Вращайте дом пальцем · нажмите на этаж</span></div>
+  <div class="tip" id="tip" hidden></div>
+
+  <!-- панель: этаж → квартиры → планировка, цена, рассрочка -->
+  <aside class="panel" id="panel" aria-hidden="true">
+    <div class="panel__head">
+      <button type="button" class="panel__back" id="pBack" hidden>← Назад</button>
+      <button type="button" class="panel__x" id="pClose" aria-label="Закрыть">×</button>
+    </div>
+    <div class="panel__body" id="pBody"></div>
+  </aside>
+
+  <!-- планировка крупно -->
+  <div class="zoom" id="zoom" hidden><img id="zoomImg" alt="Планировка крупно"><button type="button" class="zoom__x" aria-label="Закрыть">×</button></div>
+
+  <div class="load" id="load"><div class="load__in"><b>Новый Квартал</b><span id="loadT">Собираем дом…</span></div></div>
+  <div class="nogl" id="nogl" hidden>На этом устройстве не включилась 3D-графика. Обновите браузер или откройте страницу на другом устройстве.</div>
+</div>
+<script src="js/vendor/three.min.js"></script>
+<script src="js/vendor/OrbitControls.js"></script>
+<script src="js/vendor/GLTFLoader.js"></script>
+<script src="js/data.js"></script>
+<script src="js/house.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
