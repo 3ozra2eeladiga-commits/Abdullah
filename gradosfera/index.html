@@ -291,14 +291,16 @@
 <section class="sec pay" id="pay">
   <div class="wrap">
     <div class="sec-head"><h2 class="h2 split">Рассрочка</h2></div>
-    <p class="lead pay__lead"><span class="tag">От застройщика · без банков и ипотеки</span><br>Первый взнос — от 10%, срок — до 5 лет. Чем больше первый взнос, тем дешевле квадратный метр.</p>
+    <p class="lead pay__lead"><span class="tag">От застройщика · без банков и ипотеки</span><br>Взнос от 10%, срок до 5 лет. Больше взнос — дешевле метр.</p>
     <div class="pay__grid">
       <div class="pay__calc">
         <label class="pay__f"><span>Квартира</span><select id="cFlat"></select></label>
         <label class="pay__f"><span>Первый взнос <output id="oDown"></output></span><input type="range" id="cDown" min="10" max="100" step="5" value="30"></label>
+        <div class="pay__ticks" id="payTicks"><button type="button" data-p="10">10%<b>95 т.</b></button><button type="button" data-p="20">20%<b>94 т.</b></button><button type="button" data-p="30">30%<b>93 т.</b></button><button type="button" data-p="50">50%<b>90 т.</b></button><button type="button" data-p="100">100%<b>88 т.</b></button></div>
         <label class="pay__f" id="fMonths"><span>Срок <output id="oMonths"></output></span><input type="range" id="cMonths" min="6" max="60" step="6" value="36"></label>
         <div class="pay__board" aria-live="polite">
           <div class="pay__month" id="rMonth"><span>Платёж в месяц</span><b id="oMonth"></b></div>
+          <p class="pay__line" id="oLine"></p>
           <div class="pay__row"><span>Цена за м²</span><b id="oM2"></b></div>
           <div class="pay__row"><span>Первый взнос</span><b id="oFirst"></b></div>
           <div class="pay__row"><span>Стоимость квартиры</span><b id="oTotal"></b></div>
@@ -331,7 +333,7 @@
           <div data-t="10"><span>Взнос 10%</span><b>95 000 ₽</b></div>
         </div>
         <form class="pay__form" id="payForm" novalidate>
-          <b class="pay__ft">Оставьте номер — перезвоним и рассчитаем график</b>
+          <button type="button" class="pay__ft" id="payFt">Перезвоните мне — рассчитаем график</button>
           <input type="text" name="name" placeholder="Ваше имя" autocomplete="name" maxlength="80" required>
           <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel" maxlength="20" required>
           <input type="text" name="website" class="pay__hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -368,6 +370,10 @@
     </div>
     <div class="gt__after" id="gtAfter" hidden>
       <details class="gt__more"><summary>Подробнее о подарке</summary>
+        <ul class="gt__spec gt__spec--m">
+          <li><b>Стиральная MARSELLA L&nbsp;1025&nbsp;V</b>до 10,5&nbsp;кг · 1200&nbsp;об/мин · инвертор · пар · 14 программ</li>
+          <li><b>Сушильная DTD&nbsp;8105&nbsp;H VERANO</b>8&nbsp;кг · тепловой насос · A++ · 15 программ</li>
+        </ul>
         <div class="gt__gal"><img src="img/gift/delonghi-washer-info.webp" alt="Стиральная машина De’Longhi MARSELLA L 1025: характеристики" loading="lazy"><img src="img/gift/delonghi-dryer-info.webp" alt="Сушильная машина De’Longhi DTD 8105 H VERANO: характеристики" loading="lazy"></div>
         <p>Комплект ставится в колонну: сушильная машина сверху, между ними — соединитель с выдвижной полкой для корзины с бельём. Гарантия производителя — 3 года.</p>
       </details>
