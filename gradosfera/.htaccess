@@ -20,6 +20,8 @@ DirectoryIndex index.html
 
 # ---- https и адрес без www (включить после выпуска SSL-сертификата) ----
 RewriteEngine On
+# данные бота ЖК — снаружи недоступны
+RewriteRule ^gk-data(/|$) - [F,L]
 # www → без www
 RewriteCond %{HTTP_HOST} ^www\.gradosfera\.com$ [NC]
 RewriteRule ^ https://gradosfera.com%{REQUEST_URI} [R=301,L]

@@ -10,7 +10,17 @@
  */
 if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'gk-lib.php') { http_response_code(404); exit; }
 
-define('GK_HOME', dirname(__DIR__));
+// данные храним в домашней папке хостинга; если хостинг туда не пускает (open_basedir) —
+// в закрытой папке gk-data внутри сайта (снаружи доступ запрещён, автообновление её не трогает)
+function gk_home() {
+    $up = dirname(__DIR__);
+    if (@is_dir($up) && @is_writable($up)) return $up;
+    $d = __DIR__ . '/gk-data';
+    if (!is_dir($d)) @mkdir($d, 0700, true);
+    if (!is_file($d . '/.htaccess')) @file_put_contents($d . '/.htaccess', "Require all denied\nDeny from all\n");
+    return $d;
+}
+define('GK_HOME', gk_home());
 define('GK_TICKET_HOURS', 24);
 
 function gk_cfg() {
