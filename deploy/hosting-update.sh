@@ -10,7 +10,7 @@ git fetch -q --depth 1 origin main || exit 0
 if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] && [ -z "${1:-}" ]; then exit 0; fi
 git reset -q --hard origin/main
 if command -v rsync >/dev/null 2>&1; then
-  rsync -a --delete --exclude cgi-bin --exclude README.md "$REPO/gradosfera/" "$WEB/"
+  rsync -a --delete --exclude cgi-bin --exclude README.md --exclude gk-data "$REPO/gradosfera/" "$WEB/"   # gk-data — заявки и билеты бота ЖК, не стирать
 else
   cp -a "$REPO/gradosfera/." "$WEB/"
 fi
