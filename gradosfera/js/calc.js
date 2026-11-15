@@ -100,11 +100,13 @@
     return (opt ? opt.textContent : '') + '; взнос ' + p + '%' + (p < 100 ? '; срок ' + months.value + ' мес.; платёж ' + $('oMonth').textContent : '; полная оплата') + '; цена м² ' + $('oM2').textContent + '; итого ' + $('oTotal').textContent;
   }
   // демо-версия (предпросмотр для заказчика): заявки никуда не уходят, всё остальное — как на сайте
+  // демо-сайт живёт на другом сервере — заявки отправляет на настоящий сайт (в группе они помечаются «ДЕМО»)
   var DEMO = /\/preview\//.test(location.pathname) || window.GS_DEMO;
+  var API = DEMO ? 'https://gradosfera.com/send.php' : 'send.php';
   function send(data, msg, ok) {
-    if (DEMO) { msg.textContent = 'Отправляем…'; return new Promise(function (r) { setTimeout(function () { ok({ ok: true }); r(); }, 700); }); }
+    if (DEMO) data.demo = 1;
     msg.textContent = 'Отправляем…'; msg.className = msg.className.replace(/ (ok|err)/g, '');
-    return fetch('send.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+    return fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
       .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
       .then(function (r) { if (r && r.ok) ok(r); else { msg.textContent = (r && r.error) || 'Не получилось отправить. Позвоните нам: +7 (938) 815-33-33'; msg.className += ' err'; } })
       .catch(function () { msg.textContent = 'Нет связи. Позвоните нам: +7 (938) 815-33-33'; msg.className += ' err'; });
@@ -119,7 +121,7 @@
       var name = form.elements.name.value.trim(), digits = form.elements.phone.value.replace(/\D/g, '');
       if (!name) { msg.textContent = 'Напишите, пожалуйста, имя'; msg.className = 'pay__msg err'; return; }
       if (digits.length !== 11) { msg.textContent = 'Проверьте номер телефона'; msg.className = 'pay__msg err'; return; }
-      send({ name: name, phone: digits, topic: 'Рассрочка (калькулятор)', details: calcText(), website: form.elements.website.value }, msg, function () {
+      send({ kind: 'lead', name: name, phone: digits, details: calcText(), website: form.elements.website.value }, msg, function () {
         msg.textContent = 'Спасибо! Перезвоним в рабочее время (пн–сб 10:00–17:00) 🙌'; msg.className = 'pay__msg ok'; form.reset();
       });
     });
@@ -138,7 +140,7 @@
     if (st.code) $('gtDropTxt').textContent = 'Ваш билет ' + st.code;
   }
   if (st.opened) setTimeout(function () { dropTicket(); }, 600);   // билет уже открывали — он остаётся
-  function left() { return st.opened ? st.opened + HOURS * 3600e3 - Date.now() : HOURS * 3600e3; }
+  function left() { return st.until ? st.until - Date.now() : st.opened ? st.opened + HOURS * 3600e3 - Date.now() : HOURS * 3600e3; }
   var tick = 0;
   function timer() {
     var ms = Math.max(0, left()), s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
@@ -209,21 +211,16 @@
   // забрать подарок: имя + телефон → личный код
   var gform = $('gtForm'), gmsg = $('gtMsg');
   mask(gform.elements.phone);
-  function newCode() {
-    var A = 'ABCEHKMPTX23456789', s = '';
-    var rnd = new Uint32Array(8); (window.crypto || window.msCrypto).getRandomValues(rnd);
-    for (var i = 0; i < 8; i++) s += A[rnd[i] % A.length];
-    return 'ЗБ-' + s.slice(0, 4) + '-' + s.slice(4);
-  }
   function showCode() { gform.hidden = true; $('gtDone').hidden = false; $('gtCode').textContent = st.code; $('gtDropTxt').textContent = 'Ваш билет ' + st.code; }
   gform.addEventListener('submit', function (e) {
     e.preventDefault();
     var name = gform.elements.name.value.trim(), digits = gform.elements.phone.value.replace(/\D/g, '');
     if (!name) { gmsg.textContent = 'Напишите, пожалуйста, имя'; gmsg.className = 'gt__msg err'; return; }
     if (digits.length !== 11) { gmsg.textContent = 'Проверьте номер телефона'; gmsg.className = 'gt__msg err'; return; }
-    var code = newCode(), until = new Date(st.opened + HOURS * 3600e3);
-    send({ name: name, phone: digits, topic: 'Золотой билет ' + code, details: 'Подарок: комплект De’Longhi (стиральная + сушильная); действует до ' + until.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '; расчёт: ' + calcText(), code: code }, gmsg, function (r) {
-      st.code = (r && r.code) || code; st.name = name; save(); gmsg.textContent = ''; showCode();
+    // код создаёт и запоминает сервер (24 часа, один билет на номер телефона)
+    send({ kind: 'ticket', name: name, phone: digits, details: calcText() }, gmsg, function (r) {
+      if (!r || !r.code) { gmsg.textContent = 'Не получилось выдать билет. Позвоните нам: +7 (938) 815-33-33'; gmsg.className = 'gt__msg err'; return; }
+      st.code = r.code; st.name = name; if (r.until) st.until = r.until; save(); gmsg.textContent = ''; showCode(); timer();
     });
   });
   $('gtCopy').addEventListener('click', function () {
