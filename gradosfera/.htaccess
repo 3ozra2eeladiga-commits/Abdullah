@@ -29,6 +29,11 @@ RewriteRule ^ https://gradosfera.com%{REQUEST_URI} [R=301,L]
 RewriteCond %{HTTP_HOST} ^gradosfera\.com$ [NC]
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteRule ^ https://gradosfera.com%{REQUEST_URI} [R=301,L]
+# старые адреса прежнего сайта (например, /zhk-noviy-kvartal из поиска Google) и любые несуществующие страницы —
+# навсегда (301) на главную, чтобы клиент не видел «Not Found», а поисковик заменил старую ссылку
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ https://gradosfera.com/ [R=301,L]
 
 # ---- скорость: сжатие и кэш ----
 <IfModule mod_deflate.c>
