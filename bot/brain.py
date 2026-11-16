@@ -425,10 +425,22 @@ def _picked_by_ordinal(client, incoming, city):
     return [it] if it else []
 
 
+# «как 3», «номер 3», «№3», «фото 3», «3-й», «третий вариант», «под цифрой 3», «3 букет» — это номер фото в альбоме.
+# Не путаем с деньгами («3000», «3 тыс»), временем («к 3», «в 3»), количеством («3 штуки», «3 розы»).
+PHOTO_NUM_RE = re.compile(
+    r"(?:как\s+(?:на\s+)?|номер\w*\s*|№\s*|фото\s*|вариант\w*\s*|букет\w*\s*(?:номер\s*|№\s*)?|под\s+(?:номером|цифрой)\s*|"
+    r"цифр\w*\s*)(10|[1-9])(?!\d|[.,:]\d|\s*(?:шт|штук|тыс|т\.|к\b|р\b|руб|₽|роз|час|мин))"
+    r"|(?<![\d.,:])\b(10|[1-9])\s*(?:-?(?:й|ой|ий|я|ая))?\s+(?:букет|вариант|фото|композиц)", re.I)
+
+
 def _picked_by_digit(client, incoming, city):
-    """«2» сразу после альбома с номерами на фото — это букет №2 из показанных (а не номер в каталоге)."""
+    """«2» сразу после альбома с номерами на фото — это букет №2 из показанных (а не номер в каталоге).
+    «Можно как 3, но на 3000» — тоже букет №3 (номер в тексте), даже если бот спрашивал что-то другое."""
     m = re.fullmatch(r"\W*(?:фото|вариант|букет|номер|№)?\s*(10|[1-9])\W*", incoming or "", re.I)
-    if not m or db.get_setting(f"chosen:{client}") or not re.search(r"нравится|номер фото", _last_bot_text(client, "")):
+    m2 = None if m else PHOTO_NUM_RE.search(incoming or "")
+    if m2:
+        m = type("M", (), {"group": lambda self, i, _g=(m2.group(1) or m2.group(2)): _g})()
+    elif not m or db.get_setting(f"chosen:{client}") or not re.search(r"нравится|номер фото", _last_bot_text(client, "")):
         return []
     shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
     i = int(m.group(1)) - 1
@@ -4691,7 +4703,9 @@ def respond(client, incoming, from_staff=False, quote=""):
         txt = reply.text.rstrip()
         q0 = asked_before.rstrip()
         tail_q = txt.endswith(q0) and txt != q0                   # код уже дописал тот же вопрос после ответа
-        if still == asked_before and (tail_q or (q0.split("?")[0] not in txt and "?" not in txt.split("\n")[-1])):
+        gave_data = bool(DATA_SIGNAL_RE.search(incoming or "")) and "?" not in (incoming or "")   # прислал другие данные
+        if still == asked_before and not gave_data \
+                and (tail_q or (q0.split("?")[0] not in txt and "?" not in txt.split("\n")[-1])):
             n_ign = int(db.get_setting(f"ignored:{client}") or 0) + 1
             db.set_setting(f"ignored:{client}", n_ign)
             # Коротко объясняем, ЗАЧЕМ спрашиваем (хозяйке очень понравилось «наличие зависит от дня»).
@@ -4736,6 +4750,38 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.text += f"\n\nА пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{nq}"
             db.set_setting(f"lastq:{client}", nq)
         reply.photos = []
+    # «Такой же (как 3), но на 3000» — тот же букет, в той же гамме, но поменьше по составу: ИТОГО 3000 (Машa).
+    # «Варианты до 3000» — другое (показ вариантов), его не трогаем.
+    if picked and not from_staff and not reply.order and not catalog.is_addon(picked[0], city) \
+            and picked[0].get("stock") is None:
+        t_in = incoming or ""
+        n_tot = _money(t_in)
+        if n_tot and not re.search(r"\bдо\s*\d|не\s+дороже|максимум|пределах\s+до", t_in, re.I) \
+                and re.search(r"(?:но|только|а|и)\s+(?:на|за)\s*\d|(?:собрать|сделать|собер\w*)[^.?!]{0,20}(?:на|за)\s*\d|"
+                              r"(?:на|за)\s*\d[\d\s]*(?:р\b|руб\w*|₽|тыс\w*|к\b)?\W*$|в\s+пределах|бюджет", t_in, re.I) \
+                and not re.search(r"поменьше|побольше|меньше|больше|дешевле|дороже", t_in, re.I):
+            it0 = picked[0]
+            base = int(it0["price"])
+            if n_tot != base:
+                sign = "-" if n_tot < base else "+"
+                db.set_setting(f"upsize:{client}", f"{it0['code']}|{sign}|{abs(base - n_tot)}")
+                db.set_setting(f"chosen:{client}", it0["code"])
+                db.del_setting(f"upq:{client}")
+                how = "поменьше по составу" if sign == "-" else "попышнее"
+                head = f"Да, можно 🌸 Соберём такой же букет — в той же гамме, но {how}, на {_rub(n_tot)}."
+                if it0.get("stock") is None and db.get_setting(f"availq:{client}") != it0["code"]:
+                    db.set_setting(f"availq:{client}", it0["code"])
+                    reply.avail_item = it0
+                if reply.avail_item:
+                    head += " Уточняю у флориста наличие — ответит в течение пары минут ⏱"
+                nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
+                                    _known_order(client))
+                reply.text = head
+                if nq and nq != ALMOST_DONE_Q:
+                    reply.text += (f"\n\nА пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{nq}"
+                                   if reply.avail_item else f" {nq}")
+                    db.set_setting(f"lastq:{client}", nq)
+                reply.photos = []
     # «Сколько стоит доставка?» — точную цену знает флорист. Узнаём КУДА доставка, сразу передаём вопрос флористу
     # (она ответит клиенту за пару минут), а бот тем временем продолжает оформление. Не успела ответить до конца
     # заказа — в заявке пометка «клиент спрашивает стоимость доставки».
