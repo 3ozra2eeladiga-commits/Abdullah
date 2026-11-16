@@ -1,5 +1,6 @@
 """Фото с сайта в формате .webp, а Инстаграм принимает только jpg/png — переводим в jpg."""
 import io
+import os
 from functools import lru_cache
 
 import requests
@@ -25,30 +26,41 @@ def jpeg_bytes(url):
     return out.getvalue()
 
 
+_FONT = os.path.join(os.path.dirname(__file__), "fonts", "DejaVuSans-Bold.ttf")   # шрифт в репозитории: на сервере
+                                                                                  # системного может не быть
+
+
+def _font(size):
+    from PIL import ImageFont
+    for f in (_FONT, "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "DejaVuSans-Bold.ttf", "arial.ttf"):
+        try:
+            return ImageFont.truetype(f, size)
+        except OSError:
+            continue
+    try:
+        return ImageFont.load_default(size=size)       # Pillow ≥ 10.1
+    except TypeError:
+        return None
+
+
 def numbered_jpeg(url, n):
-    """Фото букета с крупным номером в кружке (для альбома в чате: клиент отвечает «2»)."""
+    """Фото букета с крупным номером в розовом кружке (для альбома в чате: клиент отвечает «2»)."""
     data = jpeg_bytes(url)
     if Image is None:
         return data
-    from PIL import ImageDraw, ImageFont
+    from PIL import ImageDraw
     img = Image.open(io.BytesIO(data)).convert("RGB")
     d = ImageDraw.Draw(img)
-    r = max(40, img.width // 9)
-    x, y = r // 3, r // 3
-    d.ellipse([x, y, x + 2 * r, y + 2 * r], fill=(255, 255, 255), outline=(233, 30, 99), width=max(4, r // 8))
-    font = None
-    for f in ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "DejaVuSans-Bold.ttf", "arial.ttf"):
-        try:
-            font = ImageFont.truetype(f, int(r * 1.3))
-            break
-        except OSError:
-            continue
+    r = max(36, min(img.width, img.height) // 11)
+    x = y = max(12, r // 3)
+    d.ellipse([x - 3, y - 3, x + 2 * r + 3, y + 2 * r + 3], fill=(255, 255, 255))          # белая окантовка
+    d.ellipse([x, y, x + 2 * r, y + 2 * r], fill=(233, 30, 99))
     txt = str(n)
-    if font:
-        w = d.textlength(txt, font=font)
-        d.text((x + r - w / 2, y + r * 0.22), txt, font=font, fill=(233, 30, 99))
-    else:
-        d.text((x + r * 0.8, y + r * 0.8), txt, fill=(233, 30, 99))
+    font = _font(int(r * (1.25 if len(txt) == 1 else 1.0)))
+    if font is None:
+        return data                                    # нечем нарисовать цифру — лучше без кружка, чем пустой
+    l, t, rr, b = d.textbbox((0, 0), txt, font=font)
+    d.text((x + r - (rr - l) / 2 - l, y + r - (b - t) / 2 - t), txt, font=font, fill=(255, 255, 255))
     out = io.BytesIO()
     img.save(out, "JPEG", quality=88)
     return out.getvalue()
