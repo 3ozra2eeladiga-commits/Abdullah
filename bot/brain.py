@@ -282,6 +282,7 @@ class Reply:
     city: str | None = None
     staff_note: str = ""                         # сообщение флористу (например, дополнение к отправленному заказу)
     staff_photos: list = field(default_factory=list)
+    avail_item: dict | None = None               # выбранный букет — флорист сразу проверяет наличие (app)
 
 
 # «Отмените заказ», «передумал»; «отметить это» — так голосовой ввод часто слышит «отменить».
@@ -1076,7 +1077,7 @@ def _contacts(client):
 ORDER_STATE_KEYS = ("neworder", "activeq", "winq", "winok", "exacttime", "chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
                     "pickup_shop", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
                     "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item",
-                    "delivq", "delivq_need", "ownref")
+                    "delivq", "delivq_need", "ownref", "availq")
 
 
 def start_new_order(client):
@@ -4183,6 +4184,16 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.text = f"Отличный выбор 🌸 {nxt}"
         reply.photos = []
         db.set_setting(f"lastq:{client}", nxt)
+        # Букет собирают под заказ (остатка на сайте нет) — флорист сразу проверяет наличие цветов, а мы
+        # продолжаем оформление, чтобы клиенту не ждать (Абдулла).
+        if it.get("stock") is None and db.get_setting(f"availq:{client}") != it["code"] \
+                and not catalog.is_addon(it, city):
+            db.set_setting(f"availq:{client}", it["code"])
+            reply.avail_item = it
+            reply.text = (f"Отличный выбор 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱\n\n"
+                          f"А пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{nxt}"
+                          if nxt and nxt != ALMOST_DONE_Q else
+                          "Отличный выбор 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱")
 
     # Режим «пышнее/скромнее»: никаких других букетов и вопросов коллегам — флорист получит доплату в заказе.
     if up_target and not from_staff:
@@ -4433,6 +4444,14 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = []
         if q:
             db.set_setting(f"lastq:{client}", q)
+    if reply.avail_item and not reply.order and not from_staff:
+        # Выбран букет — флорист проверяет наличие (вопрос уходит из app). Клиенту: предупредить и продолжить.
+        nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
+        reply.text = "Отличный выбор 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱"
+        if nq and nq != ALMOST_DONE_Q:
+            reply.text += f"\n\nА пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{nq}"
+            db.set_setting(f"lastq:{client}", nq)
+        reply.photos = []
     # «Сколько стоит доставка?» — точную цену знает флорист. Узнаём КУДА доставка, сразу передаём вопрос флористу
     # (она ответит клиенту за пару минут), а бот тем временем продолжает оформление. Не успела ответить до конца
     # заказа — в заявке пометка «клиент спрашивает стоимость доставки».

@@ -539,6 +539,11 @@ def deliver(client, text, from_staff=False, quote=""):
                               quiet=brain.shops_closed_now(db.get_city(client)))
         elif reply.order_raw:
             log.warning("Заказ не распознан (%s): %s", client, reply.order_raw)
+        if reply.avail_item and not from_staff:   # выбрал букет из каталога — флорист сразу проверяет наличие
+            it = reply.avail_item
+            _avail_request(client, (it.get("images") or [None])[0],
+                           f"🔎 Клиент выбрал: {it['title']} — {it['price']} ₽\nПроверьте наличие (бот пока собирает данные)",
+                           {"item": it["code"], "title": it["title"], "card": False, "q": "есть в наличии?", "n": 0})
         if reply.staff_note:                     # дополнение к отправленному заказу, отмена и т.п.
             telegram_bot.notify_staff_order(client, reply.staff_photos, f"{reply.staff_note}\n{_label(client)}")
         if reply.question:
@@ -1068,14 +1073,51 @@ def on_client_photo(client, photo, caption=""):
 
 
 def _photos_settled(client):
+    # Абдулла: прислал фото (даже без слов) — это «есть такой букет?»: сразу флористу, а бот продолжает оформление.
     with _client_locks[client]:
         buf = _photo_buf(client)
         if not buf.get("photos"):
             return
-        if buf.get("texts"):
-            _photo_question(client, buf)    # подпись к фото уже есть — сразу к делу
-            return
-    _later(client, PHOTO_NUDGE_SEC, _photo_nudge)
+        _photo_question(client, buf)
+
+
+def _brief(client):
+    """Всё, что уже известно о заказе, — чтобы флорист за пару секунд понял, что нужно."""
+    o = brain._known_order(client)
+    city = db.get_city(client)
+    ok = lambda v: brain._meaningful(v) and str(v).strip() not in ("—", "...", "…")
+    when = " ".join(str(o.get(k)).strip() for k in ("дата", "время") if ok(o.get(k)))
+    if not when:                                   # из слов клиента: «на завтра к 15:00»
+        facts = brain._known_facts([m["content"] for m in db.history(client, 60) if m["role"] == "user"])
+        raw = next((f.split(":", 1)[1].strip(" «»") for f in facts if f.startswith("дата")), "")
+        bits = re.findall(r"сегодня|завтра|послезавтра|\d{1,2}[./]\d{1,2}|\d{1,2}\s+[а-я]+бря|\d{1,2}\s+(?:января|февраля|марта|"
+                          r"апреля|мая|июня|июля|августа)|(?:к|в|на|до|после)\s*\d{1,2}(?::\d{2})?|\d{1,2}:\d{2}|утр\w*|"
+                          r"вечер\w*|обед\w*", raw, re.I)
+        when = " ".join(bits) or raw
+    lines = [f"📍 Город: {city or 'ещё не указан (бот уточняет)'}", f"📅 Когда: {when or 'ещё не указали (бот уточняет)'}"]
+    if ok(o.get("получение")):
+        lines.append(f"🚗 {o['получение']}" + (f": {o['адрес']}" if ok(o.get("адрес")) else ""))
+    return "\n".join(lines)
+
+
+def _avail_request(client, photo, head, rec):
+    """Вопрос флористу «есть в наличии?» (фото клиента или букет из каталога) — с кнопками и данными заказа."""
+    qid = int(db.get_setting("phq_seq") or 0) + 1
+    db.set_setting("phq_seq", qid)
+    rec = dict(rec, client=client, ts=int(time.time()))
+    db.set_setting(f"phq:{qid}", json.dumps(rec, ensure_ascii=False))
+    text = f"{head}\n{_label(client)}\n{_brief(client)}\n\nЕсть в наличии?"
+    buttons = [[{"text": "✅ Есть", "callback_data": f"ph:ok:{qid}"}],
+               [{"text": "❌ Нет — предложить другие", "callback_data": f"ph:no:{qid}"}],
+               [{"text": "✍️ Другое — отвечу сам", "callback_data": f"ph:other:{qid}"}]]
+    if photo:
+        telegram_bot.notify_staff_photo(client, photo, text, buttons=buttons)
+    else:
+        telegram_bot.notify_staff(client, text, buttons=buttons)
+    return qid
+
+
+CONTINUE_NOTE = "А пока флорист уточняет, давайте для ускорения продолжим оформление 🌸"
 
 
 def _photo_nudge(client):
@@ -1126,24 +1168,27 @@ def _photo_question(client, buf):
     buf["photos"] = [p for p, k in zip(buf["photos"], kinds) if k != "другое"] or buf["photos"]
     what = "открытку" if card else "букет"
     photos = buf["photos"]
+    qids = []
     for n, photo in enumerate(photos, 1):
-        qid = int(db.get_setting("phq_seq") or 0) + 1
-        db.set_setting("phq_seq", qid)
-        db.set_setting(f"phq:{qid}", json.dumps({"client": client, "card": card, "q": question,
-                                                 "n": n if len(photos) > 1 else 0, "ts": int(time.time())},
-                                                ensure_ascii=False))
         part = f" ({n} из {len(photos)})" if len(photos) > 1 else ""
-        telegram_bot.notify_staff_photo(
-            client, photo,
-            f"📸 Клиент спрашивает {what} по фото{part}\n{_label(client)}, {city}\n«{question}»\nЕсть в наличии?",
-            buttons=[[{"text": "✅ Есть", "callback_data": f"ph:ok:{qid}"}],
-                     [{"text": "❌ Нет — предложить другие", "callback_data": f"ph:no:{qid}"}],
-                     [{"text": "✍️ Другое — отвечу сам", "callback_data": f"ph:other:{qid}"}]])
+        qids.append(_avail_request(client, photo, f"📸 Клиент прислал фото — спрашивает, есть ли такой {what}{part}\n"
+                                                  f"Слова клиента: «{question}»",
+                                   {"card": card, "q": question, "n": n if len(photos) > 1 else 0}))
     _save_photo_buf(client, {})
     many = len(photos) > 1
-    when = (f"флорист ответит {brain.opening_text(city if city in catalog.city_names else None)} (магазин сейчас закрыт)"
-            if brain.shops_closed_now(city if city in catalog.city_names else None) else "ответим за пару минут")
-    text = f"Спросила флориста, есть ли {'такие' if many else 'такой'} в наличии — {when} 🌸"
+    c_ok = city if city in catalog.city_names else None
+    when = (f"ответит {brain.opening_text(c_ok)} (магазин сейчас закрыт)" if brain.shops_closed_now(c_ok)
+            else "ответит в течение пары минут ⏱")
+    text = f"Отправила фото флористу — она уточнит, есть ли {'такие' if many else 'такой'} в наличии, и {when}"
+    if not card:
+        # Букет с фото — пока он и есть выбранный: дальше собираем данные заказа (Абдулла: клиенту не скучно ждать).
+        db.set_setting(f"chosen:{client}", f"photo:{qids[0]}")
+        db.set_setting(f"photo_item:{client}", "Букет как на фото клиента" + (" (уточнить, какой из фото)" if many else ""))
+        nq = brain._next_question([m["content"] for m in db.history(client) if m["role"] == "user"],
+                                  c_ok, brain._known_order(client))
+        if nq and nq != brain.ALMOST_DONE_Q:
+            db.set_setting(f"lastq:{client}", nq)
+            text += f"\n\n{CONTINUE_NOTE}\n{nq}"
     _send_text(client, text)
     db.add_message(client, "assistant", text)
 
@@ -1168,18 +1213,33 @@ def on_photo_button(qid, action):
     with _client_locks[client]:
         city = db.get_city(client)
         photos = []
+        chosen = db.get_setting(f"chosen:{client}") or ""
+        in_progress = not db.get_setting(f"ocheck:{client}") and not db.get_setting(f"active_order:{client}")
         if action == "ok" and rec.get("card"):
             text = "Такая открытка есть 🌸 Добавим?"
+        elif action == "ok" and rec.get("item"):
+            # Букет из каталога есть — подтверждаем и продолжаем (или уже ждём итог/заявку).
+            text = f"Флорист подтвердила: {rec.get('title') or 'букет'} есть в наличии 🌸"
+            lq = db.get_setting(f"lastq:{client}") or ""
+            if in_progress and chosen == rec["item"] and lq and lq != brain.ALMOST_DONE_Q:
+                text += f"\n\n{lq}"
         elif action == "ok":
             # Букет с фото есть — он и есть выбранный букет: оформляем его (цену в заявке подтвердит флорист).
             n = rec.get("n") or 0
-            db.set_setting(f"chosen:{client}", f"photo:{qid}")
-            db.set_setting(f"photo_item:{client}", f"Букет как на фото клиента{f' (фото {n})' if n else ''}")
+            if in_progress:
+                db.set_setting(f"chosen:{client}", f"photo:{qid}")
+                db.set_setting(f"photo_item:{client}", f"Букет как на фото клиента{f' (фото {n})' if n else ''}")
             nq = brain._next_question([m["content"] for m in db.history(client) if m["role"] == "user"],
-                                      city, brain._known_order(client))
-            db.set_setting(f"lastq:{client}", nq)
-            text = f"Букет{f' с фото {n}' if n else ''} есть в наличии 🌸 Оформляем! {nq}"
+                                      city, brain._known_order(client)) if in_progress else ""
+            text = f"Флорист подтвердила: букет{f' с фото {n}' if n else ''} есть в наличии 🌸"
+            if nq and nq != brain.ALMOST_DONE_Q:
+                db.set_setting(f"lastq:{client}", nq)
+                text += f" {nq}"
         else:
+            # Нет в наличии: этот букет больше не «выбранный» — предлагаем похожие.
+            if chosen in (rec.get("item"), f"photo:{qid}"):
+                db.del_setting(f"chosen:{client}")
+                db.del_setting(f"photo_item:{client}")
             text = ("Такой открытки сейчас нет 😔 Вот похожие:" if rec.get("card")
                     else "Такого сейчас нет 😔 Вот похожие — может, что-то понравится?")
             cc = catalog.get_city(city) if city else None
@@ -1191,8 +1251,11 @@ def on_photo_button(qid, action):
             if photos:
                 db.set_setting(f"shown:{client}", ",".join(p["code"] for p in photos))
         _send_text(client, text)
-        for it in photos:
-            _send_photo(client, it)
+        if len(photos) >= 2 and not client.startswith("ig:"):
+            telegram_bot.send_client_album(client, photos)
+        else:
+            for it in photos:
+                _send_photo(client, it)
         db.add_message(client, "assistant", text)
     return "Клиенту отправлено."
 
