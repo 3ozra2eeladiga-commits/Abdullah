@@ -4684,8 +4684,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Клиент пропустил ВАЖНЫЙ вопрос (без ответа заказ не оформить) — отвечаем на его сообщение и вежливо, но
     # настойчиво переспрашиваем (Абдулла). Второй раз подряд — объясняем, что без этого никак.
     required = (WAY_Q, DATE_Q, DATE_ONLY_Q, TIME_Q, NIGHT_DATE_Q, ADDRESS_Q, CONTACTS_Q, PICKUP_CONTACT_Q)
-    if not from_staff and asked_before in required and not reply.order and reply.text and not keep_photos \
-            and not asked_before.startswith(FORM_HEAD):
+    if not from_staff and (asked_before in required or asked_before.startswith(FORM_HEAD)) and not reply.order \
+            and reply.text and not keep_photos:
         still = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
                                _known_order(client))
         txt = reply.text.rstrip()
@@ -4694,7 +4694,13 @@ def respond(client, incoming, from_staff=False, quote=""):
         if still == asked_before and (tail_q or (q0.split("?")[0] not in txt and "?" not in txt.split("\n")[-1])):
             n_ign = int(db.get_setting(f"ignored:{client}") or 0) + 1
             db.set_setting(f"ignored:{client}", n_ign)
-            lead = ("Чтобы оформить заказ, мне очень важно знать 🙏" if n_ign == 1 else
+            # Коротко объясняем, ЗАЧЕМ спрашиваем (хозяйке очень понравилось «наличие зависит от дня»).
+            why = ("так мы поймём, куда и как передать букет" if asked_before == WAY_Q else
+                   "наличие цветов и курьера зависит от дня и времени" if asked_before in (DATE_Q, DATE_ONLY_Q, TIME_Q, NIGHT_DATE_Q) else
+                   "курьеру нужен точный адрес, чтобы привезти букет вовремя" if asked_before == ADDRESS_Q else
+                   "чтобы выдать заказ именно вам" if asked_before == PICKUP_CONTACT_Q else
+                   "телефон нужен, чтобы курьер связался, если не найдёт получателя, а ваш — только для связи с вами по заказу")
+            lead = (f"Подскажите, пожалуйста, — это важно для заказа 🙏 {why[:1].upper() + why[1:]}." if n_ign == 1 else
                     "Простите, что повторяю 🙏 Без этого, к сожалению, не сможем оформить заказ:")
             head = txt[:-len(q0)].rstrip() if tail_q else txt
             reply.text = f"{head}\n\n{lead}\n{asked_before}"
