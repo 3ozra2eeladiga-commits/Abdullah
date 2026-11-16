@@ -64,13 +64,19 @@ if (!gk_is_staff($uid)) {
     gk_tg('sendMessage', ['chat_id' => $chat, 'text' => "⛔ Это закрытый служебный бот ЖК «Новый Квартал».\nВаш Telegram ID: {$uid}\nЕсли вы сотрудник — передайте этот номер руководителю.\n\nПо вопросам покупки: +7 (938) 815-33-33", 'reply_markup' => ['remove_keyboard' => true]]);
     exit;
 }
+// синяя кнопка «Меню» со списком команд путала сотрудников — убираем её один раз: остаются только 4 кнопки внизу
+if (!is_file(GK_HOME . '/.gk-nomenu')) {
+    $r1 = gk_tg('deleteMyCommands', []);
+    $r2 = gk_tg('setChatMenuButton', ['menu_button' => ['type' => 'default']]);
+    if (!empty($r1['ok']) && !empty($r2['ok'])) @touch(GK_HOME . '/.gk-nomenu');
+}
 $state = gk_json_read('gs-state.json');
 $waiting = !empty($state[$uid]) && $state[$uid] > time() - 600;   // ждём код после кнопки «Проверить код»
 function set_wait($uid, $on) { gk_json_update('gs-state.json', function (&$s) use ($uid, $on) { if ($on) $s[$uid] = time(); else unset($s[$uid]); return true; }); }
 
 if ($text === '/start' || $text === '/help' || $text === 'Меню') {
     set_wait($uid, false);
-    say($chat, "Здравствуйте, " . ($m['from']['first_name'] ?? '') . "! 👋\n\n" . B_LEADS . " — последние заявки с сайта\n" . B_TICKETS . " — действующие золотые билеты\n" . B_CHECK . " — клиент пришёл с кодом: проверить и погасить\n" . B_STATS . " — сколько заявок и билетов");
+    say($chat, "Здравствуйте, " . ($m['from']['first_name'] ?? '') . "! 👋\n\n" . B_LEADS . " — последние заявки с сайта\n" . B_TICKETS . " — действующие золотые билеты\n" . B_CHECK . " — клиент пришёл с кодом: проверить и погасить\n" . B_STATS . " — сколько заявок и билетов\n\n👇 Нажимайте серые кнопки внизу экрана. Если их не видно — нажмите значок ⌨️ справа в поле «Сообщение».");
     exit;
 }
 if ($text === B_LEADS) {

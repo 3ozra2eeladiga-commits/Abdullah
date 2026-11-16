@@ -53,7 +53,8 @@ foreach (($up['result'] ?? []) as $x) {
 }
 function gk_hook() {
     $cfg = gk_cfg();
-    $url = 'https://' . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/gk-bot.php';
+    // Telegram не всегда достукивается до хостинга напрямую — вебхук идёт через сервер бота (он пересылает на gk-bot.php)
+    $url = 'https://186-246-61-173.sslip.io/tg-hook/gk';
     $secret = substr(hash('sha256', $cfg['telegram_token'] . '|gk-webhook'), 0, 40);
     return gk_tg('setWebhook', ['url' => $url, 'secret_token' => $secret, 'allowed_updates' => ['message', 'callback_query'], 'drop_pending_updates' => true]);
 }

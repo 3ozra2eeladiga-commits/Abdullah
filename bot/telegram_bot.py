@@ -119,6 +119,43 @@ def send_client_photo(client, item):
         db.remember_sent(f"biz:{cid}:{msg['message_id']}")
 
 
+def send_client_album(client, items):
+    """Несколько букетов — ОДНИМ альбомом (плиткой), а не 5–6 отдельными сообщениями (Абдулла: листать неудобно).
+    Каждое фото в альбоме — отдельное сообщение Telegram: ответ клиента на любое из них = выбор этого букета.
+    Не вышло — шлём по одному, как раньше."""
+    kind, cid = client.split(":", 1)
+    conn = _biz_conn_id() if kind == "tgb" else None
+    files, media = {}, []
+    for n, item in enumerate(items[:10]):
+        try:
+            data = images.numbered_jpeg(item["images"][0], n + 1) if images.Image is not None else None
+        except Exception as e:
+            log.warning("Фото %s для альбома не загрузилось: %s", item.get("code"), e)
+            continue
+        cap = f"{n + 1}. {item['title']} — {item['price']} ₽"[:1000]
+        if data:
+            files[f"p{n}"] = (f"p{n}.jpg", data, "image/jpeg")
+            media.append({"type": "photo", "media": f"attach://p{n}", "caption": cap, "_code": item["code"]})
+        else:
+            media.append({"type": "photo", "media": item["images"][0], "caption": cap, "_code": item["code"]})
+    codes = [m.pop("_code") for m in media]
+    msgs = None
+    if len(media) >= 2:
+        params = {"chat_id": cid, "media": json.dumps(media, ensure_ascii=False)}
+        if conn:
+            params["business_connection_id"] = conn
+        msgs = call("sendMediaGroup", files=files or None, **params) if files else \
+            call("sendMediaGroup", chat_id=cid, media=media, **({"business_connection_id": conn} if conn else {}))
+    if not msgs:
+        for item in items:
+            send_client_photo(client, item)
+        return
+    for m, code in zip(msgs, codes):
+        db.link_photo(cid, m["message_id"], code)          # ответ на это фото = этот букет
+        if kind == "tgb":
+            db.remember_sent(f"biz:{cid}:{m['message_id']}")
+
+
 def _remember_copies(sent):
     """Одно и то же сообщение ушло нескольким сотрудникам: запоминаем все копии, чтобы отметка
     («👁 Просмотрено — Маша», «✅ Отмечено…») появилась у ВСЕХ, а не только у того, кто нажал."""
@@ -271,6 +308,8 @@ def notify_staff(client, text, buttons=None):
 # Сообщения, где КЛИЕНТ ЖДЁТ ОТВЕТА: кнопка «✅ Ответил(а)». Бот сам проверяет, был ли реальный ответ
 # (в чате магазина или ответом через бота): нет ответа — отметиться нельзя; ответили — отметка ставится сама.
 ANSWER_BUTTON = [[{"text": "✅ Ответил(а)", "callback_data": "ans:x:0"}]]
+# Бот молчит (клиента ведёт флорист) — «🤖 Вернуть бота»: бот снова ведёт клиента с того места, где остановились.
+RESUME_BUTTON = [[{"text": "🤖 Вернуть бота", "callback_data": "bot:x:0"}]]
 
 
 def _chat_url(client):
@@ -287,7 +326,7 @@ def _answer_buttons(client):
     name = client_name(client)
     m = re.search(r"@(\w{4,})", name)
     rows = [[{"text": "💬 Открыть чат с клиентом", "url": f"https://t.me/{m.group(1)}"}]] if m else []
-    return rows + ANSWER_BUTTON
+    return rows + ANSWER_BUTTON + RESUME_BUTTON
 
 
 def notify_staff_wait(client, text, buttons=None):
@@ -325,10 +364,12 @@ def staff_answered(client, who=None):
     db.del_setting(f"await:{client}")
     db.del_setting(f"awaitmsgs:{client}")
     if who:
-        _edit_msgs(msgs, f"✅ Ответил(а) клиенту — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
+        _edit_msgs(msgs, f"✅ Ответил(а) клиенту — {who}, {time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}",
+                   RESUME_BUTTON if db.is_paused(client) else None)
         return
     db.set_setting(f"claim:{client}", json.dumps(msgs, ensure_ascii=False))
-    _edit_msgs(msgs, "💬 Клиенту ответили в чате магазина — кто ответил(а), нажмите «✅ Ответил(а)»:", ANSWER_BUTTON)
+    _edit_msgs(msgs, "💬 Клиенту ответили в чате магазина — кто ответил(а), нажмите «✅ Ответил(а)»:",
+               ANSWER_BUTTON + (RESUME_BUTTON if db.is_paused(client) else []))
 
 
 def waiting_clients():
@@ -743,6 +784,9 @@ def _handle_business(update, deliver):
             return  # это наш же ответ, не реагируем
         db.pause(client, config.HUMAN_PAUSE_HOURS)  # сотрудник вступил в разговор — бот умолкает
         staff_answered(client)
+        said = (msg.get("text") or msg.get("caption") or "").strip()
+        if said:   # слова флориста — в историю: после «🤖 Вернуть бота» бот продолжит с учётом того, о чём договорились
+            db.add_message(client, "assistant", f"(флорист) {said}")
         return
 
     text = (msg.get("text") or msg.get("caption") or "").strip()
@@ -798,13 +842,27 @@ def _handle_callback(cq, on_check):
                 msgs = []
             db.del_setting(f"claim:{client}")
             _edit_msgs(msgs, f"✅ Ответил(а) клиенту — {_staff_name(cq.get('from'))}, "
-                             f"{time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}")
+                             f"{time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}",
+                       RESUME_BUTTON if db.is_paused(client) else None)
             call("answerCallbackQuery", callback_query_id=cq["id"], text="Отмечено ✅")
             if _rest_buttons(m):
                 _mark_done(m, "", _rest_buttons(m))
         else:
             call("answerCallbackQuery", callback_query_id=cq["id"], text="Уже отмечено ✅")
             _mark_done(m, "", _rest_buttons(m))
+        return
+    if parts[0] == "bot":
+        # «🤖 Вернуть бота»: флорист закончил(а) — бот снова ведёт клиента.
+        client = db.client_for_staff_message(m.get("chat", {}).get("id"), m.get("message_id")) if m else None
+        if not client:
+            call("answerCallbackQuery", callback_query_id=cq["id"], text="Не нашла клиента для этого сообщения.")
+            return
+        res = _hooks["on_resume"](client) if _hooks.get("on_resume") else "Бот снова ведёт клиента 🤖"
+        call("answerCallbackQuery", callback_query_id=cq["id"], text=res[:200])
+        rest = [r for r in ((m.get("reply_markup") or {}).get("inline_keyboard") or [])
+                if not any(str(b.get("callback_data") or "").startswith(("bot:", "ans:")) for b in r)]
+        _mark_done(m, f"🤖 Бот снова ведёт клиента — вернул(а) {_staff_name(cq.get('from'))}, "
+                      f"{time.strftime('%H:%M', time.gmtime(time.time() + 3 * 3600))}", rest or None)
         return
     if parts[0] == "show" and parts[2].isdigit() and _hooks.get("on_show"):
         call("answerCallbackQuery", callback_query_id=cq["id"])
@@ -954,9 +1012,10 @@ def run_polling(deliver, on_check):
 
 
 def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None, on_pay=None,
-          on_report=None, on_show=None, counts=None, on_delivered=None):
+          on_report=None, on_show=None, counts=None, on_delivered=None, on_resume=None):
     _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question, on_more=on_more,
-                  on_pay=on_pay, on_report=on_report, on_show=on_show, counts=counts, on_delivered=on_delivered)
+                  on_pay=on_pay, on_report=on_report, on_show=on_show, counts=counts, on_delivered=on_delivered,
+                  on_resume=on_resume)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return
