@@ -3596,6 +3596,21 @@ def respond(client, incoming, from_staff=False, quote=""):
         # Короткая анкета: город известен — сразу показываем букеты (дату, если не сказали, спросим потом).
         # Город известен (в т.ч. только что назван) — сразу к выбору букета (Абдулле так нравится).
         after_anketa = ANKETA_TAIL in prev_bot or "онлайн-помощник" in prev_bot or city_new
+        if db.get_setting(f"anketa_date:{client}"):          # ответил на «на какую дату и время» — теперь букеты
+            db.del_setting(f"anketa_date:{client}")
+            after_anketa = True
+        # Абдулла: город узнали — сначала дата и время, и только потом букеты (а не сразу закидывать фото).
+        user_txt = [m["content"] for m in db.history(client, 60) if m["role"] == "user"]
+        knows_date = any(f.startswith("дата") for f in _known_facts(user_txt)) or bool(_night_target(client))
+        if after_anketa and not knows_date and not wants_photos and not catalog_budget(incoming or "") \
+                and not re.search(r"(?:пришли|скин|покаж|присыл|отправ)\w*[^.?!]{0,25}(?:вариант|букет|фото)|"
+                                  r"(?:вариант|букет|фото)\w*[^.?!]{0,15}(?:пришли|скин|покаж|присыл)", incoming or "", re.I):
+            q = NIGHT_DATE_Q if shops_closed_now(city) else DATE_Q
+            db.set_setting(f"anketa_date:{client}", "1")
+            db.set_setting(f"lastq:{client}", q)
+            text = q if not city_new else f"Отлично, {city} 🌸 {q}"
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
     # Срабатывает и когда выбран букет (picked), и когда клиент пишет «этот/его/такой ... побольше» без reply.
     # НО не путаем с «покажи побольше ВАРИАНТОВ» — там как раз нужно показать.

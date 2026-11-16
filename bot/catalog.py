@@ -212,6 +212,8 @@ class Catalog:
         need_qty = _quantity(q)  # сколько штук просит клиент (для поштучных цветов)
         stems = {_stem(w) for w in re.findall(r"[а-яёa-z]+", q) if len(w) >= 3 and w not in STOP_WORDS}
         wanted_sections = {name for name, pattern in SECTION_HINTS if re.search(pattern, q)}
+        dried_ok = bool(re.search(r"сухоцвет|сухие|сушен|засушен|стабилизир", q)) and not re.search(
+            r"не\s+(?:из\s+)?сухоцвет|без\s+сухоцвет|кроме\s+сухоцвет|только\s+сухоцвет|не\s+сух", q)
 
         with self._lock:
             sections = list(self.sections)
@@ -229,6 +231,9 @@ class Catalog:
             for it in items:
                 if it.get("stock") is not None and it["stock"] <= 0 and it["code"] not in keep_codes:
                     continue                    # на сайте нет в наличии — не предлагаем
+                # Сухоцветы — только если клиент сам о них спросил («цветочки» ≈ «сухоЦВЕТЫ» по корню — не то).
+                if "сухоцвет" in it["title"].lower() and not dried_ok and it["code"] not in keep_codes:
+                    continue
                 title = it["title"].lower()
                 score = sum(1 for s in stems if s in title) * 2
                 if name in wanted_sections:
@@ -286,7 +291,7 @@ class Catalog:
 
 STOP_WORDS = set("""здравствуйте добрый день вечер утро привет сколько стоит стоят стоимость цена цены есть
 хочу хотим хотела хотел нужен нужна нужно можно какие какой какая букет букеты букетик цветы цветов
-пожалуйста спасибо подскажите скажите будет есть ваш ваши вас нас мне для или это как что где когда
+цветочки цветочков цветочек цветочка цветами пожалуйста спасибо подскажите скажите будет есть ваш ваши вас нас мне для или это как что где когда
 рублей руб тысяч""".split())
 
 SECTION_HINTS = [
