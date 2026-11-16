@@ -119,6 +119,43 @@ def send_client_photo(client, item):
         db.remember_sent(f"biz:{cid}:{msg['message_id']}")
 
 
+def send_client_album(client, items):
+    """Несколько букетов — ОДНИМ альбомом (плиткой), а не 5–6 отдельными сообщениями (Абдулла: листать неудобно).
+    Каждое фото в альбоме — отдельное сообщение Telegram: ответ клиента на любое из них = выбор этого букета.
+    Не вышло — шлём по одному, как раньше."""
+    kind, cid = client.split(":", 1)
+    conn = _biz_conn_id() if kind == "tgb" else None
+    files, media = {}, []
+    for n, item in enumerate(items[:10]):
+        try:
+            data = images.jpeg_bytes(item["images"][0]) if images.Image is not None else None
+        except Exception as e:
+            log.warning("Фото %s для альбома не загрузилось: %s", item.get("code"), e)
+            continue
+        cap = f"{item['title']} — {item['price']} ₽"[:1000]
+        if data:
+            files[f"p{n}"] = (f"p{n}.jpg", data, "image/jpeg")
+            media.append({"type": "photo", "media": f"attach://p{n}", "caption": cap, "_code": item["code"]})
+        else:
+            media.append({"type": "photo", "media": item["images"][0], "caption": cap, "_code": item["code"]})
+    codes = [m.pop("_code") for m in media]
+    msgs = None
+    if len(media) >= 2:
+        params = {"chat_id": cid, "media": json.dumps(media, ensure_ascii=False)}
+        if conn:
+            params["business_connection_id"] = conn
+        msgs = call("sendMediaGroup", files=files or None, **params) if files else \
+            call("sendMediaGroup", chat_id=cid, media=media, **({"business_connection_id": conn} if conn else {}))
+    if not msgs:
+        for item in items:
+            send_client_photo(client, item)
+        return
+    for m, code in zip(msgs, codes):
+        db.link_photo(cid, m["message_id"], code)          # ответ на это фото = этот букет
+        if kind == "tgb":
+            db.remember_sent(f"biz:{cid}:{m['message_id']}")
+
+
 def _remember_copies(sent):
     """Одно и то же сообщение ушло нескольким сотрудникам: запоминаем все копии, чтобы отметка
     («👁 Просмотрено — Маша», «✅ Отмечено…») появилась у ВСЕХ, а не только у того, кто нажал."""

@@ -62,6 +62,10 @@ def _send_photo(client, item):
         telegram_bot.send_client_photo(client, item)
 
 
+AVAIL_NOTE = ("Это примеры наших работ 🌸 Когда выберете, что нравится, флорист уточнит, все ли цветы "
+              "из состава сейчас в наличии.")
+
+
 def _label(client):
     kind, cid = client.split(":", 1)
     name = telegram_bot.client_name(client)
@@ -497,10 +501,21 @@ def deliver(client, text, from_staff=False, quote=""):
         if reply.text:
             # ТЗ п.9: служебные пометки в квадратных скобках («[уточнить]») клиенту никогда не показываем.
             reply.text = re.sub(r"[ \t]*\[[^\]\n]{0,60}\][ \t]*", " ", reply.text).replace(" ,", ",").strip()
+        album = len(reply.photos) >= 2 and not client.startswith("ig:") and not reply.order
+        if reply.text and album:
+            # Несколько букетов — это ПРИМЕРЫ работ: наличие цветов флорист уточнит после выбора (Абдулла).
+            reply.text = re.sub(r"Ответьте\s+«этот»\s+на\s+фото\.?", "Ответьте на фото или напишите номер букета.",
+                                reply.text)
+            if not db.get_setting(f"availnote:{client}"):
+                reply.text = reply.text.rstrip() + "\n\n" + AVAIL_NOTE
+                db.set_setting(f"availnote:{client}", "1")
         if reply.text:
             _send_text(client, brain.pretty(reply.text))  # короткими абзацами — легче читать
-        for item in reply.photos:
-            _send_photo(client, item)
+        if album:
+            telegram_bot.send_client_album(client, reply.photos)   # одним альбомом, а не 5 сообщений
+        else:
+            for item in reply.photos:
+                _send_photo(client, item)
 
         # Клиенту сказали «передала флористу» — значит, флорист ОБЯЗАН получить заявку. Если каких-то полей не
         # хватает, она всё равно уходит, но с пометкой — флорист уточнит у клиента. Заказ не должен теряться.
