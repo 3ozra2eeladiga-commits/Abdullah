@@ -1551,7 +1551,8 @@ def _phone_was_given(order_value, client_text):
     return digits[-7:] in client_digits
 
 
-PACK_Q = ("Упаковка: простая (бесплатная {free}) или пышная красивая — от {price} ₽? Ответьте «обычная» или «пышная» 🎀")
+PACK_Q = ("Упаковка: простая — {free} (бесплатно) или поинтереснее — пышная, красивая, от {price} ₽? "
+          "Ответьте «простая» или «поинтереснее» 🎀")
 
 
 def _pack_cfg():
@@ -3333,7 +3334,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             card_done = True
     # Ответ на вопрос об упаковке («обычная» / «пышная») — запоминаем и сразу дальше: итог или недостающее.
     if not from_staff and not card_done and last_q.startswith(PACK_Q.split("{")[0]):
-        lush = re.search(r"пышн|красив|нарядн|\bда\b|дорог", incoming or "", re.I)
+        lush = re.search(r"пышн|красив|нарядн|\bда\b|дорог|интересн|поинтерес|покрасив|получше", incoming or "", re.I)
         free = re.search(r"обычн|бесплат|пл[её]нк|лент|прозрач|\bнет\b|не\s*нуж|\bбез\b|прост", incoming or "", re.I)
         if lush or free:
             db.set_setting(f"pack:{client}", "lush" if lush and not free else "free")
@@ -4444,6 +4445,25 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = []
         if q:
             db.set_setting(f"lastq:{client}", q)
+    # Поштучные цветы: клиент назвал количество («15 штук») — сразу общая сумма и вопрос про упаковку (Абдулла).
+    ch_it = None if (from_staff or reply.order) else catalog.get(db.get_setting(f"chosen:{client}") or "", city)
+    m_qty = re.search(r"(?<![\d:.])(\d{1,3})\s*(?:шт\w*|штук\w*|роз\w*|цвет\w*|$)", (incoming or "").strip(), re.I)
+    if ch_it and ch_it.get("stock") is not None and m_qty and not db.get_setting(f"pack:{client}") \
+            and (last_q.startswith("Сколько штук") or re.search(r"шт|штук|роз", incoming or "", re.I)) \
+            and not re.search(r"похорон|траур|помин|кладбищ", incoming or "", re.I):
+        qty = int(m_qty.group(1))
+        if 0 < qty <= 1001:
+            total = qty * int(ch_it["price"])
+            if ch_it.get("stock") and qty > ch_it["stock"]:
+                reply.text = (f"Сейчас в наличии {ch_it['stock']} шт. 🙏 Подойдёт {ch_it['stock']} или меньше? "
+                              "Напишите, сколько штук.")
+                db.set_setting(f"lastq:{client}", "Сколько штук нужно? 🌸")
+            else:
+                db.set_setting(f"qty:{client}", qty)
+                pq = PACK_Q.format(free=_pack_free(), price=_lush_price(total))
+                reply.text = f"{ch_it['title']}: {qty} шт. × {ch_it['price']} ₽ = {_rub(total)} 🌸\n\n{pq}"
+                db.set_setting(f"lastq:{client}", pq)
+            reply.photos = []
     if reply.avail_item and not reply.order and not from_staff:
         # Выбран букет — флорист проверяет наличие (вопрос уходит из app). Клиенту: предупредить и продолжить.
         nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
