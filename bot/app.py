@@ -504,7 +504,7 @@ def deliver(client, text, from_staff=False, quote=""):
         album = len(reply.photos) >= 2 and not client.startswith("ig:") and not reply.order
         if reply.text and album:
             # Несколько букетов — это ПРИМЕРЫ работ: наличие цветов флорист уточнит после выбора (Абдулла).
-            reply.text = re.sub(r"Ответьте\s+«этот»\s+на\s+фото\.?", "Ответьте на фото или напишите номер букета.",
+            reply.text = re.sub(r"Ответьте\s+«этот»\s+на\s+фото\.?", "Напишите номер фото (1, 2, 3…) или ответьте на фото.",
                                 reply.text)
             if not db.get_setting(f"availnote:{client}"):
                 reply.text = reply.text.rstrip() + "\n\n" + AVAIL_NOTE

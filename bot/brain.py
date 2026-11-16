@@ -425,6 +425,19 @@ def _picked_by_ordinal(client, incoming, city):
     return [it] if it else []
 
 
+def _picked_by_digit(client, incoming, city):
+    """«2» сразу после альбома с номерами на фото — это букет №2 из показанных (а не номер в каталоге)."""
+    m = re.fullmatch(r"\W*(?:фото|вариант|букет|номер|№)?\s*([1-9])\W*", incoming or "", re.I)
+    if not m or db.get_setting(f"chosen:{client}") or not re.search(r"нравится|номер фото", _last_bot_text(client, "")):
+        return []
+    shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
+    i = int(m.group(1)) - 1
+    if i >= len(shown):
+        return []
+    it = catalog.get(shown[i], city) or catalog.get(shown[i])
+    return [it] if it else []
+
+
 def _picked_by_price(client, incoming, city):
     """«За 2300» сразу после показа фото — это выбор букета с такой ценой среди показанных (не бюджет и не доплата).
     Цена может быть округлена: «за 2300» — это букет за 2299 ₽. Выбираем, только если подходит ровно один."""
@@ -2760,6 +2773,28 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Вопрос о недостающем (открытка и т.п.), который в прошлый раз задал КОД вместо ответа ИИ.
     last_q = "" if from_staff else (db.get_setting(f"lastq:{client}") or "")
     asked_before = last_q                       # какой вопрос бот задал в прошлый раз (для вежливого переспроса)
+    # Ответ на уточнение «собрать на 3000 или на 3000 дешевле?» (1 / 2).
+    upq = None if from_staff else db.get_setting(f"upq:{client}")
+    if upq and re.fullmatch(r"\W*([12])\W*", incoming or ""):
+        code, sign, n = (upq.split("|") + ["", "", ""])[:3]
+        it_u = catalog.get(code, city) or catalog.get(code)
+        db.del_setting(f"upq:{client}")
+        if it_u and n.isdigit():
+            base, n = int(it_u["price"]), int(n)
+            opt = (incoming or "").strip(" .)")[0]
+            amount = abs(base - n) if opt == "1" else n
+            final = base + amount if sign == "+" else base - amount
+            db.set_setting(f"upsize:{client}", f"{code}|{sign}|{amount}")
+            db.set_setting(f"chosen:{client}", code)
+            db.add_message(client, "user", incoming)
+            nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
+                                _known_order(client))
+            text = f"Хорошо 🌸 Соберём {it_u['title']} на {_rub(final)} — флорист учтёт."
+            if nq and nq != ALMOST_DONE_Q:
+                text += f" {nq}"
+                db.set_setting(f"lastq:{client}", nq)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
     if last_q:
         db.del_setting(f"lastq:{client}")
     # «Да» на «Оформим на завтра — к какому времени? Например: завтра к 10:00» — берём время из нашего примера.
@@ -2774,6 +2809,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                + (_picked_card_by_name(incoming, city) if _card_pick_turn(client, incoming, last_q) else [])
                + _card_yes(client, incoming, city, last_q)
                + _picked_by_ordinal(client, incoming, city)
+               + _picked_by_digit(client, incoming, city)
                + _picked_by_price(client, incoming, city))
               if not from_staff else [])
     _seen = set()
@@ -4495,6 +4531,24 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = []
         if q:
             db.set_setting(f"lastq:{client}", q)
+    # «Второй букет собрать поменьше на 3000» — непонятно: ИТОГО 3000 или на 3000 дешевле. Переспрашиваем цифрами.
+    n_money = _money(incoming) if (size_change and up_target and not from_staff and not reply.order) else 0
+    if n_money:
+        base = int(up_target["price"])
+        minus = up_sign == "-"
+        alt = base - n_money if minus else base + n_money
+        if (minus and 0 < n_money < base) or (not minus and n_money > 0):
+            opts = []
+            if (minus and n_money < base) or (not minus and n_money > base):
+                opts.append(f"1 — на {_rub(n_money)} (итоговая сумма букета)")
+            if alt > 0:
+                opts.append(f"{len(opts) + 1} — на {_rub(n_money)} {'дешевле' if minus else 'дороже'}: {_rub(alt)}")
+            if len(opts) == 2:
+                db.set_setting(f"upq:{client}", f"{up_target['code']}|{up_sign}|{n_money}")
+                db.set_setting(f"lastq:{client}", "Уточню, как собрать")   # «1/2» — не время и не бюджет
+                reply.text = (f"{up_target['title']} сейчас {_rub(base)}. Уточню, как собрать "
+                              f"{'поменьше' if minus else 'побольше'}:\n" + "\n".join(opts) + "\nОтветьте цифрой 🌸")
+                reply.photos = []
     # Клиент пропустил ВАЖНЫЙ вопрос (без ответа заказ не оформить) — отвечаем на его сообщение и вежливо, но
     # настойчиво переспрашиваем (Абдулла). Второй раз подряд — объясняем, что без этого никак.
     required = (WAY_Q, DATE_Q, DATE_ONLY_Q, TIME_Q, NIGHT_DATE_Q, ADDRESS_Q, CONTACTS_Q, PICKUP_CONTACT_Q)

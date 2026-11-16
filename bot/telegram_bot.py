@@ -128,11 +128,11 @@ def send_client_album(client, items):
     files, media = {}, []
     for n, item in enumerate(items[:10]):
         try:
-            data = images.jpeg_bytes(item["images"][0]) if images.Image is not None else None
+            data = images.numbered_jpeg(item["images"][0], n + 1) if images.Image is not None else None
         except Exception as e:
             log.warning("Фото %s для альбома не загрузилось: %s", item.get("code"), e)
             continue
-        cap = f"{item['title']} — {item['price']} ₽"[:1000]
+        cap = f"{n + 1}. {item['title']} — {item['price']} ₽"[:1000]
         if data:
             files[f"p{n}"] = (f"p{n}.jpg", data, "image/jpeg")
             media.append({"type": "photo", "media": f"attach://p{n}", "caption": cap, "_code": item["code"]})
