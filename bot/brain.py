@@ -283,6 +283,7 @@ class Reply:
     staff_note: str = ""                         # сообщение флористу (например, дополнение к отправленному заказу)
     staff_photos: list = field(default_factory=list)
     avail_item: dict | None = None               # выбранный букет — флорист сразу проверяет наличие (app)
+    avail_note: str = ""                         # пояснение флористу к проверке наличия («такой же, но на 3 000 ₽»)
 
 
 # «Отмените заказ», «передумал»; «отметить это» — так голосовой ввод часто слышит «отменить».
@@ -2125,8 +2126,10 @@ def _apply_client_state(order, client, city):
         _code, sign, amount = (up.split("|") + ["", "", ""])[:3]
         if amount:
             order["доплата"] = int(amount) * (-1 if sign == "-" else 1)
-            note = (f"Собрать пышнее: добавить цветов на {amount} ₽" if sign != "-"
-                    else f"Собрать скромнее: на {amount} ₽ меньше")
+            base_it = catalog.get(_code, city) or catalog.get(_code)
+            total_s = f" — итого {_rub(base_it['price'] + int(amount) * (1 if sign != '-' else -1))}" if base_it else ""
+            note = (f"Собрать такой же, но пышнее: добавить цветов на {amount} ₽{total_s}" if sign != "-"
+                    else f"Собрать такой же, но поменьше по составу: на {amount} ₽ меньше{total_s}")
             c = str(order.get("комментарий") or "").strip()
             if note not in c:
                 order["комментарий"] = (c + "; " if c else "") + note
@@ -4440,10 +4443,19 @@ def respond(client, incoming, from_staff=False, quote=""):
                     reply.text = f"{head} {nxt}" if nxt and nxt != ALMOST_DONE_Q else head
                     db.set_setting(f"lastq:{client}", nxt)
                 up_text = reply.text                  # дальше фильтры не должны его портить (см. конец функции)
+                if up_target.get("stock") is None and db.get_setting(f"availq:{client}") != up_target["code"]:
+                    db.set_setting(f"availq:{client}", up_target["code"])
+                    reply.avail_item = up_target
+                    reply.avail_note = f"Собрать такой же, но на {_rub(total)} ({'поменьше' if up_sign == '-' else 'попышнее'})"
                 db.del_setting(f"upq:{client}")
             else:
-                reply.text = (f"Сейчас букет {_rub(up_target['price'])}. На какую сумму собрать весь букет? "
-                              f"Например, {_rub(_round_budget(up_target['price'] + (1500 if up_sign == '+' else -1000)))}")
+                # Маша: НЕ спрашиваем «на сколько уменьшить» — спрашиваем бюджет похожего букета. Других фото не шлём.
+                ex = _rub(_round_budget(up_target['price'] + (1500 if up_sign == '+' else -1000)))
+                reply.text = ("Да, можно 🌸 Соберём похожий букет — из тех же цветов и в той же гамме, только "
+                              + ("поменьше" if up_sign == "-" else "попышнее")
+                              + f". На какой бюджет его собрать? Например: на {ex}")
+                db.set_setting(f"lastq:{client}", "На какой бюджет его собрать?")
+                up_text = reply.text
 
     # ИИ написал заглушку «[ссылка на каталог]» вместо настоящего адреса — подставляем реальный URL города.
     if reply.text and LINK_PLACEHOLDER_RE.search(reply.text):
@@ -4745,7 +4757,14 @@ def respond(client, incoming, from_staff=False, quote=""):
                 reply.text = f"{ch_it['title']}: {qty} шт. × {ch_it['price']} ₽ = {_rub(total)} 🌸\n\n{pq}"
                 db.set_setting(f"lastq:{client}", pq)
             reply.photos = []
-    if reply.avail_item and not reply.order and not from_staff:
+    if reply.avail_item and not reply.order and not from_staff and up_text:
+        # «Соберём букет на 3 000 ₽» — оставляем наш текст, добавляем, что флорист проверяет наличие.
+        if "Уточняю у флориста" not in reply.text:
+            head_t, _, rest_t = reply.text.partition(" 🌸")
+            reply.text = (f"{head_t} 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱"
+                          + (f"\n\nА пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{rest_t.strip()}"
+                             if rest_t.strip() else ""))
+    elif reply.avail_item and not reply.order and not from_staff:
         # Выбран букет — флорист проверяет наличие (вопрос уходит из app). Клиенту: предупредить и продолжить.
         nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
         reply.text = "Отличный выбор 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱"

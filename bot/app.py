@@ -542,7 +542,9 @@ def deliver(client, text, from_staff=False, quote=""):
         if reply.avail_item and not from_staff:   # выбрал букет из каталога — флорист сразу проверяет наличие
             it = reply.avail_item
             _avail_request(client, (it.get("images") or [None])[0],
-                           f"🔎 Клиент выбрал: {it['title']} — {it['price']} ₽\nПроверьте наличие (бот пока собирает данные)",
+                           f"🔎 Клиент выбрал: {it['title']} — {it['price']} ₽\n"
+                           + (f"‼️ {reply.avail_note}\n" if reply.avail_note else "")
+                           + "Проверьте наличие (бот пока собирает данные)",
                            {"item": it["code"], "title": it["title"], "card": False, "q": "есть в наличии?", "n": 0})
         if reply.staff_note:                     # дополнение к отправленному заказу, отмена и т.п.
             telegram_bot.notify_staff_order(client, reply.staff_photos, f"{reply.staff_note}\n{_label(client)}")
