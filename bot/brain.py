@@ -695,7 +695,10 @@ def _anketa(incoming, city):
     # Первая строка — приветствие, дальше — ОДИН понятный вопрос с примером ответа.
     if not city:
         opts = "\n".join(f"{i} — {n}" for i, n in enumerate(catalog.city_names, 1))
-        return f"{head}\nВ какой город нужны цветы? Ответьте цифрой:\n{opts}\nИли напишите ваш посёлок."
+        if has_date:
+            return f"{head}\nВ какой город нужны цветы? Ответьте цифрой:\n{opts}\nИли напишите ваш посёлок."
+        # Как хозяйка в переписке: одним вопросом — дата и город (без них не проконсультировать). Время — позже.
+        return f"{head}\nНа какую дату и в какой город нужен букет? ({' / '.join(catalog.city_names)})"
     if not has_date:
         return f"{head}\nНа какой день нужны цветы? Например: завтра"
     return f"{head}\nВот варианты 🌸 Какой нравится?"
@@ -1341,6 +1344,10 @@ FAKE_QUESTION_RE = re.compile(
 # Клиент сам просит показать букеты фотографиями — тогда код точно приложит фото, даже если модель замялась.
 SHOW_REQUEST_RE = re.compile(
     r"кидай|кидыв|скин|покаж|показыв|пришли\s+фото|давай\s+фото|присла|присыла|пришли(?:те)?\b|на ваш вкус|на твой вкус|хочу посмотрет|что есть|фото сюда|"
+    # «А какие в наличии у вас», «какие букеты есть», «что у вас имеется», «ассортимент», «каталог» — человек хочет УВИДЕТЬ букеты,
+    # а не отвечать на вопрос про дату/время (жалоба 16.11: на «какие в наличии?» бот повторил «на какую дату?»).
+    r"в\s+наличи|как(?:ие|ой|ая)\s+(?:у\s+вас\s+)?(?:есть|имеют|букет|цвет|вариант|роз)|что\s+(?:у\s+вас\s+)?(?:есть|имеет)|"
+    r"(?:букет|цвет|вариант)\w*\s+(?:у\s+вас\s+)?(?:какие|есть\b)|ассортимент|каталог|выбор\s+(?:какой|есть)|"
     r"не знаю\s*,?\s*(?:что|как(?:ой|ие|ую)|чего)|предлаг|предлож|посовету|подбер\w*\s+сам|сам[аи]?\s+(?:выбер|подбер|предлож)|без разницы|любой|любые|"
     # «Ещё есть варианты?», «другие букеты», «есть ещё?» — показать ещё букеты (про открытки ловится раньше).
     r"(?:ещ[её]|друг\w*|ины[еx]|остальн\w*)\s+(?:есть\s+)?(?:вариант|букет|композиц)|(?:вариант|букет)\w*\s+(?:ещ[её]|друг)|"
@@ -1475,6 +1482,10 @@ WAY_Q = "Доставка или самовывоз? 🚗\n1 — доставк�
 TIME_Q = "К какому времени? 🕒 Например: к 14:00"
 NIGHT_DATE_Q = "Оформим на завтра 🌸 К какому времени? Например: завтра к 10:00"
 DATE_Q = "На какую дату и к какому времени? 📅 Например: завтра к 15:00"
+# До выбора букета спрашиваем только ДАТУ (без времени): от дня зависит, что будет в наличии.
+DATE_ONLY_Q = "На какую дату нужен букет? 📅"
+DATE_NEED = "Покажу 🌸 Подскажите дату — наличие зависит от дня."
+DATE_NEED_AGAIN = "Напишите дату — и сразу покажу букеты 🌸"
 PICKUP_CONTACT_Q = ("Ваше имя и телефон? 🌸\n(номер — только чтобы быстро связаться с вами по заказу, "
                     "никому его не передаём)")
 PICKUP_PHONE_Q = "{name}, а ваш номер телефона? 📞 Только чтобы быстро связаться по заказу — никому не передаём."
@@ -2718,6 +2729,22 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_city(client, city)
             city_new = True
 
+    # Заказ ЗАРАНЕЕ — больше чем на неделю вперёд (Абдулла 16.11): наличие зависит от поставки, бот сам не консультирует.
+    # Сразу передаём заявку флористу, клиенту — коротко «уточню у поставщиков и сообщу»; бот для этого клиента замолкает.
+    if not from_staff:
+        far_s = _latest_date([incoming or ""])
+        far_d = _resolve_date(far_s) if far_s else None
+        today_d = datetime.datetime.now(_MSK).date()
+        if far_d and (far_d - today_d).days > 7 and db.get_setting(f"far:{client}") != far_d.isoformat():
+            db.set_setting(f"far:{client}", far_d.isoformat())
+            text = "Уточню у поставщиков возможность поставки к этой дате и сообщу вам 🌸"
+            if not db.history(client, 1):
+                text = f"Здравствуйте! 🌸 {text}"
+            db.add_message(client, "user", incoming)
+            return _stop_chat(client, city, text,
+                              f"📅 Заказ заранее — на {far_d.strftime('%d.%m')} (больше недели). Город: {city or 'не назван'}. "
+                              f"Клиент пишет: «{incoming}». Уточните у поставщиков и ответьте клиенту сами.")
+
     # Вопрос о недостающем (открытка и т.п.), который в прошлый раз задал КОД вместо ответа ИИ.
     last_q = "" if from_staff else (db.get_setting(f"lastq:{client}") or "")
     if last_q:
@@ -3598,19 +3625,24 @@ def respond(client, incoming, from_staff=False, quote=""):
         # Короткая анкета: город известен — сразу показываем букеты (дату, если не сказали, спросим потом).
         # Город известен (в т.ч. только что назван) — сразу к выбору букета (Абдулле так нравится).
         after_anketa = ANKETA_TAIL in prev_bot or "онлайн-помощник" in prev_bot or city_new
-        if db.get_setting(f"anketa_date:{client}"):          # ответил на «на какую дату и время» — теперь букеты
+        asked_date_before = bool(db.get_setting(f"anketa_date:{client}"))
+        if asked_date_before:                                # ответил на «на какую дату» — теперь букеты
             db.del_setting(f"anketa_date:{client}")
             after_anketa = True
         # Абдулла: город узнали — сначала дата и время, и только потом букеты (а не сразу закидывать фото).
         user_txt = [m["content"] for m in db.history(client, 60) if m["role"] == "user"]
         knows_date = any(f.startswith("дата") for f in _known_facts(user_txt)) or bool(_night_target(client))
-        if after_anketa and not knows_date and not wants_photos and not catalog_budget(incoming or "") \
-                and not re.search(r"(?:пришли|скин|покаж|присыл|отправ)\w*[^.?!]{0,25}(?:вариант|букет|фото)|"
-                                  r"(?:вариант|букет|фото)\w*[^.?!]{0,15}(?:пришли|скин|покаж|присыл)", incoming or "", re.I):
-            q = NIGHT_DATE_Q if shops_closed_now(city) else DATE_Q
+        # Абдулла 16.11: БЕЗ ДАТЫ букеты не показываем и не консультируем — наличие зависит от дня. Спрашиваем ТОЛЬКО дату
+        # (время — потом, при оформлении). Клиент просит «покажите / какие в наличии / что есть» — вежливо объясняем, зачем дата.
+        asks_show = wants_photos or bool(catalog_budget(incoming or "")) or bool(OCCASION_RE.search(incoming or ""))
+        if not knows_date and (after_anketa or asks_show):
+            already = asked_date_before
             db.set_setting(f"anketa_date:{client}", "1")
-            db.set_setting(f"lastq:{client}", q)
-            text = q if not city_new else f"Отлично, {city} 🌸 {q}"
+            db.set_setting(f"lastq:{client}", DATE_ONLY_Q)
+            if asks_show and not city_new:
+                text = (DATE_NEED_AGAIN if already else DATE_NEED)
+            else:
+                text = DATE_ONLY_Q if not city_new else f"Отлично, {city} 🌸 {DATE_ONLY_Q}"
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
@@ -4369,13 +4401,13 @@ def respond(client, incoming, from_staff=False, quote=""):
                     reply.text = f"{answer}\n\n{reply.text.replace('Спасибо 🌸 ', '', 1)}"
         elif nxt in (WAY_Q, DATE_Q, ADDRESS_Q) and ((asks_way and nxt == WAY_Q) or (asks_when and nxt == DATE_Q)
                                                      or (asks_addr and nxt == ADDRESS_Q)) \
-                and "?" not in (incoming or ""):
+                and "?" not in (incoming or "") and not wants_photos:
             # ИИ спрашивает то же, что и код, но многословно («Хорошо, доставка. Подскажите дату и точное время,
             # когда удобно доставить…») — заменяем нашим коротким вопросом с примером/цифрами.
             reply.text = f"{'Отличный выбор' if picked else 'Хорошо'} 🌸 {nxt}"
             db.set_setting(f"lastq:{client}", nxt)
         elif nxt in (WAY_Q, DATE_Q, TIME_Q, NIGHT_DATE_Q, ADDRESS_Q) and "?" in reply.text \
-                and "?" not in (incoming or "") and not SUMMARY_RE.search(reply.text) \
+                and "?" not in (incoming or "") and not wants_photos and not SUMMARY_RE.search(reply.text) \
                 and not re.search(r"\n1 — |магазина заберёте|Упаковка|открытк", reply.text):
             # Порядок вопросов ведёт КОД: способ → день/время → адрес → контакты. ИИ забежал вперёд
             # (спросил контакты, не узнав время) — задаём наш недостающий вопрос.
