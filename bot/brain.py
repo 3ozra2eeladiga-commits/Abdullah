@@ -4865,24 +4865,31 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"lastq:{client}", q)
     if up_text and not reply.order:
         reply.text = up_text                  # «Хорошо, соберём букет на 3 000 ₽ 🌸 {вопрос}» — без обрывков и двух вопросов
-    # «Второй букет собрать поменьше на 3000» — непонятно: ИТОГО 3000 или на 3000 дешевле. Переспрашиваем цифрами.
+    # «Можно 3 букет сделать поменьше? На 2500» — сумма клиента ВСЕГДА итоговая цена букета (Маша/Абдулла:
+    # «никогда не просят вычесть»). Не переспрашиваем — сразу собираем такой же на эту сумму.
     n_money = _money(incoming) if (size_change and up_target and not from_staff and not reply.order) else 0
-    if n_money:
+    if n_money and n_money != int(up_target["price"]) \
+            and not re.search(r"\+\s*\d|добав\w*\s+(?:ещ[её]\s+)?(?:на\s+)?\d|сверху|доплат", incoming or "", re.I):
         base = int(up_target["price"])
-        minus = up_sign == "-"
-        alt = base - n_money if minus else base + n_money
-        if (minus and 0 < n_money < base) or (not minus and n_money > 0):
-            opts = []
-            if (minus and n_money < base) or (not minus and n_money > base):
-                opts.append(f"1 — на {_rub(n_money)} (итоговая сумма букета)")
-            if alt > 0:
-                opts.append(f"{len(opts) + 1} — на {_rub(n_money)} {'дешевле' if minus else 'дороже'}: {_rub(alt)}")
-            if len(opts) == 2:
-                db.set_setting(f"upq:{client}", f"{up_target['code']}|{up_sign}|{n_money}")
-                db.set_setting(f"lastq:{client}", "Уточню, как собрать")   # «1/2» — не время и не бюджет
-                reply.text = (f"{up_target['title']} сейчас {_rub(base)}. Уточню, как собрать "
-                              f"{'поменьше' if minus else 'побольше'}:\n" + "\n".join(opts) + "\nОтветьте цифрой 🌸")
-                reply.photos = []
+        sign = "-" if n_money < base else "+"
+        db.set_setting(f"upsize:{client}", f"{up_target['code']}|{sign}|{abs(base - n_money)}")
+        db.set_setting(f"chosen:{client}", up_target["code"])
+        db.del_setting(f"upq:{client}")
+        head = f"Да, можно 🌸 Соберём такой же, но {'поменьше' if sign == '-' else 'попышнее'} — на {_rub(n_money)}."
+        if up_target.get("stock") is None and db.get_setting(f"availq:{client}") != up_target["code"]:
+            db.set_setting(f"availq:{client}", up_target["code"])
+            reply.avail_item = up_target
+            reply.avail_note = f"Собрать такой же, но на {_rub(n_money)} ({'поменьше' if sign == '-' else 'попышнее'})"
+        if reply.avail_item:
+            head += " Флорист проверит наличие — пара минут ⏱"
+        nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
+                            _known_order(client))
+        reply.text = head
+        if nq and nq != ALMOST_DONE_Q:
+            reply.text += (f"\n\nА пока продолжим оформление 🌸\n{nq}" if reply.avail_item else f" {nq}")
+            db.set_setting(f"lastq:{client}", nq)
+        reply.photos = []
+        up_text = reply.text
     # ИИ сам спросил «Доставка или самовывоз? 🚗/🛒» без цифр — заменяем нашим вопросом с ответом цифрой (Абдулла).
     if not from_staff and reply.text and "\n1 — " not in reply.text and FORM_HEAD not in reply.text and re.search(
             r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк", reply.text, re.I):
@@ -4964,7 +4971,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.avail_item = picked[0]
     if reply.avail_item and not reply.order and not from_staff and up_text:
         # «Соберём букет на 3 000 ₽» — оставляем наш текст, добавляем, что флорист проверяет наличие.
-        if "Уточняю у флориста" not in reply.text:
+        if "Уточняю у флориста" not in reply.text and "Флорист проверит" not in reply.text:
             head_t, _, rest_t = reply.text.partition(" 🌸")
             reply.text = (f"{head_t} 🌸 Флорист проверит наличие — пара минут ⏱"
                           + (f"\n\nА пока продолжим оформление 🌸\n{rest_t.strip()}"
