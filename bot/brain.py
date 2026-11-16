@@ -1222,6 +1222,34 @@ def _rude_reply(client, incoming, city):
                           "/resume — включить бота обратно.")
 
 
+# Анкета оформления доставки ОДНИМ сообщением, по пунктам (Абдулла). Показываем только то, чего ещё нет;
+# номера пунктов постоянные — клиент отвечает «1. … 2. …», код разбирает ответ по номерам (_parse_form_answer).
+FORM_HEAD = "Для оформления заказа нам понадобится:"
+FORM_ITEMS = {1: "Ваши ФИО",
+              2: "Ваш номер телефона для связи",
+              3: "Имя и номер телефона получателя",
+              4: "Город доставки",
+              5: "Время и точный адрес доставки: посёлок, улица, дом (интервал доставки 1 час)"}
+FORM_TAIL = "Ответьте, пожалуйста, по пунктам — с цифрами, например: «1. Иванова Мария» 🌸"
+
+
+def _form_q(items):
+    # Номера подряд (1, 2, 3…), даже если какой-то пункт уже известен; соответствие — по тексту пункта.
+    return FORM_HEAD + "\n" + "\n".join(f"{i}. {FORM_ITEMS[n]}" for i, n in enumerate(items, 1)) + "\n\n" + FORM_TAIL
+
+
+def _parse_form_answer(text):
+    """«1. Иванова Мария 2. 8900… 3. Аня 8928… 5. к 15:00, Крайнего 90» → {номер: текст}. Пусто — не по пунктам."""
+    t = " " + (text or "").replace("\n", " ") + " "
+    parts = re.split(r"(?<=\s)([1-5])\s*[.):\-—]\s*", t)
+    out = {}
+    for i in range(1, len(parts) - 1, 2):
+        val = parts[i + 1].strip(" ,;")
+        if val:
+            out[int(parts[i])] = val
+    return out if len(out) >= 1 and len(parts) >= 3 else {}
+
+
 def _next_question(user_msgs, city, order=None):
     """Следующий вопрос оформления — только о том, чего клиент ЕЩЁ НЕ говорил (не переспрашиваем доставку/дату).
     order — уже собранный заказ (итог, который клиент видел): что в нём есть, тоже не спрашиваем."""
@@ -1249,6 +1277,19 @@ def _next_question(user_msgs, city, order=None):
         return WAY_Q
     if not has_date and has_time:
         return "На какую дату? 📅 Например: завтра"
+    if has_date and not pickup and not o.get("_сюрприз"):
+        cust = str(o.get("заказчик") or "")
+        need = []
+        if not re.search(r"[А-Яа-яЁёA-Za-z]{2}", re.sub(r"ваш\w*|имя|телефон|\.\.\.", "", cust, flags=re.I)):
+            need.append(1)
+        if len(phones) < 1:
+            need.append(2)
+        if len(phones) < 2 and not o.get("_получатель_есть"):
+            need.append(3)
+        if not has_time or not has_addr:
+            need.append(5)
+        if len(need) >= 2:
+            return _form_q(need)
     if has_date and not has_time:
         return TIME_Q
     if not (has_date and has_time):
@@ -1516,7 +1557,8 @@ NO_ADDR_RE = re.compile(r"нет\s+(?:е[её]\s+|его\s+)?адреса|не\s
                         r"без\s+адреса|только\s+(?:номер|телефон)", re.I)
 # «Нет адреса и времени, только телефон» / «можете узнать время и адрес у получателя?»
 NO_ADDR_TIME_RE = re.compile(r"нет\s+(?:ни\s+)?адреса\s*,?\s*(?:и|ни)\s+врем|нет\s+(?:ни\s+)?времени\s*,?\s*(?:и|ни)\s+адрес|"
-                             r"(?:узна|спрос|уточн)\w*[^.?!]{0,30}(?:врем\w*\s+и\s+адрес|адрес\w*\s+и\s+врем)", re.I)
+                             r"(?:узна|спрос|уточн)\w*[^.?!]{0,30}(?:врем\w*\s+и\s+адрес|адрес\w*\s+и\s+врем)|"
+                             r"(?:врем\w*\s+и\s+адрес|адрес\w*\s+и\s+врем)\w*[^.?!]{0,25}(?:узна|спрос|уточн)", re.I)
 SURPRISE_Q1 = "Хорошо 🌸 Имя и телефон получателя? Флорист позвонит и всё уточнит."
 SURPRISE_Q2 = "Хорошо 🌸 Напишите имя получателя и где её найти: адрес, место (магазин, аптека, офис), как узнать."
 # По одному вопросу за раз (два вопроса в одном сообщении клиенты путают), с ответами цифрами.
@@ -2809,6 +2851,40 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Вопрос о недостающем (открытка и т.п.), который в прошлый раз задал КОД вместо ответа ИИ.
     last_q = "" if from_staff else (db.get_setting(f"lastq:{client}") or "")
     asked_before = last_q                       # какой вопрос бот задал в прошлый раз (для вежливого переспроса)
+    # Ответ на анкету «Для оформления заказа нам понадобится: 1… 2… 3… 5…» по пунктам — раскладываем по местам
+    # и дальше разбираем как обычную фразу (имена/телефоны/время/адрес — существующей логикой).
+    if not from_staff and last_q.startswith(FORM_HEAD):
+        ans = _parse_form_answer(incoming)
+        # номер в ответе → настоящий пункт анкеты (по тексту строк в нашем вопросе)
+        shown_map = {int(m.group(1)): next((k for k, v in FORM_ITEMS.items() if v == m.group(2).strip()), 0)
+                     for m in re.finditer(r"(?m)^(\d)\. (.+)$", last_q)}
+        ans = {shown_map.get(k, k): v for k, v in ans.items() if shown_map.get(k, k)}
+        if ans:
+            ct = _contacts(client)
+            if ans.get(1):
+                ct["me_name"] = re.sub(r"\s+", " ", PHONE_RE.sub(" ", ans[1])).strip(" ,.")[:60]
+            ph1 = PHONE_RE.search(ans.get(2, "") or (ans.get(1, "") if not ans.get(2) else ""))
+            if ph1:
+                ct["me_phone"] = ph1.group(0).strip()
+            if ans.get(3):
+                ph3 = PHONE_RE.search(ans[3])
+                if ph3:
+                    ct["to_phone"] = ph3.group(0).strip()
+                    ct["to_name"] = re.sub(r"\s+", " ", PHONE_RE.sub(" ", ans[3])).strip(" ,.")[:60] or "получатель"
+                else:
+                    ct["to_where"] = ans[3]
+                    ct["to_name"] = ans[3].split(",")[0].strip()[:60]
+            db.set_setting(f"contacts:{client}", json.dumps(ct, ensure_ascii=False))
+            bits = []
+            if ans.get(1) or ct.get("me_phone"):
+                bits.append(f"Заказчик: {ct.get('me_name') or ''} {ct.get('me_phone') or ''}".strip())
+            if ans.get(3):
+                bits.append(f"Получатель: {ans[3]}")
+            if ans.get(4):
+                bits.append(f"Город доставки: {ans[4]}")
+            if ans.get(5):
+                bits.append(f"Доставка, время и адрес: {ans[5]}")
+            incoming = ". ".join(bits) + "." if bits else incoming
     # Ответ на уточнение «собрать на 3000 или на 3000 дешевле?» (1 / 2).
     upq = None if from_staff else db.get_setting(f"upq:{client}")
     if upq and re.fullmatch(r"\W*([12])\W*", incoming or ""):
@@ -3077,7 +3153,12 @@ def respond(client, incoming, from_staff=False, quote=""):
                 return Reply(text=q, city=city)
             if phone:
                 st["to_phone"] = phone.group(0).strip()
-                st["to_name"] = _name_from(PHONE_RE.sub(" ", t_in)) or st.get("to_name") or "получатель"
+                first = re.match(r"\s*([А-ЯЁ][а-яё]{1,20})\b", PHONE_RE.sub(" ", t_in))
+                st["to_name"] = (_name_from(PHONE_RE.sub(" ", t_in)) or (first.group(1) if first else "")
+                                 or st.get("to_name") or "получатель")
+                if NO_ADDR_TIME_RE.search(t_in):          # «адрес и время узнайте у неё» — флорист позвонит получателю
+                    db.set_setting(f"noaddr:{client}", "1")
+                    db.set_setting(f"notime:{client}", "1")
             else:
                 st["to_where"] = t_in
                 st["to_name"] = st.get("to_name") or (_name_from(t_in.split(",")[0]) or "получатель")
@@ -4603,7 +4684,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Клиент пропустил ВАЖНЫЙ вопрос (без ответа заказ не оформить) — отвечаем на его сообщение и вежливо, но
     # настойчиво переспрашиваем (Абдулла). Второй раз подряд — объясняем, что без этого никак.
     required = (WAY_Q, DATE_Q, DATE_ONLY_Q, TIME_Q, NIGHT_DATE_Q, ADDRESS_Q, CONTACTS_Q, PICKUP_CONTACT_Q)
-    if not from_staff and asked_before in required and not reply.order and reply.text and not keep_photos:
+    if not from_staff and asked_before in required and not reply.order and reply.text and not keep_photos \
+            and not asked_before.startswith(FORM_HEAD):
         still = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
                                _known_order(client))
         txt = reply.text.rstrip()
