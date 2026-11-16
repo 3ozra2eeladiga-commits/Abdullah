@@ -1348,6 +1348,43 @@ def _parse_form_answer(text):
     return out if len(out) >= 1 and len(parts) >= 3 else {}
 
 
+def _known_keys(user_msgs, city, order=None):
+    """Что клиент УЖЕ сообщил (по всей переписке + черновику): способ, дата, время, адрес, город, контакты.
+    Нужно, чтобы НИКОГДА не переспрашивать уже известное (Абдулла)."""
+    o = order or {}
+    known = " ".join(str(o.get(k) or "") for k in ("получение", "дата", "время", "адрес", "заказчик", "получатель")
+                     if str(o.get(k) or "").strip() not in ("", "—", "...", "…"))
+    t = (" ".join(user_msgs) + " " + known).lower()
+    t_time = re.sub(r"\b\d{1,2}\.(?:0[1-9]|1[0-2])\b(?!:)", " ", t)
+    phones = PHONE_RE.findall(t)
+    keys = set()
+    if city:
+        keys.add("city")
+    if re.search(r"доставк|достав|самовывоз|заберу|забер[её]м|привез", t):
+        keys.add("way")
+    if re.search(r"сегодня|завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|понедельник|вторник|сред[уа]|четверг|пятниц|суббот|"
+                 r"воскресень|\b\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)", t):
+        keys.add("date")
+    if re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\b(?:после|около)\s*\d{1,2}\b|утр|вечер|обед|как можно скор|узнать у получателя", t_time):
+        keys.add("time")
+    if _has_address(user_msgs) or len(str(o.get("адрес") or "").strip()) >= 6:
+        keys.add("address")
+    if phones:
+        keys.add("me_phone")
+    if len(phones) >= 2 or o.get("_получатель_есть"):
+        keys.add("recipient")
+    return keys
+
+
+# Какой вопрос задаёт бот → какое поле (для защиты от повторных вопросов).
+ASK_KEYS = [("way", r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк"),
+            ("date", r"на\s+какую\s+дату|какой\s+день|какого\s+числа"),
+            ("time", r"к\s+какому\s+времени|во\s+сколько|ко\s+скольки"),
+            ("address", r"адрес\s+доставки\?|куда\s+доставить|какой\s+адрес"),
+            ("city", r"в\s+какой\s+город|какой\s+город"),
+            ("recipient", r"(?:имя\s+и\s+)?телефон\w*\s+получател")]
+
+
 def _next_question(user_msgs, city, order=None):
     """Следующий вопрос оформления — только о том, чего клиент ЕЩЁ НЕ говорил (не переспрашиваем доставку/дату).
     order — уже собранный заказ (итог, который клиент видел): что в нём есть, тоже не спрашиваем."""
@@ -1368,15 +1405,7 @@ def _next_question(user_msgs, city, order=None):
     pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
     has_addr = _has_address(user_msgs) or "адрес_есть" in t
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
-    # Букет выбран, дата известна, а способ ещё нет — сразу ВСЯ анкета одним сообщением (Абдулла: «разом»,
-    # пока флорист проверяет наличие): первый пункт — доставка или самовывоз.
-    if not has_way and has_date and (o.get("товары") or o.get("_выбран")):
-        need = [0, 1, 2, 3]
-        if not has_addr:
-            need.append(4)
-        if not has_time or not has_addr:
-            need.append(5)
-        return _form_q(need)
+    # Абдулла: после выбора букета СНАЧАЛА «Доставка или самовывоз?», и только при доставке — анкета.
     # Спрашиваем ПО ОДНОМУ коротко, как живой флорист, — не списком всё сразу (Абдулла просил так не писать).
     if not has_way and not (has_date and has_time):
         return WAY_Q
@@ -4861,6 +4890,22 @@ def respond(client, incoming, from_staff=False, quote=""):
                  if p.strip() and not re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк", p, re.I)]
         reply.text = (" ".join(parts) + "\n\n" if parts else "") + WAY_Q
         db.set_setting(f"lastq:{client}", WAY_Q)
+    # НИКОГДА не переспрашиваем то, на что клиент уже ответил (Абдулла): убираем такие вопросы из ответа
+    # и вместо них задаём следующий действительно недостающий.
+    if not from_staff and reply.text and not reply.order and FORM_HEAD not in reply.text:
+        msgs_all = [m["content"] for m in db.history(client, 80) if m["role"] == "user"]
+        kn = _known_keys(msgs_all, city, _known_order(client))
+        parts = [p for p in re.split(r"(?<=[.!?])\s+|\n+", reply.text) if p.strip()]
+        drop = [p for p in parts if "?" in p and any(k in kn and re.search(rx, p, re.I) for k, rx in ASK_KEYS)]
+        if drop:
+            keep = [p for p in parts if p not in drop and not re.match(r"\s*\d+\s+—\s", p)]
+            nq2 = _next_question(msgs_all, city, _known_order(client))
+            if nq2 and nq2 != ALMOST_DONE_Q and not any(k in kn and re.search(rx, nq2, re.I) for k, rx in ASK_KEYS) \
+                    and nq2 not in reply.text:
+                keep.append(nq2)
+                db.set_setting(f"lastq:{client}", nq2)
+            if keep:
+                reply.text = " ".join(keep)
     # Клиент пропустил ВАЖНЫЙ вопрос (без ответа заказ не оформить) — отвечаем на его сообщение и вежливо, но
     # настойчиво переспрашиваем (Абдулла). Второй раз подряд — объясняем, что без этого никак.
     required = (WAY_Q, DATE_Q, DATE_ONLY_Q, TIME_Q, NIGHT_DATE_Q, ADDRESS_Q, CONTACTS_Q, PICKUP_CONTACT_Q)
