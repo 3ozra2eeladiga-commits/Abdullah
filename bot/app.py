@@ -68,6 +68,16 @@ AVAIL_NOTE = ("Это примеры наших работ 🌸 Любой бу�
               "Когда выберете, флорист уточнит, все ли цветы из состава сейчас в наличии.")
 
 
+def _send_album(client, items):
+    """Альбом букетов с номерами, которые ПРОДОЛЖАЮТСЯ в разговоре (1–10, потом 11–20…): «10» всегда однозначно
+    (Абдулла). Все показанные по порядку — в album_all:{client}."""
+    prev = [c for c in (db.get_setting(f"album_all:{client}") or "").split(",") if c]
+    if len(prev) >= 90:
+        prev = []                                       # очень длинный разговор — начинаем нумерацию заново
+    telegram_bot.send_client_album(client, items, start=len(prev))
+    db.set_setting(f"album_all:{client}", ",".join(prev + [it["code"] for it in items[:10]]))
+
+
 def _label(client):
     kind, cid = client.split(":", 1)
     name = telegram_bot.client_name(client)
@@ -532,7 +542,7 @@ def deliver(client, text, from_staff=False, quote=""):
         if reply.text:
             _send_text(client, brain.pretty(reply.text))  # короткими абзацами — легче читать
         if album:
-            telegram_bot.send_client_album(client, reply.photos)   # одним альбомом, а не 5 сообщений
+            _send_album(client, reply.photos)                  # одним альбомом, нумерация продолжается
             sent_at = time.time()
             t_n = threading.Timer(ALBUM_NUDGE_SEC, _album_nudge, args=(client, sent_at))
             t_n.daemon = True
@@ -1280,7 +1290,7 @@ def on_photo_button(qid, action):
             return "Клиенту написали, что флорист подберёт замену. Бот молчит — напишите клиенту."
         _send_text(client, text)
         if len(photos) >= 2 and not client.startswith("ig:"):
-            telegram_bot.send_client_album(client, photos)
+            _send_album(client, photos)
         else:
             for it in photos:
                 _send_photo(client, it)

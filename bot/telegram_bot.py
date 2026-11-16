@@ -119,7 +119,7 @@ def send_client_photo(client, item):
         db.remember_sent(f"biz:{cid}:{msg['message_id']}")
 
 
-def send_client_album(client, items):
+def send_client_album(client, items, start=0):
     """Несколько букетов — ОДНИМ альбомом (плиткой), а не 5–6 отдельными сообщениями (Абдулла: листать неудобно).
     Каждое фото в альбоме — отдельное сообщение Telegram: ответ клиента на любое из них = выбор этого букета.
     Не вышло — шлём по одному, как раньше."""
@@ -128,11 +128,11 @@ def send_client_album(client, items):
     files, media = {}, []
     for n, item in enumerate(items[:10]):
         try:
-            data = images.numbered_jpeg(item["images"][0], n + 1) if images.Image is not None else None
+            data = images.numbered_jpeg(item["images"][0], start + n + 1) if images.Image is not None else None
         except Exception as e:
             log.warning("Фото %s для альбома не загрузилось: %s", item.get("code"), e)
             continue
-        cap = f"{n + 1}. {item['title']} — {item['price']} ₽"[:1000]
+        cap = f"{start + n + 1}. {item['title']} — {item['price']} ₽"[:1000]
         if data:
             files[f"p{n}"] = (f"p{n}.jpg", data, "image/jpeg")
             media.append({"type": "photo", "media": f"attach://p{n}", "caption": cap, "_code": item["code"]})

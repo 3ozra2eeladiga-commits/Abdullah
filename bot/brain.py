@@ -430,11 +430,11 @@ def _picked_by_ordinal(client, incoming, city):
 # Не путаем с деньгами («3000», «3 тыс»), временем («к 3», «в 3»), количеством («3 штуки», «3 розы»).
 PHOTO_NUM_RE = re.compile(
     r"(?:как\s+(?:на\s+)?|номер\w*\s*|№\s*|фото\s*|вариант\w*\s*|букет\w*\s*(?:номер\s*|№\s*)?|под\s+(?:номером|цифрой)\s*|"
-    r"цифр\w*\s*)(10|[1-9])(?!\d|[.,:]\d|\s*(?:шт|штук|тыс|т\.|к\b|р\b|руб|₽|роз|час|мин))"
-    r"|(?<![\d.,:])\b(10|[1-9])\s*(?:-?(?:й|ой|ий|я|ая))?\s+(?:букет|вариант|фото|композиц)"
+    r"цифр\w*\s*)([1-9]\d?)(?!\d|[.,:]\d|\s*(?:шт|штук|тыс|т\.|к\b|р\b|руб|₽|роз|час|мин))"
+    r"|(?<![\d.,:])\b([1-9]\d?)\s*(?:-?(?:й|ой|ий|я|ая))?\s+(?:букет|вариант|фото|композиц)"
     # «2 мне нравится», «2 нравится», «беру 2», «давайте 2», «хочу 2-й», «выбираю 2»
-    r"|^\W*(10|[1-9])\s*(?:-?(?:й|ой|ий|я|ая))?\s*[,.!]?\s*(?=(?:мне\s+)?(?:нрав|подход|бер[уём]|возьм|хочу|давай|выбира|этот|эту|он\b|его))"
-    r"|(?:бер[уём]\w*|возьм\w*|хочу|давай\w*|выбира\w*|нравится)\s+(10|[1-9])(?!\d|[.,:]\d|\s*(?:шт|штук|тыс|к\b|р\b|руб|₽|роз|час|мин))",
+    r"|^\W*([1-9]\d?)\s*(?:-?(?:й|ой|ий|я|ая))?\s*[,.!]?\s*(?=(?:мне\s+)?(?:нрав|подход|бер[уём]|возьм|хочу|давай|выбира|этот|эту|он\b|его))"
+    r"|(?:бер[уём]\w*|возьм\w*|хочу|давай\w*|выбира\w*|нравится)\s+([1-9]\d?)(?!\d|[.,:]\d|\s*(?:шт|штук|тыс|к\b|р\b|руб|₽|роз|час|мин))",
     re.I)
 
 
@@ -475,15 +475,17 @@ def _pick_wish(incoming):
 def _picked_by_digit(client, incoming, city):
     """«2» сразу после альбома с номерами на фото — это букет №2 из показанных (а не номер в каталоге).
     «Можно как 3, но на 3000» — тоже букет №3 (номер в тексте), даже если бот спрашивал что-то другое."""
-    m = re.fullmatch(r"\W*(?:фото|вариант|букет|номер|№)?\s*(10|[1-9])\W*", incoming or "", re.I)
-    if not m and re.search(r"нравится|номер фото", _last_bot_text(client, "")):
-        m = re.match(r"\W*(10|[1-9])\s*[,.:—-]\s+(?=[^\d\s])", incoming or "")   # «3, в зелёной упаковке» сразу после фото
+    m = re.fullmatch(r"\W*(?:фото|вариант|букет|номер|№)?\s*([1-9]\d?)\W*", incoming or "", re.I)
+    after_album = bool(re.search(r"нравится|номер фото|вариант", _last_bot_text(client, ""))) or (
+        bool(db.get_setting(f"album_all:{client}")) and not db.get_setting(f"lastq:{client}"))
+    if not m and after_album:
+        m = re.match(r"\W*([1-9]\d?)\s*[,.:—-]\s+(?=[^\d\s])", incoming or "")   # «3, в зелёной упаковке» сразу после фото
     m2 = None if m else PHOTO_NUM_RE.search(incoming or "")
     if m2:
         m = type("M", (), {"group": lambda self, i, _g=next(g for g in m2.groups() if g): _g})()
-    elif not m or db.get_setting(f"chosen:{client}") or not re.search(r"нравится|номер фото", _last_bot_text(client, "")):
+    elif not m or db.get_setting(f"chosen:{client}") or not after_album:
         return []
-    shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
+    shown = [c for c in (db.get_setting(f"album_all:{client}") or db.get_setting(f"shown:{client}") or "").split(",") if c]
     i = int(m.group(1)) - 1
     if i >= len(shown):
         return []
@@ -1228,7 +1230,7 @@ def _contacts(client):
 ORDER_STATE_KEYS = ("neworder", "activeq", "winq", "winok", "exacttime", "chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
                     "pickup_shop", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
                     "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item",
-                    "delivq", "delivq_need", "ownref", "availq", "wish")
+                    "delivq", "delivq_need", "ownref", "availq", "wish", "album_all")
 
 
 def start_new_order(client):
@@ -3117,8 +3119,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         plural = re.search(r"\b(?:они|все|всё|букеты|эти|цветы\s+у\s+вас)\b", incoming or "", re.I)
         ch = db.get_setting(f"chosen:{client}")
         if not picked and db.get_setting(f"freshask:{client}"):      # ответ «3» на «какой букет?» — №3 из альбома
-            m_ = re.fullmatch(r"\W*(?:№|номер|фото)?\s*(10|[1-9])\W*", incoming or "", re.I)
-            shown_ = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
+            m_ = re.fullmatch(r"\W*(?:№|номер|фото)?\s*([1-9]\d?)\W*", incoming or "", re.I)
+            shown_ = [c for c in (db.get_setting(f"album_all:{client}") or db.get_setting(f"shown:{client}") or "").split(",") if c]
             if m_ and int(m_.group(1)) <= len(shown_):
                 it_ = catalog.get(shown_[int(m_.group(1)) - 1], city) or catalog.get(shown_[int(m_.group(1)) - 1])
                 picked = [it_] if it_ else []
@@ -4927,6 +4929,23 @@ def respond(client, incoming, from_staff=False, quote=""):
                  if p.strip() and not re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк", p, re.I)]
         reply.text = (" ".join(parts) + "\n\n" if parts else "") + WAY_Q
         db.set_setting(f"lastq:{client}", WAY_Q)
+    # Новые варианты — ТОЛЬКО если клиент сам попросил (ещё / другие / не нравится / новые пожелания). Иначе не
+    # закидываем фото (Абдулла): клиент уже смотрит присланные и выбирает по номеру.
+    if not from_staff and len(reply.photos) >= 2 and not keep_photos and not reply.order \
+            and db.get_setting(f"album_all:{client}") and not new_order and not after_anketa \
+            and not re.search(r"ещ[её]|друг|покаж|пришл|скин|кинь|кида|закид|вариант|больше|мало|не\s+нрав|ничего\s+не|"
+                              r"не\s+то\b|дешевл|дорож|бюджет|до\s*\d|роз|пион|тюльпан|хризантем|гортенз|лили|эустом|"
+                              r"ромаш|гербер|ярк|нежн|бел|красн|розов|син|ж[её]лт|сухоцвет|живы|корзин|коробк|шляпн",
+                              incoming or "", re.I):
+        reply.photos = []
+        if re.match(r"\s*Вот\s+(?:ещё\s+|другие\s+)?варианты", reply.text or "") or not (reply.text or "").strip():
+            reply.text = "Какой из присланных букетов нравится? Напишите номер фото 🌸"
+    # «Извинись» — извиняемся по-человечески и возвращаемся к выбору (без новых фото).
+    if not from_staff and re.fullmatch(r"\W*(?:извини(?:сь|те)?|извиняйся|извинитесь|попроси\s+прощения)\W*", incoming or "", re.I):
+        reply.photos = []
+        reply.text = ("Простите, пожалуйста 🙏 Очень хочу, чтобы вам понравился букет. "
+                      + ("Какой из присланных выбираете? Напишите номер фото 🌸" if db.get_setting(f"album_all:{client}")
+                         else "Подскажите, что хотелось бы — подберу 🌸"))
     # НИКОГДА не переспрашиваем то, на что клиент уже ответил (Абдулла): убираем такие вопросы из ответа
     # и вместо них задаём следующий действительно недостающий.
     if not from_staff and reply.text and not reply.order and FORM_HEAD not in reply.text:
