@@ -1629,6 +1629,27 @@ def _deliv_dest(client, city, incoming, history):
 OTHER_CARD_RE = re.compile(r"друг(?:ая|ую|ие|ой|их)\b|ещ[её]\s+(?:открыт|вариант)|есть\s+ещ[её]|другие\s+вариант|"
                            r"не\s+(?:эт[уа]|ту|та)\b|передумал|покаж\w*\s+(?:друг|ещ|открыт)|не\s+та\s+открыт", re.I)
 CARD_TEXT_AGAIN_Q = "Хорошо, какой текст напишем?"
+# «А сколько эти в наличии?», «есть в наличии?», «сколько штук осталось» — про остаток (ответ — из каталога сайта).
+STOCK_Q_RE = re.compile(r"(?:сколько|скок|есть\s+ли|ещ[её]\s+есть|остал)\w*[^.?!]{0,30}(?:наличи|штук|\bшт\b|остал|есть)|"
+                        r"\bв\s+наличии\b[^.!]{0,15}(?:\?|$)|\bналичи\w*\s*\?", re.I)
+
+
+def _stock_answer(items):
+    """Ответ про наличие по данным сайта: поштучные — сколько штук; букеты — собираем под заказ."""
+    lines, piece = [], False
+    for it in items[:3]:
+        st = it.get("stock")
+        if st is None:
+            lines.append(f"{it['title']} — {it['price']} ₽. Собираем под заказ — флорист уточнит, все ли цветы "
+                         "из состава сейчас есть.")
+        elif st <= 0:
+            lines.append(f"{it['title']} — сейчас, к сожалению, нет в наличии 🙏")
+        else:
+            piece = True
+            lines.append(f"{it['title']} — в наличии {st} шт., {it['price']} ₽ за штуку.")
+    return "\n".join(lines), piece
+
+
 QUESTION_LIKE_RE = re.compile(r"\?\s*$|^\W*(?:как|когда|сколько|можно|а\s+если|где|почему|зачем|есть\s+ли|что\s+(?:если|будет|можно))\b", re.I)
 NO_TEXT_RE = re.compile(r"^\W*(?:без\s+текст\w*|без\s+надпис\w*|текст\s+не\s+нуж\w*|ничего\s+не\s+пиш\w*|не\s+надо\s+пис\w*|ничего|ни\s*какой(?:\s+пока)?|не\s+какой(?:\s+пока)?|никак\w*\s+не\s+надо)\W*$", re.I)
 NO_CARD_AT_ALL_RE = re.compile(r"без\s+открытк|открытк\w*\s+не\s+нуж|не\s+нужн\w*\s+открытк", re.I)
@@ -4111,8 +4132,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = []
         db.set_setting(f"lastq:{client}", nq)
     nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client)) if picked else ""
+    asks_q = "?" in (incoming or "") or bool(QUESTION_LIKE_RE.search(re.sub(r"^\W*(?:а|и|а\s+вот|скажите)\s+", "",
+                                                                             incoming or "", flags=re.I)))
     if picked and not size_change and not from_staff and not reply.order and not order_text and not keep_photos \
-            and (ASK_WHICH_RE.search(reply.text or "") or ("?" not in (incoming or "") and nxt != ALMOST_DONE_Q)):
+            and not STOCK_Q_RE.search(incoming or "") \
+            and (ASK_WHICH_RE.search(reply.text or "") or (not asks_q and nxt != ALMOST_DONE_Q)):
         it = picked[0]
         reply.text = f"Отличный выбор 🌸 {nxt}"
         reply.photos = []
@@ -4359,6 +4383,14 @@ def respond(client, incoming, from_staff=False, quote=""):
                                                  [m["content"] for m in history if m["role"] == "user"])
         if to_summary and not keep_photos:
             advance()                                # всё собрано — показываем итог (или спрашиваем недостающее)
+    if picked and not from_staff and not reply.order and not order_text and STOCK_Q_RE.search(incoming or ""):
+        # Ответил на фото «а сколько их в наличии?» — это вопрос, а не выбор: отвечаем остатком с сайта.
+        ans, piece = _stock_answer(picked)
+        q = "Сколько штук нужно? 🌸" if piece else (nxt if (nxt := _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))) and nxt != ALMOST_DONE_Q else "")
+        reply.text = ans + (f"\n\n{q}" if q else "")
+        reply.photos = []
+        if q:
+            db.set_setting(f"lastq:{client}", q)
     # «Сколько стоит доставка?» — точную цену знает флорист. Узнаём КУДА доставка, сразу передаём вопрос флористу
     # (она ответит клиенту за пару минут), а бот тем временем продолжает оформление. Не успела ответить до конца
     # заказа — в заявке пометка «клиент спрашивает стоимость доставки».
