@@ -379,7 +379,7 @@ def _card_pick_turn(client, incoming, last_q=""):
                 or re.search(r"конверт|\d{2,4}\s*(?:₽|р)", incoming or "", re.I))
 
 
-MORE_RE = re.compile(r"друг|ещ[её]|остальн|не нрав|не то\b|иные|\bвсе\s+(?:открыт|конверт)", re.I)
+MORE_RE = re.compile(r"друг|ещ[её]|остальн|\bне\s+нрав|\bне\s+то\b|иные|\bвсе\s+(?:открыт|конверт)", re.I)
 
 
 def _more_cards_request(client, incoming, last_q="", quote=""):
@@ -431,7 +431,11 @@ def _picked_by_ordinal(client, incoming, city):
 PHOTO_NUM_RE = re.compile(
     r"(?:как\s+(?:на\s+)?|номер\w*\s*|№\s*|фото\s*|вариант\w*\s*|букет\w*\s*(?:номер\s*|№\s*)?|под\s+(?:номером|цифрой)\s*|"
     r"цифр\w*\s*)(10|[1-9])(?!\d|[.,:]\d|\s*(?:шт|штук|тыс|т\.|к\b|р\b|руб|₽|роз|час|мин))"
-    r"|(?<![\d.,:])\b(10|[1-9])\s*(?:-?(?:й|ой|ий|я|ая))?\s+(?:букет|вариант|фото|композиц)", re.I)
+    r"|(?<![\d.,:])\b(10|[1-9])\s*(?:-?(?:й|ой|ий|я|ая))?\s+(?:букет|вариант|фото|композиц)"
+    # «2 мне нравится», «2 нравится», «беру 2», «давайте 2», «хочу 2-й», «выбираю 2»
+    r"|^\W*(10|[1-9])\s*(?:-?(?:й|ой|ий|я|ая))?\s*[,.!]?\s*(?=(?:мне\s+)?(?:нрав|подход|бер[уём]|возьм|хочу|давай|выбира|этот|эту|он\b|его))"
+    r"|(?:бер[уём]\w*|возьм\w*|хочу|давай\w*|выбира\w*|нравится)\s+(10|[1-9])(?!\d|[.,:]\d|\s*(?:шт|штук|тыс|к\b|р\b|руб|₽|роз|час|мин))",
+    re.I)
 
 
 def _picked_by_digit(client, incoming, city):
@@ -440,7 +444,7 @@ def _picked_by_digit(client, incoming, city):
     m = re.fullmatch(r"\W*(?:фото|вариант|букет|номер|№)?\s*(10|[1-9])\W*", incoming or "", re.I)
     m2 = None if m else PHOTO_NUM_RE.search(incoming or "")
     if m2:
-        m = type("M", (), {"group": lambda self, i, _g=(m2.group(1) or m2.group(2)): _g})()
+        m = type("M", (), {"group": lambda self, i, _g=next(g for g in m2.groups() if g): _g})()
     elif not m or db.get_setting(f"chosen:{client}") or not re.search(r"нравится|номер фото", _last_bot_text(client, "")):
         return []
     shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
@@ -4626,7 +4630,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.text = f"{reply.text.rstrip()}\n\n{nxt}"
             db.set_setting(f"lastq:{client}", nxt)
     if chosen and reply.photos and not keep_photos and not re.search(
-            r"друг|ещ[её]|вариант|покаж|скин|кинь|кида|закид|больше|мало|поменя|замен|не нрав|передумал", incoming or "", re.I):
+            r"друг|ещ[её]|вариант|покаж|скин|кинь|кида|закид|больше|мало|поменя|замен|\bне\s+нрав|передумал", incoming or "", re.I):
         reply.photos = [p for p in reply.photos if p["code"] == chosen and p in picked]
     elif chosen and reply.photos and not keep_photos:
         db.del_setting(f"chosen:{client}")    # клиент сам попросил другие — снимаем «замок»
