@@ -2759,6 +2759,7 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     # Вопрос о недостающем (открытка и т.п.), который в прошлый раз задал КОД вместо ответа ИИ.
     last_q = "" if from_staff else (db.get_setting(f"lastq:{client}") or "")
+    asked_before = last_q                       # какой вопрос бот задал в прошлый раз (для вежливого переспроса)
     if last_q:
         db.del_setting(f"lastq:{client}")
     # «Да» на «Оформим на завтра — к какому времени? Например: завтра к 10:00» — берём время из нашего примера.
@@ -4494,6 +4495,27 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = []
         if q:
             db.set_setting(f"lastq:{client}", q)
+    # Клиент пропустил ВАЖНЫЙ вопрос (без ответа заказ не оформить) — отвечаем на его сообщение и вежливо, но
+    # настойчиво переспрашиваем (Абдулла). Второй раз подряд — объясняем, что без этого никак.
+    required = (WAY_Q, DATE_Q, DATE_ONLY_Q, TIME_Q, NIGHT_DATE_Q, ADDRESS_Q, CONTACTS_Q, PICKUP_CONTACT_Q)
+    if not from_staff and asked_before in required and not reply.order and reply.text and not keep_photos:
+        still = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
+                               _known_order(client))
+        txt = reply.text.rstrip()
+        q0 = asked_before.rstrip()
+        tail_q = txt.endswith(q0) and txt != q0                   # код уже дописал тот же вопрос после ответа
+        if still == asked_before and (tail_q or (q0.split("?")[0] not in txt and "?" not in txt.split("\n")[-1])):
+            n_ign = int(db.get_setting(f"ignored:{client}") or 0) + 1
+            db.set_setting(f"ignored:{client}", n_ign)
+            lead = ("Чтобы оформить заказ, мне очень важно знать 🙏" if n_ign == 1 else
+                    "Простите, что повторяю 🙏 Без этого, к сожалению, не сможем оформить заказ:")
+            head = txt[:-len(q0)].rstrip() if tail_q else txt
+            reply.text = f"{head}\n\n{lead}\n{asked_before}"
+            db.set_setting(f"lastq:{client}", asked_before)
+        elif still != asked_before:
+            db.del_setting(f"ignored:{client}")
+    elif not from_staff and asked_before not in required:
+        db.del_setting(f"ignored:{client}")
     # Поштучные цветы: клиент назвал количество («15 штук») — сразу общая сумма и вопрос про упаковку (Абдулла).
     ch_it = None if (from_staff or reply.order) else catalog.get(db.get_setting(f"chosen:{client}") or "", city)
     m_qty = re.search(r"(?<![\d:.])(\d{1,3})\s*(?:шт\w*|штук\w*|роз\w*|цвет\w*|$)", (incoming or "").strip(), re.I)
