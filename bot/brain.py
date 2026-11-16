@@ -1249,12 +1249,13 @@ def _rude_reply(client, incoming, city):
 # Анкета оформления доставки ОДНИМ сообщением, по пунктам (Абдулла). Показываем только то, чего ещё нет;
 # номера пунктов постоянные — клиент отвечает «1. … 2. …», код разбирает ответ по номерам (_parse_form_answer).
 FORM_HEAD = "Для оформления заказа нам понадобится:"
-FORM_ITEMS = {1: "Ваши ФИО",
+FORM_ITEMS = {0: "Доставка или самовывоз? (при самовывозе адрес и получатель не нужны)",
+              1: "Ваши ФИО",
               2: "Номер телефона для связи",
               3: "Имя и номер телефона получателя",
               4: "Город доставки",
               5: "Время и точный адрес доставки: посёлок, улица, дом (интервал доставки 1 час)"}
-FORM_TAIL = "Ответьте, пожалуйста, по пунктам — с цифрами, например: «1. Иванова Мария» 🌸"
+FORM_TAIL = "Ответьте, пожалуйста, по пунктам — с цифрами, например: «1. …  2. …» 🌸"
 
 
 def _form_q(items):
@@ -1294,6 +1295,15 @@ def _next_question(user_msgs, city, order=None):
     pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
     has_addr = _has_address(user_msgs) or "адрес_есть" in t
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
+    # Букет выбран, дата известна, а способ ещё нет — сразу ВСЯ анкета одним сообщением (Абдулла: «разом»,
+    # пока флорист проверяет наличие): первый пункт — доставка или самовывоз.
+    if not has_way and has_date and (o.get("товары") or o.get("_выбран")):
+        need = [0, 1, 2, 3]
+        if not has_addr:
+            need.append(4)
+        if not has_time or not has_addr:
+            need.append(5)
+        return _form_q(need)
     # Спрашиваем ПО ОДНОМУ коротко, как живой флорист, — не списком всё сразу (Абдулла просил так не писать).
     if not has_way and not (has_date and has_time):
         return WAY_Q
@@ -2212,6 +2222,8 @@ def _known_order(client):
     for k, v in (db.get_pending_order(client) or {}).items():
         if _meaningful(v) or isinstance(v, list):
             d[k] = v
+    if db.get_setting(f"chosen:{client}"):
+        d["_выбран"] = True                     # букет уже выбран — можно сразу всю анкету оформления
     if db.get_setting(f"cardtext:{client}"):
         d["открытка"] = db.get_setting(f"cardtext:{client}")
     elif db.get_setting(f"nocard:{client}"):
@@ -2904,6 +2916,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                     ct["to_name"] = ans[3].split(",")[0].strip()[:60]
             db.set_setting(f"contacts:{client}", json.dumps(ct, ensure_ascii=False))
             bits = []
+            if ans.get(0):
+                bits.append(("Самовывоз" if re.search(r"самовыв|забер|^\W*2\W*$", ans[0], re.I) else "Доставка")
+                            + f" ({ans[0]})")
             if ans.get(1) or ct.get("me_phone"):
                 bits.append(f"Заказчик: {ct.get('me_name') or ''} {ct.get('me_phone') or ''}".strip())
             if ans.get(3):
