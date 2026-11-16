@@ -57,23 +57,24 @@ def numbered_jpeg(url, n):
         return data
     from PIL import ImageDraw
     img = Image.open(io.BytesIO(data)).convert("RGBA")
-    s = max(70, min(img.width, img.height) // 6)       # высота таблички
+    s = max(90, min(img.width, img.height) // 4)       # высота таблички (крупно — видно и в маленьком альбоме)
     w = int(s * (1.0 if n < 10 else 1.3))
     x = y = max(14, s // 5)
     layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
     rad = max(6, s // 7)
     d.rounded_rectangle([x + 3, y + 4, x + w + 3, y + s + 4], radius=rad, fill=(0, 0, 0, 70))      # мягкая тень
-    d.rounded_rectangle([x, y, x + w, y + s], radius=rad, fill=_badge_color() + (245,))
-    m = max(5, s // 10)
+    # Светлая табличка с хаки-рамкой и хаки-цифрой: заметна и на тёмных, и на пёстрых фото (Абдулла: «поярче»).
+    d.rounded_rectangle([x, y, x + w, y + s], radius=rad, fill=(255, 255, 255, 250))
+    m = max(5, s // 11)
     d.rounded_rectangle([x + m, y + m, x + w - m, y + s - m], radius=max(3, rad - m // 2),
-                        outline=(255, 255, 255, 230), width=max(2, s // 32))                     # рамка, как на вывеске
+                        outline=_badge_color() + (255,), width=max(3, s // 18))                  # рамка, как на вывеске
     txt = str(n)
     font = _font(int(s * 0.58))
     if font is None:
         return data                                    # нечем нарисовать цифру — лучше без таблички, чем пустая
     l, t, rr, b = d.textbbox((0, 0), txt, font=font)
-    d.text((x + w / 2 - (rr - l) / 2 - l, y + s / 2 - (b - t) / 2 - t), txt, font=font, fill=(255, 255, 255, 255))
+    d.text((x + w / 2 - (rr - l) / 2 - l, y + s / 2 - (b - t) / 2 - t), txt, font=font, fill=_badge_color() + (255,))
     img = Image.alpha_composite(img, layer).convert("RGB")
     out = io.BytesIO()
     img.save(out, "JPEG", quality=88)

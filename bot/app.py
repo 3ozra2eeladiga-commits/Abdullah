@@ -391,10 +391,28 @@ def on_delivered(order_id, action):
     return f"📦 Заказ №{db.order_no(order_id)} доставлен — клиенту написали «спасибо»"
 
 
+# Прислали букеты, а клиент 20 секунд молчит — спрашиваем, удалось ли подобрать (Абдулла/Маша).
+ALBUM_NUDGE_SEC = 20
+ALBUM_NUDGE = "Удалось что-то подобрать? 🌸 Если ничего не приглянулось — напишите «ещё», пришлю другие варианты."
+_last_incoming = {}
+
+
+def _album_nudge(client, sent_at):
+    if _last_incoming.get(client, 0) > sent_at or db.is_paused(client) or db.get_setting(f"chosen:{client}"):
+        return                                          # клиент уже написал / выбрал / ведёт флорист
+    if db.get_setting(f"albumnudge:{client}") == str(int(sent_at)):
+        return
+    db.set_setting(f"albumnudge:{client}", str(int(sent_at)))
+    with _client_locks[client]:
+        _send_text(client, ALBUM_NUDGE)
+        db.add_message(client, "assistant", ALBUM_NUDGE)
+
+
 def deliver_debounced(client, text, from_staff=False, quote=""):
     if from_staff:
         return deliver(client, text, from_staff=True, quote=quote)
     now = time.time()
+    _last_incoming[client] = now
     with _pending_lock:
         b = _pending.setdefault(client, {"texts": [], "quote": "", "first": now, "timer": None})
         b["texts"].append(text)
@@ -513,6 +531,10 @@ def deliver(client, text, from_staff=False, quote=""):
             _send_text(client, brain.pretty(reply.text))  # короткими абзацами — легче читать
         if album:
             telegram_bot.send_client_album(client, reply.photos)   # одним альбомом, а не 5 сообщений
+            sent_at = time.time()
+            t_n = threading.Timer(ALBUM_NUDGE_SEC, _album_nudge, args=(client, sent_at))
+            t_n.daemon = True
+            t_n.start()
         else:
             for item in reply.photos:
                 _send_photo(client, item)
