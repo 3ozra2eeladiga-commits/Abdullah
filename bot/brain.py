@@ -2976,11 +2976,22 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.del_setting(f"freshask:{client}")
             num = item.get("number") or item.get("num") or ""
             text = "Уточню у флориста свежесть этого букета и сразу напишу вам 🌸"
+            # «2 мне нравится, он свежий?» — это ещё и ВЫБОР букета: запоминаем и продолжаем оформление (Абдулла).
+            if picked and re.search(r"нрав|бер[уём]|возьм|хочу|давай|выбира|подходит|этот|эту", incoming or "", re.I):
+                db.set_setting(f"chosen:{client}", item["code"])
+                db.set_setting(f"availq:{client}", item["code"])        # флорист проверит и наличие — второй раз не спрашиваем
+                nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
+                                    _known_order(client))
+                text = ("Отличный выбор 🌸 Уточню у флориста, свежий ли он и есть ли в наличии, — ответит в течение "
+                        "пары минут ⏱")
+                if nq and nq != ALMOST_DONE_Q:
+                    text += f"\n\nА пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{nq}"
+                    db.set_setting(f"lastq:{client}", nq)
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city, staff_photos=[item],
                          staff_note=f"🌿 Про этот букет клиент спрашивает свежесть: {item.get('title', '')}",
                          question=f"🌿 Клиент пишет: «{incoming}». Букет «{item.get('title', '')}»"
-                                  f"{f' (№{num})' if num else ''}, {item.get('price', '')} ₽ — свежий?")
+                                  f"{f' (№{num})' if num else ''}, {item.get('price', '')} ₽ — свежий и есть в наличии?")
         if db.get_setting(f"freshask:{client}") and not FRESH_Q_RE.search(incoming or ""):
             db.del_setting(f"freshask:{client}")
             text = "Не нашла такой номер 🙏 Напишите номер фото ещё раз или ответьте на фото букета — спрошу у флориста."
