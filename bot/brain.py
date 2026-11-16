@@ -2729,6 +2729,22 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_city(client, city)
             city_new = True
 
+    # Заказ ЗАРАНЕЕ — больше чем на неделю вперёд (Абдулла 16.11): наличие зависит от поставки, бот сам не консультирует.
+    # Сразу передаём заявку флористу, клиенту — коротко «уточню у поставщиков и сообщу»; бот для этого клиента замолкает.
+    if not from_staff:
+        far_s = _latest_date([incoming or ""])
+        far_d = _resolve_date(far_s) if far_s else None
+        today_d = datetime.datetime.now(_MSK).date()
+        if far_d and (far_d - today_d).days > 7 and db.get_setting(f"far:{client}") != far_d.isoformat():
+            db.set_setting(f"far:{client}", far_d.isoformat())
+            text = "Уточню у поставщиков возможность поставки к этой дате и сообщу вам 🌸"
+            if not db.history(client, 1):
+                text = f"Здравствуйте! 🌸 {text}"
+            db.add_message(client, "user", incoming)
+            return _stop_chat(client, city, text,
+                              f"📅 Заказ заранее — на {far_d.strftime('%d.%m')} (больше недели). Город: {city or 'не назван'}. "
+                              f"Клиент пишет: «{incoming}». Уточните у поставщиков и ответьте клиенту сами.")
+
     # Вопрос о недостающем (открытка и т.п.), который в прошлый раз задал КОД вместо ответа ИИ.
     last_q = "" if from_staff else (db.get_setting(f"lastq:{client}") or "")
     if last_q:
