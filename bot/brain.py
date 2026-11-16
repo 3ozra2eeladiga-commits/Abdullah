@@ -4283,6 +4283,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                           "Отличный выбор 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱")
 
     # Режим «пышнее/скромнее»: никаких других букетов и вопросов коллегам — флорист получит доплату в заказе.
+    up_text = ""
     if up_target and not from_staff:
         if up_turn and not keep_photos and not order_text:
             reply.photos = []
@@ -4295,14 +4296,15 @@ def respond(client, incoming, from_staff=False, quote=""):
                 total = up_target["price"] + (int(up_amount) if up_sign == "+" else -int(up_amount))
                 pend = db.get_pending_order(client)
                 nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
-                head = (f"Хорошо, соберём букет на {_rub(total)} "
-                        f"({'+' if up_sign == '+' else '−'}{_rub(int(up_amount))} к цене) 🌸")
+                head = f"Хорошо, соберём букет на {_rub(total)} 🌸"     # без «(−4 320 ₽ к цене)» — Абдулла
                 if pend and not _order_missing(_apply_client_state(pend, client, city), client_text):
                     db.set_pending_order(client, pend)     # итог уже был — показываем его заново, с доплатой
                     reply.text = head + "\n\n" + _order_summary(pend)
                 else:
-                    reply.text = f"{head} {nxt}"
+                    reply.text = f"{head} {nxt}" if nxt and nxt != ALMOST_DONE_Q else head
                     db.set_setting(f"lastq:{client}", nxt)
+                up_text = reply.text                  # дальше фильтры не должны его портить (см. конец функции)
+                db.del_setting(f"upq:{client}")
             else:
                 reply.text = (f"Сейчас букет {_rub(up_target['price'])}. На какую сумму собрать весь букет? "
                               f"Например, {_rub(_round_budget(up_target['price'] + (1500 if up_sign == '+' else -1000)))}")
@@ -4531,6 +4533,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = []
         if q:
             db.set_setting(f"lastq:{client}", q)
+    if up_text and not reply.order:
+        reply.text = up_text                  # «Хорошо, соберём букет на 3 000 ₽ 🌸 {вопрос}» — без обрывков и двух вопросов
     # «Второй букет собрать поменьше на 3000» — непонятно: ИТОГО 3000 или на 3000 дешевле. Переспрашиваем цифрами.
     n_money = _money(incoming) if (size_change and up_target and not from_staff and not reply.order) else 0
     if n_money:
