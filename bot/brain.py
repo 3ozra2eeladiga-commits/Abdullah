@@ -438,10 +438,46 @@ PHOTO_NUM_RE = re.compile(
     re.I)
 
 
+_WISH_FILLER = re.compile(
+    r"\b(?:мне|нам|очень|нравится|понравился|понравилась|беру|возьму|возьмём|хочу|хотим|хотела|хотел|давайте|давай|"
+    r"выбираю|выбрала|выбрал|этот|эту|это|его|её|ее|вот|пожалуйста|можно|ли|ок|окей|хорошо|отлично|супер|красивый|"
+    r"красивая|букет\w*|вариант\w*|фото|номер|такой|такую|такое|такие|же|как|на\s+фото|он|она|оно|сделать|собрать|"
+    r"соберите|сделайте|получится|можете|могли\s+бы|бы|а|и|да)\b", re.I)
+
+
+def _pick_wish(incoming):
+    """Что клиент ДОБАВИЛ к выбору букета: «как 8, но без роз» → «без роз», «этот, в зелёной упаковке» →
+    «в зелёной упаковке». Подходит для любых уточнений (цветы, цвет, упаковка, размер, лента, открытка…)."""
+    t = (incoming or "").strip()
+    t = PHOTO_NUM_RE.sub(" ", t)
+    t = re.sub(r"^\W*(?:10|[1-9])(?!\d)\W*", " ", t)            # «2, но без роз»
+    rest = re.sub(r"\s+", " ", t).strip(" ,.!;:—-")
+    core = re.sub(r"[^\w₽]+", " ", _WISH_FILLER.sub(" ", rest)).strip()
+    if len(re.sub(r"[^А-Яа-яЁёA-Za-z\d]", "", core)) < 3:
+        return ""
+    if re.fullmatch(r"(?:св[еэ]ж\w*|\s)+", core, re.I) or re.fullmatch(r"\W*(?:сколько\s+стоит|цена)\W*", rest, re.I):
+        return ""                                     # вопрос про свежесть/цену — не пожелание к сборке
+    lead = re.compile(r"^(?:такой\s+же|такую\s+же|такое\s+же|этот|эту|это|мне\s+нравится|нравится|пожалуйста|хочу|беру|"
+                      r"букет\w*|давайте|но|только|а|и|чтобы|плюс)\b[\s,.:;—-]*", re.I)
+    for _ in range(6):                                # снимаем «этот, но», «такой же букет, только», «мне нравится, но»…
+        new = lead.sub("", rest)
+        if new == rest:
+            break
+        rest = new
+    rest = rest[:150].strip(" ,.")
+    # Это не пожелание к сборке, а дата/время/доставка или вопрос — их ведёт обычная логика.
+    if "?" in rest or re.match(r"(?:собрать\s+)?(?:на\s+)?(?:сегодня|завтра|послезавтра)\b|к\s*\d|в\s*\d{1,2}(?::\d{2})?$|"
+                               r"(?:доставк|самовывоз|адрес)", rest, re.I):
+        return ""
+    return rest
+
+
 def _picked_by_digit(client, incoming, city):
     """«2» сразу после альбома с номерами на фото — это букет №2 из показанных (а не номер в каталоге).
     «Можно как 3, но на 3000» — тоже букет №3 (номер в тексте), даже если бот спрашивал что-то другое."""
     m = re.fullmatch(r"\W*(?:фото|вариант|букет|номер|№)?\s*(10|[1-9])\W*", incoming or "", re.I)
+    if not m and re.search(r"нравится|номер фото", _last_bot_text(client, "")):
+        m = re.match(r"\W*(10|[1-9])\s*[,.:—-]\s+(?=[^\d\s])", incoming or "")   # «3, в зелёной упаковке» сразу после фото
     m2 = None if m else PHOTO_NUM_RE.search(incoming or "")
     if m2:
         m = type("M", (), {"group": lambda self, i, _g=next(g for g in m2.groups() if g): _g})()
@@ -1183,7 +1219,7 @@ def _contacts(client):
 ORDER_STATE_KEYS = ("neworder", "activeq", "winq", "winok", "exacttime", "chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
                     "pickup_shop", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
                     "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item",
-                    "delivq", "delivq_need", "ownref", "availq")
+                    "delivq", "delivq_need", "ownref", "availq", "wish")
 
 
 def start_new_order(client):
@@ -2167,6 +2203,11 @@ def _apply_client_state(order, client, city):
         c0 = str(order.get("комментарий") or "").strip()
         if note not in c0:
             order["комментарий"] = (c0 + "; " if c0 else "") + "❗ " + note
+    wish = db.get_setting(f"wish:{client}") or ""
+    if wish:
+        c_w = str(order.get("комментарий") or "").strip()
+        if wish not in c_w:
+            order["комментарий"] = (c_w + "; " if c_w else "") + f"‼️ Пожелание к букету: {wish}"
     pack = db.get_setting(f"pack:{client}") or ""
     order["товары"] = [it for it in order["товары"] if not (isinstance(it, dict) and not it.get("код")
                                                             and re.search(r"упаковк", str(it.get("название") or ""), re.I))]
@@ -3054,8 +3095,12 @@ def respond(client, incoming, from_staff=False, quote=""):
         return Reply(text=text, city=city)
     if not from_staff:
         db.del_setting(f"freshask:{client}")
+    pick_wish = ""
     if picked and not from_staff:
         db.set_setting(f"chosen:{client}", picked[0]["code"])   # букет выбран — других больше не подсовываем
+        pick_wish = "" if catalog.is_addon(picked[0], city) else _pick_wish(incoming)
+        if pick_wish:                                           # «как 8, но без роз» — пожелание к букету (флористу)
+            db.set_setting(f"wish:{client}", pick_wish)
     if addons and not from_staff:
         saved = [c for c in (db.get_setting(f"addons:{client}") or "").split(",") if c]
         # Новая открытка заменяет прежнюю открытку (конверт — прежний конверт), а не добавляется второй.
@@ -4810,7 +4855,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                               f"{'поменьше' if minus else 'побольше'}:\n" + "\n".join(opts) + "\nОтветьте цифрой 🌸")
                 reply.photos = []
     # ИИ сам спросил «Доставка или самовывоз? 🚗/🛒» без цифр — заменяем нашим вопросом с ответом цифрой (Абдулла).
-    if not from_staff and reply.text and "\n1 — " not in reply.text and re.search(
+    if not from_staff and reply.text and "\n1 — " not in reply.text and FORM_HEAD not in reply.text and re.search(
             r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк", reply.text, re.I):
         parts = [p for p in re.split(r"(?<=[.!?])\s+|\n+", reply.text)
                  if p.strip() and not re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк", p, re.I)]
@@ -4865,6 +4910,13 @@ def respond(client, incoming, from_staff=False, quote=""):
                 reply.text = f"{ch_it['title']}: {qty} шт. × {ch_it['price']} ₽ = {_rub(total)} 🌸\n\n{pq}"
                 db.set_setting(f"lastq:{client}", pq)
             reply.photos = []
+    if pick_wish and ((_money(pick_wish) and re.search(r"(?:на|за|в)\s*\d", pick_wish)) or size_change):
+        pick_wish = ""                     # «на 2000» / «поменьше» — это бюджет/размер, его ведут отдельные блоки
+        db.del_setting(f"wish:{client}")
+    if pick_wish and picked and not reply.avail_item and not reply.order and not from_staff \
+            and picked[0].get("stock") is None and db.get_setting(f"availq:{client}") != picked[0]["code"]:
+        db.set_setting(f"availq:{client}", picked[0]["code"])       # «как 4, но без роз» — флористу с пожеланием
+        reply.avail_item = picked[0]
     if reply.avail_item and not reply.order and not from_staff and up_text:
         # «Соберём букет на 3 000 ₽» — оставляем наш текст, добавляем, что флорист проверяет наличие.
         if "Уточняю у флориста" not in reply.text:
@@ -4875,7 +4927,11 @@ def respond(client, incoming, from_staff=False, quote=""):
     elif reply.avail_item and not reply.order and not from_staff:
         # Выбран букет — флорист проверяет наличие (вопрос уходит из app). Клиенту: предупредить и продолжить.
         nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
-        reply.text = "Отличный выбор 🌸 Флорист проверит наличие — пара минут ⏱"
+        wish_now = pick_wish or ""
+        if wish_now and not reply.avail_note:
+            reply.avail_note = f"Пожелание клиента: {wish_now}"
+        reply.text = (f"Отличный выбор 🌸 Передала флористу ваше пожелание: «{wish_now}». Она проверит наличие и "
+                      "ответит — пара минут ⏱" if wish_now else "Отличный выбор 🌸 Флорист проверит наличие — пара минут ⏱")
         if nq and nq != ALMOST_DONE_Q:
             reply.text += f"\n\nА пока продолжим оформление 🌸\n{nq}"
             db.set_setting(f"lastq:{client}", nq)
@@ -4902,6 +4958,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                 if it0.get("stock") is None and db.get_setting(f"availq:{client}") != it0["code"]:
                     db.set_setting(f"availq:{client}", it0["code"])
                     reply.avail_item = it0
+                if reply.avail_item:
+                    reply.avail_note = f"Собрать такой же, но на {_rub(n_tot)} ({'поменьше' if sign == '-' else 'попышнее'})"
+                db.del_setting(f"wish:{client}")           # это не отдельное пожелание — уже в «собрать на …»
                 if reply.avail_item:
                     head += " Флорист проверит наличие — пара минут ⏱"
                 nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,

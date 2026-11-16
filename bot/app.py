@@ -565,7 +565,8 @@ def deliver(client, text, from_staff=False, quote=""):
             log.warning("Заказ не распознан (%s): %s", client, reply.order_raw)
         if reply.avail_item and not from_staff:   # выбрал букет из каталога — флорист сразу проверяет наличие
             it = reply.avail_item
-            _avail_request(client, (it.get("images") or [None])[0],
+            photo = images.public_url(it) if config.PUBLIC_BASE_URL else (it.get("images") or [None])[0]
+            _avail_request(client, photo,
                            f"🔎 Клиент выбрал: {it['title']} — {it['price']} ₽\n"
                            + (f"‼️ {reply.avail_note}\n" if reply.avail_note else "")
                            + "Проверьте наличие (бот пока собирает данные)",
