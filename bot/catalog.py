@@ -199,7 +199,7 @@ class Catalog:
                     lines += [self._line(it) for it in items]
         return "\n".join(lines).strip()
 
-    def relevant_text(self, query, keep_codes=(), limit=40, bouquets_only=False):
+    def relevant_text(self, query, keep_codes=(), limit=40, bouquets_only=False, ready_first=False):
         """Только подходящие под разговор товары — чтобы не отправлять ИИ весь каталог (дорого).
 
         query — последние сообщения клиента, keep_codes — товары, уже упомянутые в разговоре.
@@ -240,6 +240,8 @@ class Catalog:
                     score += 1
                 if it["code"] in keep_codes:
                     score += 100
+                if ready_first and name == READY_SECTION:
+                    score += 3                  # букет нужен сегодня/завтра — сначала уже собранные (Абдулла)
                 if budget and not (lo <= it["price"] <= budget) and it["code"] not in keep_codes:
                     continue                    # вне окна бюджета (±500 ₽)
                 # Поштучные цветы: показываем только те, которых в наличии хватает на нужное количество
@@ -265,7 +267,8 @@ class Catalog:
         for score, name, it in scored:
             if it["code"] in seen or len(seen) >= limit:
                 continue
-            if score < 100 and len(picked.get(name, [])) >= per_section:
+            cap = limit if ready_first and name == READY_SECTION else per_section
+            if score < 100 and len(picked.get(name, [])) >= cap:
                 continue
             seen.add(it["code"])
             picked.setdefault(name, []).append(it)
@@ -278,9 +281,9 @@ class Catalog:
             lines += [self._line(it) for it in items]
         return "\n".join(lines)
 
-    def relevant_items(self, query, keep_codes=(), limit=12, bouquets_only=False):
+    def relevant_items(self, query, keep_codes=(), limit=12, bouquets_only=False, ready_first=False):
         """Плоский список подходящих товаров (с фото) — чтобы код сам добивал показ до нужного числа фото."""
-        text = self.relevant_text(query, keep_codes, limit, bouquets_only=bouquets_only)
+        text = self.relevant_text(query, keep_codes, limit, bouquets_only=bouquets_only, ready_first=ready_first)
         out = []
         for m in re.finditer(r"\[([0-9a-f]{6})\]", text):
             it = self.by_code.get(m.group(1))
@@ -310,6 +313,7 @@ NON_BOUQUET = {"Розы и цветы поштучно", "К букету: по
 # Раздел поштучных цветов (роза по 1 шт и т.п.)
 PIECE_SECTION = "Розы и цветы поштучно"
 # Если клиент не назвал ничего конкретного — показываем коллекцию и готовые (ИИ выберет по дате)
+READY_SECTION = "ГОТОВЫЕ букеты — уже собраны (только если букет нужен сегодня или завтра)"
 DEFAULT_SECTIONS = {"ГОТОВЫЕ букеты — уже собраны (только если букет нужен сегодня или завтра)", "КОЛЛЕКЦИЯ: букеты в тренде", "КОЛЛЕКЦИЯ: яркие букеты «дофамины»"}
 
 
