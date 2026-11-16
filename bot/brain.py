@@ -427,7 +427,7 @@ def _picked_by_ordinal(client, incoming, city):
 
 def _picked_by_digit(client, incoming, city):
     """«2» сразу после альбома с номерами на фото — это букет №2 из показанных (а не номер в каталоге)."""
-    m = re.fullmatch(r"\W*(?:фото|вариант|букет|номер|№)?\s*([1-9])\W*", incoming or "", re.I)
+    m = re.fullmatch(r"\W*(?:фото|вариант|букет|номер|№)?\s*(10|[1-9])\W*", incoming or "", re.I)
     if not m or db.get_setting(f"chosen:{client}") or not re.search(r"нравится|номер фото", _last_bot_text(client, "")):
         return []
     shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
@@ -4593,6 +4593,13 @@ def respond(client, incoming, from_staff=False, quote=""):
                 reply.text = (f"{up_target['title']} сейчас {_rub(base)}. Уточню, как собрать "
                               f"{'поменьше' if minus else 'побольше'}:\n" + "\n".join(opts) + "\nОтветьте цифрой 🌸")
                 reply.photos = []
+    # ИИ сам спросил «Доставка или самовывоз? 🚗/🛒» без цифр — заменяем нашим вопросом с ответом цифрой (Абдулла).
+    if not from_staff and reply.text and "\n1 — " not in reply.text and re.search(
+            r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк", reply.text, re.I):
+        parts = [p for p in re.split(r"(?<=[.!?])\s+|\n+", reply.text)
+                 if p.strip() and not re.search(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или\s+доставк", p, re.I)]
+        reply.text = (" ".join(parts) + "\n\n" if parts else "") + WAY_Q
+        db.set_setting(f"lastq:{client}", WAY_Q)
     # Клиент пропустил ВАЖНЫЙ вопрос (без ответа заказ не оформить) — отвечаем на его сообщение и вежливо, но
     # настойчиво переспрашиваем (Абдулла). Второй раз подряд — объясняем, что без этого никак.
     required = (WAY_Q, DATE_Q, DATE_ONLY_Q, TIME_Q, NIGHT_DATE_Q, ADDRESS_Q, CONTACTS_Q, PICKUP_CONTACT_Q)
