@@ -13,7 +13,7 @@ window.GKScene = (function () {
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
 
   var scene = new T.Scene();
-  var camera = new T.PerspectiveCamera(30, 1, 1, 2000);
+  var camera = new T.PerspectiveCamera(30, 1, 1, 4500);
   var controls = new T.OrbitControls(camera, canvas);
   controls.enableDamping = true; controls.dampingFactor = 0.08; controls.enablePan = false;
   controls.rotateSpeed = 0.55; controls.zoomSpeed = 0.7;
@@ -29,7 +29,7 @@ window.GKScene = (function () {
   var skyMat = function (u) { return new T.ShaderMaterial({ uniforms: u, side: T.BackSide, depthWrite: false, fog: false,
     vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
     fragmentShader: 'uniform vec3 top; uniform vec3 hor; uniform vec3 bot; varying vec3 vP; void main(){ float h = normalize(vP).y; vec3 c = h > 0.0 ? mix(hor, top, pow(max(h, 0.0001), 0.55)) : mix(hor, bot, pow(clamp(-h * 6.0, 0.0001, 1.0), 0.7)); gl_FragColor = vec4(c, 1.0);\n#include <encodings_fragment>\n}', toneMapped: false }); };
-  var sky = new T.Mesh(new T.SphereGeometry(900, 32, 16), skyMat(skyU)); sky.frustumCulled = false; scene.add(sky);
+  var sky = new T.Mesh(new T.SphereGeometry(1700, 32, 16), skyMat(skyU)); sky.frustumCulled = false; scene.add(sky);
   scene.fog = new T.Fog(0xffffff, 200, 700);
 
   // отражения в стёклах — маленькая «картинка неба»
@@ -68,18 +68,17 @@ window.GKScene = (function () {
   var P0 = house.parts[0], P1 = house.parts[1];       // два крыла дома (Г-образный план)
   var HX = P1.x1, HZ = P0.z1;                          // половины габарита: дом стоит в центре
   shopL[0].position.set(4, 3, HZ + 6); shopL[1].position.set(-HX - 6, 3, 0);
-  var SR = 74;                                        // радиус «подмакетника»
+  var SR = 56;                                        // радиус своего участка (для посадки деревьев рядом с домом)
+  // земля до горизонта вместо «подставки»
+  var groundT = ctex(512, 512, function (g) { g.fillStyle = '#6f8a55'; g.fillRect(0, 0, 512, 512);
+    for (var i = 0; i < 260; i++) { var x = rnd() * 512, y = rnd() * 512, r = 20 + rnd() * 70, gr = g.createRadialGradient(x, y, 0, x, y, r), c = rnd() < 0.5 ? '70,105,55' : rnd() < 0.5 ? '140,140,95' : '95,125,70';
+      gr.addColorStop(0, 'rgba(' + c + ',.35)'); gr.addColorStop(1, 'rgba(' + c + ',0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); } }, 1 / 90);
+  var GR = 1400;
   (function () {
-    var top = new T.Mesh(new T.CircleGeometry(SR, 72), mGrass); top.rotation.x = -Math.PI / 2; top.receiveShadow = true;
-    var uv = top.geometry.attributes.uv; for (var i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) - 0.5) * 2 * SR, (uv.getY(i) - 0.5) * 2 * SR);
-    var rim = new T.Mesh(new T.CylinderGeometry(SR + 0.5, SR + 0.5, 2.2, 72, 1, true), mBase); rim.position.y = -1.12;
-    var lip = new T.Mesh(new T.RingGeometry(SR, SR + 0.5, 72), mBase); lip.rotation.x = -Math.PI / 2; lip.position.y = -0.02;
-    site.add(top, rim, lip);
+    var top = new T.Mesh(new T.CircleGeometry(GR, 64), M({ map: groundT, roughness: 1 })); top.rotation.x = -Math.PI / 2; top.receiveShadow = true;
+    var uv = top.geometry.attributes.uv; for (var i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) - 0.5) * 2 * GR, (uv.getY(i) - 0.5) * 2 * GR);
+    site.add(top);
   })();
-  var floorMat = new T.MeshBasicMaterial({ color: 0xffffff }), floor = new T.Mesh(new T.CircleGeometry(900, 48), floorMat);
-  floor.rotation.x = -Math.PI / 2; floor.position.y = -2.2; site.add(floor);
-  var shadowCatch = new T.Mesh(new T.CircleGeometry(230, 48), new T.ShadowMaterial({ opacity: 0.18 })); shadowCatch.rotation.x = -Math.PI / 2; shadowCatch.position.y = -2.18; shadowCatch.receiveShadow = true; site.add(shadowCatch);
-  var rimCaster = new T.Mesh(new T.CylinderGeometry(SR + 0.5, SR + 0.5, 0.2, 48), new T.MeshBasicMaterial({ colorWrite: false, depthWrite: false })); rimCaster.position.y = -0.3; rimCaster.castShadow = true; site.add(rimCaster);
 
   var layer = 0;
   function slab(mat, x0, x1, z0, z1, h) {            // плоская площадка (плитка, асфальт…)
@@ -90,7 +89,52 @@ window.GKScene = (function () {
   var PX0 = -HX - 8, PX1 = HX + 5.5, PZ0 = -HZ - 5, PZ1 = HZ + 7.5;   // плитка: тротуары и двор
   var RW = [PX0 - 9, PX0], RS = [PZ1, PZ1 + 9];                         // улицы: западная и южная
   slab(mPave, PX0, PX1, PZ0, PZ1, 0.08);
-  slab(mAsph, RW[0], RW[1], -56, 56, 0.05); slab(mAsph, -56, 56, RS[0], RS[1], 0.05);
+  // ---------- город вокруг: сетка улиц, пятиэтажки, частные дома — уходит в дымку до горизонта ----------
+  var cityMats = [], cityTrees = [];
+  (function () {
+    var pitch = 112, sx0 = (RW[0] + RW[1]) / 2, sz0 = (RS[0] + RS[1]) / 2, NB = 5, EXT = 640;
+    for (var k = -NB; k <= NB; k++) { var w = k === 0 ? 4.5 : 3.6; slab(mAsph, sx0 + k * pitch - w, sx0 + k * pitch + w, -EXT, EXT, 0.05); slab(mAsph, -EXT, EXT, sz0 + k * pitch - w, sz0 + k * pitch + w, 0.05); }
+    var facade = function (wall, lit) { return ctex(512, 512, function (g) {
+      g.fillStyle = lit ? '#000' : wall; g.fillRect(0, 0, 512, 512);
+      if (!lit) for (var r = 0; r < 26; r++) { g.fillStyle = 'rgba(0,0,0,' + (0.03 + rnd() * 0.05) + ')'; g.fillRect(0, r * 20, 512, 1.5); }
+      for (var y = 0; y < 4; y++) for (var x = 0; x < 4; x++) { var on = rnd() < 0.4;
+        if (lit) { if (on) { g.fillStyle = rnd() < 0.75 ? '#f3b56a' : '#cdd8f0'; g.fillRect(x * 128 + 36, y * 128 + 30, 56, 62); } }
+        else { g.fillStyle = '#e9e6df'; g.fillRect(x * 128 + 32, y * 128 + 26, 64, 70); g.fillStyle = '#2b3743'; g.fillRect(x * 128 + 36, y * 128 + 30, 56, 62); g.fillStyle = '#e9e6df'; g.fillRect(x * 128 + 62, y * 128 + 30, 3, 62); } } }); };
+    var mkWall = function (wall) { var m = M({ map: facade(wall, false), roughness: 0.95, emissive: 0xffffff, emissiveMap: facade(wall, true), emissiveIntensity: 0 }); cityMats.push(m); return m; };
+    var mRoofG = M({ color: 0x6a6660, roughness: 1 });
+    var slabGeo = function (L, Hh, Dd) { var g = new T.BoxGeometry(L, Hh, Dd), uv = g.attributes.uv;
+      for (var i = 0; i < uv.count; i++) { var f = Math.floor(i / 4), len = f < 2 ? Dd : L; uv.setXY(i, uv.getX(i) * len / 12.8, uv.getY(i) * Hh / 12.8); } return g; };
+    var slabsA = [], houses = [];
+    slabsA.push({ x: 12, z: P0.z0 - 30, r: 0, c: 0 }, { x: HX + 26, z: -4, r: 1, c: 1 });      // соседи по своему кварталу
+    for (var i = -NB; i < NB; i++) for (var j = -NB; j < NB; j++) {
+      if (i === 0 && j === -1) continue;
+      var x0 = sx0 + i * pitch + 9, x1 = sx0 + (i + 1) * pitch - 9, z0 = sz0 + j * pitch + 9, z1 = sz0 + (j + 1) * pitch - 9, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, d = Math.hypot(cx, cz);
+      if (d > 600) continue;
+      if (d > 175 && rnd() < (d < 330 ? 0.5 : 0.14)) { var rot = rnd() < 0.5 ? 0 : 1, cc = (rnd() * 3) | 0;
+        for (var q = -1; q <= 1; q++) { if (rnd() < 0.15) continue; slabsA.push({ x: cx + (rot ? q * 32 : 0), z: cz + (rot ? 0 : q * 32), r: rot, c: cc }); if (rnd() < 0.8) cityTrees.push([cx + (rot ? q * 32 + 15 : (rnd() - 0.5) * 70), cz + (rot ? (rnd() - 0.5) * 70 : q * 32 + 15)]); }
+      } else for (var a = 0; a < 4; a++) for (var b = 0; b < 4; b++) { if (rnd() < 0.1) continue;
+        var hx = x0 + (a + 0.5) * (x1 - x0) / 4 + (rnd() - 0.5) * 5, hz = z0 + (b + 0.5) * (z1 - z0) / 4 + (rnd() - 0.5) * 5;
+        houses.push({ x: hx, z: hz, w: 8 + rnd() * 4, d: 7 + rnd() * 3, h: 3 + (rnd() < 0.2 ? 3 : 0), r: rnd() < 0.5 ? 0 : 1 });
+        if (rnd() < 0.7) cityTrees.push([hx + 7 + rnd() * 3, hz + (rnd() - 0.5) * 10]); if (rnd() < 0.4) cityTrees.push([hx - 8, hz + 6 + rnd() * 3]); }
+    }
+    var o = new T.Object3D(), col = new T.Color();
+    var walls = ['#b7b2a8', '#c9bfa9', '#a3644c'].map(mkWall), gS = slabGeo(60, 16, 12);
+    walls.forEach(function (wm, ci) {
+      var list = slabsA.filter(function (b) { return b.c === ci; }); if (!list.length) return;
+      var im = new T.InstancedMesh(gS, [wm, wm, mRoofG, mRoofG, wm, wm], list.length);
+      list.forEach(function (b, n) { o.position.set(b.x, 8, b.z); o.rotation.set(0, b.r ? Math.PI / 2 : 0, 0); o.scale.set(1, 1, 1); o.updateMatrix(); im.setMatrixAt(n, o.matrix); });
+      im.castShadow = im.receiveShadow = true; site.add(im);
+    });
+    var hWall = M({ map: ctex(256, 128, function (g) { g.fillStyle = '#e4dfd4'; g.fillRect(0, 0, 256, 128); [40, 150].forEach(function (x) { g.fillStyle = '#f4f2ec'; g.fillRect(x - 4, 34, 66, 62); g.fillStyle = '#2b3743'; g.fillRect(x, 38, 58, 54); }); }), roughness: 0.95,
+      emissive: 0xffffff, emissiveMap: ctex(256, 128, function (g) { g.fillStyle = '#000'; g.fillRect(0, 0, 256, 128); g.fillStyle = '#f0b060'; g.fillRect(40, 38, 58, 54); }), emissiveIntensity: 0 }); cityMats.push(hWall);
+    var roofG = new T.ConeGeometry(1, 1, 4); roofG.rotateY(Math.PI / 4);
+    var bodies = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), hWall, houses.length), roofs = new T.InstancedMesh(roofG, M({ color: 0xffffff, roughness: 0.9 }), houses.length);
+    var RC = [0x7a4a3a, 0x5d5f66, 0x8a3b2e, 0x4d5a4a, 0x6b5a4a], WC = [0xffffff, 0xf2e6cf, 0xd9c4a6, 0xe9e9e9, 0xc9a48a];
+    houses.forEach(function (h, n) { var ry = h.r ? Math.PI / 2 : 0;
+      o.rotation.set(0, ry, 0); o.position.set(h.x, h.h / 2, h.z); o.scale.set(h.w, h.h, h.d); o.updateMatrix(); bodies.setMatrixAt(n, o.matrix); bodies.setColorAt(n, col.setHex(WC[(rnd() * WC.length) | 0]));
+      o.position.set(h.x, h.h + 1.3, h.z); o.scale.set(h.w * 0.82, 2.6, h.d * 0.82); o.updateMatrix(); roofs.setMatrixAt(n, o.matrix); roofs.setColorAt(n, col.setHex(RC[(rnd() * RC.length) | 0])); });
+    [bodies, roofs].forEach(function (im) { im.castShadow = im.receiveShadow = true; im.instanceColor.needsUpdate = true; site.add(im); });
+  })();
   for (var i = -5; i <= 5; i++) { slab(mLine, RW[0] + 4.42, RW[0] + 4.58, i * 9 - 1.5, i * 9 + 1.5, 0.06); slab(mLine, i * 9 - 1.5, i * 9 + 1.5, RS[0] + 4.42, RS[0] + 4.58, 0.06); }
   for (i = 0; i < 8; i++) slab(mLine, P1.x0 + 16 + i * 0.9, P1.x0 + 16.45 + i * 0.9, RS[0] + 0.6, RS[1] - 0.6, 0.06);   // «зебра»
   // двор: проезд, газоны, детская площадка, беседки
@@ -121,12 +165,13 @@ window.GKScene = (function () {
       return !(inR(PX0, PX1, PZ0, PZ1) || inR(RW[0], RW[1], -80, 80) || inR(-80, 80, RS[0], RS[1]));
     };
     var dec = [], con = [], tries = 0;
-    while (dec.length < 34 && tries++ < 6000) { var a = rnd() * 6.283, d = 30 + rnd() * 42, x = Math.cos(a) * d, z = Math.sin(a) * d, r = 2.3 + rnd() * 1.6;
+    while (dec.length < 16 && tries++ < 6000) { var a = rnd() * 6.283, d = 30 + rnd() * 24, x = Math.cos(a) * d, z = Math.sin(a) * d, r = 2.3 + rnd() * 1.6;
       if (!free(x, z, r * 0.9)) continue; if (dec.some(function (t) { return Math.hypot(t.x - x, t.z - z) < (t.r + r) * 0.8; })) continue; dec.push({ x: x, z: z, r: r }); }
+    cityTrees.forEach(function (t) { dec.push({ x: t[0], z: t[1], r: 2.6 + rnd() * 1.8, far: true }); });
     for (var i = 0; i < 6; i++) dec.push({ x: P1.x0 + 9 + i * 7.2, z: PZ1 - 1.6, r: 1.25, young: true });             // молодые деревья вдоль южного тротуара
     for (i = 0; i < 6; i++) dec.push({ x: PX0 + 1.6, z: -HZ + 6 + i * 7.5, r: 1.25, young: true });                       // и вдоль западного
     [[CX0 + 8, CZ0 + 9.5], [CX1 - 8, CZ0 + 9.5], [CX0 + 8, CZ1 - 8], [CX1 - 9, CZ1 - 8]].forEach(function (p) { dec.push({ x: p[0], z: p[1], r: 1.9, young: true }); });
-    [[HX + 9, -HZ + 4], [HX + 9, 6], [-HX + 6, -HZ - 9], [8, -HZ - 9], [HX + 8, HZ + 1]].forEach(function (p) { if (free(p[0], p[1], 1.5)) con.push({ x: p[0], z: p[1] }); });
+    [[HX + 9, -HZ + 4], [-HX + 6, -HZ - 9], [8, -HZ - 9], [HX + 8, HZ + 1]].forEach(function (p) { if (free(p[0], p[1], 1.5)) con.push({ x: p[0], z: p[1] }); });
     for (i = 0; i < 7; i++) con.push({ x: PX1 - 1.2, z: CZ0 + 4 + i * 1.5, thuja: true });
     var blobG = new T.SphereGeometry(1, 22, 16), bp = blobG.attributes.position;
     for (i = 0; i < bp.count; i++) { var k = 1 + (Math.sin(bp.getX(i) * 9.1) * Math.cos(bp.getY(i) * 7.3) * Math.sin(bp.getZ(i) * 8.2)) * 0.07; bp.setXYZ(i, bp.getX(i) * k, bp.getY(i) * k, bp.getZ(i) * k); }
@@ -138,7 +183,7 @@ window.GKScene = (function () {
     var put = function (im, n, x, y, z, sx, sy, sz, c) { o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.rotation.set(0, rnd() * 6, 0); o.updateMatrix(); im.setMatrixAt(n, o.matrix); if (c) im.setColorAt(n, c); };
     dec.forEach(function (t) {
       var th = t.young ? 2.2 : 2.6 + rnd() * 1.6; put(trunks, nt++, t.x, th / 2, t.z, t.young ? 0.6 : 1, th, t.young ? 0.6 : 1);
-      for (var j = 0; j < (t.young ? 2 : 4); j++) { var rr = t.r * (j ? 0.55 + rnd() * 0.25 : 1), ox = j ? (rnd() - 0.5) * t.r * 1.3 : 0, oz = j ? (rnd() - 0.5) * t.r * 1.3 : 0;
+      for (var j = 0; j < (t.far ? 1 : t.young ? 2 : 4); j++) { var rr = t.r * (j ? 0.55 + rnd() * 0.25 : 1), ox = j ? (rnd() - 0.5) * t.r * 1.3 : 0, oz = j ? (rnd() - 0.5) * t.r * 1.3 : 0;
         col.setHSL(0.27 + rnd() * 0.05, 0.36 + rnd() * 0.12, 0.25 + rnd() * 0.08); put(blobs, nb++, t.x + ox, th + t.r * 0.75 + (j ? rnd() * t.r * 0.5 : 0), t.z + oz, rr, rr * 0.88, rr, col); }
     });
     con.forEach(function (t) {
@@ -172,11 +217,22 @@ window.GKScene = (function () {
   /* ---------- звёзды и облака ---------- */
   var stars = (function () {
     var n = 700, p = new Float32Array(n * 3);
-    for (var i = 0; i < n; i++) { var a = rnd() * 6.283, e = 0.06 + rnd() * 1.45, r = 800; p[i * 3] = Math.cos(a) * Math.cos(e) * r; p[i * 3 + 1] = Math.sin(e) * r; p[i * 3 + 2] = Math.sin(a) * Math.cos(e) * r; }
+    for (var i = 0; i < n; i++) { var a = rnd() * 6.283, e = 0.1 + rnd() * 1.4, r = 1600; p[i * 3] = Math.cos(a) * Math.cos(e) * r; p[i * 3 + 1] = Math.sin(e) * r; p[i * 3 + 2] = Math.sin(a) * Math.cos(e) * r; }
     var g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(p, 3));
     var m = new T.Points(g, new T.PointsMaterial({ color: 0xdfe8ff, size: 1.7, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false }));
     m.frustumCulled = false; scene.add(m); return m;
   })();
+  // горы на горизонте (Кавказский хребет — на юге) и кучевые облака в небе
+  var mountMat = new T.MeshBasicMaterial({ transparent: true, fog: false, side: T.BackSide, depthWrite: false,
+    map: ctex(2048, 128, function (g) { for (var pass = 0; pass < 2; pass++) { g.beginPath(); g.moveTo(0, 128);
+      for (var x = 0; x <= 2048; x += 2) { var u = x / 2048, south = Math.pow(Math.max(0, Math.cos(u * 6.283)), 1.5), hh = 8 + 4 * Math.sin(u * 140) + 3 * Math.sin(u * 397 + 1) + south * (40 + 20 * Math.sin(u * 261) + 16 * Math.abs(Math.sin(u * 613 + 2)) + 10 * Math.sin(u * 1311) + 6 * Math.sin(u * 2903));
+        g.lineTo(x, 128 - (pass ? hh * 0.62 : hh)); }
+      g.lineTo(2048, 128); g.closePath(); g.fillStyle = pass ? '#8fa2b8' : '#f4f7fb'; g.fill(); } }) });
+  var mount = new T.Mesh(new T.CylinderGeometry(1560, 1560, 230, 96, 1, true), mountMat); mount.position.y = 100; mount.renderOrder = -1; scene.add(mount);
+  var skyCloudMat = new T.SpriteMaterial({ transparent: true, depthWrite: false, fog: false, opacity: 0.9,
+    map: ctex(512, 256, function (g) { for (var i = 0; i < 26; i++) { var x = 90 + rnd() * 330, y = 120 + rnd() * 60 - Math.abs(x - 256) * 0.1, r = 40 + rnd() * 60, gr = g.createRadialGradient(x, y - r * 0.2, 0, x, y, r);
+      gr.addColorStop(0, 'rgba(255,255,255,.6)'); gr.addColorStop(0.6, 'rgba(244,247,252,.25)'); gr.addColorStop(1, 'rgba(235,240,248,0)'); g.fillStyle = gr; g.fillRect(0, 0, 512, 256); } }) });
+  (function () { for (var i = 0; i < 16; i++) { var a = i / 16 * 6.283 + rnd() * 0.3, d = 900 + rnd() * 500, sp = new T.Sprite(skyCloudMat); sp.position.set(Math.cos(a) * d, 260 + rnd() * 330, Math.sin(a) * d); var sz = 420 + rnd() * 380; sp.scale.set(sz, sz * 0.45, 1); scene.add(sp); } })();
   var clouds = new T.Group(), cloudMats = []; scene.add(clouds);
   (function () {
     for (var v = 0; v < 3; v++) {
@@ -185,8 +241,8 @@ window.GKScene = (function () {
       cloudMats.push(new T.SpriteMaterial({ map: t, transparent: true, opacity: 0, depthWrite: false, fog: false }));
     }
     var add = function (rad, y, size, a) { var s = new T.Sprite(cloudMats[(rnd() * 3) | 0]); s.position.set(Math.cos(a) * rad, y, Math.sin(a) * rad); s.scale.set(size, size * 0.62, 1); s.userData = { y: y, ph: rnd() * 6.3 }; clouds.add(s); };
-    for (var i = 0; i < 46; i++) add(86 + rnd() * 150, -9 + rnd() * 9, 80 + rnd() * 90, i / 46 * 6.283 + rnd() * 0.3);   // «море облаков» вокруг дома
-    for (i = 0; i < 20; i++) add(72 + rnd() * 16, -3 + rnd() * 5, 42 + rnd() * 22, i / 20 * 6.283 + rnd() * 0.2);
+    for (var i = 0; i < 90; i++) add(100 + rnd() * 420, 6 + rnd() * 10, 120 + rnd() * 130, i / 90 * 6.283 * 3 + rnd() * 0.3);   // «море облаков» вокруг дома
+    for (i = 0; i < 20; i++) add(74 + rnd() * 18, 3 + rnd() * 5, 46 + rnd() * 24, i / 20 * 6.283 + rnd() * 0.2);
     for (i = 0; i < 10; i++) add(66 + rnd() * 60, 10 + rnd() * 26, 30 + rnd() * 26, rnd() * 6.283);                           // облака, плывущие мимо этажей
     clouds.visible = false;
   })();
@@ -194,16 +250,16 @@ window.GKScene = (function () {
   /* ---------- режимы ---------- */
   var C = function (h) { return new T.Color(h); };
   var MODES = {
-    day: { top: C(0x4f93dd), hor: C(0xe4edf4), bot: C(0xd9d6cf), sunC: C(0xfff0dc), sun: 2.1, sunP: new T.Vector3(-120, 135, 150), hemiS: C(0xcfe0ff), hemiG: C(0x6f695d), hemi: 0.29, exp: 0.92, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 0, env: 1, fogN: 320, fogF: 890, sh: 0.2 },
-    night: { top: C(0x050915), hor: C(0x1c2744), bot: C(0x0c0f18), sunC: C(0x9db6ff), sun: 0.5, sunP: new T.Vector3(100, 180, 110), hemiS: C(0x4a5f98), hemiG: C(0x15171f), hemi: 0.26, exp: 1.0, win: 1.5, shop: 1.5, lamp: 1, stars: 1, cloud: 0, env: 0.1, fogN: 300, fogF: 890, sh: 0.3 },
-    clouds: { top: C(0x3f8ae0), hor: C(0xc4dcf5), bot: C(0xf3f6fa), sunC: C(0xfff3df), sun: 1.55, sunP: new T.Vector3(-95, 175, 135), hemiS: C(0xe6eeff), hemiG: C(0xb9c0cc), hemi: 0.6, exp: 0.95, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 1, env: 1, fogN: 230, fogF: 900, sh: 0 }
+    day: { top: C(0x4f93dd), hor: C(0xd3e2ee), bot: C(0xb9c7c9), sunC: C(0xfff0dc), sun: 2.1, sunP: new T.Vector3(-120, 135, 150), hemiS: C(0xcfe0ff), hemiG: C(0x6f695d), hemi: 0.29, exp: 0.92, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 0, env: 1, fogN: 260, fogF: 1500, sh: 0.2 },
+    night: { top: C(0x050915), hor: C(0x1c2744), bot: C(0x0c0f18), sunC: C(0x9db6ff), sun: 0.5, sunP: new T.Vector3(100, 180, 110), hemiS: C(0x4a5f98), hemiG: C(0x15171f), hemi: 0.26, exp: 1.0, win: 1.5, shop: 1.5, lamp: 1, stars: 1, cloud: 0, env: 0.1, fogN: 220, fogF: 1300, sh: 0.3 },
+    clouds: { top: C(0x3f8ae0), hor: C(0xc4dcf5), bot: C(0xf3f6fa), sunC: C(0xfff3df), sun: 1.55, sunP: new T.Vector3(-95, 175, 135), hemiS: C(0xe6eeff), hemiG: C(0xb9c0cc), hemi: 0.6, exp: 0.95, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 1, env: 1, fogN: 190, fogF: 700, sh: 0 }
   };
   var NUM = ['sun', 'hemi', 'exp', 'win', 'shop', 'lamp', 'stars', 'cloud', 'env', 'fogN', 'fogF', 'sh'], COL = ['top', 'hor', 'bot', 'sunC', 'hemiS', 'hemiG'];
   var cur = {}, goal = MODES.day, mode = 'day', modeT = 0;
   NUM.forEach(function (k) { cur[k] = goal[k]; }); COL.forEach(function (k) { cur[k] = goal[k].clone(); }); cur.sunP = goal.sunP.clone();
   function applyMode() {
     skyU.top.value.copy(cur.top).convertSRGBToLinear(); skyU.hor.value.copy(cur.hor).convertSRGBToLinear(); skyU.bot.value.copy(cur.bot).convertSRGBToLinear();
-    scene.fog.color.copy(cur.hor); scene.fog.near = cur.fogN; scene.fog.far = cur.fogF; floorMat.color.copy(cur.bot);
+    scene.fog.color.copy(cur.hor); scene.fog.near = cur.fogN; scene.fog.far = cur.fogF; mountMat.color.copy(cur.hor); skyCloudMat.opacity = 0.9 * (1 - cur.stars * 0.85); cityMats.forEach(function (m) { m.emissiveIntensity = cur.win * 0.9; });
     sun.color.copy(cur.sunC); sun.intensity = cur.sun; sun.position.copy(cur.sunP);
     hemi.color.copy(cur.hemiS); hemi.groundColor.copy(cur.hemiG); hemi.intensity = cur.hemi;
     renderer.toneMappingExposure = cur.exp;
@@ -213,7 +269,6 @@ window.GKScene = (function () {
     glowMat.opacity = cur.lamp; poolMat.opacity = cur.lamp * 0.3; lampMat.color.setRGB(0.33 + cur.lamp * 0.67, 0.31 + cur.lamp * 0.55, 0.29 + cur.lamp * 0.3);
     stars.material.opacity = cur.stars; stars.visible = cur.stars > 0.01;
     clouds.visible = cur.cloud > 0.01; cloudMats.forEach(function (m) { m.opacity = cur.cloud * 0.95; });
-    shadowCatch.material.opacity = cur.sh;
     envMats.forEach(function (m) { m.envMapIntensity = m.userData.env * cur.env; });
     renderer.shadowMap.needsUpdate = true; dirty = true;
   }
