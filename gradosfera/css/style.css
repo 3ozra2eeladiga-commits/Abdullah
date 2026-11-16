@@ -1729,3 +1729,12 @@ body.gt-open .fab, body.gt-open .build-fg, body.gt-open .build-hud, body.gt-open
 .team__svg .tt__star { fill: #ffd27a !important; stroke: #e3a33b !important; filter: drop-shadow(0 0 4px rgba(255,210,120,.9)); }
 .team__svg .tt__gift { fill: #c8343a !important; stroke: #ffd27a !important; }
 .team__svg .tt__gift2 { fill: #e3b04b !important; stroke: #fff2c8 !important; }
+
+/* ===== согласие на обработку данных у форм (152-ФЗ) ===== */
+.agree { display: flex; gap: 9px; align-items: flex-start; font-size: 12px; line-height: 1.4; color: var(--muted); cursor: pointer; text-align: left; }
+.agree input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--copper); }
+.agree a { color: inherit; text-decoration: underline; }
+.agree--gt { color: #5a3f17; }
+.agree--gt input { accent-color: #6b4a14; }
+.ftr__fine a { color: inherit; text-decoration: underline; }
+.pay__form .agree input, .gt__form .agree input { min-height: 0; width: 18px; height: 18px; padding: 0; border-radius: 3px; }

@@ -121,7 +121,8 @@
       var name = form.elements.name.value.trim(), digits = form.elements.phone.value.replace(/\D/g, '');
       if (!name) { msg.textContent = 'Напишите, пожалуйста, имя'; msg.className = 'pay__msg err'; return; }
       if (digits.length !== 11) { msg.textContent = 'Проверьте номер телефона'; msg.className = 'pay__msg err'; return; }
-      send({ kind: 'lead', name: name, phone: digits, details: calcText(), website: form.elements.website.value }, msg, function () {
+      if (form.elements.agree && !form.elements.agree.checked) { msg.textContent = 'Отметьте галочку согласия на обработку данных'; msg.className = 'pay__msg err'; return; }
+      send({ kind: 'lead', agree: 1, name: name, phone: digits, details: calcText(), website: form.elements.website.value }, msg, function () {
         msg.textContent = 'Спасибо! Перезвоним в рабочее время (пн–сб 10:00–17:00) 🙌'; msg.className = 'pay__msg ok'; form.reset();
       });
     });
@@ -246,8 +247,9 @@
     var name = gform.elements.name.value.trim(), digits = gform.elements.phone.value.replace(/\D/g, '');
     if (!name) { gmsg.textContent = 'Напишите, пожалуйста, имя'; gmsg.className = 'gt__msg err'; return; }
     if (digits.length !== 11) { gmsg.textContent = 'Проверьте номер телефона'; gmsg.className = 'gt__msg err'; return; }
+    if (gform.elements.agree && !gform.elements.agree.checked) { gmsg.textContent = 'Отметьте галочку согласия'; gmsg.className = 'gt__msg err'; return; }
     // код создаёт и запоминает сервер (48 часов, один билет на номер телефона)
-    send({ kind: 'ticket', name: name, phone: digits, details: calcText(), dev: dev, fp: fp }, gmsg, function (r) {
+    send({ kind: 'ticket', agree: 1, name: name, phone: digits, details: calcText(), dev: dev, fp: fp }, gmsg, function (r) {
       if (!r || !r.code) { gmsg.textContent = 'Не получилось выдать билет. Позвоните нам: +7 (938) 815-33-33'; gmsg.className = 'gt__msg err'; return; }
       st.code = r.code; st.name = name; if (r.until) st.until = r.until; st.untilText = r.untilText || ''; st.repeat = !!r.repeat; st.why = r.why || ''; st.status = r.status; save(); gmsg.textContent = ''; showCode(); timer();
     });

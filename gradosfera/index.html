@@ -306,7 +306,7 @@
           <div class="pay__row"><span>Стоимость квартиры</span><b id="oTotal"></b></div>
         </div>
         <p class="pay__nudge" id="oNudge"></p>
-        <p class="pay__note">Предварительный расчёт, не является публичной офертой. График платежей подтвердит менеджер.</p>
+        <p class="pay__note">Рассрочка от застройщика, не кредит: первый взнос от 10% до 100%, срок от 6 до 60 месяцев, цена за м² зависит от размера взноса (88 000–95 000 ₽). Предварительный расчёт, не является публичной офертой. График платежей подтвердит менеджер.</p>
       </div>
       <div class="pay__side">
         <div class="pay__scene" aria-hidden="true">
@@ -335,9 +335,9 @@
           <input type="text" name="name" placeholder="Ваше имя" autocomplete="name" maxlength="80" required>
           <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel" maxlength="20" required>
           <input type="text" name="website" class="pay__hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <label class="agree"><input type="checkbox" name="agree"><span>Согласен(на) на <a href="soglasie.html" target="_blank">обработку персональных данных</a> по <a href="politika.html" target="_blank">политике</a></span></label>
           <button class="btn btn--fill" type="submit">Перезвоните мне</button>
           <p class="pay__msg" id="payMsg" aria-live="polite"></p>
-          <small class="pay__agree">Нажимая кнопку, вы соглашаетесь на обработку персональных данных.</small>
         </form>
       </div>
     </div>
@@ -380,6 +380,7 @@
       <form class="gt__form" id="gtForm" novalidate>
         <input type="text" name="name" placeholder="Ваше имя" autocomplete="name" maxlength="80" required>
         <input type="tel" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel" maxlength="20" required>
+        <label class="agree agree--gt"><input type="checkbox" name="agree"><span>Согласен(на) на <a href="soglasie.html" target="_blank">обработку персональных данных</a> и с <a href="akciya.html" target="_blank">правилами акции</a></span></label>
         <button class="btn btn--fill" type="submit">Забрать подарок</button>
         <p class="gt__msg" id="gtMsg" aria-live="polite"></p>
       </form>
@@ -539,6 +540,11 @@
       <span class="doc__t"><b>Разрешение на строительство</b><small>№ 15-01-05-2026 от 25.03.2026</small></span>
       <span class="doc__go">Открыть →</span>
     </a>
+    <a class="doc fade" href="https://наш.дом.рф/сервисы/каталог-новостроек/список-объектов/список?search=Градосфера" target="_blank" rel="noopener">
+      <span class="doc__ico">ДОМ.РФ</span>
+      <span class="doc__t"><b>Проектная декларация</b><small>опубликована на сайте наш.дом.рф</small></span>
+      <span class="doc__go">Открыть →</span>
+    </a>
   </div>
 </section>
 
@@ -652,7 +658,9 @@
   </div>
   <div class="wrap ftr__fine">
     <span>© <span id="year">2026</span> «Градосфера»</span>
+    <span>Застройщик — ООО «Специализированный застройщик «ГРАДОСФЕРА», ИНН 0500040717, ОГРН 1250500015457. Проектная декларация — на сайте <a href="https://наш.дом.рф/сервисы/каталог-новостроек/список-объектов/список?search=Градосфера" target="_blank" rel="noopener">наш.дом.рф</a>.</span>
     <span>Информация на сайте не является публичной офертой. Изображения дома — архитектурные визуализации.</span>
+    <span><a href="politika.html">Политика обработки персональных данных</a> · <a href="soglasie.html">Согласие на обработку данных</a> · <a href="akciya.html">Правила акции «Золотой билет»</a></span>
   </div>
   <div class="parade" aria-hidden="true"><div class="parade__ground"></div><div class="parade__boss" id="paradeBoss"><span class="parade__say" id="paradeSay"></span><svg viewBox="0 0 54 60" class="pboss"><path d="M22 38 L17 58 M22 38 L27 58"/>
 <path d="M22 22 V38" /><rect x="15" y="22" width="14" height="15" rx="3" class="vest"/><circle cx="22" cy="14" r="7" class="face"/><path d="M15 12 a7 7 0 0 1 14 0 z M14 12 h16" class="hatw"/>

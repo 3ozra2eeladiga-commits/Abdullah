@@ -88,7 +88,7 @@ if ($kind === 'ticket') {
 
 // журнал заявок для бота (кнопка «Заявки»)
 gk_json_update('gs-leads.json', function (&$all) use ($kind, $name, $phone, $details, $demo, $res) {
-    $all[] = ['t' => time(), 'kind' => $kind, 'name' => $name, 'phone' => $phone, 'code' => $res['code'] ?? '', 'details' => $details, 'demo' => $demo];
+    $all[] = ['t' => time(), 'agree' => !empty($GLOBALS['in']['agree']), 'kind' => $kind, 'name' => $name, 'phone' => $phone, 'code' => $res['code'] ?? '', 'details' => $details, 'demo' => $demo];
     if (count($all) > 1000) $all = array_slice($all, -1000);
     return true;
 });
