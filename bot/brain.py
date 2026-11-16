@@ -1352,7 +1352,9 @@ def _known_keys(user_msgs, city, order=None):
     """Что клиент УЖЕ сообщил (по всей переписке + черновику): способ, дата, время, адрес, город, контакты.
     Нужно, чтобы НИКОГДА не переспрашивать уже известное (Абдулла)."""
     o = order or {}
-    known = " ".join(str(o.get(k) or "") for k in ("получение", "дата", "время", "адрес", "заказчик", "получатель")
+    # «получение» из черновика ИИ НЕ считаем ответом: ИИ сам ставит «доставка», хотя клиент ещё не выбрал (Абдулла:
+    # сначала спросить «Доставка или самовывоз?»). Способ — только из слов клиента (или раз уже есть адрес).
+    known = " ".join(str(o.get(k) or "") for k in ("дата", "время", "адрес", "заказчик", "получатель")
                      if str(o.get(k) or "").strip() not in ("", "—", "...", "…"))
     t = (" ".join(user_msgs) + " " + known).lower()
     t_time = re.sub(r"\b\d{1,2}\.(?:0[1-9]|1[0-2])\b(?!:)", " ", t)
@@ -1389,7 +1391,9 @@ def _next_question(user_msgs, city, order=None):
     """Следующий вопрос оформления — только о том, чего клиент ЕЩЁ НЕ говорил (не переспрашиваем доставку/дату).
     order — уже собранный заказ (итог, который клиент видел): что в нём есть, тоже не спрашиваем."""
     o = order or {}
-    known = " ".join(str(o.get(k) or "") for k in ("получение", "дата", "время", "адрес", "заказчик", "получатель")
+    # «получение» из черновика ИИ НЕ считаем ответом: ИИ сам ставит «доставка», хотя клиент ещё не выбрал (Абдулла:
+    # сначала спросить «Доставка или самовывоз?»). Способ — только из слов клиента (или раз уже есть адрес).
+    known = " ".join(str(o.get(k) or "") for k in ("дата", "время", "адрес", "заказчик", "получатель")
                      if str(o.get(k) or "").strip() not in ("", "—", "...", "…"))
     if o.get("получение") == "доставка" and len(str(o.get("адрес") or "").strip()) >= 6:
         known += " доставка ул. адрес_есть"
@@ -4490,7 +4494,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         and not keep_photos and not addons
     city_cat = catalog.get_city(city)
     # «Скинь 10 вариантов» — столько и показываем (максимум MAX_OPTIONS), иначе по умолчанию 5.
-    want_n = None if from_staff else _wanted_count(incoming)
+    want_n = None if (from_staff or picked) else _wanted_count(incoming)   # «3 букет поменьше» — это №3, не «3 варианта»
     n_show = want_n or MIN_OPTIONS
     if want_n and not picked and not order_text and not keep_photos and not size_change:
         offering = True
