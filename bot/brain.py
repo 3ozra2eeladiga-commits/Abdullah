@@ -482,7 +482,8 @@ ALMOST_DONE_Q = "Почти всё 🌸 Напишите «да» — пришл
 def _not_address(m):
     """«завтра на 3», «сегодня к 14:00», «через 2 часа», «51 роза» — это время/количество, не адрес."""
     return bool(PHONE_RE.search(m) or re.search(r"\b(?:сегодня|завтра|послезавтра|через|после|около)\b|\b[квс]\s+\d{1,2}(?:[:.]\d{2})?\b|"
-                          r"\bна\s+\d{1,2}(?:[:.]\d{2})?\s*$|\d{1,2}:\d{2}|\d+\s*(?:роз|шт|тыс|₽|руб|час|мин)", m, re.I)) \
+                          r"\bна\s+\d{1,2}(?:[:.]\d{2})?\s*$|\d{1,2}:\d{2}|\d+\s*(?:роз|шт|тыс|₽|руб|р\b|час|мин)|"
+                          r"^\W*(?:как|номер|фото|вариант|беру|давай\w*|хочу)\s+\d", m, re.I)) \
         and not re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|дом|кв|квартир\w*|подъезд)\b", m, re.I)
 
 
@@ -1284,14 +1285,14 @@ def _rude_reply(client, incoming, city):
 
 # Анкета оформления доставки ОДНИМ сообщением, по пунктам (Абдулла). Показываем только то, чего ещё нет;
 # номера пунктов постоянные — клиент отвечает «1. … 2. …», код разбирает ответ по номерам (_parse_form_answer).
-FORM_HEAD = "Для оформления заказа нам понадобится:"
-FORM_ITEMS = {0: "Доставка или самовывоз? (при самовывозе адрес и получатель не нужны)",
+FORM_HEAD = "Для заказа нужно:"
+FORM_ITEMS = {0: "Доставка или самовывоз",
               1: "Ваши ФИО",
-              2: "Номер телефона для связи",
-              3: "Имя и номер телефона получателя",
+              2: "Ваш телефон",
+              3: "Имя и телефон получателя",
               4: "Город доставки",
-              5: "Время и точный адрес доставки: посёлок, улица, дом (интервал доставки 1 час)"}
-FORM_TAIL = "Ответьте, пожалуйста, по пунктам — с цифрами, например: «1. …  2. …» 🌸"
+              5: "Время и адрес: улица, дом (интервал 1 час)"}
+FORM_TAIL = "Ответьте по пунктам, с цифрами 🌸"
 
 
 def _form_q(items):
@@ -3033,10 +3034,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                 db.set_setting(f"availq:{client}", item["code"])        # флорист проверит и наличие — второй раз не спрашиваем
                 nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
                                     _known_order(client))
-                text = ("Отличный выбор 🌸 Уточню у флориста, свежий ли он и есть ли в наличии, — ответит в течение "
-                        "пары минут ⏱")
+                text = "Отличный выбор 🌸 Флорист проверит свежесть и наличие — пара минут ⏱"
                 if nq and nq != ALMOST_DONE_Q:
-                    text += f"\n\nА пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{nq}"
+                    text += f"\n\nА пока продолжим оформление 🌸\n{nq}"
                     db.set_setting(f"lastq:{client}", nq)
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city, staff_photos=[item],
@@ -4524,10 +4524,10 @@ def respond(client, incoming, from_staff=False, quote=""):
                 and not catalog.is_addon(it, city):
             db.set_setting(f"availq:{client}", it["code"])
             reply.avail_item = it
-            reply.text = (f"Отличный выбор 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱\n\n"
-                          f"А пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{nxt}"
+            reply.text = (f"Отличный выбор 🌸 Флорист проверит наличие — пара минут ⏱\n\n"
+                          f"А пока продолжим оформление 🌸\n{nxt}"
                           if nxt and nxt != ALMOST_DONE_Q else
-                          "Отличный выбор 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱")
+                          "Отличный выбор 🌸 Флорист проверит наличие — пара минут ⏱")
 
     # Режим «пышнее/скромнее»: никаких других букетов и вопросов коллегам — флорист получит доплату в заказе.
     up_text = ""
@@ -4869,15 +4869,15 @@ def respond(client, incoming, from_staff=False, quote=""):
         # «Соберём букет на 3 000 ₽» — оставляем наш текст, добавляем, что флорист проверяет наличие.
         if "Уточняю у флориста" not in reply.text:
             head_t, _, rest_t = reply.text.partition(" 🌸")
-            reply.text = (f"{head_t} 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱"
-                          + (f"\n\nА пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{rest_t.strip()}"
+            reply.text = (f"{head_t} 🌸 Флорист проверит наличие — пара минут ⏱"
+                          + (f"\n\nА пока продолжим оформление 🌸\n{rest_t.strip()}"
                              if rest_t.strip() else ""))
     elif reply.avail_item and not reply.order and not from_staff:
         # Выбран букет — флорист проверяет наличие (вопрос уходит из app). Клиенту: предупредить и продолжить.
         nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
-        reply.text = "Отличный выбор 🌸 Уточняю у флориста наличие — ответит в течение пары минут ⏱"
+        reply.text = "Отличный выбор 🌸 Флорист проверит наличие — пара минут ⏱"
         if nq and nq != ALMOST_DONE_Q:
-            reply.text += f"\n\nА пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{nq}"
+            reply.text += f"\n\nА пока продолжим оформление 🌸\n{nq}"
             db.set_setting(f"lastq:{client}", nq)
         reply.photos = []
     # «Такой же (как 3), но на 3000» — тот же букет, в той же гамме, но поменьше по составу: ИТОГО 3000 (Машa).
@@ -4898,17 +4898,17 @@ def respond(client, incoming, from_staff=False, quote=""):
                 db.set_setting(f"chosen:{client}", it0["code"])
                 db.del_setting(f"upq:{client}")
                 how = "поменьше по составу" if sign == "-" else "попышнее"
-                head = f"Да, можно 🌸 Соберём такой же букет — в той же гамме, но {how}, на {_rub(n_tot)}."
+                head = f"Да, можно 🌸 Соберём такой же, но {'поменьше' if sign == '-' else 'попышнее'} — на {_rub(n_tot)}."
                 if it0.get("stock") is None and db.get_setting(f"availq:{client}") != it0["code"]:
                     db.set_setting(f"availq:{client}", it0["code"])
                     reply.avail_item = it0
                 if reply.avail_item:
-                    head += " Уточняю у флориста наличие — ответит в течение пары минут ⏱"
+                    head += " Флорист проверит наличие — пара минут ⏱"
                 nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
                                     _known_order(client))
                 reply.text = head
                 if nq and nq != ALMOST_DONE_Q:
-                    reply.text += (f"\n\nА пока флорист уточняет, давайте для ускорения продолжим оформление 🌸\n{nq}"
+                    reply.text += (f"\n\nА пока продолжим оформление 🌸\n{nq}"
                                    if reply.avail_item else f" {nq}")
                     db.set_setting(f"lastq:{client}", nq)
                 reply.photos = []

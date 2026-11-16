@@ -47,6 +47,8 @@ SORRY = "Извините, у нас небольшая техническая �
 # ---------- Куда отправлять ответ клиенту ----------
 
 def _send_text(client, text):
+    # «А пока продолжим оформление 🌸 / Для заказа нужно:» — короче, одной строкой (Абдулла: для ленивых)
+    text = text.replace("А пока продолжим оформление 🌸\nДля заказа нужно:", "А пока для заказа нужно:")
     kind, cid = client.split(":", 1)
     if kind == "ig":
         instagram.send_text(cid, text)
@@ -1140,7 +1142,7 @@ def _avail_request(client, photo, head, rec):
     return qid
 
 
-CONTINUE_NOTE = "А пока флорист уточняет, давайте для ускорения продолжим оформление 🌸"
+CONTINUE_NOTE = "А пока продолжим оформление 🌸"
 
 
 def _photo_nudge(client):
