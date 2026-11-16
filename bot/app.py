@@ -1107,9 +1107,8 @@ def _avail_request(client, photo, head, rec):
     rec = dict(rec, client=client, ts=int(time.time()))
     db.set_setting(f"phq:{qid}", json.dumps(rec, ensure_ascii=False))
     text = f"{head}\n{_label(client)}\n{_brief(client)}\n\nЕсть в наличии?"
-    buttons = [[{"text": "✅ Есть", "callback_data": f"ph:ok:{qid}"}],
-               [{"text": "❌ Нет — предложить другие", "callback_data": f"ph:no:{qid}"}],
-               [{"text": "✍️ Другое — отвечу сам", "callback_data": f"ph:other:{qid}"}]]
+    buttons = [[{"text": "✅ Да, есть в наличии", "callback_data": f"ph:ok:{qid}"}],
+               [{"text": "❌ Нет в наличии — напишу клиенту сама", "callback_data": f"ph:no:{qid}"}]]
     if photo:
         telegram_bot.notify_staff_photo(client, photo, text, buttons=buttons)
     else:
@@ -1236,20 +1235,22 @@ def on_photo_button(qid, action):
                 db.set_setting(f"lastq:{client}", nq)
                 text += f" {nq}"
         else:
-            # Нет в наличии: этот букет больше не «выбранный» — предлагаем похожие.
+            # Нет в наличии (Абдулла): бот НЕ предлагает другие — флорист сама пишет клиенту и решает вопрос.
             if chosen in (rec.get("item"), f"photo:{qid}"):
                 db.del_setting(f"chosen:{client}")
                 db.del_setting(f"photo_item:{client}")
-            text = ("Такой открытки сейчас нет 😔 Вот похожие:" if rec.get("card")
-                    else "Такого сейчас нет 😔 Вот похожие — может, что-то понравится?")
-            cc = catalog.get_city(city) if city else None
-            if rec.get("card"):
-                photos = catalog.cards(city, limit=5)
-            elif cc:
-                photos = cc.relevant_items(rec.get("q") or "популярные букеты", limit=5, bouquets_only=True)[:5] \
-                    or cc.relevant_items("популярные букеты", limit=5, bouquets_only=True)[:5]
-            if photos:
-                db.set_setting(f"shown:{client}", ",".join(p["code"] for p in photos))
+            closed = brain.shops_closed_now(city)
+            what = "такой открытки" if rec.get("card") else "этого букета"
+            text = (f"К сожалению, {what} сейчас нет в наличии 😔 Флорист напишет вам "
+                    + (f"{brain.opening_text(city)}, когда откроется магазин," if closed else "в ближайшие минуты")
+                    + " и подберёт замену 🌸")
+            _send_text(client, text)
+            db.add_message(client, "assistant", text)
+            db.pause(client, config.HUMAN_PAUSE_HOURS)
+            telegram_bot.notify_staff_wait(client, f"❌ Нет в наличии: {rec.get('title') or 'букет с фото клиента'}\n"
+                                                   f"{_label(client)}\nБот замолчал — напишите клиенту и предложите замену. "
+                                                   "Когда закончите, нажмите «🤖 Вернуть бота».")
+            return "Клиенту написали, что флорист подберёт замену. Бот молчит — напишите клиенту."
         _send_text(client, text)
         if len(photos) >= 2 and not client.startswith("ig:"):
             telegram_bot.send_client_album(client, photos)
@@ -1258,6 +1259,29 @@ def on_photo_button(qid, action):
                 _send_photo(client, it)
         db.add_message(client, "assistant", text)
     return "Клиенту отправлено."
+
+
+def on_resume(client):
+    """«🤖 Вернуть бота»: флорист закончил(а) — бот снова ведёт клиента с того места, где остановились:
+    если заказ в процессе — сам задаёт следующий недостающий вопрос; если нет — просто ждёт клиента."""
+    with _client_locks[client]:
+        db.resume(client)
+        db.del_setting(f"complaint:{client}")
+        db.del_setting(f"lastq:{client}")
+        in_order = bool(db.get_setting(f"chosen:{client}") or db.get_setting(f"draft:{client}")
+                        or db.get_pending_order(client)) and not db.get_setting(f"ocheck:{client}")
+        if not in_order:
+            return "🤖 Бот снова ведёт клиента — ответит на следующее сообщение."
+        city = db.get_city(client)
+        nq = brain._next_question([m["content"] for m in db.history(client) if m["role"] == "user"],
+                                  city, brain._known_order(client))
+        if not nq or nq == brain.ALMOST_DONE_Q:
+            return "🤖 Бот снова ведёт клиента — ответит на следующее сообщение."
+        db.set_setting(f"lastq:{client}", nq)
+        text = f"Продолжим оформление 🌸 {nq}"
+        _send_text(client, text)
+        db.add_message(client, "assistant", text)
+        return "🤖 Бот снова ведёт клиента и продолжил оформление."
 
 
 def _handle_client_photos(client, image_urls, caption=""):
@@ -1425,7 +1449,7 @@ def main():
     threading.Thread(target=_daily_loop, daemon=True).start()
     telegram_bot.start(deliver_debounced, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
                        on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts, on_delivered=on_delivered,
-                       on_question=on_question)
+                       on_question=on_question, on_resume=on_resume)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
 
