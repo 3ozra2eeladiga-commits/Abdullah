@@ -1238,7 +1238,7 @@ def _rude_reply(client, incoming, city):
 # номера пунктов постоянные — клиент отвечает «1. … 2. …», код разбирает ответ по номерам (_parse_form_answer).
 FORM_HEAD = "Для оформления заказа нам понадобится:"
 FORM_ITEMS = {1: "Ваши ФИО",
-              2: "Ваш номер телефона для связи",
+              2: "Номер телефона для связи",
               3: "Имя и номер телефона получателя",
               4: "Город доставки",
               5: "Время и точный адрес доставки: посёлок, улица, дом (интервал доставки 1 час)"}
@@ -1298,6 +1298,8 @@ def _next_question(user_msgs, city, order=None):
             need.append(2)
         if len(phones) < 2 and not o.get("_получатель_есть"):
             need.append(3)
+        if not has_addr:
+            need.append(4)                 # город/посёлок доставки — может отличаться от города магазина
         if not has_time or not has_addr:
             need.append(5)
         if len(need) >= 2:
@@ -3120,7 +3122,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         lbq = _last_bot_text(client, last_q)
         own_ref = delivery and not sur and not PHONE_RE.search(t_in) and not NO_TO_PHONE_RE.search(t_in) and bool(
             OWN_PHONE_REFUSE_RE.search(t_in) or SURPRISE_RE.search(t_in) or (
-                CONTACT_REFUSE_RE.search(t_in) and re.search(r"имя\s+и\s+телефон|ваш\w*\s+(?:номер|имя|телефон)|контактн",
+                CONTACT_REFUSE_RE.search(t_in) and re.search(r"имя\s+и\s+телефон|ваш\w*\s+(?:номер|имя|телефон|фио)|"
+                                                             r"номер\s+телефона\s+для\s+связи|контактн",
                                                              lbq, re.I)))
         if last_q == OWN_EXPLAIN and delivery and not sur:
             if PHONE_RE.search(t_in) and not OWN_AGREE_RE.search(t_in) and not re.search(r"получател|\bей\b|\bему\b", t_in, re.I):
