@@ -524,6 +524,16 @@ def _known_facts(user_msgs):
     return out
 
 
+# «А можно не из сухоцветов?», «только сухоцветы?», «хочу живые цветы» — показываем букеты из живых цветов.
+NOT_DRIED_RE = re.compile(r"не\s+(?:из\s+)?сухоцвет|без\s+сухоцвет|кроме\s+сухоцвет|только\s+сухоцвет|"
+                          r"не\s+сух\w*|живы[хе]\s+цвет|живые\b|свеж\w*\s+цвет", re.I)
+DRIED_RE = re.compile(r"сухоцвет", re.I)
+
+
+def _no_dried(client):
+    return bool(db.get_setting(f"nodried:{client}"))
+
+
 def _catalog_query(history):
     """Запрос для подбора: последние сообщения клиента + его бюджет, даже если он назвал его в самом начале
     («здравствуйте, нужны цветы в бюджет 2000») — бот помнит бюджет, как живой человек."""
@@ -533,7 +543,10 @@ def _catalog_query(history):
         older = next((m for m in reversed(msgs[:-4]) if catalog_budget(m)), "")
         if older:
             recent = [older] + recent
-    return " ".join(recent)
+    q = " ".join(recent)
+    # «не из сухоцветов» — само слово «сухоцвет» не должно подтягивать сухоцветы обратно
+    return re.sub(r"(?:не\s+(?:из\s+)?|без\s+|кроме\s+|только\s+)?сухоцвет\w*", " ", q, flags=re.I) \
+        if NOT_DRIED_RE.search(q) else q
 
 
 _MONTHS = ["январ", "феврал", "март", "апрел", "ма[яй]", "июн", "июл", "август", "сентябр", "октябр", "ноябр", "декабр"]
@@ -4064,6 +4077,14 @@ def respond(client, incoming, from_staff=False, quote=""):
                          r"давай\w*\s+ещ[её]|ещ[её]\s+покаж\w*|покаж\w*\s+ещ[её])\W*$", incoming or "", re.I) \
             and db.get_setting(f"seen:{client}"):
         offering = True
+    # «Можно не из сухоцветов?» / «только сухоцветы?» — сразу показываем букеты из живых цветов (Абдулла).
+    fresh_ask = (not from_staff and not picked and not order_text and not keep_photos and not size_change
+                 and bool(NOT_DRIED_RE.search(incoming or "")))
+    if fresh_ask:
+        db.set_setting(f"nodried:{client}", "1")
+        offering = True
+    if _no_dried(client) and not keep_photos and not picked:
+        reply.photos = [p for p in reply.photos if not DRIED_RE.search(p.get("title") or "")]
     # Для режима «конкретный цветок» и «сделать больше/меньше» общий добор фото не нужен.
     if city_cat and (len(reply.photos) >= 2 or offering) and len(reply.photos) < n_show \
             and not flowers and not size_change and not order_text and not up_turn and not keep_photos:
@@ -4080,7 +4101,9 @@ def respond(client, incoming, from_staff=False, quote=""):
             # «Ещё варианты» — только те, что клиент ещё НЕ видел.
             shown |= set(c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c)
             shown |= set(c for c in (db.get_setting(f"seen:{client}") or "").split(",") if c)
-        for it in city_cat.relevant_items(query, shown, limit=n_show * 2, bouquets_only=bouquets_only):
+        for it in city_cat.relevant_items(query, shown, limit=n_show * 4, bouquets_only=bouquets_only):
+            if _no_dried(client) and DRIED_RE.search(it.get("title") or ""):
+                continue
             if it["code"] not in shown:
                 reply.photos.append(it)
                 shown.add(it["code"])
@@ -4091,7 +4114,8 @@ def respond(client, incoming, from_staff=False, quote=""):
             # (ближе к его бюджету, если он известен).
             bud = catalog_budget(query) or 0
             pool = [it for it in city_cat.relevant_items("букет", shown, limit=200, bouquets_only=True)
-                    if it["code"] not in shown and it.get("images")]
+                    if it["code"] not in shown and it.get("images")
+                    and not (_no_dried(client) and DRIED_RE.search(it.get("title") or ""))]
             pool.sort(key=lambda it: abs(it["price"] - bud) if bud else 0)
             for it in pool[:n_show - len(reply.photos)]:
                 reply.photos.append(it)
@@ -4099,6 +4123,9 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Показ вариантов — максимум 5 фото за раз, чтобы не заваливать клиента.
     if offering and len(reply.photos) > n_show:
         reply.photos = reply.photos[:n_show]
+    if fresh_ask and len(reply.photos) >= 2:
+        reply.text = (("Нет, не только 🌸" if re.search(r"только", incoming or "", re.I) else "Конечно 🌸")
+                      + " Вот букеты из живых цветов. Какой нравится? Ответьте «этот» на фото.")
     count_text = ""
     if want_n and offering and len(reply.photos) >= 2:
         count_text = (f"Вот {len(reply.photos)} вариантов 🌸" + (f" (больше {MAX_OPTIONS} за раз не присылаю — так удобнее "
