@@ -1479,6 +1479,11 @@ WAY_Q = "Доставка или самовывоз? 🚗\n1 — доставк�
 TIME_Q = "К какому времени? 🕒 Например: к 14:00"
 NIGHT_DATE_Q = "Оформим на завтра 🌸 К какому времени? Например: завтра к 10:00"
 DATE_Q = "На какую дату и к какому времени? 📅 Например: завтра к 15:00"
+# До выбора букета спрашиваем только ДАТУ (без времени): от дня зависит, что будет в наличии.
+DATE_ONLY_Q = "На какую дату нужен букет? 📅 Например: сегодня, завтра или 20 ноября"
+DATE_NEED = ("С радостью покажу 🌸 Цветы у нас каждый день свежие и разные — чтобы точно подсказать, что будет в наличии, "
+             "напишите, на какую дату нужен букет 📅 Например: сегодня, завтра или 20 ноября")
+DATE_NEED_AGAIN = "Без даты не смогу подсказать точно 🙏 Напишите, пожалуйста, день: сегодня, завтра или число — и сразу покажу букеты 🌸"
 PICKUP_CONTACT_Q = ("Ваше имя и телефон? 🌸\n(номер — только чтобы быстро связаться с вами по заказу, "
                     "никому его не передаём)")
 PICKUP_PHONE_Q = "{name}, а ваш номер телефона? 📞 Только чтобы быстро связаться по заказу — никому не передаём."
@@ -3602,19 +3607,24 @@ def respond(client, incoming, from_staff=False, quote=""):
         # Короткая анкета: город известен — сразу показываем букеты (дату, если не сказали, спросим потом).
         # Город известен (в т.ч. только что назван) — сразу к выбору букета (Абдулле так нравится).
         after_anketa = ANKETA_TAIL in prev_bot or "онлайн-помощник" in prev_bot or city_new
-        if db.get_setting(f"anketa_date:{client}"):          # ответил на «на какую дату и время» — теперь букеты
+        asked_date_before = bool(db.get_setting(f"anketa_date:{client}"))
+        if asked_date_before:                                # ответил на «на какую дату» — теперь букеты
             db.del_setting(f"anketa_date:{client}")
             after_anketa = True
         # Абдулла: город узнали — сначала дата и время, и только потом букеты (а не сразу закидывать фото).
         user_txt = [m["content"] for m in db.history(client, 60) if m["role"] == "user"]
         knows_date = any(f.startswith("дата") for f in _known_facts(user_txt)) or bool(_night_target(client))
-        if after_anketa and not knows_date and not wants_photos and not catalog_budget(incoming or "") \
-                and not re.search(r"(?:пришли|скин|покаж|присыл|отправ)\w*[^.?!]{0,25}(?:вариант|букет|фото)|"
-                                  r"(?:вариант|букет|фото)\w*[^.?!]{0,15}(?:пришли|скин|покаж|присыл)", incoming or "", re.I):
-            q = NIGHT_DATE_Q if shops_closed_now(city) else DATE_Q
+        # Абдулла 16.11: БЕЗ ДАТЫ букеты не показываем и не консультируем — наличие зависит от дня. Спрашиваем ТОЛЬКО дату
+        # (время — потом, при оформлении). Клиент просит «покажите / какие в наличии / что есть» — вежливо объясняем, зачем дата.
+        asks_show = wants_photos or bool(catalog_budget(incoming or "")) or bool(OCCASION_RE.search(incoming or ""))
+        if not knows_date and (after_anketa or asks_show):
+            already = asked_date_before
             db.set_setting(f"anketa_date:{client}", "1")
-            db.set_setting(f"lastq:{client}", q)
-            text = q if not city_new else f"Отлично, {city} 🌸 {q}"
+            db.set_setting(f"lastq:{client}", DATE_ONLY_Q)
+            if asks_show and not city_new:
+                text = (DATE_NEED_AGAIN if already else DATE_NEED)
+            else:
+                text = DATE_ONLY_Q if not city_new else f"Отлично, {city} 🌸 {DATE_ONLY_Q}"
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
