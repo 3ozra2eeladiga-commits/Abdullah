@@ -2712,6 +2712,11 @@ def respond(client, incoming, from_staff=False, quote=""):
         incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(incoming)),
                                     db.get_setting(f"lastq:{client}") or "")
         incoming = _fix_budget_answer(client, incoming, db.get_setting(f"lastq:{client}") or "")    # «саморезов» → «самовывоз», «дастафка» → «доставка»
+    # На «на какую дату?» ответили «сейчас / срочно / прямо сейчас» — это СЕГОДНЯ, как можно скорее (1–2 часа), Абдулла.
+    if not from_staff and re.fullmatch(r"\W*(?:прямо\s+)?(?:сейчас|срочно|сразу|побыстрее|поскорее|как\s+можно\s+(?:скорее|быстрее)|"
+                                       r"сегодня\s+же|в\s+течени\w*\s+часа|прямо\s+сегодня)\W*", incoming or "", re.I) \
+            and re.search(r"дат|когда|какой\s+день|на\s+когда", db.get_setting(f"lastq:{client}") or _last_bot_text(client, ""), re.I):
+        incoming = "сегодня, как можно скорее (в течение 1–2 часов)"
     content = f"{STAFF_PREFIX} {incoming}" if from_staff else incoming
 
     # Ответ на фото со словами «есть ещё варианты / другие» — это НЕ выбор этого товара, а просьба показать другие.
