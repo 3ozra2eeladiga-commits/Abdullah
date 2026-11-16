@@ -557,6 +557,13 @@ NOT_DRIED_RE = re.compile(r"не\s+(?:из\s+)?сухоцвет|без\s+сух�
 DRIED_RE = re.compile(r"сухоцвет", re.I)
 
 
+# Вопрос о свежести букета: «они свежие?», «букет свежий?», «точно свежие?» (не «хочу из свежих цветов»).
+FRESH_Q_RE = re.compile(r"свеж(?!\w*\s+цвет)\w*(?=[^.!]*\?)|(?:вообще|точно|правда|сегодняшн\w*)\s+свеж|"
+                        r"свеж\w*\s+(?:ли|вообще|точно)|(?:№\s*|\b)\d{1,4}\s+свеж|"
+                        r"\b(?:они|он|она|букет\w*|цвет\w*|это|этот|эти)\s+(?:\w+\s+){0,2}свеж\w*\b(?!\s+цвет)|"
+                        r"не\s+(?:завял|завян|вял|стар)\w*|выгляд\w*\s+(?:так\s+себе|не\s+свеж|вял|завял|стар)", re.I)
+
+
 def _no_dried(client):
     return bool(db.get_setting(f"nodried:{client}"))
 
@@ -2946,6 +2953,41 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Дополнения (открытка, шар, игрушка…) ДОБАВЛЯЮТ к заказу — выбранный букет при этом не меняется.
     addons = [p for p in picked if catalog.is_addon(p, city)]
     picked = [p for p in picked if p not in addons]
+    # «А они вообще свежие?» — свежесть знает только флорист (Абдулла 16.11). Новые фото НЕ шлём.
+    # Про конкретный букет (номер / ответ на фото / уже выбранный) — передаём вопрос флористу.
+    # Про «все букеты» — спрашиваем, по какому именно уточнить.
+    if not from_staff and (FRESH_Q_RE.search(incoming or "") or (db.get_setting(f"freshask:{client}") and (
+            picked or re.fullmatch(r"\W*(?:№|номер|фото)?\s*(?:10|[1-9])\W*", incoming or "", re.I)))):
+        plural = re.search(r"\b(?:они|все|всё|букеты|эти|цветы\s+у\s+вас)\b", incoming or "", re.I)
+        ch = db.get_setting(f"chosen:{client}")
+        if not picked and db.get_setting(f"freshask:{client}"):      # ответ «3» на «какой букет?» — №3 из альбома
+            m_ = re.fullmatch(r"\W*(?:№|номер|фото)?\s*(10|[1-9])\W*", incoming or "", re.I)
+            shown_ = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
+            if m_ and int(m_.group(1)) <= len(shown_):
+                it_ = catalog.get(shown_[int(m_.group(1)) - 1], city) or catalog.get(shown_[int(m_.group(1)) - 1])
+                picked = [it_] if it_ else []
+        item = picked[0] if picked else (catalog.get(ch, city) or catalog.get(ch) if ch and not plural else None)
+        db.add_message(client, "user", content)
+        if item:
+            db.del_setting(f"freshask:{client}")
+            num = item.get("number") or item.get("num") or ""
+            text = "Уточню у флориста свежесть этого букета и сразу напишу вам 🌸"
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city, staff_photos=[item],
+                         staff_note=f"🌿 Про этот букет клиент спрашивает свежесть: {item.get('title', '')}",
+                         question=f"🌿 Клиент пишет: «{incoming}». Букет «{item.get('title', '')}»"
+                                  f"{f' (№{num})' if num else ''}, {item.get('price', '')} ₽ — свежий?")
+        if db.get_setting(f"freshask:{client}") and not FRESH_Q_RE.search(incoming or ""):
+            db.del_setting(f"freshask:{client}")
+            text = "Не нашла такой номер 🙏 Напишите номер фото ещё раз или ответьте на фото букета — спрошу у флориста."
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=city)
+        db.set_setting(f"freshask:{client}", "1")
+        text = "Про какой букет уточнить свежесть? Напишите номер фото — спрошу у флориста 🌸"
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
+    if not from_staff:
+        db.del_setting(f"freshask:{client}")
     if picked and not from_staff:
         db.set_setting(f"chosen:{client}", picked[0]["code"])   # букет выбран — других больше не подсовываем
     if addons and not from_staff:
