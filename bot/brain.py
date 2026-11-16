@@ -696,9 +696,12 @@ def _anketa(incoming, city):
     if not city:
         opts = "\n".join(f"{i} — {n}" for i, n in enumerate(catalog.city_names, 1))
         if has_date:
-            return f"{head}\nВ какой город нужны цветы? Ответьте цифрой:\n{opts}\nИли напишите ваш посёлок."
+            return (f"{head}\nВ какой город нужны цветы? Ответьте цифрой:\n{opts}\n"
+                    f"{len(catalog.city_names) + 1} — другое (напишите ваш город или посёлок)")
         # Как хозяйка в переписке: одним вопросом — дата и город (без них не проконсультировать). Время — позже.
-        return f"{head}\nНа какую дату и в какой город нужен букет? ({' / '.join(catalog.city_names)})"
+        n_other = len(catalog.city_names) + 1
+        return (f"{head}\nНа какую дату и в какой город нужен букет?\n{opts}\n"
+                f"{n_other} — другое (напишите ваш город или посёлок)\nНапример: «завтра, 1»")
     if not has_date:
         return f"{head}\nНа какой день нужны цветы? Например: завтра"
     return f"{head}\nВот варианты 🌸 Какой нравится?"
@@ -2707,10 +2710,19 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not city and not from_staff:  # клиент мог сам назвать город или прийти по ссылке с сайта города
         city = catalog.match_city(incoming) or _city_from_url(detect)
         # Ответ цифрой на «В какой город? 1 — Пятигорск, 2 — …»
-        m_num = re.fullmatch(r"\W*(\d)\W*", incoming or "")
-        if not city and m_num and re.search(r"какой\s+город", _last_bot_text(client, "")) \
-                and 1 <= int(m_num.group(1)) <= len(catalog.city_names):
-            city = list(catalog.city_names)[int(m_num.group(1)) - 1]
+        # Цифра может быть и вместе с датой: «завтра, 1», «2 на субботу» (но не время «к 15», «в 3»).
+        toks = re.findall(r"[\w:.]+", (incoming or "").lower())
+        m_num = next((t for i, t in enumerate(toks) if re.fullmatch(r"\d", t)
+                      and not (i and toks[i - 1] in ("к", "в", "на", "до", "после", "около", "с"))), None) \
+            if len(toks) <= 6 else None
+        asked_city = bool(re.search(r"какой\s+город", _last_bot_text(client, "")))
+        if not city and m_num and asked_city and 1 <= int(m_num) <= len(catalog.city_names):
+            city = list(catalog.city_names)[int(m_num) - 1]
+        elif not city and m_num and asked_city and int(m_num) == len(catalog.city_names) + 1:
+            text = "Напишите, пожалуйста, ваш город или посёлок 🌸 Подскажу, доставим ли туда."
+            db.add_message(client, "user", incoming)
+            db.add_message(client, "assistant", text)
+            return Reply(text=text, city=None)
         # Город, где нас нет («Сочи», «Москва») — сразу честно говорим и предлагаем наши города цифрами.
         t_c = (incoming or "").strip(" .!?")
         if not city and re.search(r"какой\s+город", _last_bot_text(client, "")) and not re.search(r"\d", t_c) \
@@ -3642,7 +3654,12 @@ def respond(client, incoming, from_staff=False, quote=""):
             if asks_show and not city_new:
                 text = (DATE_NEED_AGAIN if already else DATE_NEED)
             else:
-                text = DATE_ONLY_Q if not city_new else f"Отлично, {city} 🌸 {DATE_ONLY_Q}"
+                place = (incoming or "").strip(" .,!?")
+                if city_new and city.lower()[:5] not in place.lower() and 2 < len(place) < 30 and not re.search(r"\d", place):
+                    # назвали посёлок рядом («Ессентуки», «Змейка») — говорим, откуда доставим
+                    text = f"Отлично 🌸 {place[:1].upper() + place[1:]} — доставим из магазина в городе {city}. {DATE_ONLY_Q}"
+                else:
+                    text = DATE_ONLY_Q if not city_new else f"Отлично, {city} 🌸 {DATE_ONLY_Q}"
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
     # Клиент хочет выбранный букет больше/меньше — не показываем другие, спрашиваем сумму.
