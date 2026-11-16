@@ -21,6 +21,7 @@ function gk_home() {
         @unlink($p); return true;
     };
     $up = dirname(__DIR__);
+    if (@is_file(__DIR__ . '/gk-data/gs-config.php')) return __DIR__ . '/gk-data';   // настройки уже лежат в gk-data
     if (@is_file($up . '/gs-config.php') || $try($up)) return $up;
     $d = __DIR__ . '/gk-data';
     if ($try($d) && !is_file($d . '/.htaccess')) @file_put_contents($d . '/.htaccess', "Require all denied\nDeny from all\n");

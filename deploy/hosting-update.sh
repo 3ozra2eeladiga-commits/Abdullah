@@ -6,6 +6,8 @@ set -u
 REPO="$HOME/repo"
 WEB="$HOME/public_html"
 cd "$REPO" || exit 0
+# сторож: проверяет сайт, бот ЖК и сервер бота цветов; при сбое пишет Абдулле в Telegram (в фоне, не мешает обновлению)
+( curl -s -m 90 "https://gradosfera.com/gk-watch.php" >/dev/null 2>&1 || wget -q -T 90 -O /dev/null "https://gradosfera.com/gk-watch.php" ) &
 # 3D-модель (gk-tour) на сайт НЕ выкладываем — она не готова и будет отдельно, для планшетов. Если папка осталась — убрать.
 [ -f "$WEB/tour/js/house.js" ] && rm -rf "$WEB/tour"
 git fetch -q --depth 1 origin main || exit 0

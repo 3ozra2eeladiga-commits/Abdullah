@@ -97,6 +97,16 @@ $fh = @fopen(GK_HOME . '/gs-leads.csv', 'a');
 if ($fh) { flock($fh, LOCK_EX); fputcsv($fh, [date('d.m.Y H:i'), $demo ? 'ДЕМО' : '', $kind, $name, $phone, $res['code'] ?? '', $details], ';'); flock($fh, LOCK_UN); fclose($fh); }
 
 if (!gk_is_work(time())) $text .= "\n\n🌙 Заявка в нерабочее время — перезвонить в ближайший рабочий день с 10:00.";
+// Клиенту отвечаем СРАЗУ (код билета уже сохранён), а Telegram и почту отправляем после —
+// иначе при плохой связи хостинга с Telegram клиент ждёт «Отправляем…» до минуты.
+$body = json_encode($res, JSON_UNESCAPED_UNICODE);
+http_response_code(200);
+header('Content-Length: ' . strlen($body));
+header('Connection: close');
+echo $body;
+ignore_user_abort(true); set_time_limit(120);
+if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+else { @ob_end_flush(); flush(); }
 gk_send_group($text);
 // почта — запасной канал, если указана в настройках
 $cfg = gk_cfg();
@@ -105,4 +115,4 @@ if (!empty($cfg['email_to'])) {
     @mail($cfg['email_to'], '=?UTF-8?B?' . base64_encode(($demo ? 'ДЕМО: ' : '') . ($kind === 'ticket' ? 'Золотой билет' : 'Заявка: рассрочка')) . '?=', $text,
         "From: =?UTF-8?B?" . base64_encode('Сайт Новый Квартал') . "?= <{$from}>\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n");
 }
-out($res);
+exit;
