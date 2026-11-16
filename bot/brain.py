@@ -92,7 +92,7 @@ RULES = """Ты — флорист цветочного магазина и пе
 2) ПОЛУЧЕНИЕ. Спроси: доставка или самовывоз. При самовывозе пришли адреса магазинов города и часы работы.
 3) ДАТА И ТОЧНОЕ ВРЕМЯ. Узнай дату и ТОЧНОЕ время. Если клиент ответил размыто («после обеда», «вечером»,
    «днём») — вежливо уточни конкретный час или интервал: «А к какому часу удобно? Например, к 14:00 🕒».
-   «Как можно скорее / срочно» — это нормально, уточнять не нужно.
+   «Как можно скорее / срочно / на ближайшее время» — это СЕГОДНЯ, в течение 1–2 часов; уточнять не нужно.
 4) ПОЖЕЛАНИЯ. НЕ спрашивай повод, бюджет, цвета и состав: как только известны город и день — сразу показывай букеты.
    Если клиент сам назвал повод, бюджет, цвета или цветы — учитывай при подборе, не переспрашивай.
 (Имена и телефоны могли прийти в анкете — тогда не переспрашивай. Открытку спрашивай ПОЗЖЕ, после выбора букета.)
@@ -105,7 +105,7 @@ RULES = """Ты — флорист цветочного магазина и пе
 6) КАК ВЫБРАТЬ БУКЕТ — СРАЗУ ПОКАЗЫВАЙ ФОТО (не спрашивай «фото или ссылку на сайт?»).
    - Город известен, клиенту нужен букет → покажи СРАЗУ НЕСКОЛЬКО вариантов под
      пожелания — НЕ меньше 5 букетов, у каждого цена и фото (метки [ФОТО код]). Не подошло — пришли ещё 5 ДРУГИХ.
-     Учитывай дату: нужно сегодня/завтра → можно ГОТОВЫЕ и КОЛЛЕКЦИЮ; позже 2 дней → только КОЛЛЕКЦИЮ.
+     Учитывай дату: нужно сегодня/завтра → СНАЧАЛА ГОТОВЫЕ (уже собраны), потом КОЛЛЕКЦИЯ; позже 2 дней → только КОЛЛЕКЦИЮ.
      «Недорого/бюджетно» — примерно до 3000 ₽. Подбирай под бюджет, гамму и состав.
      ПОСЛЕ вариантов ВСЕГДА добавляй ссылку на каталог города (из «Ссылка на каталог» ниже), например:
      «А ещё весь каталог тут: <ссылка> 🌸 Откройте любой букет и нажмите «Купить в TELEGRAM», или напишите мне
@@ -898,6 +898,8 @@ TYPO_STEMS = [
     (r"з[ао][вф]тр[ао](?![а-яё])", "завтра"),
     (r"п[ао]сл[еи]з[ао][вф]тр[ао](?![а-яё])", "послезавтра"),
     (r"с[еи]в[оа]дн[яиа](?![а-яё])|с[еи]г[оа]дн[яиа](?![а-яё])", "сегодня"),
+    # «на ближайшее время» = сегодня, в течение часа-двух (Абдулла)
+    (r"(?:(?:на|в)\s+)?ближайш\w*\s+(?:время|врем[яе]ни|час\w*)", "сегодня как можно скорее"),
     (r"д[ао]ст[ао][вф]к", "доставк"),
     (r"с[ао]м[ао]в[ыи][вф][ао][зс]", "самовывоз"),
     (r"саморез\w*(?![а-яё])|самовызов\w*", "самовывоз"),       # клавиатура: «саморезов», «самовызов»
@@ -908,6 +910,24 @@ TYPO_STEMS = [
     (r"ск[ао]лк[ао](?![а-яё])|скол[ь]?к[ао](?![а-яё])", "сколько"),
 ]
 TYPO_STEMS = [(re.compile(r"(?<![а-яё])" + p, re.I), r) for p, r in TYPO_STEMS]
+
+
+def _ready_first(client, incoming=""):
+    """Букет нужен сегодня или завтра → сначала показываем раздел «Готовые» (уже собранные букеты)."""
+    if db.get_setting(f"asap:{client}") or re.search(r"как можно скор|срочно|прямо\s+сейчас", incoming or "", re.I):
+        return True
+    msgs = [m["content"] for m in db.history(client, 60) if m["role"] == "user"] + [incoming or ""]
+    d = _resolve_date(_latest_date(msgs))
+    return bool(d and (d - datetime.datetime.now(_MSK).date()).days <= 1)
+
+
+def _soon_from_history(history):
+    """По переписке: букет нужен сегодня/завтра (или «как можно скорее»)?"""
+    msgs = [m["content"] for m in history if m["role"] == "user"]
+    if any(re.search(r"как можно скор|срочно|прямо\s+сейчас", m or "", re.I) for m in msgs[-3:]):
+        return True
+    d = _resolve_date(_latest_date(msgs))
+    return bool(d and (d - datetime.datetime.now(_MSK).date()).days <= 1)
 
 
 def _fix_common_typos(text):
@@ -2623,7 +2643,7 @@ def system_prompt(history, city, picked=(), flower_block="", size_change=False, 
         + (f"# Ссылка на каталог ({city}): {site}\n\n" if site else "")
         + f"# КАТАЛОГ ГОРОДА: {city} (код — название — цена)\n"
         f"Предлагай только товары этого города. Нет подходящего — спроси подробнее (повод, цветы, бюджет).\n"
-        f"{city_cat.relevant_text(query, discussed)}"
+        f"{city_cat.relevant_text(query, discussed, ready_first=_soon_from_history(history))}"
         + picked_block
         + flower_block
         + known_block
@@ -3209,7 +3229,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"nightorder:{client}", target)
             if city:
                 cc = catalog.get_city(city)
-                photos = cc.relevant_items("популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True)[:MIN_OPTIONS] \
+                photos = cc.relevant_items("популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True, ready_first=True)[:MIN_OPTIONS] \
                     if cc else []
                 text = f"Отлично 🌸 Оформляем на {target}. Вот варианты — какой нравится? Ответьте «этот» на фото."
                 db.set_setting(f"shown:{client}", ",".join(p["code"] for p in photos))
@@ -3254,7 +3274,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         # Клиент уже заказывал (новый заказ после отправленной заявки) — второй раз не здороваемся, сразу букеты.
         if not note and db.get_setting(f"hist_from:{client}") and city:
             cc = catalog.get_city(city)
-            photos = (cc.relevant_items(incoming or "популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True)
+            photos = (cc.relevant_items(incoming or "популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True,
+                                        ready_first=_ready_first(client, incoming))
                       [:MIN_OPTIONS] if cc else [])
             if photos:
                 text = "Конечно 🌸 Вот варианты — какой нравится? Ответьте «этот» на фото."
@@ -3264,7 +3285,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         # Город и день уже известны — повод не спрашиваем (Абдулла), сразу показываем букеты.
         if not note and city and any(f.startswith("дата") for f in _known_facts([incoming or ""])):
             cc = catalog.get_city(city)
-            photos = (cc.relevant_items(incoming or "популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True)
+            photos = (cc.relevant_items(incoming or "популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True,
+                                        ready_first=_ready_first(client, incoming))
                       [:MIN_OPTIONS] if cc else [])
             if photos:
                 text = text.split("\n", 1)[0] + "\nВот варианты 🌸 Какой нравится? Ответьте «этот» на фото."
@@ -4209,7 +4231,8 @@ def respond(client, incoming, from_staff=False, quote=""):
             # «Ещё варианты» — только те, что клиент ещё НЕ видел.
             shown |= set(c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c)
             shown |= set(c for c in (db.get_setting(f"seen:{client}") or "").split(",") if c)
-        for it in city_cat.relevant_items(query, shown, limit=n_show * 4, bouquets_only=bouquets_only):
+        for it in city_cat.relevant_items(query, shown, limit=n_show * 4, bouquets_only=bouquets_only,
+                                          ready_first=_ready_first(client, incoming)):
             if _no_dried(client) and DRIED_RE.search(it.get("title") or ""):
                 continue
             if it["code"] not in shown:
