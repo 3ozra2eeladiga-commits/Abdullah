@@ -1291,6 +1291,33 @@ def tg_relay(path):
         return Response(json.dumps({"ok": False, "description": "relay error"}), status=502, mimetype="application/json")
 
 
+# Обратное реле: Telegram не всегда достукивается до российского хостинга сайта ЖК напрямую («Connection timed out»),
+# поэтому вебхук бота ЖК указывает сюда, а этот сервер пересылает сообщение на gradosfera.com/gk-bot.php.
+# Telegram получает ответ сразу; пересылка — в фоне, с тремя попытками. Секретный заголовок передаётся как есть (проверяет его gk-bot.php).
+@app.post("/tg-hook/gk")
+def tg_hook_gk():
+    body = request.get_data(cache=False)[:262144]
+    secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    if not secret or not body:
+        abort(403)
+
+    def forward():
+        import urllib.request
+        for attempt in range(3):
+            try:
+                req = urllib.request.Request("https://gradosfera.com/gk-bot.php", data=body, method="POST",
+                                             headers={"Content-Type": "application/json", "X-Telegram-Bot-Api-Secret-Token": secret})
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    r.read()
+                return
+            except Exception as e:
+                log.warning("tg-hook gk, попытка %s: %s", attempt + 1, e)
+                time.sleep(2 + attempt * 3)
+
+    threading.Thread(target=forward, daemon=True).start()
+    return Response("ok", status=200)
+
+
 @app.get("/")
 def health():
     by_city = ", ".join(f"{name}: {len(c.by_code)}" for name, c in catalog.by_city.items())
