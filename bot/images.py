@@ -44,7 +44,7 @@ def _font(size):
 
 
 def numbered_jpeg(url, n):
-    """Фото букета с крупным номером в розовом кружке (для альбома в чате: клиент отвечает «2»)."""
+    """Фото букета с крупным номером в зелёном кружке с листиком (для альбома в чате: клиент отвечает «2»)."""
     data = jpeg_bytes(url)
     if Image is None:
         return data
@@ -52,9 +52,24 @@ def numbered_jpeg(url, n):
     img = Image.open(io.BytesIO(data)).convert("RGB")
     d = ImageDraw.Draw(img)
     r = max(36, min(img.width, img.height) // 11)
-    x = y = max(12, r // 3)
-    d.ellipse([x - 3, y - 3, x + 2 * r + 3, y + 2 * r + 3], fill=(255, 255, 255))          # белая окантовка
-    d.ellipse([x, y, x + 2 * r, y + 2 * r], fill=(233, 30, 99))
+    x = max(12, r // 3)
+    y = x + r // 3                                     # чуть ниже — листику есть место сверху
+    # Природный вид: зелёный «бутон» с белой окантовкой и листиком сбоку (Абдулла: зелёный, про цветы).
+    import math
+    cx, cy = x + r, y + r
+    leaf = []                                          # листик-«лодочка» с острым кончиком, вправо-вверх
+    L, W, ang = r * 1.05, r * 0.34, -0.5
+    pts = [(2 * L * u / 30, W * math.sin(math.pi * u / 30) ** 0.8) for u in range(31)]
+    for px, py in pts + [(px, -py) for px, py in reversed(pts)]:
+        px += r * 0.55                                 # растёт из-за кружка
+        leaf.append((cx + px * math.cos(ang) - py * math.sin(ang), cy + px * math.sin(ang) + py * math.cos(ang)))
+    d.polygon(leaf, fill=(129, 199, 132), outline=(255, 255, 255))
+    vx, vy = cx + (r * 0.55 + 2 * L * 0.85) * math.cos(ang), cy + (r * 0.55 + 2 * L * 0.85) * math.sin(ang)  # прожилка
+    d.line([(cx, cy), (vx, vy)], fill=(232, 245, 233), width=max(2, r // 14))
+    d.ellipse([x - 4, y - 4, x + 2 * r + 4, y + 2 * r + 4], fill=(255, 255, 255))          # белая окантовка
+    d.ellipse([x, y, x + 2 * r, y + 2 * r], fill=(56, 142, 60))                           # листовой зелёный
+    d.ellipse([x + r * 0.18, y + r * 0.18, x + 2 * r - r * 0.18, y + 2 * r - r * 0.18],
+              outline=(165, 214, 167), width=max(2, r // 16))                              # тонкое светлое кольцо
     txt = str(n)
     font = _font(int(r * (1.25 if len(txt) == 1 else 1.0)))
     if font is None:
