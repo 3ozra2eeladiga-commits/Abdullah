@@ -875,6 +875,15 @@ def _city_shops(city):
     return [tuple(x) for x in (c or {}).get("shops") or []]
 
 
+def _pickup_shops(city):
+    """Все магазины для самовывоза (Абдулла: показываем все адреса): сначала города клиента, потом остальные —
+    к адресу другого города дописываем город. [(адрес, часы), ...]"""
+    own = [(a, h) for a, h in _city_shops(city)]
+    other = [(f"{c['name']}, {a}", h) for c in config.city_list() if c.get("name") and c.get("name") != city
+             for a, h in (c.get("shops") or [])]
+    return own + other
+
+
 def _shop_aliases(addr):
     """Как клиенты называют магазин («Квартал», «Ромашка») — shop_aliases в shop.json: [название, части слов…]."""
     for c in config.city_list():
@@ -1327,7 +1336,8 @@ FORM_ITEMS = {0: "Доставка или самовывоз",
               2: "Ваш телефон",
               3: "Имя и телефон получателя",
               4: "Город доставки",
-              5: "Время и адрес: улица, дом (интервал 1 час)"}
+              5: "Время и адрес: улица, дом (интервал 1 час)",
+              6: "Время, когда будете забирать букет"}
 FORM_TAIL = "Ответьте по пунктам, с цифрами 🌸"
 
 
@@ -1430,6 +1440,19 @@ def _next_question(user_msgs, city, order=None):
             need.append(4)                 # город/посёлок доставки — может отличаться от города магазина
         if not has_time or not has_addr:
             need.append(5)
+        if len(need) >= 2:
+            return _form_q(need)
+    if pickup and not o.get("_сюрприз") and has_date:
+        # Самовывоз (магазин уже выбран): ФИО, телефон и время — одной анкетой (Абдулла).
+        cust = str(o.get("заказчик") or "")
+        need = []
+        if not re.search(r"[А-Яа-яЁёA-Za-z]{2}", re.sub(r"ваш\w*|имя|телефон|\.\.\.", "", cust, flags=re.I)) \
+                and not o.get("_самовывоз_контакт"):
+            need.append(1)
+        if len(phones) < 1 and not o.get("_самовывоз_контакт"):
+            need.append(2)
+        if not has_time:
+            need.append(6)
         if len(need) >= 2:
             return _form_q(need)
     if has_date and not has_time:
@@ -1969,7 +1992,7 @@ def _order_missing(o, client_text):
         return "Подскажите, пожалуйста, точное время — к которому часу нужен букет? (например, к 14:00) 🕒"
     # Самовывоз — из КАКОГО магазина (в городе их может быть несколько). Даём готовые ответы «1» / «2».
     if (o.get("получение") or "").lower().startswith("самовывоз") and not o.get("_магазин_выбран"):
-        shops = _city_shops(catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or "")))
+        shops = _pickup_shops(catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or "")))
         if len(shops) > 1 and not _shop_in(str(o.get("адрес") or ""), shops):
             return PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {_shop_label(a, h)}" for i, (a, h) in enumerate(shops, 1)) \
                 + "\nОтветьте цифрой 🌸"
@@ -3038,6 +3061,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                 bits.append(f"Город доставки: {ans[4]}")
             if ans.get(5):
                 bits.append(f"Доставка, время и адрес: {ans[5]}")
+            if ans.get(6):
+                t6 = ans[6] if re.search(r"\b(?:к|в)\s*\d", ans[6]) else "к " + ans[6]
+                bits.append("Самовывоз, заберу " + t6)
             incoming = ". ".join(bits) + "." if bits else incoming
     # Ответ на уточнение «собрать на 3000 или на 3000 дешевле?» (1 / 2).
     upq = None if from_staff else db.get_setting(f"upq:{client}")
@@ -3722,7 +3748,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                 db.del_setting(f"florist_note:{client}")
     # Ответ на «Из какого магазина заберёте? 1 — … 2 — …»: цифра или улица.
     if not from_staff and _last_bot_text(client, last_q).startswith(PICKUP_Q_HEAD):
-        shops = _city_shops(city)
+        shops = _pickup_shops(city)
         m_n = re.match(r"^\D*(\d)\D*$", (incoming or "").strip())
         pick = shops[int(m_n.group(1)) - 1] if m_n and 1 <= int(m_n.group(1)) <= len(shops) else _shop_in(incoming, shops)
         if pick:
@@ -4703,10 +4729,10 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"lastq:{client}", note)
     # Самовывоз в городе с несколькими магазинами — всегда наш вопрос с цифрами (а не рассказ ИИ про улицы).
     if not from_staff and city and not order_text and not keep_photos and not reply.order \
-            and len(_city_shops(city)) > 1 and not db.get_setting(f"pickup_shop:{client}") \
+            and len(_pickup_shops(city)) > 1 and not db.get_setting(f"pickup_shop:{client}") \
             and (re.search(r"самовывоз|заберу|забер[её]м", incoming or "", re.I)
                  or re.search(r"из\s+какого\s+магазин|какой\s+магазин|орджоникидзе[^.?!]{0,40}украинск", reply.text or "", re.I)):
-        shops = _city_shops(city)
+        shops = _pickup_shops(city)
         reply.text = PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {_shop_label(a, h)}" for i, (a, h) in enumerate(shops, 1)) \
             + "\nОтветьте цифрой 🌸"
         reply.photos, reply.question = [], ""
