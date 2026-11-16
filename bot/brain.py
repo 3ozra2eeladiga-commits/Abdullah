@@ -912,9 +912,15 @@ TYPO_STEMS = [
 TYPO_STEMS = [(re.compile(r"(?<![а-яё])" + p, re.I), r) for p, r in TYPO_STEMS]
 
 
+# «Сейчас / в течение часа / как можно скорее / в скором времени» — букет нужен СЕГОДНЯ, максимально быстро:
+# сначала раздел «Готовые», потом остальная коллекция (Абдулла, хозяйка).
+SOON_RE = re.compile(r"как\s+можно\s+(?:скор|раньш|быстр)|срочно|прямо\s+сейчас|в\s+течени\w*\s+(?:часа|\d\s*час|пол)|"
+                     r"ближайш\w*\s+(?:час|время|времени)|в\s+скором\s+времени|побыстрее|поскорее|сегодня\s+же", re.I)
+
+
 def _ready_first(client, incoming=""):
     """Букет нужен сегодня или завтра → сначала показываем раздел «Готовые» (уже собранные букеты)."""
-    if db.get_setting(f"asap:{client}") or re.search(r"как можно скор|срочно|прямо\s+сейчас", incoming or "", re.I):
+    if db.get_setting(f"asap:{client}") or SOON_RE.search(incoming or ""):
         return True
     msgs = [m["content"] for m in db.history(client, 60) if m["role"] == "user"] + [incoming or ""]
     d = _resolve_date(_latest_date(msgs))
@@ -924,7 +930,7 @@ def _ready_first(client, incoming=""):
 def _soon_from_history(history):
     """По переписке: букет нужен сегодня/завтра (или «как можно скорее»)?"""
     msgs = [m["content"] for m in history if m["role"] == "user"]
-    if any(re.search(r"как можно скор|срочно|прямо\s+сейчас", m or "", re.I) for m in msgs[-3:]):
+    if any(SOON_RE.search(m or "") for m in msgs[-3:]):
         return True
     d = _resolve_date(_latest_date(msgs))
     return bool(d and (d - datetime.datetime.now(_MSK).date()).days <= 1)
@@ -2733,8 +2739,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                                     db.get_setting(f"lastq:{client}") or "")
         incoming = _fix_budget_answer(client, incoming, db.get_setting(f"lastq:{client}") or "")    # «саморезов» → «самовывоз», «дастафка» → «доставка»
     # На «на какую дату?» ответили «сейчас / срочно / прямо сейчас» — это СЕГОДНЯ, как можно скорее (1–2 часа), Абдулла.
-    if not from_staff and re.fullmatch(r"\W*(?:прямо\s+)?(?:сейчас|срочно|сразу|побыстрее|поскорее|как\s+можно\s+(?:скорее|быстрее)|"
-                                       r"сегодня\s+же|в\s+течени\w*\s+часа|прямо\s+сегодня)\W*", incoming or "", re.I) \
+    if not from_staff and re.fullmatch(r"\W*(?:прямо\s+)?(?:сейчас|срочно|сразу|побыстрее|поскорее|как\s+можно\s+(?:скорее|быстрее|раньше)|"
+                                       r"сегодня\s+же|в\s+течени\w*\s+(?:часа|двух\s+часов|1-2\s+час\w*)|прямо\s+сегодня|"
+                                       r"в\s+скором\s+времени|в\s+ближайш\w*\s+час)\W*", incoming or "", re.I) \
             and re.search(r"дат|когда|какой\s+день|на\s+когда", db.get_setting(f"lastq:{client}") or _last_bot_text(client, ""), re.I):
         incoming = "сегодня, как можно скорее (в течение 1–2 часов)"
     content = f"{STAFF_PREFIX} {incoming}" if from_staff else incoming
@@ -3418,7 +3425,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # «Как можно скорее / прямо сейчас / через 5 минут» (или «да» на наше «как можно скорее — подходит?») —
     # запоминаем: сегодня, ближайшее время. «Завтра / другая дата» — снимаем.
     if not from_staff:
-        if re.search(r"как можно скор|прямо\s+сейчас|срочно|побыстрее|поскорее|через\s+\d+\s*мин|сейчас\s+(?:отправ|привез|достав)|"
+        if SOON_RE.search(incoming or "") or re.search(r"как можно скор|прямо\s+сейчас|срочно|побыстрее|поскорее|через\s+\d+\s*мин|сейчас\s+(?:отправ|привез|достав)|"
                      r"пока\s+не\s+закр|до\s+закрыт", incoming or "", re.I) \
                 or (last_q.startswith("Это время сегодня уже прошло") and CONFIRM_YES_RE.search(incoming or "")
                     and not CORRECTION_RE.search(incoming or "")):
