@@ -2241,6 +2241,20 @@ def _apply_client_state(order, client, city):
     if not isinstance(items, list):
         items = order["товары"] = []
     _drop_prev_items(order, client)
+    # Пустые позиции и «лишние» букеты: клиент выбрал ОДИН букет (chosen) — остальные букеты, которые ИИ
+    # вписал из показанных вариантов, в заказ не берём (дополнения — открытки, шары — оставляем).
+    order["товары"] = [it for it in order["товары"] if not isinstance(it, dict)
+                       or str(it.get("название") or it.get("код") or "").strip(" ,")]
+    ch_code = (db.get_setting(f"chosen:{client}") or "").strip().lower()
+    if ch_code and not ch_code.startswith("photo:"):
+        ch_it = catalog.get(ch_code, city) or catalog.get(ch_code)
+        def _is_chosen(it):
+            c = str(it.get("код") or "").strip().lower()
+            return c == ch_code or (ch_it and str(it.get("название") or "").strip().lower()[:20] == ch_it["title"].lower()[:20])
+        bouquets = [it for it in order["товары"] if isinstance(it, dict) and not CARD_RE.search(str(it.get("название") or ""))
+                    and not catalog.is_addon(catalog.get(str(it.get("код") or "").lower(), city) or {"title": str(it.get("название") or ""), "code": ""}, city)]
+        if len(bouquets) > 1 and any(_is_chosen(it) for it in bouquets):
+            order["товары"] = [it for it in order["товары"] if it not in bouquets or _is_chosen(it)]
     # Одна и та же позиция дважды (ИИ + код добавили одну открытку) — оставляем одну.
     uniq, seen_t = [], set()
     for it in order["товары"]:
