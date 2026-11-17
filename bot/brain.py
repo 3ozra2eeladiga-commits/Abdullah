@@ -425,7 +425,8 @@ def _picked_by_ordinal(client, incoming, city):
     if not m or (_has_address([t]) and not lead) or not (len(t) < 50 or lead or re.search(
             r"вариант|букет|фото|композиц|открытк|давай|беру|хочу|нрав", t, re.I)):
         return []
-    shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
+    shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c] \
+        or [c for c in (db.get_setting(f"album_all:{client}") or "").split(",") if c]   # «третий» — из присланного альбома
     word = m.group(1).lower()
     idx = next(i for pat, i in ORDINALS if re.match(pat, word))
     if not shown or not (-len(shown) <= idx < len(shown)):

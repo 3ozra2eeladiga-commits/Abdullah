@@ -519,6 +519,15 @@ def deliver(client, text, from_staff=False, quote=""):
                     db.set_setting(f"lastq:{client}", nq)
                     db.add_message(client, "assistant", nq)
                     reply.text = nq
+            # «Почти всё — напишите да» → «да» → снова «Почти всё»: итог не собирается — не мучаем клиента по кругу,
+            # передаём флористу всё, что собрали (она оформит сама).
+            if not from_staff and reply and not reply.order and brain.ALMOST_DONE_Q in (reply.text or "") \
+                    and brain.CONFIRM_YES_RE.search(text or ""):
+                prev_a = [m["content"] for m in db.history(client, 6) if m["role"] == "assistant"]
+                if len(prev_a) >= 2 and brain.ALMOST_DONE_Q in prev_a[-2]:
+                    _to_human(client, f"(бот не смог собрать итог заказа — оформите, пожалуйста, по переписке) {text}",
+                              saved=True)
+                    return
             if not from_staff and reply and reply.text and not reply.order and _bot_stuck(client, reply.text):
                 _to_human(client, f"(бот не понимает клиента — повторяет одно и то же) {text}", saved=True)
                 return
