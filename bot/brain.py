@@ -447,6 +447,14 @@ _WISH_FILLER = re.compile(
     r"соберите|сделайте|получится|можете|могли\s+бы|бы|а|и|да)\b", re.I)
 
 
+WISH_SIGNAL_RE = re.compile(
+    r"\bбез\b|добав|убер|убрать|замен|вместо|не\s+надо|не\s+нужн|упаков|лент|бумаг|пл[её]нк|корзин|коробк|шляп|"
+    r"цвет|гамм|оттен|красн|бел|розов|ж[её]лт|син|голуб|фиолет|сирен|оранж|зел[её]н|бордо|персик|пастел|нежн|ярк|"
+    r"пышн|побольше|поменьше|больше\s+(?:роз|цвет|зелен)|меньше|крупн|мелк|роз|пион|тюльпан|хризантем|гортенз|лили|"
+    r"эустом|ромаш|гербер|альстром|диантус|гипсофил|сухоцвет|орхид|ирис|маттиол|зелен|открытк|надпис|топпер|шар|"
+    r"игрушк|конфет|сладк|запах|аромат|высок|низк|длинн|коротк|кругл", re.I)
+
+
 def _pick_wish(incoming):
     """Что клиент ДОБАВИЛ к выбору букета: «как 8, но без роз» → «без роз», «этот, в зелёной упаковке» →
     «в зелёной упаковке». Подходит для любых уточнений (цветы, цвет, упаковка, размер, лента, открытка…)."""
@@ -469,6 +477,10 @@ def _pick_wish(incoming):
             break
         rest = new
     rest = rest[:150].strip(" ,.")
+    if re.search(r"\d[\d\s]{2,6}\s*₽", rest):
+        return ""                                     # клиент скопировал подпись фото «… — 2889 ₽» — это выбор
+    if not WISH_SIGNAL_RE.search(rest):
+        return ""                                     # «он такой красивый», «доченька» — не пожелание к сборке
     # Это не пожелание к сборке, а дата/время/доставка или вопрос — их ведёт обычная логика.
     if "?" in rest or re.match(r"(?:собрать\s+)?(?:на\s+)?(?:сегодня|завтра|послезавтра)\b|к\s*\d|в\s*\d{1,2}(?::\d{2})?$|"
                                r"(?:доставк|самовывоз|адрес)", rest, re.I):
@@ -929,6 +941,10 @@ def _shop_label(addr, hours):
 def _shop_in(text, shops):
     """Какой магазин из списка упомянут в тексте (по улице или как его называют: «квартал») — (адрес, часы) или None."""
     t = (text or "").lower()
+    def _streets(a):
+        return re.sub(r"^(?:ул\.?|улица|пр\.?|проспект)\s*", "", a.lower()).split(",")[0].strip()[:6]
+    if len(shops) > 1 and sum(1 for a, _h in shops if _streets(a) and _streets(a) in t) > 1:
+        return None                      # «Орджоникидзе, 2 или Украинская, 47» — магазин ещё не выбран
     for a, h in shops:
         if any(x.lower() in t for x in _shop_aliases(a)):
             return (a, h)
@@ -1241,7 +1257,16 @@ def _contacts_from_text(text):
         to_name = _name_from(between) or _name_from(after2)
     else:                                           # «8928… Иван, 8928… Анна» — имена после телефонов
         me_name, to_name = _name_from(between), _name_from(after2)
-    return {"me_name": me_name, "me_phone": p1.group(0).strip(), "to_name": to_name, "to_phone": p2.group(0).strip()}
+    out = {"me_name": me_name, "me_phone": p1.group(0).strip(), "to_name": to_name, "to_phone": p2.group(0).strip()}
+    # «Получатель Мария, телефон 8928… Мой телефон 8928…, зовут Анна» — первым назван ПОЛУЧАТЕЛЬ: меняем местами.
+    to_first = re.search(r"получател\w*|(?:её|ее|его)\s+(?:телефон|номер)|(?:маме|маму|подруг|жене|жена|дочке|бабушк)",
+                         before1[-60:], re.I)
+    me_second = re.search(r"\b(?:мой|моё|мое|мне|я|меня|заказчик\w*)\b", (between + " " + after2[:40]), re.I)
+    if to_first and me_second and not re.search(r"\b(?:мой|моё|мое|я|меня|заказчик\w*)\b", before1[-60:], re.I):
+        me_after = _name_from(re.sub(r".*?\b(?:зовут|я|меня)\b", "", after2[:60], flags=re.I)) or me_name
+        out = {"me_name": me_after if me_after != me_name else to_name or "", "me_phone": p2.group(0).strip(),
+               "to_name": me_name or to_name, "to_phone": p1.group(0).strip()}
+    return out
 
 
 def _contacts(client):
@@ -2502,10 +2527,15 @@ def _polish_ai_text(text, client, city, user_msgs):
     parts = [p for p in _SENT_SPLIT_RE.split(t) if p.strip()]
     keep, dropped = [], False
     is_q = lambda p: "?" in p or bool(ASK_START_RE.match(p))
+    prev_dropped = False
     for p in parts:
         if is_q(p) and any(rx.search(p) and ok(known, user_msgs, client) for rx, ok in _KNOWN_Q):
-            dropped = True
+            dropped = prev_dropped = True
             continue
+        # Хвост вырезанного вопроса («📅 Например: завтра к 15:00», «Если да, то какую надпись?») — тоже убираем.
+        if prev_dropped and re.match(r"\W*(?:например|если\s+да|если\s+нет|или\b|а\s+если)", p, re.I):
+            continue
+        prev_dropped = False
         keep.append(p)
     # Один вопрос за раз: клиенту проще ответить, а коду — понять ответ. Остальные вопросы — следующими сообщениями.
     first_q = next((i for i, p in enumerate(keep) if is_q(p)), None)
@@ -3020,13 +3050,55 @@ def _spoken_phones(text):
     return _SPOKEN_RUN_RE.sub(fix, text or "")
 
 
+_MONEY_N = {"одну": 1, "одна": 1, "две": 2, "два": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "семь": 7,
+            "восемь": 8, "девять": 9, "десять": 10, "пятнадцать": 15, "двадцать": 20}
+_HOUR_N = {"час": 1, "часу": 1, "одному": 1, "одного": 1, "двум": 2, "двух": 2, "трём": 3, "трем": 3, "трёх": 3,
+           "трех": 3, "четырём": 4, "четырем": 4, "четырёх": 4, "четырех": 4, "пяти": 5, "шести": 6, "семи": 7,
+           "восьми": 8, "девяти": 9, "десяти": 10, "одиннадцати": 11, "двенадцати": 12}
+
+
+def _spoken_money_time(text):
+    """«три тысячи» → «3000 ₽», «полторы тысячи» → «1500 ₽», «к трём часам дня» → «к 15:00» (голосовые / словами)."""
+    t = text or ""
+    t = re.sub(r"(?<![а-яё])полторы\s+тысяч\w*", "1500 ₽", t, flags=re.I)
+    t = re.sub(rf"(?<![а-яё])({'|'.join(_MONEY_N)})\s+с\s+половиной\s+тысяч\w*",
+               lambda m: f"{_MONEY_N[m.group(1).lower()]}500 ₽", t, flags=re.I)
+    t = re.sub(rf"(?<![а-яё])({'|'.join(_MONEY_N)})\s+тысяч\w*",
+               lambda m: f"{_MONEY_N[m.group(1).lower()]}000 ₽", t, flags=re.I)
+    t = re.sub(r"₽(\s+руб\w*)", r"\1", t).replace("₽ рубл", "рубл")
+    t = re.sub(r"(?<![а-яё])(на|за|до|в|около)\s+тысяч[уи]\b", r"\1 1000 ₽", t, flags=re.I)
+
+    def hour(m):
+        h = _HOUR_N[m.group(2).lower()]
+        part = (m.group(4) or "").lower()
+        if part.startswith(("дня", "вечер")) and h < 12:
+            h += 12
+        elif not part and 1 <= h <= 7:             # «к трём» — днём, магазины с 8 утра
+            h += 12
+        return f"{m.group(1)} {h:02d}:00"
+    nom = {"один": 1, "два": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "семь": 7, "восемь": 8, "девять": 9,
+           "десять": 10, "одиннадцать": 11, "двенадцать": 12}
+
+    def hour_nom(m):                               # «в пять вечера», «в три часа дня»
+        h = nom[m.group(1).lower()]
+        part = (m.group(3) or m.group(2) or "").lower()
+        if (part.startswith(("дня", "вечер")) or (part.startswith("час") and 1 <= h <= 7)) and h < 12:
+            h += 12
+        return f"в {h:02d}:00"
+    t = re.sub(rf"(?<![а-яё])в\s+({'|'.join(nom)})\s+(час\w*|дня|вечера|утра)(?:\s+(дня|вечера|утра))?(?![а-яё])",
+               hour_nom, t, flags=re.I)
+    t = re.sub(rf"(?<![а-яё])(к|в|на|до|после|около|с)\s+({'|'.join(sorted(_HOUR_N, key=len, reverse=True))})(?![а-яё])"
+               r"(\s+час\w*)?(?:\s+(дня|вечера|утра|ночи))?", hour, t, flags=re.I)
+    return t
+
+
 def respond(client, incoming, from_staff=False, quote=""):
     """Записывает входящее сообщение, спрашивает ИИ и возвращает разобранный ответ.
 
     quote — текст сообщения, на которое клиент ответил (reply): подпись фото букета и т.п. Используется
     ТОЛЬКО для распознавания (какой букет), но НЕ подмешивается в сам текст для ИИ, чтобы его не путать."""
     if not from_staff:
-        incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(_spoken_phones(incoming))),
+        incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(_spoken_money_time(_spoken_phones(incoming)))),
                                     db.get_setting(f"lastq:{client}") or "")
         incoming = _fix_budget_answer(client, incoming, db.get_setting(f"lastq:{client}") or "")    # «саморезов» → «самовывоз», «дастафка» → «доставка»
     # На «на какую дату?» ответили «сейчас / срочно / прямо сейчас» — это СЕГОДНЯ, как можно скорее (1–2 часа), Абдулла.
@@ -3297,7 +3369,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         winq = db.get_setting(f"winq:{client}") or ""
         if winq and last_q.startswith("Доставим с"):
             t_w = (incoming or "").strip().lower()
-            exact = re.match(r"^\W*2\b", t_w) or re.search(r"точно|ровно|строго|не\s+позже|обязательно\s+к", t_w)
+            exact = re.match(r"^\W*2\b", t_w) or re.search(r"точно|ровно|строго|не\s+позже|обязательно\s+к|лучше\s+к|именно\s+к", t_w)
             if exact or re.match(r"^\W*(?:1|да|ок|подойд|хорошо|норм|давай|согласн|устраива)", t_w):
                 db.del_setting(f"winq:{client}")
                 db.set_setting(f"winok:{client}", winq)
@@ -4130,6 +4202,8 @@ def respond(client, incoming, from_staff=False, quote=""):
     # НО не путаем с «покажи побольше ВАРИАНТОВ» — там как раз нужно показать.
     size_change = (bool(SIZE_CHANGE_RE.search(incoming or ""))
                    and not re.search(r"вариант|ещё|еще|друг|показ|покаж|выбор", incoming or "", re.I)
+                   and not re.search(r"нрав\w*\s+(?:\w+\s+)?больше|больше\s+(?:всех|всего|нрав)|не\s+больше|больше\s+не\b|"
+                                     r"не\s+дороже|не\s+меньше", incoming or "", re.I)
                    and (bool(picked) or (bool(db.get_setting(f"chosen:{client}")) and bool(re.search(
                             r"побольше|пышнее|крупнее|объ[её]мн|поменьше|поскромн|компактн|побогаче|пороскошн", incoming or "", re.I)))
                         or bool(re.search(r"\bэтот\b|\bэту\b|\bэто\b|\bтакой\b|\bтакую\b|\bего\b|\bеё\b|\bее\b|\bих\b",
@@ -5027,6 +5101,8 @@ def respond(client, incoming, from_staff=False, quote=""):
         kn = _known_keys(msgs_all, city, _known_order(client))
         parts = [p for p in re.split(r"(?<=[.!?])\s+|\n+", reply.text) if p.strip()]
         drop = [p for p in parts if "?" in p and any(k in kn and re.search(rx, p, re.I) for k, rx in ASK_KEYS)]
+        if drop:                                  # хвосты вырезанного вопроса: «📅 Например: …», «Если да, …»
+            drop += [p for p in parts if re.match(r"\W*(?:например|если\s+да|если\s+нет)\b", p, re.I)]
         if drop:
             keep = [p for p in parts if p not in drop and not re.match(r"\s*\d+\s+—\s", p)]
             nq2 = _next_question(msgs_all, city, _known_order(client))
