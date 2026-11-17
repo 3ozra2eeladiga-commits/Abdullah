@@ -946,9 +946,9 @@ def _pickup_shops(city):
     """Все магазины для самовывоза (Абдулла: показываем все адреса): сначала города клиента, потом остальные —
     к адресу другого города дописываем город. [(адрес, часы), ...]"""
     own = [(a, h) for a, h in _city_shops(city)]
-    other = [(a, h) for c in config.city_list() if c.get("name") and c.get("name") != city
-             for a, h in (c.get("shops") or [])]
-    return own + other
+    if own:
+        return own                     # город клиента известен — только его магазины (Абдулла: «сказал Минводы»)
+    return [(a, h) for c in config.city_list() if c.get("name") for a, h in (c.get("shops") or [])]
 
 
 def _shop_city(addr):
@@ -5068,6 +5068,12 @@ def respond(client, incoming, from_staff=False, quote=""):
             reply.text = note                  # коротко: только это, с вариантами ответа цифрой
             reply.photos, reply.question = [], ""
             db.set_setting(f"lastq:{client}", note)
+    # Самовывоз, а магазин в городе один — сразу говорим адрес, без вопроса «из какого магазина».
+    if not from_staff and city and not reply.order and len(_city_shops(city)) == 1 \
+            and not db.get_setting(f"pickup_shop:{client}") and _is_pickup(client):
+        a1, h1 = _city_shops(city)[0]
+        db.set_setting(f"pickup_shop:{client}", _shop_full(a1))
+        reply.text = f"Заберёте из магазина: {_shop_full(a1)} ({h1}) 🌸\n\n" + re.sub(r"^\s*Хорошо\W*", "", reply.text or "")
     # Самовывоз в городе с несколькими магазинами — всегда наш вопрос с цифрами (а не рассказ ИИ про улицы).
     if not from_staff and city and not order_text and not keep_photos and not reply.order \
             and len(_pickup_shops(city)) > 1 and not db.get_setting(f"pickup_shop:{client}") \
