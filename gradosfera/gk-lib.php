@@ -116,8 +116,28 @@ function gk_send_group($text, $extra = []) {
     foreach ($to as $chat) {
         $r = gk_tg('sendMessage', array_merge(['chat_id' => $chat, 'text' => $text, 'disable_web_page_preview' => true], $extra));
         if (!empty($r['ok'])) $ok = true;
+        // нет связи с Telegram — заявка не теряется: кладём в очередь, сторож (gk-watch.php) дошлёт через 5 минут
+        elseif (!empty($r['net']) || ($r['description'] ?? '') === 'нет связи с Telegram')
+            gk_json_update('gs-outbox.json', function (&$q) use ($chat, $text, $extra) { $q[] = ['chat' => $chat, 'text' => $text, 'extra' => $extra, 't' => time()]; if (count($q) > 300) $q = array_slice($q, -300); return true; });
     }
     return $ok;
+}
+/** дослать то, что не ушло из-за сбоя (не старше 2 суток); возвращает, сколько отправлено */
+function gk_outbox_flush() {
+    $q = gk_json_read('gs-outbox.json');
+    if (!$q) return 0;
+    $left = []; $n = 0;
+    foreach ($q as $m) {
+        if (time() - $m['t'] > 2 * 86400) continue;
+        $note = "⏳ Пришло с задержкой (сбой связи), заявка от " . gk_date($m['t']) . "\n\n";
+        $r = gk_tg('sendMessage', array_merge(['chat_id' => $m['chat'], 'text' => $note . $m['text'], 'disable_web_page_preview' => true], $m['extra'] ?: []));
+        if (!empty($r['ok'])) $n++; else $left[] = $m;
+    }
+    gk_json_update('gs-outbox.json', function (&$all) use ($q, $left) {
+        $new = array_slice($all, count($q));      // пока досылали, могли добавиться новые
+        $all = array_merge($left, $new); return true;
+    });
+    return $n;
 }
 function gk_ago($ts) {
     $m = max(0, intdiv(time() - $ts, 60));
