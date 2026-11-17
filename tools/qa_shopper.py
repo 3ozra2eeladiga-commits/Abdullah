@@ -955,7 +955,7 @@ class Run:
         if p["way"] == "доставка" and p.get("window") == "2" and "точно" not in json.dumps(o, ensure_ascii=False).lower() \
                 and "точно" not in bot_all.lower():
             self.problem("🕒 «Нужно точно к» не попало в заявку", str(o.get("время")))
-        if p["way"] == "самовывоз" and other in str(o.get("адрес") or ""):
+        if p["way"] == "самовывоз" and re.search(rf"{other}(?![а-яё])", str(o.get("адрес") or "")):   # «ул. Пятигорская» — не Пятигорск
             self.problem("🏪 Самовывоз из магазина другого города", str(o.get("адрес")))
         if p.get("pack") == "поинтереснее" and "упаковк" in bot_all.lower() and not re.search(
                 r"пышн|упаковк", json.dumps(o, ensure_ascii=False), re.I):
