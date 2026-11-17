@@ -943,12 +943,12 @@ def _city_shops(city):
 
 
 def _pickup_shops(city):
-    """Все магазины для самовывоза (Абдулла: показываем все адреса): сначала города клиента, потом остальные —
-    к адресу другого города дописываем город. [(адрес, часы), ...]"""
+    """Магазины для самовывоза: только города, который выбрал клиент (Абдулла 17.11: выбрал Пятигорск — Минводы
+    не предлагаем). Город ещё не известен — все магазины, к адресу дописываем город. [(адрес, часы), ...]"""
     own = [(a, h) for a, h in _city_shops(city)]
-    other = [(a, h) for c in config.city_list() if c.get("name") and c.get("name") != city
-             for a, h in (c.get("shops") or [])]
-    return own + other
+    if own:
+        return own
+    return [(a, h) for c in config.city_list() if c.get("name") for a, h in (c.get("shops") or [])]
 
 
 def _shop_city(addr):
