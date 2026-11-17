@@ -562,6 +562,8 @@ def deliver(client, text, from_staff=False, quote=""):
                 while reply.text.count(q) > 1:
                     i = reply.text.rfind(q)
                     reply.text = (reply.text[:i] + reply.text[i + len(q):]).strip()
+            # Одно и то же предложение два раза подряд («Скидок нет 🌸 Скидок нет 🌸») — оставляем одно.
+            reply.text = re.sub(r"([^.!?\n]{12,}?[.!?]?\s*(?:🌸)?)\s*\1", r"\1", reply.text)
             paras = [p for p in reply.text.split("\n\n")]
             reply.text = "\n\n".join(p for i, p in enumerate(paras) if p.strip() and p not in paras[:i])
             _send_text(client, brain.pretty(reply.text))  # короткими абзацами — легче читать

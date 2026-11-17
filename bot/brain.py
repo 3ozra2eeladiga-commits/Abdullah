@@ -561,7 +561,7 @@ def _not_address(m):
     """«завтра на 3», «сегодня к 14:00», «через 2 часа», «51 роза» — это время/количество, не адрес."""
     return bool(PHONE_RE.search(m) or re.search(r"\b(?:сегодня|завтра|послезавтра|через|после|около)\b|\b[квс]\s+\d{1,2}(?:[:.]\d{2})?\b|"
                           r"\bна\s+\d{1,2}(?:[:.]\d{2})?\s*$|\d{1,2}:\d{2}|\d+\s*(?:роз|шт|тыс|₽|руб|р\b|час|мин(?:ут|\b))|"
-                          r"^\W*(?:как|номер|фото|вариант|беру|давай\w*|хочу)\s+\d", m, re.I)) \
+                          r"^\W*(?:как|номер|фото|вариант|беру|давай\w*|хочу)\s+\d|^\W*(?:букет|композици|вариант|фото)\w*\s+(?:номер\s*|№\s*)?\d", m, re.I)) \
         and not re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|дом|кв|квартир\w*|подъезд)\b", m, re.I)
 
 
@@ -2401,6 +2401,8 @@ def _apply_client_state(order, client, city):
     up = db.get_setting(f"upsize:{client}") or ""
     if up:
         _code, sign, amount = (up.split("|") + ["", "", ""])[:3]
+        if amount and int(amount or 0) < 100:
+            amount = ""                      # «пышнее на +1 ₽» — это не доплата, а округление бюджета (3000 vs 2999)
         if amount:
             order["доплата"] = int(amount) * (-1 if sign == "-" else 1)
             base_it = catalog.get(_code, city) or catalog.get(_code)
