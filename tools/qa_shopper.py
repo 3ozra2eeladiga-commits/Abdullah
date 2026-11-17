@@ -176,9 +176,9 @@ PERSONA = {
 S = []
 
 
-def sc(key, title, steps, order=True, clock=12, florist="ok", inject=None, **persona):
+def sc(key, title, steps, order=True, clock=12, florist="ok", inject=None, char=None, **persona):
     S.append({"key": key, "title": title, "steps": steps, "order": order, "clock": clock, "florist": florist,
-              "inject": inject or {}, "persona": dict(PERSONA, **persona)})
+              "inject": inject or {}, "char": char, "persona": dict(PERSONA, **persona)})
 
 
 sc("roses_tomorrow", "Розы на завтра", ["Здравствуйте, нужны розы на завтра"])
@@ -262,6 +262,53 @@ sc("night", "Ночью: заказ на завтра", ["Здравствуйт
 sc("night_late", "Глубокой ночью (2:00)", ["нужен букет на завтра утром"], clock=2, time="к 10:00")
 
 
+# «Трудные» клиенты — их целиком играет ИИ (каждый ответ), со своим характером.
+CHARS = {
+    "hurry": ("Торопыга", "Очень спешишь. Пишешь коротко, без знаков препинания, часто «быстрее», «ну что», "
+                          "иногда отвечаешь не на тот вопрос, лишь бы быстрее."),
+    "noread": ("Не читает", "Не читаешь сообщения магазина целиком. Через раз отвечаешь невпопад или задаёшь свой вопрос "
+                            "вместо ответа, иногда повторяешь то, что уже говорил."),
+    "words": ("Пишет словами", "Все числа пишешь СЛОВАМИ: номер букета («девятый», «давайте третий»), время («в три часа "
+                               "дня», «к пяти»), телефон словами по частям, сумму («тысячи на три»)."),
+    "changer": ("Передумывает", "Посреди оформления меняешь решение: сначала доставка, потом самовывоз (или наоборот), "
+                                "меняешь время или дату, один раз просишь другой букет."),
+    "voice": ("Голосовой", "Пишешь как распознанное голосовое: длинно, без точек и запятых, с ошибками распознавания "
+                           "(«дастафка», «завтро», «пятегорск»), с лишними словами «ну вот», «короче»."),
+    "grumpy": ("Недовольный", "Раздражён, ворчишь («долго», «зачем столько вопросов», «вы же уже спрашивали»), "
+                              "но без мата; всё же хочешь купить."),
+    "lost": ("Пропадает", "Иногда пишешь «щас», «минуту», «алло», «ну что там?» вместо ответа, потом отвечаешь."),
+    "mixnum": ("Путает номера", "Путаешь номера фото: называешь букет описанием («тот, с лилиями», «розовый») или "
+                                "неверным номером, потом исправляешься."),
+    "granny": ("Бабушка", "Пожилая, вежливая, многословная, плохо понимает, что значит «ответьте цифрой», "
+                          "переспрашиваешь, пишешь «доченька»."),
+    "allinone": ("Всё сразу", "Первым же сообщением пишешь почти всё: что, когда, куда, кому, свой телефон; потом "
+                              "раздражаешься, если переспрашивают."),
+}
+for _k, (_t, _d) in CHARS.items():
+    sc(f"ai_{_k}", f"ИИ-клиент: {_t}", [], char=_k)
+
+# Ещё «неудобные» начала и ответы (готовые фразы)
+sc("hello_gone", "«Здрасте» и пропал, потом вернулся", ["здрасте", "ну так что", "букет нужен завтра"])
+sc("photo_first_price", "Сразу «сколько стоит» (без букета)", ["сколько стоит?"])
+sc("ignore_city", "Игнорирует вопрос про город", ["букет на завтра"],
+   inject={"album": "а у вас доставка есть?"})
+sc("wrong_answer_way", "На «доставка или самовывоз» отвечает не то", ["букет на завтра"],
+   inject={"way": "а сколько по времени собирать будете?"})
+sc("pick_ninth_word", "«Девятый» словом", ["букет на завтра"], pick="девятый")
+sc("pick_desc", "Выбор описанием «тот, с лилиями»", ["букет на завтра"], pick="тот, где лилии")
+sc("pick_two", "Выбрал два букета", ["букет на завтра"], pick="2 и 5")
+sc("late_change_way", "Передумал: самовывоз вместо доставки", ["букет на завтра"],
+   inject={"form": "ой, давайте лучше самовывоз"})
+sc("late_change_date", "Передумал дату на итоге", ["букет на завтра"], inject={"summary": "ой, нет, на послезавтра"})
+sc("voice_style", "Как голосовое, без знаков", ["ну короче мне надо букет завтро в пятегорск доставку к трём часам"])
+sc("phone_words", "Телефон словами", ["букет на завтра"],
+   inject={"form": "1. Анна\n2. восемь девятьсот двадцать восемь сто двадцать три сорок пять шестьдесят семь\n"
+                   "3. Мария 89280001122\n4. к трём, Крайнего 90"})
+sc("ask_twice", "Повторяет вопрос, не дождавшись", ["есть розы?", "есть розы?", "алло"])
+sc("time_words", "Время словами «к пяти вечера»", ["букет на завтра"], time="к пяти вечера")
+sc("emoji_answers", "Отвечает смайликами", ["букет на завтра"], inject={"album": "👍", "summary": "👍"})
+
+
 # ---------------------------------------------------------------- автоответчик «клиента»
 def _city_answer(text, p):
     return str(p["city"])
@@ -334,19 +381,21 @@ def _fill(tpl, p):
     return tpl.format(**p) if isinstance(tpl, str) else tpl
 
 
-def _llm_customer(p, dialog):
-    """Ни одно правило не подошло — отвечает ИИ в роли клиента (коротко, по своей легенде)."""
-    sys_prompt = ("Ты — клиент цветочного магазина, переписываешься в мессенджере. Хочешь заказать букет. "
+def _llm_customer(p, dialog, char=None):
+    """Отвечает ИИ в роли клиента (по своей легенде; char — «трудный» характер из CHARS)."""
+    trait = f" Твой характер: {CHARS[char][1]}" if char in CHARS else ""
+    sys_prompt = ("Ты — клиент цветочного магазина, переписываешься в мессенджере. Хочешь заказать букет." + trait + " "
                   f"Твои данные: город №{p['city']}, дата — {p['date']}, время — {p['time']}, {p['way']}, "
                   f"адрес {p['address']}, тебя зовут {p['name']}, телефон {p['phone']}, получатель {p['recipient']}, "
-                  f"бюджет {p['budget']} ₽, открытка не нужна. Отвечай ОДНОЙ короткой фразой, как обычный человек, "
-                  "только на вопрос магазина. Если вопроса нет — коротко скажи, что хочешь оформить заказ.")
+                  f"бюджет {p['budget']} ₽, открытка не нужна. Отвечай коротко (1–2 фразы), как живой человек в "
+                  "мессенджере, без кавычек и пояснений. Если магазин прислал фото букетов — выбери один. "
+                  "Если разговора ещё нет — начни его так, как начал бы ты. Если заказ принят — напиши «спасибо».")
     # Для ИИ «клиент» — это он сам (assistant), а бот магазина — собеседник (user).
     msgs = []
-    for who, t in dialog[-8:]:
-        if who not in ("bot", "client"):
+    for who, t in dialog[-10:]:
+        if who not in ("bot", "client", "photos"):
             continue
-        role = "user" if who == "bot" else "assistant"
+        role = "assistant" if who == "client" else "user"
         if msgs and msgs[-1]["role"] == role:
             msgs[-1]["content"] += "\n" + t
         else:
@@ -384,6 +433,22 @@ LEAK_RE = re.compile(r"\[ЗАКАЗ\]|\[ВОПРОС\]|\bnull\b|\bNone\b|\{\s*\"
 FRESH_RE = re.compile(r"свеж", re.I)
 DOUBLE_SUM_RE = re.compile(r"итог\w*\s+(?:цен\w*|сумм\w*)?\s*или|или\s+(?:подешевле|дешевле)|включая\s+доставку\s+или|"
                            r"с\s+доставкой\s+или\s+без", re.I)
+
+
+# ---------------------------------------------------------------- живая страница (bot/app.py → /qa)
+LIVE = {"running": True, "started": time.time(), "total": 0, "index": 0, "title": "", "char": "",
+        "dialog": [], "runs": [], "usage": _USAGE}
+
+
+def write_live():
+    """cache/qa/live.json — что происходит прямо сейчас (страница /qa обновляется каждые 2–3 с)."""
+    try:
+        tmp = os.path.join(QA_DIR, "live.json.tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(LIVE, f, ensure_ascii=False)
+        os.replace(tmp, os.path.join(QA_DIR, "live.json"))
+    except OSError:
+        pass
 
 
 class Run:
@@ -435,7 +500,14 @@ class Run:
             app.deliver(self.client, text, quote=quote)
         except Exception as e:
             self.problem("💥 Ошибка в боте", f"«{text}» → {e!r}")
-        return self._collect(start, text, spec)
+        out = self._collect(start, text, spec)
+        self.live()
+        return out
+
+    def live(self):
+        LIVE["dialog"] = self.dialog[-60:]
+        LIVE["problems_now"] = self.problems
+        write_live()
 
     def _learn(self, text):
         if DATE_RE.search(text) or VAGUE_RE.search(text):
@@ -546,6 +618,8 @@ class Run:
             ev.append("form")
         if "всё верно?" in low or "все верно?" in low:
             ev.append("summary")
+        if self.s.get("char"):
+            return _llm_customer(self.p, self.dialog, self.s["char"])
         for e in ev:
             if e in self.s["inject"] and e not in self.done_inject:
                 self.done_inject.add(e)
@@ -581,6 +655,8 @@ class Run:
         return out
 
     def run(self, max_turns=26):
+        if self.s.get("char"):
+            max_turns = 18                            # ИИ-клиент дороже — держим разговор покороче
         set_clock(self.s["clock"])
         db.clear_history(self.client)
         for step in self.s["steps"]:
@@ -692,13 +768,19 @@ def main():
     catalog.refresh()
     t0 = time.time()
     runs = []
+    LIVE["total"] = len(chosen)
     for i, s in enumerate(chosen):
         r = Run(s, i)
+        LIVE.update(index=i + 1, title=s["title"], key=s["key"], dialog=[], problems_now=[])
+        write_live()
         try:
             r.run()
         except Exception as e:
             r.problem("💥 Ошибка в тайном покупателе", repr(e))
         runs.append(r)
+        LIVE["runs"].append({"title": s["title"], "key": s["key"], "order": bool(r.order),
+                             "problems": r.problems, "dialog": r.dialog})
+        write_live()
         if len(runs) == 2 and all(any(x.startswith("💥 Техническая заминка") for x, _ in z.problems) for z in runs):
             print("ИИ не отвечает — останавливаю проверку", flush=True)
             with open(os.path.join(QA_DIR, "report.txt"), "w", encoding="utf-8") as f:
@@ -706,10 +788,14 @@ def main():
                         "Посмотрите страницу статуса сервера.")
             with open(os.path.join(QA_DIR, "dialogs.txt"), "w", encoding="utf-8") as f:
                 f.write(dialogs_text(runs))
+            LIVE.update(running=False, report="❌ ИИ не отвечает — проверка остановлена", finished=time.time())
+            write_live()
             return
         print(f"[{i + 1}/{len(chosen)}] {s['title']}: {'заказ' if r.order else 'без заказа'}, проблем {len(r.problems)}",
               flush=True)
     rep = report(runs, time.time() - t0)
+    LIVE.update(running=False, report=rep, finished=time.time())
+    write_live()
     with open(os.path.join(QA_DIR, "report.txt"), "w", encoding="utf-8") as f:
         f.write(rep)
     with open(os.path.join(QA_DIR, "dialogs.txt"), "w", encoding="utf-8") as f:

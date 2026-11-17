@@ -165,7 +165,7 @@ TELEGRAM_ORDERS_CHAT = os.getenv("TELEGRAM_ORDERS_CHAT", "")
 # Отчёт — ТОЛЬКО этому человеку (владелец бота), сотрудникам магазина никогда. Команда /qa — тоже только ему.
 QA_REPORT_TO = int(os.getenv("QA_REPORT_TO", "1247310515") or 0)
 QA_NIGHT_AT = os.getenv("QA_NIGHT_AT", "03:10")             # время ночного запуска (по Москве)
-QA_NIGHT_N = int(os.getenv("QA_NIGHT_N", "10"))             # сколько разговоров ночью (по кругу); 0 — не запускать
+QA_NIGHT_N = int(os.getenv("QA_NIGHT_N", "0"))              # сколько разговоров ночью (по кругу); 0 — не запускать (Абдулла: пока не нужно)
 QA_N = int(os.getenv("QA_N", "10"))                         # сколько разговоров по команде /qa
 
 # --- Сервер ---

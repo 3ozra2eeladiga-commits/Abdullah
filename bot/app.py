@@ -993,7 +993,7 @@ def run_qa(args, title="🕵️ Проверка"):
         try:
             root = _REPO_ROOT
             os.makedirs(QA_DIR, exist_ok=True)
-            for name in ("report.txt", "dialogs.txt"):
+            for name in ("report.txt", "dialogs.txt", "live.json"):
                 if os.path.exists(os.path.join(QA_DIR, name)):
                     os.remove(os.path.join(QA_DIR, name))
             env = dict(os.environ)
@@ -1046,7 +1046,8 @@ def on_qa(arg):
     if not run_qa(args):
         return "⏳ Проверка уже идёт — пришлю отчёт, когда закончится."
     return (f"🕵️ Запустил тайного покупателя: {what}.\nКлиентам и флористам ничего не уходит. "
-            "Отчёт пришлю сюда, когда закончится (обычно 10–20 минут).")
+            "Отчёт пришлю сюда, когда закончится (обычно 10–20 минут).\n"
+            + (f"Смотреть вживую: {config.PUBLIC_BASE_URL}/qa" if config.PUBLIC_BASE_URL else ""))
 
 
 def on_show(chat, order_id):
@@ -1534,6 +1535,27 @@ def tg_hook_gk():
 
     threading.Thread(target=forward, daemon=True).start()
     return Response("ok", status=200)
+
+
+@app.get("/qa")
+def qa_page():
+    """Живая страница тайного покупателя (только тестовые разговоры — настоящих клиентов там нет)."""
+    return send_from_directory(os.path.join(_REPO_ROOT, "tools"), "qa_page.html", max_age=0)
+
+
+@app.get("/qa/live.json")
+def qa_live():
+    path = os.path.join(QA_DIR, "live.json")
+    if not os.path.exists(path):
+        abort(404)
+    return send_from_directory(QA_DIR, "live.json", max_age=0)
+
+
+@app.get("/qa/dialogs.txt")
+def qa_dialogs():
+    if not os.path.exists(os.path.join(QA_DIR, "dialogs.txt")):
+        abort(404)
+    return send_from_directory(QA_DIR, "dialogs.txt", max_age=0, mimetype="text/plain; charset=utf-8")
 
 
 @app.get("/")
