@@ -854,6 +854,7 @@ class Run:
     def _logic(self):
         """Логика ветки: что клиент выбрал — то и в заявке; бот не предлагает лишнего (магазины другого города и т.п.)."""
         p = self.p
+        prev_b = ""
         bot_all = "\n".join(t for w, t in self.dialog if w == "bot")
         cities = ["Пятигорск", "Минеральные Воды"]
         my_city = cities[min(int(p.get("city") or 1), 2) - 1]
@@ -862,6 +863,26 @@ class Run:
             if w == "bot" and t.startswith("Из какого магазина") and other in t and "city" in self.facts:
                 self.problem("🏪 Предлагает магазины другого города", t[:200])
                 break
+        # Логика везде (не только в «дереве»): выбранное клиентом не переспрашиваем и не противоречим ему.
+        prev_c = ""
+        card_no = pickup = False
+        for w, t in self.dialog:
+            if w == "client":
+                prev_c = t
+                if re.search(r"самовывоз|заберу|забрать", t, re.I) or (re.match(r"\W*2\b", t) and "самовывоз" in prev_b):
+                    pickup = True
+                elif re.search(r"\bдоставк", t, re.I) or (re.match(r"\W*1\b", t) and "самовывоз" in prev_b):
+                    pickup = False
+                if "открытк" in prev_b.lower() and re.match(r"\W*нет\b", t, re.I):
+                    card_no = True
+            elif w == "bot":
+                if pickup and re.search(r"адрес доставки\?|куда доставить|курьер\w*\s+(?:привез|достав)", t, re.I):
+                    self.problem("🚗 Самовывоз, а бот спрашивает адрес доставки", t[:200])
+                if card_no and re.search(r"открытку добавим|добавить открытку|выберите открытку", t, re.I):
+                    self.problem("💌 Клиент отказался от открытки — бот снова предлагает", t[:200])
+                prev_b = t
+            if w == "bot":
+                continue
         if not self.s.get("tree") or not self.order:
             return
         o = self.order
