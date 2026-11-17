@@ -1103,7 +1103,14 @@ def qa_resume_after_restart():
         return
     if left > 0.05:
         time.sleep(20)
-        qa_start(left)
+        try:
+            tag = json.load(open(QA_ACTIVE)).get("tag")
+        except (OSError, ValueError):
+            tag = None
+        if tag:
+            run_qa(["--loop", "--tag", tag, "--hours", f"{left:.2f}"], "🌹 Проверка остановлена")
+        else:
+            qa_start(left)
     else:
         _qa_active_clear()
 
@@ -1119,6 +1126,13 @@ def _on_qa(arg):
     a = (arg or "").strip().lower()
     if a in ("стоп", "stop", "остановить", "хватит"):
         return ("⏹ Останавливаю — отчёт пришлю через минуту." if qa_stop() else "Проверка сейчас не идёт.")
+    if a in ("розы", "roses"):
+        if not run_qa(["--loop", "--tag", "rose_", "--hours", str(config.QA_MAX_HOURS)], "🌹 Проверка «розы» остановлена"):
+            return "⏳ Проверка уже идёт. Остановить — /qa стоп"
+        os.makedirs(QA_DIR, exist_ok=True)
+        with open(QA_ACTIVE, "w") as f:
+            json.dump({"until": time.time() + config.QA_MAX_HOURS * 3600, "tag": "rose_"}, f)
+        return f"🌹 Начал проверку «розы»: 32 разных вопроса про розы (без «здравствуйте», 51 роза, 60 см, поштучно…).\nСмотреть: {qa_link()}"
     if a in ("", "старт", "start", "начать"):
         if not qa_start():
             return f"⏳ Проверка уже идёт. Остановить — /qa стоп\nСмотреть: {qa_link()}"
