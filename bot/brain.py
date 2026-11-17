@@ -1243,6 +1243,37 @@ def _name_from(text):
     return " ".join(w[:1].upper() + w[1:] for w in words)
 
 
+_TO_LBL = r"получател\w*|кому\b|(?:для|маме|мама|мамы|жене|жена|подруге|подруга|дочке|бабушке)\b|(?:её|ее|его)\s+(?:телефон|номер)"
+_ME_LBL = r"\b(?:я|меня|мой|моё|мое|мне|заказчик\w*)\b"
+_NAME_LBL_RE = re.compile(r"(?i:зовут|\bя|имя|фио|заказчик\w*|получател\w*|мама|маме|мамы|жена|жене|подруга)\b\s*[—:,-]?\s*"
+                          r"(?:(?i:мама|маме|это)\s+)?"
+                          r"([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)?)")
+
+
+def _contacts_by_labels(t, ms):
+    """Кто заказчик, кто получатель — по словам рядом с номером («получатель Мария, 8928…», «я Анна, 8928…»)."""
+    out = {}
+    for i, m in enumerate(ms[:2]):
+        start = ms[i - 1].end() if i else 0
+        before = t[start:m.start()]
+        after = t[m.end():ms[i + 1].start()] if i + 1 < len(ms) else t[m.end():m.end() + 60]
+        last_to = max([x.end() for x in re.finditer(_TO_LBL, before, re.I)] or [-1])
+        last_me = max([x.end() for x in re.finditer(_ME_LBL, before, re.I)] or [-1])
+        if last_to < 0 and last_me < 0:
+            return {}
+        role = "to" if last_to > last_me else "me"
+        names = [x.group(1) for x in _NAME_LBL_RE.finditer(before)]
+        if not names:                       # «Мой телефон 8928…, имя — Анна Петрова. Получатель — …»
+            head = re.split(r"получател|\bя\b|меня|мой|моё", after, maxsplit=1, flags=re.I)[0]
+            names = [x.group(1) for x in _NAME_LBL_RE.finditer(head)] or [n for n in [_name_from(head)] if n]
+        out[role + "_phone"] = m.group(0).strip()
+        out[role + "_name"] = names[-1] if names else ""
+    if not (out.get("me_phone") and out.get("to_phone")):
+        return {}
+    return {"me_name": out.get("me_name", ""), "me_phone": out["me_phone"],
+            "to_name": out.get("to_name", ""), "to_phone": out["to_phone"]}
+
+
 def _contacts_from_text(text):
     """«Иван Петров 8928…, Анна Смирнова 8928…» / «Имя заказчика: …\nТелефон заказчика: …\nИмя получателя: …» →
     {me_name, me_phone, to_name, to_phone}. Имя — перед телефоном, а если перед ним пусто — сразу после."""
@@ -1250,6 +1281,9 @@ def _contacts_from_text(text):
     ms = list(PHONE_RE.finditer(t))
     if len(ms) < 2:
         return {}
+    by_lbl = _contacts_by_labels(t, ms)
+    if by_lbl:
+        return by_lbl
     p1, p2 = ms[0], ms[1]
     before1, between, after2 = t[:p1.start()], t[p1.end():p2.start()], t[p2.end():]
     me_name = _name_from(before1)
@@ -1529,8 +1563,8 @@ def _next_question(user_msgs, city, order=None):
 
 
 # Клиент отказался от открытки коротким «нет» в ответ на вопрос про открытку.
-NO_CARD_RE = re.compile(r"^\W*(нет|не|неа|нет-нет|ноу|no|не\s*нужн\w*|не\s*надо|не\s*хочу|без\s+открытк\w*|без\s+неё|"
-                        r"ничего\s+не\s+(?:надо|пиш\w*|нужно)|не\s+буду)\W*"
+NO_CARD_RE = re.compile(r"^\W*(?:(?:нет|неа|нет-нет|ноу|no|не\s*нужн\w*|не\s*надо|не\s*хочу|без\s+открытк\w*|без\s+неё|"
+                        r"ничего\s+не\s+(?:надо|пиш\w*|нужно)|не\s+буду|не)\W*){1,3}"
                         r"(?:спасибо)?\W*$", re.I)
 
 
@@ -2035,7 +2069,8 @@ def _order_missing(o, client_text):
         return "На какую дату нужен букет? 📅"
     hour_o = _hour_from_text(o.get("время"))
     if hour_o is not None and not o.get("_время_у_получателя") and not o.get("_время_уточнит_флорист") \
-            and not re.search(rf"(?<!\d){hour_o}(?!\d)|(?<!\d){hour_o - 12}(?!\d)|как можно|скорее|срочно|"
+            and not re.search(rf"\b(?:к|в|до|на|около|после|с)\s*(?:{hour_o}|{hour_o - 12})(?!\d)|"
+                              rf"(?<!\d)(?:{hour_o}|{hour_o - 12})\s*(?::\d\d|\.\d\d|час|ч\b|утра|дня|вечера)|как можно|скорее|срочно|"
                               r"через\s+\w+\s+час|через\s+час|любое|утр|вечер|обед", cl):
         return NIGHT_DATE_Q if shops_closed_now(city_o) else DATE_Q   # время придумал ИИ — спрашиваем
     if o.get("получение") == "доставка" and (len((o.get("адрес") or "").strip()) < 6 or not _meaningful(o.get("адрес"))):
@@ -2423,7 +2458,11 @@ def _known_order(client):
     if db.get_setting(f"notime:{client}"):
         d["время"] = "узнать у получателя"
     ct0 = _contacts(client)
-    if not _meaningful(d.get("заказчик")) and ct0.get("me_name") and ct0.get("me_phone"):
+    cust = str(d.get("заказчик") or "")
+    mixed = bool(ct0.get("to_name") and ct0.get("me_name") and ct0["to_name"].split()[0].lower() in cust.lower()
+                 and ct0["me_name"].split()[0].lower() not in cust.lower())   # ИИ записал заказчиком имя получателя
+    if (not _meaningful(cust) or mixed or not re.search(r"[А-Яа-яЁёA-Za-z]{2}", PHONE_RE.sub("", cust))) \
+            and ct0.get("me_name") and ct0.get("me_phone"):
         d["заказчик"] = f"{ct0['me_name']}, {ct0['me_phone']}"
     if not _meaningful(d.get("получатель")) and ct0.get("to_name") and ct0.get("to_phone"):
         d["получатель"] = f"{ct0['to_name']}, {ct0['to_phone']}"

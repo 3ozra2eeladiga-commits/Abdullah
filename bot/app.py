@@ -170,6 +170,9 @@ HUMAN_REQ_RE = re.compile(
     r"(?:свяж|соедин|позов|перевед|переключ|дайте|хочу|нужен|нужна|можно|пообщат|поговор|общат)\w*[^.?!]{0,30}"
     r"(?:сотрудни|человек|оператор|менеджер|флорист|администратор|продавц|живы|живой|живому|хозяйк)"
     r"|^\W*(?:сотрудник|оператор|менеджер|человек|флорист)\W*$", re.I)
+# «Перезвоните мне» — переписываться не хочет: флористу, она позвонит.
+CALLBACK_RE = re.compile(r"перезвон\w*|(?:позвон\w*|набер\w*)\s+(?:мне|меня|пожалуйста)|(?:мне|меня)\s+(?:позвон\w*|набер\w*)",
+                         re.I)
 
 
 # Клиент недоволен ботом / запутался — сразу к флористу, не мучаем.
@@ -243,8 +246,11 @@ def _to_human(client, text, saved=False):
     telegram_bot.notify_staff_wait(client, f"🙋 Клиент просит живого сотрудника ({_label(client)}{', ' + city if city else ''}):\n"
                                       f"«{text}»\nНапишите клиенту в чате или ответом на это сообщение. "
                                       f"Бот молчит с ним {config.HUMAN_PAUSE_HOURS:g} ч; /resume ответом — включить бота.")
-    reply = ("Хорошо, передала флористу 🌸 Она напишет вам здесь "
-             + (f"{brain.opening_text(city)}, когда откроется магазин." if closed else "в ближайшее время."))
+    call = bool(CALLBACK_RE.search(text or ""))
+    reply = ("Хорошо, передала флористу 🌸 Она " + ("позвонит вам" if call else "напишет вам здесь") + " "
+             + (f"{brain.opening_text(city)}, когда откроется магазин." if closed else "в ближайшее время.")
+             + (" Если номер ещё не писали — пришлите его, пожалуйста 📞" if call and not brain.PHONE_RE.search(
+                 " ".join(m["content"] for m in db.history(client, 30) if m["role"] == "user") + " " + (text or "")) else ""))
     _send_text(client, reply)
     db.add_message(client, "assistant", reply)
     db.pause(client, config.HUMAN_PAUSE_HOURS)
@@ -463,8 +469,8 @@ def deliver(client, text, from_staff=False, quote=""):
                 and len(db.history(client, 6)) >= 4:       # недоволен ботом посреди разговора
             _to_human(client, text)
             return
-        if not from_staff and not db.is_paused(client) and HUMAN_REQ_RE.search(text or "") \
-                and not re.search(r"\bдля\b|букет|цвет|роз|подар", text or "", re.I):   # «букет для менеджера» — не то
+        if not from_staff and not db.is_paused(client) and (CALLBACK_RE.search(text or "") or (HUMAN_REQ_RE.search(text or "")
+                and not re.search(r"\bдля\b|букет|цвет|роз|подар", text or "", re.I))):   # «букет для менеджера» — не то
             _to_human(client, text)
             return
         if not from_staff and not db.is_paused(client) and _is_complaint(text):
@@ -505,7 +511,8 @@ def deliver(client, text, from_staff=False, quote=""):
             # вместо этого — следующий недостающий вопрос оформления.
             if not from_staff and reply and not reply.order and not reply.photos and not reply.staff_note \
                     and not reply.question and not reply.handoff and not db.is_paused(client) \
-                    and re.fullmatch(r"\W*(?:вс[её]\s+верно\??[^\n]{0,60})?\W*", reply.text or "", re.I):
+                    and (re.fullmatch(r"\W*(?:вс[её]\s+верно\??[^\n]{0,60})?\W*", reply.text or "", re.I)
+                         or re.match(r"\W*(?:если\s+да|если\s+нет|например)\b", reply.text or "", re.I)):
                 um = [m["content"] for m in db.history(client, 60) if m["role"] == "user"]
                 nq = brain._next_question(um, db.get_city(client), brain._known_order(client))
                 if nq:
@@ -551,6 +558,12 @@ def deliver(client, text, from_staff=False, quote=""):
                 reply.text = reply.text.rstrip() + "\n\n" + AVAIL_NOTE
                 db.set_setting(f"availnote:{client}", "1")
         if reply.text:
+            for q in (brain.ALMOST_DONE_Q,):                # один и тот же вопрос дважды в ответе — оставляем один
+                while reply.text.count(q) > 1:
+                    i = reply.text.rfind(q)
+                    reply.text = (reply.text[:i] + reply.text[i + len(q):]).strip()
+            paras = [p for p in reply.text.split("\n\n")]
+            reply.text = "\n\n".join(p for i, p in enumerate(paras) if p.strip() and p not in paras[:i])
             _send_text(client, brain.pretty(reply.text))  # короткими абзацами — легче читать
         if album:
             _send_album(client, reply.photos)                  # одним альбомом, нумерация продолжается
