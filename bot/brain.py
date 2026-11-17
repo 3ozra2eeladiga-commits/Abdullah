@@ -633,7 +633,7 @@ def _known_facts(user_msgs):
     out = []
     def find(rx):
         return next((m.strip() for m in reversed(user_msgs) if re.search(rx, m, re.I)), "")
-    way = find(r"достав|самовывоз|заберу|забер[её]м|привез")
+    way = find(r"достав|самовывоз|заберу|забер[её]м|забрать|забирать|сама\s+забер|привез")
     if way:
         out.append(f"способ получения: «{way[:80]}»")
     when = find(r"сегодня|завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}[:.]\d{2}\b|понедельник|вторник|"
@@ -1382,7 +1382,7 @@ def _is_pickup(client):
         if m["role"] != "user":
             continue
         t = m["content"].lower()
-        last_pick = max((t.rfind(w) for w in ("самовывоз", "заберу", "заберём", "заберем")), default=-1)
+        last_pick = max((t.rfind(w) for w in ("самовывоз", "заберу", "заберём", "заберем", "забрать", "забирать")), default=-1)
         last_deliv = t.rfind("доставк")
         if last_pick >= 0 or last_deliv >= 0:
             return last_pick > last_deliv
@@ -1503,7 +1503,7 @@ def _known_keys(user_msgs, city, order=None):
     keys = set()
     if city:
         keys.add("city")
-    if re.search(r"доставк|достав|самовывоз|заберу|забер[её]м|привез", t):
+    if re.search(r"доставк|достав|самовывоз|заберу|забер[её]м|забрать|забирать|сама\s+забер|привез", t):
         keys.add("way")
     if re.search(r"сегодня|завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|понедельник|вторник|сред[уа]|четверг|пятниц|суббот|"
                  r"воскресень|\b\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)", t):
@@ -1541,13 +1541,13 @@ def _next_question(user_msgs, city, order=None):
     t = (" ".join(user_msgs) + " " + known + (" открытка" if str(o.get("открытка") or "").strip() else "")).lower()
     if not city:
         return "В какой город?"
-    has_way = re.search(r"доставк|достав|самовывоз|заберу|забер[её]м|привез", t)
+    has_way = re.search(r"доставк|достав|самовывоз|заберу|забер[её]м|забрать|забирать|сама\s+забер|привез", t)
     has_date = re.search(r"сегодня|завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|"
                          r"июн|июл|август|сентябр|октябр|ноябр|декабр)|понедельник|вторник|сред[уа]|четверг|пятниц|"
                          r"суббот|воскресень", t)
     t_time = re.sub(r"\b\d{1,2}\.(?:0[1-9]|1[0-2])\b(?!:)", " ", t)    # «31.10» — это дата, не время
     has_time = re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b|\bв\s*\d{1,2}\b|\b(?:после|с|около)\s*\d{1,2}\b|утр|вечер|обед|узнать у получателя", t_time)
-    pickup = re.search(r"самовывоз|заберу|забер[её]м", t)
+    pickup = re.search(r"самовывоз|заберу|забер[её]м|забрать|забирать|сама\s+забер", t)
     has_addr = _has_address(user_msgs) or "адрес_есть" in t
     phones = re.findall(r"(?:\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}", t)
     # Абдулла: после выбора букета СНАЧАЛА «Доставка или самовывоз?», и только при доставке — анкета.
@@ -2115,7 +2115,7 @@ def _order_missing(o, client_text):
     city_o = catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or ""))
     # Способ, дату и время берём только со слов КЛИЕНТА — ИИ мог «додумать» (доставка, сегодня, 23:00).
     if o.get("получение") not in ("доставка", "самовывоз") or not re.search(
-            r"достав|самовывоз|заберу|забер[её]м|привез|забрать", cl):
+            r"достав|самовывоз|заберу|забер[её]м|забрать|забирать|сама\s+забер|привез|забрать", cl):
         return WAY_Q
     if not str(o.get("дата") or "").strip() or str(o.get("дата")).strip() in ("—", "-", "...") or not re.search(
             r"сегодня|завтра|послезавтра|\d{1,2}[./]\d{1,2}|\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|"
@@ -4070,6 +4070,13 @@ def respond(client, incoming, from_staff=False, quote=""):
         db.clear_pending_order(client)
         incoming = "Магазин для самовывоза выбран, продолжаем оформление."
         card_done = True
+    # Магазин назван словами («Орджоникидзе удобнее», «заберу в Квартале»), хотя бот спрашивал иначе — тоже выбор.
+    if shops_all and len(shops_all) > 1 and not lbt.startswith(PICKUP_Q_HEAD) and _shop_in(incoming, shops_all) \
+            and not re.search(r"\?|как\s+добрат|где\s+наход|далеко", incoming or "", re.I):
+        db.set_setting(f"pickup_shop:{client}", _shop_full(_shop_in(incoming, shops_all)[0]))
+        db.clear_pending_order(client)
+        incoming = "Магазин для самовывоза выбран, продолжаем оформление."
+        card_done = True
     if not from_staff and lbt.startswith(PICKUP_Q_HEAD):
         shops = _pickup_shops(city)
         m_n = re.match(r"^\D*(\d)\D*$", (incoming or "").strip())
@@ -5078,7 +5085,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # Самовывоз в городе с несколькими магазинами — всегда наш вопрос с цифрами (а не рассказ ИИ про улицы).
     if not from_staff and city and not order_text and not keep_photos and not reply.order \
             and len(_pickup_shops(city)) > 1 and not db.get_setting(f"pickup_shop:{client}") \
-            and (re.search(r"самовывоз|заберу|забер[её]м", incoming or "", re.I)
+            and (re.search(r"самовывоз|заберу|забер[её]м|забрать|забирать|сама\s+забер", incoming or "", re.I)
                  or re.search(r"из\s+какого\s+магазин|какой\s+магазин|орджоникидзе[^.?!]{0,40}украинск", reply.text or "", re.I)):
         shops = _pickup_shops(city)
         reply.text = PICKUP_Q_HEAD + "\n" + "\n".join(f"{i} — {_shop_label(a, h)}" for i, (a, h) in enumerate(shops, 1)) \
