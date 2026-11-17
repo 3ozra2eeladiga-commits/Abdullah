@@ -480,6 +480,10 @@ def _pick_wish(incoming):
         if new == rest:
             break
         rest = new
+    # Из длинного сообщения берём только про букет: «Доставить завтра…», «Получатель…», «Бюджет…» — не пожелание.
+    rest = " ".join(x for x in re.split(r"(?<=[.!?])\s+", rest)
+                    if not re.search(r"достав|адрес|получател|телефон|бюджет|завтра|сегодня|\bк\s*\d|самовывоз|"
+                                     r"заберу|город|улиц", x, re.I))
     rest = rest[:150].strip(" ,.")
     if re.search(r"\d[\d\s]{2,6}\s*₽", rest):
         return ""                                     # клиент скопировал подпись фото «… — 2889 ₽» — это выбор
@@ -3377,6 +3381,11 @@ def respond(client, incoming, from_staff=False, quote=""):
     if picked and not from_staff:
         db.set_setting(f"chosen:{client}", picked[0]["code"])   # букет выбран — других больше не подсовываем
         pick_wish = "" if catalog.is_addon(picked[0], city) else _pick_wish(incoming)
+        if pick_wish:                       # клиент просто назвал состав выбранного букета — это не пожелание
+            tw = {w for w in re.findall(r"[а-яё]{4,}", (picked[0].get("title") or "").lower())}
+            ww = [w for w in re.findall(r"[а-яё]{4,}", pick_wish.lower()) if w not in ("букет", "цветы", "другие")]
+            if ww and sum(1 for w in ww if any(w[:5] == t[:5] for t in tw)) >= max(1, len(ww) * 0.6):
+                pick_wish = ""
         if pick_wish:                                           # «как 8, но без роз» — пожелание к букету (флористу)
             db.set_setting(f"wish:{client}", pick_wish)
     if addons and not from_staff:
@@ -5281,7 +5290,10 @@ def respond(client, incoming, from_staff=False, quote=""):
                 and not re.search(r"поменьше|побольше|меньше|больше|дешевле|дороже", t_in, re.I):
             it0 = picked[0]
             base = int(it0["price"])
-            if n_tot != base:
+            # «Второй букет. … Бюджет 3000» — это потолок, а не «соберите на 3000»: букет за 2999 берём как есть.
+            budget_only = bool(re.search(r"бюджет|в\s+пределах", t_in, re.I)) and not re.search(
+                r"(?:но|только|а|и)\s+(?:на|за)\s*\d|(?:собрать|сделать|собер\w*)[^.?!]{0,20}(?:на|за)\s*\d", t_in, re.I)
+            if n_tot != base and not (budget_only and (n_tot >= base or base - n_tot <= max(150, base * 0.05))):
                 sign = "-" if n_tot < base else "+"
                 db.set_setting(f"upsize:{client}", f"{it0['code']}|{sign}|{abs(base - n_tot)}")
                 db.set_setting(f"chosen:{client}", it0["code"])
