@@ -501,6 +501,17 @@ def deliver(client, text, from_staff=False, quote=""):
             if isinstance(guard, str):
                 text = guard                         # «2 — новый заказ»: обрабатываем первую фразу клиента
             reply = brain.respond(client, text, from_staff=from_staff, quote=quote)
+            # Бот не должен молчать и не должен слать голое «Всё верно?» без самого итога (тайный покупатель):
+            # вместо этого — следующий недостающий вопрос оформления.
+            if not from_staff and reply and not reply.order and not reply.photos and not reply.staff_note \
+                    and not reply.question and not reply.handoff and not db.is_paused(client) \
+                    and re.fullmatch(r"\W*(?:вс[её]\s+верно\??[^\n]{0,60})?\W*", reply.text or "", re.I):
+                um = [m["content"] for m in db.history(client, 60) if m["role"] == "user"]
+                nq = brain._next_question(um, db.get_city(client), brain._known_order(client))
+                if nq:
+                    db.set_setting(f"lastq:{client}", nq)
+                    db.add_message(client, "assistant", nq)
+                    reply.text = nq
             if not from_staff and reply and reply.text and not reply.order and _bot_stuck(client, reply.text):
                 _to_human(client, f"(бот не понимает клиента — повторяет одно и то же) {text}", saved=True)
                 return

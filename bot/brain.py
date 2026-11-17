@@ -544,6 +544,14 @@ def _not_address(m):
 
 def _has_address(user_msgs):
     """Клиент уже назвал адрес: «ул. Весенняя 33», «Крайнего 90», «адрес крайнего 90», «Весенняя 55»."""
+    # Ответ на анкету: «…время и адрес: завтра к 15:00, Крайнего, 90.» — берём адрес без времени.
+    labeled = []
+    for m in user_msgs:
+        for tail in re.findall(r"адрес\w*\s*:\s*([^\n.]+(?:\.\d[^\n.]*)?)", m or "", re.I):
+            rest = " ".join(x.strip() for x in tail.split(",") if x.strip() and not _not_address(x.strip()))
+            if rest:
+                labeled.append(rest)
+    user_msgs = list(user_msgs) + labeled
     return any(not _not_address(m) and re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|дом|кв|квартир\w*)\b\.?\s*\S|"
                          r"адрес\w*\s*[:-]?\s*[А-ЯЁа-яёA-Za-z][^\n]{0,40}?\d+|"
                          r"^(?:[А-ЯЁа-яё-]+,\s*)?[А-ЯЁа-яё][а-яё-]+(?:\s+[А-ЯЁа-яё][а-яё-]+)?,?\s+\d+",
@@ -590,7 +598,7 @@ def _known_facts(user_msgs):
     out = []
     def find(rx):
         return next((m.strip() for m in reversed(user_msgs) if re.search(rx, m, re.I)), "")
-    way = find(r"доставк|самовывоз|заберу|забер[её]м|привез")
+    way = find(r"достав|самовывоз|заберу|забер[её]м|привез")
     if way:
         out.append(f"способ получения: «{way[:80]}»")
     when = find(r"сегодня|завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}[:.]\d{2}\b|понедельник|вторник|"
@@ -1455,8 +1463,8 @@ def _next_question(user_msgs, city, order=None):
             need.append(2)
         if len(phones) < 2 and not o.get("_получатель_есть"):
             need.append(3)
-        if not has_addr:
-            need.append(4)                 # город/посёлок доставки — может отличаться от города магазина
+        # Пункт 4 «Город доставки» НЕ спрашиваем: город клиент уже выбрал (Абдулла — не переспрашивать);
+        # посёлок, если он другой, клиент напишет в адресе.
         if not has_time or not has_addr:
             need.append(5)
         if len(need) >= 2:
@@ -1991,7 +1999,7 @@ def _order_missing(o, client_text):
     city_o = catalog.match_city(str(o.get("город") or "")) or catalog.match_city(str(o.get("адрес") or ""))
     # Способ, дату и время берём только со слов КЛИЕНТА — ИИ мог «додумать» (доставка, сегодня, 23:00).
     if o.get("получение") not in ("доставка", "самовывоз") or not re.search(
-            r"доставк|самовывоз|заберу|забер[её]м|привез|забрать", cl):
+            r"достав|самовывоз|заберу|забер[её]м|привез|забрать", cl):
         return WAY_Q
     if not str(o.get("дата") or "").strip() or str(o.get("дата")).strip() in ("—", "-", "...") or not re.search(
             r"сегодня|завтра|послезавтра|\d{1,2}[./]\d{1,2}|\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|"
@@ -2346,7 +2354,7 @@ def pretty(text):
 # Каждое сообщение с данными (телефон, адрес, дата, «самовывоз»…) разбирается и копится в черновике. Все вопросы
 # бота и проверки берут данные отсюда — что клиент уже сказал хоть раз, больше НЕ спрашиваем, даже после сбоя.
 DRAFT_KEYS = ("дата", "время", "город", "получение", "адрес", "заказчик", "получатель", "комментарий")
-DATA_SIGNAL_RE = re.compile(r"\d{3,}|\b(?:ул|улиц\w*|дом|кв|подъезд|этаж|просп\w*|пер)\b|доставк|самовывоз|заберу|"
+DATA_SIGNAL_RE = re.compile(r"\d{3,}|\b(?:ул|улиц\w*|дом|кв|подъезд|этаж|просп\w*|пер)\b|достав|самовывоз|заберу|"
                             r"сегодня|завтра|послезавтра|\d{1,2}[:.]\d{2}|\bк\s*\d{1,2}\b|получател|зовут|фамили|"
                             r"заказчик|понедельник|вторник|сред[уа]|четверг|пятниц|суббот|воскресень|январ|феврал|март|"
                             r"апрел|ма[яй]\b|июн|июл|август|сентябр|октябр|ноябр|декабр", re.I)
@@ -2390,6 +2398,10 @@ def _known_order(client):
     if db.get_setting(f"notime:{client}"):
         d["время"] = "узнать у получателя"
     ct0 = _contacts(client)
+    if not _meaningful(d.get("заказчик")) and ct0.get("me_name") and ct0.get("me_phone"):
+        d["заказчик"] = f"{ct0['me_name']}, {ct0['me_phone']}"
+    if not _meaningful(d.get("получатель")) and ct0.get("to_name") and ct0.get("to_phone"):
+        d["получатель"] = f"{ct0['to_name']}, {ct0['to_phone']}"
     if ct0.get("pickup") and ct0.get("me_name") and (ct0.get("me_phone") or ct0.get("nophone")):
         d["_самовывоз_контакт"] = True
     sur = db.get_setting(f"surprise:{client}") or ""
@@ -2463,7 +2475,7 @@ FILLER_RE = re.compile(r"^\s*(?:понимаю\s+вас|спасибо\s+за\s+
                        r"извините\s+за\s+(?:путаницу|недоразумение)|отличный\s+вопрос|хороший\s+вопрос)[^.!?…]*[.!?…]+\s*", re.I)
 _KNOWN_Q = [  # (вопрос ИИ, как понять, что ответ уже известен)
     (re.compile(r"доставк\w*\s+или\s+самовывоз|самовывоз\s+или|нужна\s+ли\s+доставк|заберёте\s+сами", re.I),
-     lambda k, um, c: _meaningful(k.get("получение")) or bool(re.search(r"доставк|самовывоз|заберу", " ".join(um), re.I))),
+     lambda k, um, c: _meaningful(k.get("получение")) or bool(re.search(r"достав|самовывоз|заберу", " ".join(um), re.I))),
     (re.compile(r"на\s+как\w+\s+(?:дату|день|число)|какая\s+дата|к\s+какому\s+(?:часу|времени)|во\s+сколько|какое\s+время", re.I),
      lambda k, um, c: _meaningful(k.get("дата")) and _meaningful(k.get("время"))),
     (re.compile(r"адрес", re.I),
@@ -2964,13 +2976,57 @@ def parse(raw, city=None):
     return reply
 
 
+_NUM_UNITS = {"ноль": 0, "один": 1, "одна": 1, "два": 2, "две": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6,
+              "семь": 7, "восемь": 8, "девять": 9}
+_NUM_TEENS = {"десять": 10, "одиннадцать": 11, "двенадцать": 12, "тринадцать": 13, "четырнадцать": 14,
+              "пятнадцать": 15, "шестнадцать": 16, "семнадцать": 17, "восемнадцать": 18, "девятнадцать": 19}
+_NUM_TENS = {"двадцать": 20, "тридцать": 30, "сорок": 40, "пятьдесят": 50, "шестьдесят": 60, "семьдесят": 70,
+             "восемьдесят": 80, "девяносто": 90}
+_NUM_HUND = {"сто": 100, "двести": 200, "триста": 300, "четыреста": 400, "пятьсот": 500, "шестьсот": 600,
+             "семьсот": 700, "восемьсот": 800, "девятьсот": 900}
+_NUM_WORD_RE = "|".join(sorted(list(_NUM_UNITS) + list(_NUM_TEENS) + list(_NUM_TENS) + list(_NUM_HUND), key=len, reverse=True))
+_SPOKEN_RUN_RE = re.compile(rf"(?<![а-яё])(?:(?:{_NUM_WORD_RE})(?![а-яё])[\s,.\-]*){{4,}}", re.I)
+
+
+def _spoken_digits(run):
+    """«восемь девятьсот двадцать восемь сто двадцать три сорок пять шестьдесят семь» → «89281234567»."""
+    groups = []                         # [значение, младший заполненный разряд: 100 / 10 / 1]
+    for w in re.findall(r"[а-яё]+", run.lower()):
+        if w in _NUM_HUND:
+            groups.append([_NUM_HUND[w], 100])
+        elif w in _NUM_TENS:
+            if groups and groups[-1][1] == 100 and groups[-1][0] % 100 == 0:
+                groups[-1] = [groups[-1][0] + _NUM_TENS[w], 10]
+            else:
+                groups.append([_NUM_TENS[w], 10])
+        elif w in _NUM_TEENS:
+            if groups and groups[-1][1] == 100 and groups[-1][0] % 100 == 0:
+                groups[-1] = [groups[-1][0] + _NUM_TEENS[w], 1]
+            else:
+                groups.append([_NUM_TEENS[w], 1])
+        elif w in _NUM_UNITS:
+            if groups and groups[-1][1] in (100, 10) and groups[-1][0] % 10 == 0 and groups[-1][0] > 0:
+                groups[-1] = [groups[-1][0] + _NUM_UNITS[w], 1]
+            else:
+                groups.append([_NUM_UNITS[w], 1])
+    return "".join(str(v) for v, _ in groups)
+
+
+def _spoken_phones(text):
+    """Телефон, продиктованный словами (голосовое / «пишет словами»), заменяем цифрами — иначе бот его не видит."""
+    def fix(m):
+        d = _spoken_digits(m.group(0))
+        return f"{d} " if len(d) in (10, 11) and d[0] in "789" else m.group(0)
+    return _SPOKEN_RUN_RE.sub(fix, text or "")
+
+
 def respond(client, incoming, from_staff=False, quote=""):
     """Записывает входящее сообщение, спрашивает ИИ и возвращает разобранный ответ.
 
     quote — текст сообщения, на которое клиент ответил (reply): подпись фото букета и т.п. Используется
     ТОЛЬКО для распознавания (какой букет), но НЕ подмешивается в сам текст для ИИ, чтобы его не путать."""
     if not from_staff:
-        incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(incoming)),
+        incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(_spoken_phones(incoming))),
                                     db.get_setting(f"lastq:{client}") or "")
         incoming = _fix_budget_answer(client, incoming, db.get_setting(f"lastq:{client}") or "")    # «саморезов» → «самовывоз», «дастафка» → «доставка»
     # На «на какую дату?» ответили «сейчас / срочно / прямо сейчас» — это СЕГОДНЯ, как можно скорее (1–2 часа), Абдулла.
@@ -3084,6 +3140,7 @@ def respond(client, incoming, from_staff=False, quote=""):
                 t6 = ans[6] if re.search(r"\b(?:к|в)\s*\d", ans[6]) else "к " + ans[6]
                 bits.append("Самовывоз, заберу " + t6)
             incoming = ". ".join(bits) + "." if bits else incoming
+            content = incoming          # в историю — разобранный текст: по нему код видит адрес, имя, способ
     # Ответ на уточнение «собрать на 3000 или на 3000 дешевле?» (1 / 2).
     upq = None if from_staff else db.get_setting(f"upq:{client}")
     if upq and re.fullmatch(r"\W*([12])\W*", incoming or ""):
@@ -4977,6 +5034,10 @@ def respond(client, incoming, from_staff=False, quote=""):
                     and nq2 not in reply.text:
                 keep.append(nq2)
                 db.set_setting(f"lastq:{client}", nq2)
+            if keep and not re.search(r"[А-Яа-яЁёA-Za-z]", " ".join(keep)):
+                keep = [nq2] if nq2 else []           # остался один смайлик («🚗») — вместо него следующий вопрос
+                if nq2:
+                    db.set_setting(f"lastq:{client}", nq2)
             if keep:
                 reply.text = " ".join(keep)
     # Клиент пропустил ВАЖНЫЙ вопрос (без ответа заказ не оформить) — отвечаем на его сообщение и вежливо, но

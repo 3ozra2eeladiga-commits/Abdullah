@@ -389,7 +389,8 @@ def _llm_customer(p, dialog, char=None):
                   f"адрес {p['address']}, тебя зовут {p['name']}, телефон {p['phone']}, получатель {p['recipient']}, "
                   f"бюджет {p['budget']} ₽, открытка не нужна. Отвечай коротко (1–2 фразы), как живой человек в "
                   "мессенджере, без кавычек и пояснений. Если магазин прислал фото букетов — выбери один. "
-                  "Если разговора ещё нет — начни его так, как начал бы ты. Если заказ принят — напиши «спасибо».")
+                  "Если разговора ещё нет — начни его так, как начал бы ты. Пиши ТОЛЬКО свою реплику, никогда не пиши "
+                  "за магазин и не добавляй «Пользователь:»/«Ответ:».")
     # Для ИИ «клиент» — это он сам (assistant), а бот магазина — собеседник (user).
     msgs = []
     for who, t in dialog[-10:]:
@@ -404,7 +405,10 @@ def _llm_customer(p, dialog, char=None):
         msgs.pop(0)
     try:
         ans = llm.complete(sys_prompt, msgs or [{"role": "user", "content": "Здравствуйте!"}], attempts=2).strip()
-        return re.sub(r"\s+", " ", ans)[:200] or "да"
+        # ИИ иногда дописывает за магазин («Пользователь: …», «Дана: …», «Ответ 1») — берём только реплику клиента.
+        ans = re.split(r"\b(?:Пользователь|Ассистент|Магазин|Флорист|Дана|Бот|Вопрос\s*\d*|Ответ\s*\d*)\s*:", ans)[0]
+        ans = re.sub(r"^\W*(?:Клиент|Я)\s*:\s*", "", ans.strip(), flags=re.I)
+        return re.sub(r"\s+", " ", ans).strip(" \"«»")[:300] or "да"
     except Exception:
         return "хочу оформить заказ"
 
@@ -525,7 +529,7 @@ class Run:
             self.facts.add("date")
         if catalog.match_city(text):
             self.facts.add("city")
-        if re.search(r"доставк|самовывоз|заберу", text, re.I):
+        if re.search(r"достав|самовывоз|заберу", text, re.I):
             self.facts.add("way")
         if SUM_RE.search(text):
             self.facts.add("budget")
