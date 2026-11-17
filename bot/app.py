@@ -529,6 +529,22 @@ def deliver(client, text, from_staff=False, quote=""):
                     _to_human(client, f"(бот не смог собрать итог заказа — оформите, пожалуйста, по переписке) {text}",
                               saved=True)
                     return
+            # Клиент поправляет итог («адрес не тот…»), а бот присылает ТОТ ЖЕ итог — не повторяем, уточняем (тайный покупатель).
+            if not from_staff and reply and reply.text and not reply.order and "Всё верно?" in reply.text \
+                    and not brain.CONFIRM_YES_RE.fullmatch((text or "").strip(" .!")):
+                _n = lambda x: re.sub(r"\W+", "", (x or "").lower())
+                prev = next((m["content"] for m in reversed(db.history(client, 6)[:-1]) if m["role"] == "assistant"), "")
+                if _n(prev) == _n(reply.text):
+                    city = db.get_city(client)
+                    pickup = "Самовывоз" in reply.text
+                    if pickup and brain._has_address([text]):
+                        shops = "\n".join(f"• {brain._shop_full(a)} ({h})" for a, h in brain._pickup_shops(city))
+                        nq = ("Самовывоз — только из наших магазинов 🌸\n" + shops +
+                              "\n\nЗаберёте из магазина (напишите, из какого) или оформить доставку на ваш адрес?")
+                    else:
+                        nq = "Поняла, что-то не так 🙏 Напишите, пожалуйста, что именно исправить — и я пришлю новый итог 🌸"
+                    db.add_message(client, "assistant", nq)
+                    reply.text = nq
             if not from_staff and reply and reply.text and not reply.order and _bot_stuck(client, reply.text):
                 _to_human(client, f"(бот не понимает клиента — повторяет одно и то же) {text}", saved=True)
                 return

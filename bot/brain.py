@@ -1349,7 +1349,7 @@ def _contacts_from_text(text):
         return by_lbl
     p1, p2 = ms[0], ms[1]
     before1, between, after2 = t[:p1.start()], t[p1.end():p2.start()], t[p2.end():]
-    me_name = _name_from(before1)
+    me_name = _name_from(before1) or _name_from(re.split(r"[.!?\n]\s", before1.rstrip())[-1])   # «Бюджет 5000. Анна Петрова, телефон …»
     if me_name:
         to_name = _name_from(between) or _name_from(after2)
     else:                                           # «8928… Иван, 8928… Анна» — имена после телефонов
@@ -3330,7 +3330,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         # Цифра может быть и вместе с датой: «завтра, 1», «2 на субботу» (но не время «к 15», «в 3»).
         _cw = {"один": "1", "одна": "1", "первый": "1", "первая": "1", "два": "2", "второй": "2", "вторая": "2",
                "три": "3", "третий": "3", "третья": "3"}
-        toks = [_cw.get(x.strip("."), x) for x in re.findall(r"[\w:.]+", (incoming or "").lower())]
+        toks = [_cw.get(x.strip("."), x.strip(".")) for x in re.findall(r"[\w:.]+", (incoming or "").lower())]
         m_num = next((t for i, t in enumerate(toks) if re.fullmatch(r"\d", t)
                       and not (i and toks[i - 1] in ("к", "в", "на", "до", "после", "около", "с"))), None) \
             if len(toks) <= 6 else None
