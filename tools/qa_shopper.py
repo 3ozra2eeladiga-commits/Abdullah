@@ -835,7 +835,9 @@ class Run:
             if len(last_answers) >= 4 and len(set(last_answers[-4:])) == 1:
                 self.problem("🌀 Разговор зациклился", f"Клиент 4 раза отвечал «{m}», бот: {self.last_bot[:200]}")
                 break
-        if self.s["order"] and not self.order:
+        if self.s["order"] and not self.order and "Уточню у поставщиков" in (self.last_bot or ""):
+            pass                                         # дата дальше недели — по правилу хозяйки ведёт флорист, это не ошибка
+        elif self.s["order"] and not self.order:
             why = "бот передал разговор сотруднику" if db.is_paused(self.client) else f"за {self.turn} ходов"
             self.problem("🚫 Заказ не дошёл до флориста", f"{why}. Последний ответ бота: {self.last_bot[:200]}")
         if self.order:
