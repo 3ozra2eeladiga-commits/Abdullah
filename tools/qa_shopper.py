@@ -451,6 +451,17 @@ def write_live():
         pass
 
 
+STOP_FILE = os.path.join(QA_DIR, "stop")
+
+
+class Stopped(Exception):
+    pass
+
+
+def stop_requested():
+    return os.path.exists(STOP_FILE)
+
+
 class Run:
     def __init__(self, s, idx):
         self.s = s
@@ -660,11 +671,15 @@ class Run:
         set_clock(self.s["clock"])
         db.clear_history(self.client)
         for step in self.s["steps"]:
+            if stop_requested():
+                raise Stopped()
             self.say(step)
             self.florist_turn()
             self._order_check()
         last_answers = []
         while not self.order and self.turn < max_turns and not db.is_paused(self.client):
+            if stop_requested():
+                raise Stopped()
             if not self.s["order"] and self.turn >= 3:
                 break
             self.turn += 1
@@ -744,6 +759,8 @@ def main():
     ap.add_argument("--only", default="")
     ap.add_argument("--next", type=int, default=0, help="следующие N разговоров по кругу (для ночного запуска)")
     ap.add_argument("--list", action="store_true")
+    ap.add_argument("--loop", action="store_true", help="по кругу, пока не нажмут «Стоп» (файл cache/qa/stop)")
+    ap.add_argument("--hours", type=float, default=3, help="страховка: не дольше N часов")
     a = ap.parse_args()
     if a.list:
         for s in S:
@@ -765,42 +782,68 @@ def main():
         chosen = list(S)
     else:
         chosen = random.sample(S, min(a.n, len(S)))
+    if a.loop:
+        chosen = None                                   # без конца, по кругу, пока не нажмут «Стоп»
     catalog.refresh()
     t0 = time.time()
     runs = []
-    LIVE["total"] = len(chosen)
-    for i, s in enumerate(chosen):
+    LIVE["total"] = 0 if chosen is None else len(chosen)
+    LIVE["loop"] = chosen is None
+    order = []
+    i = 0
+    while True:
+        if chosen is not None:
+            if i >= len(chosen):
+                break
+            s = chosen[i]
+        else:
+            if not order:
+                order = random.sample(S, len(S))
+                order.sort(key=lambda x: not x.get("char"))   # ИИ-клиенты с характером — в начале круга
+            s = order.pop(0)
+        if stop_requested() or time.time() - t0 > a.hours * 3600:
+            break
         r = Run(s, i)
-        LIVE.update(index=i + 1, title=s["title"], key=s["key"], dialog=[], problems_now=[])
+        i += 1
+        LIVE.update(index=i, title=s["title"], key=s["key"], dialog=[], problems_now=[])
         write_live()
+        stopped = False
         try:
             r.run()
+        except Stopped:
+            stopped = True
         except Exception as e:
             r.problem("💥 Ошибка в тайном покупателе", repr(e))
         runs.append(r)
-        LIVE["runs"].append({"title": s["title"], "key": s["key"], "order": bool(r.order),
-                             "problems": r.problems, "dialog": r.dialog})
+        LIVE["runs"].append({"title": s["title"] + (" (остановлен)" if stopped else ""), "key": s["key"],
+                             "order": bool(r.order), "problems": r.problems, "dialog": r.dialog})
         write_live()
+        save(runs, t0)
+        print(f"[{i}] {s['title']}: {'заказ' if r.order else 'без заказа'}, проблем {len(r.problems)}", flush=True)
+        if stopped:
+            break
         if len(runs) == 2 and all(any(x.startswith("💥 Техническая заминка") for x, _ in z.problems) for z in runs):
-            print("ИИ не отвечает — останавливаю проверку", flush=True)
             with open(os.path.join(QA_DIR, "report.txt"), "w", encoding="utf-8") as f:
                 f.write("❌ ИИ не отвечает (сбой Yandex или ключи) — проверку остановил после 2 разговоров.\n"
                         "Посмотрите страницу статуса сервера.")
-            with open(os.path.join(QA_DIR, "dialogs.txt"), "w", encoding="utf-8") as f:
-                f.write(dialogs_text(runs))
             LIVE.update(running=False, report="❌ ИИ не отвечает — проверка остановлена", finished=time.time())
             write_live()
             return
-        print(f"[{i + 1}/{len(chosen)}] {s['title']}: {'заказ' if r.order else 'без заказа'}, проблем {len(r.problems)}",
-              flush=True)
-    rep = report(runs, time.time() - t0)
+    rep = save(runs, t0)
     LIVE.update(running=False, report=rep, finished=time.time())
     write_live()
+    if os.path.exists(STOP_FILE):
+        os.remove(STOP_FILE)
+    print("\n" + rep)
+
+
+def save(runs, t0):
+    rep = report(runs, time.time() - t0)
     with open(os.path.join(QA_DIR, "report.txt"), "w", encoding="utf-8") as f:
         f.write(rep)
     with open(os.path.join(QA_DIR, "dialogs.txt"), "w", encoding="utf-8") as f:
         f.write(dialogs_text(runs))
-    print("\n" + rep)
+    return rep
 
 
 if __name__ == "__main__":

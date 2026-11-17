@@ -19,7 +19,11 @@ h1{font-size:20px;margin:6px 0 10px}.card{background:var(--card);border-radius:1
 </style></head><body><div class="wrap">
 <h1>🕵️ Тайный покупатель</h1>
 <div class="card"><div class="big" id="st">Загрузка…</div><div class="bar"><i id="pb" style="width:0"></i></div>
-<div class="mut" id="sub"></div></div>
+<div class="mut" id="sub"></div>
+<div id="btns" style="display:none;margin-top:10px;gap:10px;display:none">
+<button id="bstart" onclick="act('start')">▶️ Начать проверку</button>
+<button id="bstop" onclick="act('stop')" style="background:#c62828">⏹ Стоп</button>
+<span class="mut" id="msg"></span></div></div>
 <div class="card"><div class="big" id="ct">Разговор</div><div class="mut" id="cs"></div><div class="chat" id="chat"></div>
 <div id="back" style="display:none;margin-top:8px"><button onclick="sel=null;draw()">← к текущему разговору</button></div></div>
 <div class="card"><div class="big">Найденные проблемы</div><div id="probs" class="mut">пока нет</div></div>
@@ -27,13 +31,18 @@ h1{font-size:20px;margin:6px 0 10px}.card{background:var(--card);border-radius:1
 <div class="mut">Это тестовые разговоры: отдельная база, клиентам и флористам ничего не уходит. Запуск — /qa в боте.</div>
 </div>
 <script>
-let D=null,sel=null;
+let D=null,sel=null;const KEY=new URLSearchParams(location.search).get("key")||"";
+async function act(w){msg.textContent=w=="start"?"запускаю…":"останавливаю… (докончит текущий ответ)";
+ try{const r=await fetch("qa/"+w+"?key="+encodeURIComponent(KEY),{method:"POST"});
+ if(r.status==403){msg.textContent="нет доступа — откройте ссылку из бота";return}
+ const j=await r.json();if(w=="start"&&!j.ok)msg.textContent="проверка уже идёт";}catch(e){msg.textContent="ошибка связи"}}
 const esc=t=>String(t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 function bubbles(dl){return dl.map(([w,t])=>w=="client"?`<div class="b c">👤 ${esc(t)}</div>`:w=="bot"?`<div class="b o">${esc(t)}</div>`:`<div class="s">${esc(t)}</div>`).join("")}
-function draw(){if(!D)return;
+function draw(){if(KEY){btns.style.display="flex";}if(!D)return;
+ bstart.style.display=D.running?"none":"";bstop.style.display=D.running?"":"none";
  const runs=D.runs||[];const done=runs.length,total=D.total||0;
- st.textContent=D.running?`Идёт проверка: ${D.index} из ${total}`:`Проверка закончена: ${done} разговоров`;
- pb.style.width=(total?Math.round(100*(D.running?D.index-1:done)/total):0)+"%";
+ st.textContent=D.running?(D.loop?`🟢 Идёт проверка: разговор №${D.index}`:`🟢 Идёт проверка: ${D.index} из ${total}`):`Проверка закончена: ${done} разговоров`;
+ pb.style.width=(D.loop?(D.running?((D.index%10)*10+5):100):total?Math.round(100*(D.running?D.index-1:done)/total):0)+"%";
  const np=runs.reduce((a,r)=>a+r.problems.length,0)+(D.running?(D.problems_now||[]).length:0);
  sub.textContent=`Заявок дошло: ${runs.filter(r=>r.order).length} · проблем: ${np} · ИИ: ${(D.usage||{}).calls||0} запросов`;
  let r=sel!=null?runs[sel]:null;
@@ -48,7 +57,7 @@ function draw(){if(!D)return;
  runs_.innerHTML=runs.map((x,i)=>`<div class="run" onclick="sel=${i};draw();scrollTo(0,0)"><span>${esc(x.title)}</span><span class="${x.problems.length?"no":"ok"}">${x.order?"🧾":"—"} ${x.problems.length?"❗"+x.problems.length:"✅"}</span></div>`).reverse().join("")||"пока нет";
 }
 const runs_=document.getElementById("runs");
-async function tick(){try{const r=await fetch("qa/live.json?"+Date.now());if(r.ok){D=await r.json();draw()}else st.textContent="Проверок ещё не было — отправьте /qa в боте"}catch(e){}
+async function tick(){try{const r=await fetch("qa/live.json?"+Date.now());if(r.ok){D=await r.json();draw()}else{st.textContent="Проверок ещё не было"+(KEY?" — нажмите «Начать проверку»":" — отправьте /qa в боте");if(KEY){btns.style.display="flex";bstop.style.display="none"}}}catch(e){}
  setTimeout(tick,2500)}
 tick();
 </script></body></html>

@@ -993,7 +993,7 @@ def run_qa(args, title="🕵️ Проверка"):
         try:
             root = _REPO_ROOT
             os.makedirs(QA_DIR, exist_ok=True)
-            for name in ("report.txt", "dialogs.txt", "live.json"):
+            for name in ("report.txt", "dialogs.txt", "live.json", "stop"):
                 if os.path.exists(os.path.join(QA_DIR, name)):
                     os.remove(os.path.join(QA_DIR, name))
             env = dict(os.environ)
@@ -1024,10 +1024,42 @@ def run_qa(args, title="🕵️ Проверка"):
     return True
 
 
+def qa_key():
+    """Ключ живой страницы /qa?key=… — из токена бота (его нет в репозитории), чтобы кнопки не нажал чужой."""
+    import hashlib
+    return hashlib.sha256(("qa:" + config.TELEGRAM_TOKEN).encode()).hexdigest()[:12] if config.TELEGRAM_TOKEN else ""
+
+
+def qa_link():
+    base = config.PUBLIC_BASE_URL or "https://186-246-61-173.sslip.io"
+    return f"{base}/qa?key={qa_key()}"
+
+
+def qa_stop():
+    """«Стоп»: тайный покупатель заканчивает текущий ход, присылает отчёт о том, что успел."""
+    if not _qa_lock.locked():
+        return False
+    os.makedirs(QA_DIR, exist_ok=True)
+    open(os.path.join(QA_DIR, "stop"), "w").close()
+    return True
+
+
+def qa_start():
+    return run_qa(["--loop"], "🕵️ Проверка остановлена")
+
+
 def on_qa(arg):
     """Команда /qa (только владелец): «/qa» — несколько случайных разговоров, «/qa все» — все,
     «/qa roses_tomorrow,night» — выбранные, «/qa список» — какие есть."""
     a = (arg or "").strip().lower()
+    if a in ("стоп", "stop", "остановить", "хватит"):
+        return ("⏹ Останавливаю — отчёт пришлю через минуту." if qa_stop() else "Проверка сейчас не идёт.")
+    if a in ("", "старт", "start", "начать"):
+        if not qa_start():
+            return f"⏳ Проверка уже идёт. Остановить — /qa стоп\nСмотреть: {qa_link()}"
+        return ("🕵️ Начал проверку: тестовые клиенты (в т.ч. «неудобные») пишут боту по кругу, пока не скажете стоп.\n"
+                "Клиентам и флористам ничего не уходит.\n"
+                f"Смотреть вживую и кнопка «Стоп»: {qa_link()}\nОстановить здесь — /qa стоп")
     if a in ("список", "list"):
         try:
             out = subprocess.run([sys.executable, "-m", "tools.qa_shopper", "--list"], capture_output=True, text=True,
@@ -1046,8 +1078,7 @@ def on_qa(arg):
     if not run_qa(args):
         return "⏳ Проверка уже идёт — пришлю отчёт, когда закончится."
     return (f"🕵️ Запустил тайного покупателя: {what}.\nКлиентам и флористам ничего не уходит. "
-            "Отчёт пришлю сюда, когда закончится (обычно 10–20 минут).\n"
-            + (f"Смотреть вживую: {config.PUBLIC_BASE_URL}/qa" if config.PUBLIC_BASE_URL else ""))
+            f"Отчёт пришлю сюда, когда закончится.\nСмотреть вживую: {qa_link()}")
 
 
 def on_show(chat, order_id):
@@ -1541,6 +1572,20 @@ def tg_hook_gk():
 def qa_page():
     """Живая страница тайного покупателя (только тестовые разговоры — настоящих клиентов там нет)."""
     return send_from_directory(os.path.join(_REPO_ROOT, "tools"), "qa_page.html", max_age=0)
+
+
+@app.post("/qa/start")
+def qa_start_btn():
+    if not qa_key() or request.args.get("key") != qa_key():
+        abort(403)
+    return {"ok": qa_start(), "running": _qa_lock.locked()}
+
+
+@app.post("/qa/stop")
+def qa_stop_btn():
+    if not qa_key() or request.args.get("key") != qa_key():
+        abort(403)
+    return {"ok": qa_stop(), "running": _qa_lock.locked()}
 
 
 @app.get("/qa/live.json")
