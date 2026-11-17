@@ -5324,6 +5324,14 @@ def respond(client, incoming, from_staff=False, quote=""):
     if n_money and re.search(r"поменьше|меньше|дешевле|уложит|скромн", incoming or "", re.I) \
             and n_money >= int(up_target["price"]) - max(150, int(up_target["price"]) * 0.05):
         n_money = 0                         # «поменьше, чтобы в 3000 уложиться», а букет 2999 — и так укладывается
+        if up_text and "На какой бюджет" in (reply.text or "") and int(up_target["price"]) <= _money(incoming):
+            db.del_setting(f"upq:{client}")
+            db.set_setting(f"chosen:{client}", up_target["code"])
+            nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
+            up_text = reply.text = (f"Этот букет стоит {_rub(up_target['price'])} — и так укладывается в ваш бюджет 🌸"
+                                    + (f"\n\n{nxt}" if nxt and nxt != ALMOST_DONE_Q else ""))
+            if nxt and nxt != ALMOST_DONE_Q:
+                db.set_setting(f"lastq:{client}", nxt)
     if n_money and n_money != int(up_target["price"]) \
             and not re.search(r"\+\s*\d|добав\w*\s+(?:ещ[её]\s+)?(?:на\s+)?\d|сверху|доплат", incoming or "", re.I):
         base = int(up_target["price"])
