@@ -2648,6 +2648,9 @@ def _polish_ai_text(text, client, city, user_msgs):
     """Ответ ИИ перед отправкой: убираем «Понимаю вас / Спасибо за уточнение», вопросы о том, что клиент уже
     сказал (по черновику и переписке), и длинноты. Если вопросов не осталось — добавляем следующий нужный."""
     t = FILLER_RE.sub("", text).strip() or text
+    # «Композиция будет свежей!» — свежесть знает только флорист (правило 4): такие обещания убираем.
+    t = re.sub(r"[^.!?\n]*\bсвеж\w*[^.!?\n]*[.!?]*(?:\s*🌸)?", lambda m: m.group(0) if re.search(
+        r"флорист|уточн|провер|спрош|узна", m.group(0), re.I) else "", t, flags=re.I).strip() or t
     # «Да, конечно, успеем!» — успеем ли, знает только флорист (правило: бот сам не обещает).
     t = re.sub(r"[^.!?\n]*\b(?:точно\s+)?успеем\b[^.!?\n]*[.!?]*(?:\s*🌸)?", "Успеем ли к этому времени — флорист подтвердит вместе с заказом 🌸",
                t, count=1, flags=re.I)
@@ -4660,6 +4663,15 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff:
         confirmed = bool(CONFIRM_YES_RE.search(incoming or "")) and not CORRECTION_RE.search(incoming or "")
         prev = db.get_pending_order(client)      # итог, который клиент уже видел
+        lb_sum = " ".join([m["content"] for m in db.history(client, 8) if m["role"] == "assistant"][-2:])
+        if re.search(r"Флорист подтвердила", lb_sum):          # после итога пришло «флорист подтвердила» — итог в силе
+            lb_sum += " всё верно"
+        if confirmed and prev and not re.search(r"вс[её]\s+(?:ли\s+)?верно|всё\s+записала|пришлю\s+итог", lb_sum, re.I):
+            # «Да, этот нравится» в ответ на «Вот ещё вариант: №691 — нравится?» — это НЕ «да» на итог:
+            # итог устарел (букет мог смениться) — показываем новый итог, а не отправляем старый.
+            confirmed = False
+            db.clear_pending_order(client)
+            prev = None
         if reply.order:                          # ИИ собрал полный заказ
             if confirmed and prev:
                 pass                             # клиент сказал «да» на итог — отправляем (свежие данные)
