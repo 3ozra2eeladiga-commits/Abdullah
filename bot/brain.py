@@ -882,20 +882,25 @@ def _hour_from_text(t):
 URGENT_MIN_HOURS = 0.5    # срочный заказ: на сборку нужно ~30 минут (Абдулла) — не отпускаем клиента раньше времени
 
 
-_DATE_WORD_RE = re.compile(r"послезавтра|завтра|сегодня|\b\d{1,2}[./]\d{1,2}(?:[./]\d{2,4})?\b|\b\d{1,2}\s+(?:январ|феврал|"
+_DATE_WORD_RE = re.compile(r"послезавтра|завтра|сегодня|понедельник\w*|вторник\w*|сред[ауы]\b|четверг\w*|пятниц\w*|суббот\w*|"
+                           r"воскресень\w*|\b\d{1,2}[./]\d{1,2}(?:[./]\d{2,4})?\b|\b\d{1,2}\s+(?:январ|феврал|"
                            r"март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)\w*", re.I)
 
 
 def _latest_date(user_msgs):
     """Последняя дата, которую назвал клиент: «сегодня» → «ладно, завтра» → «завтра». Пусто, если не называл."""
+    days = {"понедельник": "понедельник", "вторник": "вторник", "сред": "среда", "четверг": "четверг",
+            "пятниц": "пятница", "суббот": "суббота", "воскресень": "воскресенье"}
     for m in reversed(user_msgs):
+        m = re.sub(r"\bне\s+(?:на\s+)?(?:послезавтра|завтра|сегодня)\b", " ", m or "", flags=re.I)   # «не завтра, а в субботу»
         found = [x.group(0) for x in _DATE_WORD_RE.finditer(m or "")
                  # «в 09.00», «к 14.30» — это время, а не дата
                  if not (re.match(r"\d{1,2}[.]\d{2}$", x.group(0))
                          and (re.search(r"(?:\bв|\bк|\bс|\bдо|\bна)\s*$", (m or "")[:x.start()], re.I)
                               or int(x.group(0).split(".")[1]) > 12))]
         if found:
-            return found[-1].lower()
+            f = found[-1].lower()
+            return next((v for k, v in days.items() if f.startswith(k)), f)
     return ""
 
 
@@ -2244,8 +2249,14 @@ def _apply_client_state(order, client, city):
     # Пустые позиции и «лишние» букеты: клиент выбрал ОДИН букет (chosen) — остальные букеты, которые ИИ
     # вписал из показанных вариантов, в заказ не берём (дополнения — открытки, шары — оставляем).
     order["товары"] = [it for it in order["товары"] if not isinstance(it, dict)
-                       or str(it.get("название") or it.get("код") or "").strip(" ,")]
+                       or str(it.get("название") or it.get("код") or "").strip(" ,.…—-")]
     ch_code = (db.get_setting(f"chosen:{client}") or "").strip().lower()
+    if ch_code and not ch_code.startswith("photo:") and not any(
+            isinstance(it, dict) and not CARD_RE.search(str(it.get("название") or "")) for it in order["товары"]):
+        ch0 = catalog.get(ch_code, city) or catalog.get(ch_code)
+        if ch0:                             # ИИ не вписал букет («...», «Итого: 0 ₽») — берём выбранный клиентом
+            order["товары"].insert(0, {"код": ch0["code"], "название": ch0["title"], "кол-во": 1,
+                                       "цена_за_шт": ch0["price"], "сумма": ch0["price"]})
     if ch_code and not ch_code.startswith("photo:"):
         ch_it = catalog.get(ch_code, city) or catalog.get(ch_code)
         def _is_chosen(it):
