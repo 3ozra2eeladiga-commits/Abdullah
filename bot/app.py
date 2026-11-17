@@ -1126,6 +1126,13 @@ def _on_qa(arg):
     a = (arg or "").strip().lower()
     if a in ("стоп", "stop", "остановить", "хватит"):
         return ("⏹ Останавливаю — отчёт пришлю через минуту." if qa_stop() else "Проверка сейчас не идёт.")
+    if a in ("мама", "мамы", "день матери", "mom"):
+        if not run_qa(["--loop", "--tag", "mom_", "--hours", str(config.QA_MAX_HOURS)], "💐 Проверка «День матери» остановлена"):
+            return "⏳ Проверка уже идёт. Остановить — /qa стоп"
+        os.makedirs(QA_DIR, exist_ok=True)
+        with open(QA_ACTIVE, "w") as f:
+            json.dump({"until": time.time() + config.QA_MAX_HOURS * 3600, "tag": "mom_"}, f)
+        return f"💐 Начал проверку «День матери»: 16 разговоров (маме розы, 29 ноября, всё одним сообщением…).\nСмотреть: {qa_link()}"
     if a in ("розы", "roses"):
         if not run_qa(["--loop", "--tag", "rose_", "--hours", str(config.QA_MAX_HOURS)], "🌹 Проверка «розы» остановлена"):
             return "⏳ Проверка уже идёт. Остановить — /qa стоп"
