@@ -552,7 +552,8 @@ class Run:
             self.facts.add("date")
         if catalog.match_city(text):
             self.facts.add("city")
-        if re.search(r"достав|самовывоз|заберу", text, re.I):
+        if re.search(r"достав|самовывоз|заберу", text, re.I) or (
+                "доставка или самовывоз" in (self.last_bot or "").lower() and re.match(r"\W*[12]\b", text)):
             self.facts.add("way")
         if SUM_RE.search(text):
             self.facts.add("budget")

@@ -1438,7 +1438,8 @@ FORM_ITEMS = {0: "Доставка или самовывоз",
               3: "Имя и телефон получателя",
               4: "Город доставки",
               5: "Время и адрес: улица, дом (интервал 1 час)",
-              6: "Время, когда будете забирать букет"}
+              6: "Время, когда будете забирать букет",
+              7: "Время доставки (интервал 1 час)"}
 FORM_TAIL = "Ответьте по пунктам, с цифрами 🌸"
 
 
@@ -1539,8 +1540,10 @@ def _next_question(user_msgs, city, order=None):
             need.append(3)
         # Пункт 4 «Город доставки» НЕ спрашиваем: город клиент уже выбрал (Абдулла — не переспрашивать);
         # посёлок, если он другой, клиент напишет в адресе.
-        if not has_time or not has_addr:
+        if not has_addr:
             need.append(5)
+        elif not has_time:
+            need.append(7)                 # адрес уже есть — спрашиваем только время
         if len(need) >= 2:
             return _form_q(need)
     if pickup and not o.get("_сюрприз") and has_date:
@@ -3287,6 +3290,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                 bits.append(f"Город доставки: {ans[4]}")
             if ans.get(5):
                 bits.append(f"Доставка, время и адрес: {ans[5]}")
+            if ans.get(7):
+                t7 = ans[7] if re.search(r"\b(?:к|в|с|до)\s*\d", ans[7]) else "к " + ans[7]
+                bits.append("Доставка " + t7)
             if ans.get(6):
                 t6 = ans[6] if re.search(r"\b(?:к|в)\s*\d", ans[6]) else "к " + ans[6]
                 bits.append("Самовывоз, заберу " + t6)
@@ -5187,6 +5193,16 @@ def respond(client, incoming, from_staff=False, quote=""):
         reply.photos = []
         if re.match(r"\s*Вот\s+(?:ещё\s+|другие\s+)?варианты", reply.text or "") or not (reply.text or "").strip():
             reply.text = "Какой из присланных букетов нравится? Напишите номер фото 🌸"
+    # Букет уже выбран — новые фото только если клиент сам попросил другие (Маша: «других фото НЕ слать»).
+    if not from_staff and len(reply.photos) >= 2 and not reply.order and db.get_setting(f"chosen:{client}") \
+            and not keep_photos and not re.search(r"ещ[её]|друг|покаж|пришл|скин|вариант|не\s+нрав|передумал|"
+                                                  r"поменя\w*\s+букет|другой\s+букет|что\s+есть", incoming or "", re.I):
+        reply.photos = []
+        if re.match(r"\s*Вот\s+(?:ещё\s+|другие\s+)?варианты", reply.text or "") or not (reply.text or "").strip():
+            nq_p = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
+                                  _known_order(client))
+            reply.text = "Хорошо, учту 🌸 Флорист соберёт выбранный букет с учётом ваших пожеланий." + (
+                f"\n\n{nq_p}" if nq_p and nq_p != ALMOST_DONE_Q else "")
     # «Извинись» — извиняемся по-человечески и возвращаемся к выбору (без новых фото).
     if not from_staff and re.fullmatch(r"\W*(?:извини(?:сь|те)?|извиняйся|извинитесь|попроси\s+прощения)\W*", incoming or "", re.I):
         reply.photos = []
