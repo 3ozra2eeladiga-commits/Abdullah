@@ -512,6 +512,7 @@ def deliver(client, text, from_staff=False, quote=""):
             if not from_staff and reply and not reply.order and not reply.photos and not reply.staff_note \
                     and not reply.question and not reply.handoff and not db.is_paused(client) \
                     and (re.fullmatch(r"\W*(?:вс[её]\s+верно\??[^\n]{0,60})?\W*", reply.text or "", re.I)
+                         or not re.search(r"[А-Яа-яЁёA-Za-z]", reply.text or "")                 # один «🎁»
                          or re.match(r"\W*(?:если\s+да|если\s+нет|например)\b", reply.text or "", re.I)):
                 um = [m["content"] for m in db.history(client, 60) if m["role"] == "user"]
                 nq = brain._next_question(um, db.get_city(client), brain._known_order(client))
