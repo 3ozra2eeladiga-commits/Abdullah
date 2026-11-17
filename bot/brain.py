@@ -3993,9 +3993,21 @@ def respond(client, incoming, from_staff=False, quote=""):
                 db.del_setting(f"lateask:{client}")       # клиент выбрал другой день — «сегодня» больше не обсуждаем
                 db.del_setting(f"florist_note:{client}")
     # Ответ на «Из какого магазина заберёте? 1 — … 2 — …»: цифра или улица.
-    if not from_staff and _last_bot_text(client, last_q).startswith(PICKUP_Q_HEAD):
+    lbt = _last_bot_text(client, last_q)
+    shops_all = _pickup_shops(city) if not from_staff and _is_pickup(client) and not db.get_setting(f"pickup_shop:{client}") else []
+    # «Ближайший — Украинская, 47. Верно?» → «Да» — это выбор магазина (иначе бот снова спросит магазин).
+    if shops_all and not lbt.startswith(PICKUP_Q_HEAD) and CONFIRM_YES_RE.search(incoming or "") \
+            and not CORRECTION_RE.search(incoming or "") and _shop_in(lbt, shops_all):
+        db.set_setting(f"pickup_shop:{client}", _shop_in(lbt, shops_all)[0])
+        db.clear_pending_order(client)
+        incoming = "Магазин для самовывоза выбран, продолжаем оформление."
+        card_done = True
+    if not from_staff and lbt.startswith(PICKUP_Q_HEAD):
         shops = _pickup_shops(city)
         m_n = re.match(r"^\D*(\d)\D*$", (incoming or "").strip())
+        m_w = re.match(r"^\W*(перв|втор|трет)\w*", (incoming or "").strip(), re.I)
+        if not m_n and m_w:
+            m_n = re.match(r"(\d)", str({"перв": 1, "втор": 2, "трет": 3}[m_w.group(1).lower()]))
         pick = shops[int(m_n.group(1)) - 1] if m_n and 1 <= int(m_n.group(1)) <= len(shops) else _shop_in(incoming, shops)
         if pick:
             db.set_setting(f"pickup_shop:{client}", pick[0])
