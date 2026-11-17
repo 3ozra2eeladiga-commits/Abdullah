@@ -2597,6 +2597,9 @@ def _polish_ai_text(text, client, city, user_msgs):
     """Ответ ИИ перед отправкой: убираем «Понимаю вас / Спасибо за уточнение», вопросы о том, что клиент уже
     сказал (по черновику и переписке), и длинноты. Если вопросов не осталось — добавляем следующий нужный."""
     t = FILLER_RE.sub("", text).strip() or text
+    # «Да, конечно, успеем!» — успеем ли, знает только флорист (правило: бот сам не обещает).
+    t = re.sub(r"[^.!?\n]*\b(?:точно\s+)?успеем\b[^.!?\n]*[.!?]*(?:\s*🌸)?", "Успеем ли к этому времени — флорист подтвердит вместе с заказом 🌸",
+               t, count=1, flags=re.I)
     known = _known_order(client)
     parts = [p for p in _SENT_SPLIT_RE.split(t) if p.strip()]
     keep, dropped = [], False
@@ -3457,6 +3460,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         winq = db.get_setting(f"winq:{client}") or ""
         if winq and last_q.startswith("Доставим с"):
             t_w = (incoming or "").strip().lower()
+            t_w = re.sub(r"^\W*(?:два|второе|второй)\b", "2", re.sub(r"^\W*(?:один|первое|первый)\b", "1", t_w))
             exact = re.match(r"^\W*2\b", t_w) or re.search(r"точно|ровно|строго|не\s+позже|обязательно\s+к|лучше\s+к|именно\s+к", t_w)
             if exact or re.match(r"^\W*(?:1|да|ок|подойд|хорошо|норм|давай|согласн|устраива)", t_w):
                 db.del_setting(f"winq:{client}")
