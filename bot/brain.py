@@ -416,7 +416,11 @@ ORDINAL_RE = re.compile(
 def _picked_by_ordinal(client, incoming, city):
     t = incoming or ""
     m = ORDINAL_RE.search(t)
-    if not m or _has_address([t]) or not (len(t) < 50 or re.search(r"вариант|букет|фото|композиц|открытк|давай|беру|хочу|нрав", t, re.I)):
+    # «Второй букет нравится. Доставить завтра на Крайнего 90…» — номер в начале длинного сообщения тоже выбор.
+    lead = bool(m) and m.start() < 25 and bool(re.match(r"\W*(?:букет|вариант|фото|композиц|нрав|мне|пожалуйста|давай|беру)",
+                                                         t[m.end():], re.I))
+    if not m or (_has_address([t]) and not lead) or not (len(t) < 50 or lead or re.search(
+            r"вариант|букет|фото|композиц|открытк|давай|беру|хочу|нрав", t, re.I)):
         return []
     shown = [c for c in (db.get_setting(f"shown:{client}") or "").split(",") if c]
     word = m.group(1).lower()
@@ -1720,7 +1724,8 @@ CHANGE_BOUQUET_RE = re.compile(r"(?:друг|ин)\w*\s+(?:\w+\s+)?(?:букет
                                r"не\s+(?:тот|этот)\s+букет|выбрал\w*\s+друг", re.I)
 NEW_ORDER_RE = re.compile(r"ещ[её]\s+(?:\w+\s+)?(?:купить|заказать|букет|заказ|цвет)|нов\w+\s+заказ|"
                           r"хочу\s+ещ[её]|друг\w+\s+букет|ещ[её]\s+один", re.I)
-CORRECTION_RE = re.compile(r"\bнет\b|\bне\b|поменя|измен|друг|ошиб|неправильн|не так|а не", re.I)
+CORRECTION_RE = re.compile(r"\bнет\b|\bне\b|поменя|измен|друг|ошиб|неправильн|не так|а не|\bкроме\b|\bно\s+(?!спасибо)|"
+                           r"бюджет|дешевл|дорог|уложит", re.I)
 
 
 def _phone_digits(s):
@@ -3175,7 +3180,9 @@ def respond(client, incoming, from_staff=False, quote=""):
         city = catalog.match_city(incoming) or _city_from_url(detect)
         # Ответ цифрой на «В какой город? 1 — Пятигорск, 2 — …»
         # Цифра может быть и вместе с датой: «завтра, 1», «2 на субботу» (но не время «к 15», «в 3»).
-        toks = re.findall(r"[\w:.]+", (incoming or "").lower())
+        _cw = {"один": "1", "одна": "1", "первый": "1", "первая": "1", "два": "2", "второй": "2", "вторая": "2",
+               "три": "3", "третий": "3", "третья": "3"}
+        toks = [_cw.get(x.strip("."), x) for x in re.findall(r"[\w:.]+", (incoming or "").lower())]
         m_num = next((t for i, t in enumerate(toks) if re.fullmatch(r"\d", t)
                       and not (i and toks[i - 1] in ("к", "в", "на", "до", "после", "около", "с"))), None) \
             if len(toks) <= 6 else None
@@ -3416,6 +3423,9 @@ def respond(client, incoming, from_staff=False, quote=""):
             st = _contacts(client)
             st.update({k: v for k, v in both.items() if v})
             db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+    if not from_staff and re.search(r"адрес|" + re.escape(FORM_HEAD), last_q or _last_bot_text(client, ""), re.I):
+        incoming = re.sub(rf"(?<=[,\s])((?:(?:{_NUM_WORD_RE})(?![а-яё])\s*){{1,3}})",
+                          lambda m: _spoken_digits(m.group(1)) + " ", incoming or "", flags=re.I).strip()
     # Назвал точное время («к 15:00») после «как можно скорее» — время клиента главнее «скорее».
     if not from_staff and re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b", incoming or "") \
             and not SOON_RE.search(incoming or "") and not re.search(r"как можно|срочно|скорее|быстрее", incoming or "", re.I):
