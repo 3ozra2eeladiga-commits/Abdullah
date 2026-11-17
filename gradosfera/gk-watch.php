@@ -2,11 +2,12 @@
 /**
  * Сторож: каждые 5 минут его открывает расписание хостинга (deploy/hosting-update.sh).
  * Проверяет бот ЖК (приём сообщений), сервер-посредник для Telegram и сайт. Досылает заявки, которые не ушли из-за сбоя.
- * Сбои записывает в журнал watch.log на хостинге (в Telegram-бот ЖК ничего не пишет).
+ * О сбоях пишет ТОЛЬКО Абдулле в личку (его Telegram ID), сотрудникам — никогда. Плюс журнал watch.log.
  */
 require __DIR__ . '/gk-lib.php';
 header('Content-Type: text/plain; charset=utf-8');
 header('X-Robots-Tag: noindex');
+const ONLY_ABDULLAH = '1247310515';   // технические сообщения — только Абдулле, никому больше
 $stateFile = GK_HOME . '/.watch.json';
 $st = is_file($stateFile) ? (json_decode((string)file_get_contents($stateFile), true) ?: []) : [];
 if (time() - ($st['_run'] ?? 0) < 200) { echo "skip\n"; exit; }   // не чаще раза в ~4 минуты
@@ -55,6 +56,9 @@ foreach ($names as $k => $n) {
     }
 }
 @file_put_contents($stateFile, json_encode($st), LOCK_EX);
-// В бот ЖК технические сообщения НЕ шлём (Абдулла 17.11: бот — только для заявок). Пишем в журнал на хостинге.
-if ($msgs) @file_put_contents(GK_HOME . '/watch.log', date('d.m.Y H:i') . ' ' . str_replace("\n", ' ', implode(' | ', $msgs)) . "\n", FILE_APPEND | LOCK_EX);
+// Технические сообщения — ТОЛЬКО Абдулле в личку (17.11: сотрудники и хозяин их не видят). Плюс журнал на хостинге.
+if ($msgs) {
+    @file_put_contents(GK_HOME . '/watch.log', date('d.m.Y H:i') . ' ' . str_replace("\n", ' ', implode(' | ', $msgs)) . "\n", FILE_APPEND | LOCK_EX);
+    gk_tg('sendMessage', ['chat_id' => ONLY_ABDULLAH, 'text' => "🛡 Только для Абдуллы — техническое\n\n" . implode("\n\n", $msgs), 'disable_web_page_preview' => true]);
+}
 echo $problems ? "problems: " . implode(', ', array_keys($problems)) . "\n" : "ok\n";
