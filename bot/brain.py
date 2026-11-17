@@ -2266,6 +2266,11 @@ def _apply_client_state(order, client, city):
                     and not catalog.is_addon(catalog.get(str(it.get("код") or "").lower(), city) or {"title": str(it.get("название") or ""), "code": ""}, city)]
         if len(bouquets) > 1 and any(_is_chosen(it) for it in bouquets):
             order["товары"] = [it for it in order["товары"] if it not in bouquets or _is_chosen(it)]
+        elif bouquets and ch_it and not any(_is_chosen(it) for it in bouquets) and not db.get_setting(f"upsize:{client}"):
+            # ИИ вписал ДРУГОЙ букет (не тот, что выбран и проверен флористом) — в заказ идёт выбранный.
+            order["товары"] = [it for it in order["товары"] if it not in bouquets]
+            order["товары"].insert(0, {"код": ch_it["code"], "название": ch_it["title"], "кол-во": 1,
+                                       "цена_за_шт": ch_it["price"], "сумма": ch_it["price"]})
     # Одна и та же позиция дважды (ИИ + код добавили одну открытку) — оставляем одну.
     uniq, seen_t = [], set()
     for it in order["товары"]:
@@ -4016,7 +4021,9 @@ def respond(client, incoming, from_staff=False, quote=""):
                      r"пока\s+не\s+закр|до\s+закрыт", incoming or "", re.I) \
                 or (last_q.startswith("Это время сегодня уже прошло") and CONFIRM_YES_RE.search(incoming or "")
                     and not CORRECTION_RE.search(incoming or "")):
-            db.set_setting(f"asap:{client}", "1")
+            later = _latest_date([m["content"] for m in db.history(client, 60) if m["role"] == "user"])
+            if later in ("", "сегодня") or re.search(r"сегодня|сейчас|срочно", incoming or "", re.I):
+                db.set_setting(f"asap:{client}", "1")    # «побыстрее соберите» к заказу на завтра — это не «сегодня»
         elif re.search(r"завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b|\b\d{1,2}[:.]\d{2}\b", incoming or ""):
             db.del_setting(f"asap:{client}")
             if re.search(r"завтра|послезавтра|\b\d{1,2}[./]\d{1,2}\b", incoming or ""):
