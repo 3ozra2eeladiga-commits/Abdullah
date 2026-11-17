@@ -573,7 +573,9 @@ def _has_address(user_msgs):
         for tail in re.findall(r"адрес\w*\s*[:—-]?\s*([^\n.]+(?:\.\d[^\n.]*)?)", m or "", re.I):
             tail = re.sub(r"\b(?:к|в|до|с|после|около)\s*\d{1,2}(?:[:.]\d{2})?\b|\b\d{1,2}:\d{2}\b|\bсегодня\b|"
                           r"\bзавтр\w*|\bпослезавтра\b|\bутр\w*|\bвечер\w*", " ", tail, flags=re.I)
-            rest = " ".join(x.strip() for x in tail.split(",") if x.strip() and not _not_address(x.strip()))
+            rest = " ".join(x.strip() for x in tail.split(",") if x.strip() and not _not_address(x.strip())
+                            and not re.match(r"(?:г\.?|город)\s|.*(?:доставк|самовывоз)", x.strip(), re.I)
+                            and not (catalog.match_city(x) and not re.search(r"\d", x)))
             if rest:
                 labeled.append(rest)
     user_msgs = list(user_msgs) + labeled
