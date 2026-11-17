@@ -479,7 +479,7 @@ def _pick_wish(incoming):
     rest = rest[:150].strip(" ,.")
     if re.search(r"\d[\d\s]{2,6}\s*₽", rest):
         return ""                                     # клиент скопировал подпись фото «… — 2889 ₽» — это выбор
-    if not WISH_SIGNAL_RE.search(rest):
+    if not WISH_SIGNAL_RE.search(rest) or re.search(r"кажется|наверн|вроде\b|по-моему|если\s+не\s+ошиба", rest, re.I):
         return ""                                     # «он такой красивый», «доченька» — не пожелание к сборке
     # Это не пожелание к сборке, а дата/время/доставка или вопрос — их ведёт обычная логика.
     if "?" in rest or re.match(r"(?:собрать\s+)?(?:на\s+)?(?:сегодня|завтра|послезавтра)\b|к\s*\d|в\s*\d{1,2}(?::\d{2})?$|"
@@ -2024,6 +2024,7 @@ CARD_PICK_Q = "Выберите открытку — ответьте «эту»
 def _money(text):
     """Сумма из сообщения клиента: «3000», «на 3 000», «3 тыс», «+5к» → 3000 / 5000. Телефоны не считаем."""
     t = (text or "").lower()
+    t = re.sub(r"(?:№|#|номер\w*|букет\w*|композици\w*|фото)\s*№?\s*\d+", " ", t)   # «букет №691» — номер, не сумма
     if re.search(r"\d{10,}", re.sub(r"[\s()+-]", "", t)) and not re.search(r"руб|₽|тыс", t):
         return None
     m = re.search(r"(\d+(?:[.,]\d+)?)\s*(?:тыс|т\.|к\b)", t)
@@ -3409,6 +3410,10 @@ def respond(client, incoming, from_staff=False, quote=""):
             st = _contacts(client)
             st.update({k: v for k, v in both.items() if v})
             db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
+    # Назвал точное время («к 15:00») после «как можно скорее» — время клиента главнее «скорее».
+    if not from_staff and re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b", incoming or "") \
+            and not SOON_RE.search(incoming or "") and not re.search(r"как можно|срочно|скорее|быстрее", incoming or "", re.I):
+        db.del_setting(f"asap:{client}")
     # ТЗ п.5: доставку гарантируем в часовой интервал. Клиент назвал время → предлагаем «с 14:30 до 15:30, подойдёт?».
     if not from_staff:
         winq = db.get_setting(f"winq:{client}") or ""
