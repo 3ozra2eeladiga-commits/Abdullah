@@ -1133,6 +1133,13 @@ def _on_qa(arg):
         with open(QA_ACTIVE, "w") as f:
             json.dump({"until": time.time() + config.QA_MAX_HOURS * 3600, "tag": "mom_"}, f)
         return f"💐 Начал проверку «День матери»: 16 разговоров (маме розы, 29 ноября, всё одним сообщением…).\nСмотреть: {qa_link()}"
+    if a in ("сайт", "site"):
+        if not run_qa(["--loop", "--tag", "site_", "--hours", str(config.QA_MAX_HOURS)], "🌐 Проверка «с сайта» остановлена"):
+            return "⏳ Проверка уже идёт. Остановить — /qa стоп"
+        os.makedirs(QA_DIR, exist_ok=True)
+        with open(QA_ACTIVE, "w") as f:
+            json.dump({"until": time.time() + config.QA_MAX_HOURS * 3600, "tag": "site_"}, f)
+        return f"🌐 Начал проверку «с сайта»: клиент пишет номер букета с сайта или жмёт «Купить в TELEGRAM».\nСмотреть: {qa_link()}"
     if a in ("розы", "roses"):
         if not run_qa(["--loop", "--tag", "rose_", "--hours", str(config.QA_MAX_HOURS)], "🌹 Проверка «розы» остановлена"):
             return "⏳ Проверка уже идёт. Остановить — /qa стоп"

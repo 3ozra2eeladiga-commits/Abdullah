@@ -580,6 +580,11 @@ def _has_address(user_msgs):
                             and not (catalog.match_city(x) and not re.search(r"\d", x)))
             if rest:
                 labeled.append(rest)
+        for mm in re.finditer(r"(?:доставк\w*|достав\w*|привез\w*|адрес\w*)[^.\n]{0,15}?\b(?:на|по)\s+(?:ул\.?\s*|улиц\w*\s+)?"
+                              r"([А-ЯЁа-яё][а-яё-]{3,}),?\s+(\d{1,3})(?![\d:.])", m or "", re.I):
+            if not re.match(r"завтр|сегодн|послезавтр|суббот|воскрес|понедел|вторник|сред|четверг|пятниц|врем|сумм|бюджет",
+                            mm.group(1), re.I):
+                labeled.append(f"{mm.group(1)} {mm.group(2)}")
     user_msgs = list(user_msgs) + labeled
     return any(not _not_address(m) and re.search(r"\b(?:ул|улиц\w*|пр|просп\w*|пер|переул\w*|дом|кв|квартир\w*)\b\.?\s*\S|"
                          r"адрес\w*\s*[:-]?\s*[А-ЯЁа-яёA-Za-z][^\n]{0,40}?\d+|"
@@ -3226,9 +3231,10 @@ def respond(client, incoming, from_staff=False, quote=""):
         incoming = _fix_budget_answer(client, incoming, db.get_setting(f"lastq:{client}") or "")    # «саморезов» → «самовывоз», «дастафка» → «доставка»
     # На «на какую дату?» ответили «сейчас / срочно / прямо сейчас» — это СЕГОДНЯ, как можно скорее (1–2 часа), Абдулла.
     if not from_staff and (URGENT_SHORT_RE.fullmatch(incoming or "") or re.fullmatch(
-            r"\W*(?:прямо\s+)?(?:сейчас|срочно|сразу|побыстрее|поскорее|как\s+можно\s+(?:скорее|быстрее|раньше)|"
+            r"\W*(?:прямо\s+)?(?:сегодня,?\s+)?(?:сейчас|срочно|сразу|побыстрее|поскорее|как\s+можно\s+(?:скорее|быстрее|раньше)|"
+            r"чем\s+(?:быстрее|скорее|раньше),?\s+тем\s+лучше|"
             r"сегодня\s+(?:же\s+)?как\s+можно\s+скорее|сегодня\s+же|прямо\s+сегодня)\W*", incoming or "", re.I)) \
-            and re.search(r"дат|когда|какой\s+день|на\s+когда", db.get_setting(f"lastq:{client}") or _last_bot_text(client, ""), re.I):
+            and re.search(r"дат|когда|какой\s+день|на\s+когда|врем|к\s+которому\s+часу", db.get_setting(f"lastq:{client}") or _last_bot_text(client, ""), re.I):
         incoming = "сегодня, как можно скорее (в течение 1–2 часов)"
     content = f"{STAFF_PREFIX} {incoming}" if from_staff else incoming
 
