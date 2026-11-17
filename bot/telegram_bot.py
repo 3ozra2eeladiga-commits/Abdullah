@@ -542,6 +542,9 @@ def _handle(msg, deliver):
     if secret:
         send(chat_id, secret)
         return
+    if text.startswith("/qa") and config.QA_REPORT_TO and user_id == config.QA_REPORT_TO and _hooks.get("on_qa"):
+        send(chat_id, _hooks["on_qa"](text[3:].strip()))      # «тайный покупатель» — только владельцу бота
+        return
     if not config.is_staff(user_id):
         if text.startswith("/start") or text.startswith("/myid"):
             send(chat_id, f"Ваш ID: {user_id}\nДоступ к боту закрыт. Передайте этот номер администратору.")
@@ -1012,10 +1015,10 @@ def run_polling(deliver, on_check):
 
 
 def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None, on_pay=None,
-          on_report=None, on_show=None, counts=None, on_delivered=None, on_resume=None):
+          on_report=None, on_show=None, counts=None, on_delivered=None, on_resume=None, on_qa=None):
     _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question, on_more=on_more,
                   on_pay=on_pay, on_report=on_report, on_show=on_show, counts=counts, on_delivered=on_delivered,
-                  on_resume=on_resume)
+                  on_resume=on_resume, on_qa=on_qa)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return

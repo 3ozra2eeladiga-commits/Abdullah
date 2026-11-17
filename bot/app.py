@@ -967,10 +967,86 @@ def _daily_loop():
                 db.set_setting("daily_morning", day)
                 text, ids = on_report("today")
                 _send_to_staff("☀️ Доброе утро! " + text, ids)
+            if config.QA_NIGHT_N > 0 and config.QA_NIGHT_AT <= hm < "06:00" and db.get_setting("qa_night") != day:
+                db.set_setting("qa_night", day)
+                run_qa(["--next", str(config.QA_NIGHT_N)], "🌙 Ночная проверка")
             _remind_unchecked()
         except Exception as e:                                      # отчёт не должен ронять бота
             log.warning("Ежедневный отчёт не удался: %s", e)
         time.sleep(60)
+
+
+# ---------- «Тайный покупатель»: бот проверяет сам себя (tools/qa_shopper.py) ----------
+# Отдельный процесс с отдельной базой (cache/qa/qa.db), вся отправка в Telegram там подменена — клиенты и флористы
+# ничего не получают. Отчёт — только владельцу бота (config.QA_REPORT_TO).
+_qa_lock = threading.Lock()
+QA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cache", "qa")
+
+
+def run_qa(args, title="🕵️ Проверка"):
+    """Запускает тайного покупателя в фоне. False — уже идёт другая проверка."""
+    if not config.QA_REPORT_TO or not _qa_lock.acquire(blocking=False):
+        return False
+
+    def work():
+        to = config.QA_REPORT_TO
+        try:
+            root = _REPO_ROOT
+            os.makedirs(QA_DIR, exist_ok=True)
+            for name in ("report.txt", "dialogs.txt"):
+                if os.path.exists(os.path.join(QA_DIR, name)):
+                    os.remove(os.path.join(QA_DIR, name))
+            env = dict(os.environ)
+            env.pop("DB_PATH", None)
+            p = subprocess.run([sys.executable, "-m", "tools.qa_shopper"] + list(args), cwd=root, env=env,
+                               capture_output=True, text=True, timeout=4 * 3600)
+            try:
+                with open(os.path.join(QA_DIR, "report.txt"), encoding="utf-8") as f:
+                    rep = f.read()
+            except OSError:
+                rep = "❌ Проверка не завершилась:\n" + (p.stderr or p.stdout or "")[-1500:]
+            rep = f"{title}\n{rep}"
+            for i in range(0, len(rep), 3800):
+                telegram_bot.send(to, rep[i:i + 3800], disable_notification=True)
+            path = os.path.join(QA_DIR, "dialogs.txt")
+            if os.path.exists(path):
+                with open(path, "rb") as f:
+                    telegram_bot.call("sendDocument", chat_id=to, caption="Все переписки тайного покупателя",
+                                      disable_notification=True,
+                                      files={"document": (f"проверка_{datetime.date.today():%d.%m}.txt", f)})
+        except Exception as e:
+            log.warning("Тайный покупатель не удался: %s", e)
+            telegram_bot.send(to, f"❌ Тайный покупатель не удался: {e}")
+        finally:
+            _qa_lock.release()
+
+    threading.Thread(target=work, daemon=True).start()
+    return True
+
+
+def on_qa(arg):
+    """Команда /qa (только владелец): «/qa» — несколько случайных разговоров, «/qa все» — все,
+    «/qa roses_tomorrow,night» — выбранные, «/qa список» — какие есть."""
+    a = (arg or "").strip().lower()
+    if a in ("список", "list"):
+        try:
+            out = subprocess.run([sys.executable, "-m", "tools.qa_shopper", "--list"], capture_output=True, text=True,
+                                 timeout=120, cwd=_REPO_ROOT)
+            return "Разговоры тайного покупателя:\n" + out.stdout[-3500:]
+        except Exception as e:
+            return f"Не получилось: {e}"
+    if a in ("все", "всё", "all"):
+        args, what = ["--all"], "все разговоры (это долго — час и больше, и тратит ИИ)"
+    elif re.fullmatch(r"\d{1,3}", a):
+        args, what = ["--n", a], f"{a} случайных разговоров"
+    elif a:
+        args, what = ["--only", a.replace(" ", "")], f"разговоры: {a}"
+    else:
+        args, what = ["--n", str(config.QA_N)], f"{config.QA_N} случайных разговоров"
+    if not run_qa(args):
+        return "⏳ Проверка уже идёт — пришлю отчёт, когда закончится."
+    return (f"🕵️ Запустил тайного покупателя: {what}.\nКлиентам и флористам ничего не уходит. "
+            "Отчёт пришлю сюда, когда закончится (обычно 10–20 минут).")
 
 
 def on_show(chat, order_id):
@@ -1489,7 +1565,7 @@ def main():
     threading.Thread(target=_daily_loop, daemon=True).start()
     telegram_bot.start(deliver_debounced, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
                        on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts, on_delivered=on_delivered,
-                       on_question=on_question, on_resume=on_resume)
+                       on_question=on_question, on_resume=on_resume, on_qa=on_qa)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
 

@@ -161,6 +161,13 @@ def many_cities():
 
 TELEGRAM_ORDERS_CHAT = os.getenv("TELEGRAM_ORDERS_CHAT", "")
 
+# --- «Тайный покупатель» (tools/qa_shopper.py): бот сам проверяет себя тестовыми разговорами ---
+# Отчёт — ТОЛЬКО этому человеку (владелец бота), сотрудникам магазина никогда. Команда /qa — тоже только ему.
+QA_REPORT_TO = int(os.getenv("QA_REPORT_TO", "1247310515") or 0)
+QA_NIGHT_AT = os.getenv("QA_NIGHT_AT", "03:10")             # время ночного запуска (по Москве)
+QA_NIGHT_N = int(os.getenv("QA_NIGHT_N", "10"))             # сколько разговоров ночью (по кругу); 0 — не запускать
+QA_N = int(os.getenv("QA_N", "10"))                         # сколько разговоров по команде /qa
+
 # --- Сервер ---
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
 PORT = int(os.getenv("PORT", "8080"))
