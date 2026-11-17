@@ -40,6 +40,7 @@ from bot.catalog import catalog                               # noqa: E402
 assert os.path.abspath(config.DB_PATH) == QA_DB, "тайный покупатель должен работать в отдельной базе"
 
 MSK = _real_dt.timezone(_real_dt.timedelta(hours=3))
+CARD_TITLE_RE = re.compile(r"открытк|конверт|карточк", re.I)
 
 # ---------------------------------------------------------------- часы: разговоры идут «днём» (или «ночью»)
 _OFFSET = [_real_dt.timedelta(0)]
@@ -164,6 +165,8 @@ PERSONA = {
     "pick": "2",                     # как выбирает букет из присланных
     "budget": "3000",
     "pack": "простая",
+    "window": "1",                   # «Доставим с 14:30 до 15:30, подойдёт?» 1 — да, 2 — нужно точно к
+    "card_pick": "1",                # какую открытку выбрать из присланных
 }
 
 # ---------------------------------------------------------------- сценарии
@@ -176,9 +179,9 @@ PERSONA = {
 S = []
 
 
-def sc(key, title, steps, order=True, clock=12, florist="ok", inject=None, char=None, **persona):
+def sc(key, title, steps, order=True, clock=12, florist="ok", inject=None, char=None, tree=False, **persona):
     S.append({"key": key, "title": title, "steps": steps, "order": order, "clock": clock, "florist": florist,
-              "inject": inject or {}, "char": char, "persona": dict(PERSONA, **persona)})
+              "inject": inject or {}, "char": char, "tree": tree, "persona": dict(PERSONA, **persona)})
 
 
 sc("roses_tomorrow", "Розы на завтра", ["Здравствуйте, нужны розы на завтра"])
@@ -407,6 +410,27 @@ for _key, _title, _fn, _kw in [
      {"date": "сегодня", "time": "как можно скорее"}),
 ]:
     sc(_key, _title, [_fn], **_kw)
+# ДЕРЕВО: каждая развилка оформления — во всех вариантах (Абдулла 17.11: «как дерево — каждую ветку»).
+# Город × способ × открытка × время × упаковка. Отвечает автоответчик (дёшево и одинаково), проверка логики — в _logic.
+_TREE = []
+for _city in (1, 2):
+    for _way in ("доставка", "самовывоз"):
+        for _card in ("нет", "да", "без текста"):
+            for _win in ("1", "2"):
+                if _way == "самовывоз" and _win == "2":
+                    continue                     # у самовывоза нет интервала доставки
+                _TREE.append((_city, _way, _card, _win))
+for _i, (_city, _way, _card, _win) in enumerate(_TREE):
+    _kw = {"city": _city, "way": _way, "window": _win,
+           "card": "нет" if _card == "нет" else "да",
+           "card_text": "без текста" if _card == "без текста" else "С любовью, мама!",
+           "pack": random.choice(["простая", "поинтереснее"])}
+    if _city == 2:
+        _kw["address"] = "22 Партсъезда, 10"
+    _title = (f"Ветка: {'Пятигорск' if _city == 1 else 'Минводы'}, {_way}, открытка {_card}"
+              + ("" if _way == "самовывоз" else f", {'интервал' if _win == '1' else 'точно к'}"))
+    sc(f"tree_{_i + 1}", _title, [random.choice(["букет на завтра", "Здравствуйте, нужен букет на завтра",
+                                                   "цветы на завтра"])], tree=True, **_kw)
 CHARS["roses"] = ("Про розы", "Тебе нужны именно розы. Начинаешь сразу с вопроса, без «здравствуйте». Спрашиваешь цвет, "
                               "высоту стебля в см, сколько стоит 21/51/101 роза, поштучно или букетом, в коробке ли.")
 CHARS["nohello"] = ("Без приветствия", "Никогда не здороваешься, пишешь одним-тремя словами: «цена?», «есть?», «а красные?».")
@@ -461,7 +485,7 @@ RULES_ANSWER = [
     (r"из какого магазина заберёте", "1", ()),
     (r"на какую дату и в какой город", lambda t, p: f"{p['date']}, {p['city']}", ("date", "city")),
     (r"в какой город|из какого города", _city_answer, ("city",)),
-    (r"1\s*—\s*да.*2\s*—\s*точно|точно к", "1", ()),
+    (r"1\s*—\s*да.*2\s*—\s*точно|точно к", "{window}", ()),
     (r"на какую дату и к какому времени", "{date} {time}", ("date", "time")),
     (r"на какую дату|напишите дату|подскажите дату|какого числа", "{date}", ("date",)),
     (r"с какого времени|к какому времени|во сколько|какое время", "{time}", ("time",)),
@@ -476,7 +500,7 @@ RULES_ANSWER = [
     (r"открытку добавим|открытк\w* нужн|добавить открытку", "{card}", ()),
     (r"напишем: «.*»\. верно", "да", ()),
     (r"какой текст", "{card_text}", ()),
-    (r"выберите открытку", "1", ()),
+    (r"выберите открытку", "{card_pick}", ()),
     (r"берём\?", "да", ()),
     (r"бюджет", "{budget}", ("budget",)),
     (r"ответьте цифрой", "1", ()),
@@ -823,8 +847,47 @@ class Run:
                 self.problem("🗒 Мусор в пожеланиях заявки", f"«{m_w.group(1).strip()[:120]}»")
             if re.fullmatch(r"\W*(?:втор\w*|перв\w*|трет\w*|этот|эту|да|нет|\d{1,2})\W*", wish.strip(), re.I) and wish.strip():
                 self.problem("🗒 Мусор в пожеланиях заявки", f"«{wish.strip()}»")
+        self._logic()
         if not self.s["order"] and self.order and self.s["key"] in ("cancel", "florist_no", "human", "complaint"):
             self.problem("🚫 Заказ ушёл, хотя не должен был", json.dumps(self.order, ensure_ascii=False)[:200])
+
+    def _logic(self):
+        """Логика ветки: что клиент выбрал — то и в заявке; бот не предлагает лишнего (магазины другого города и т.п.)."""
+        p = self.p
+        bot_all = "\n".join(t for w, t in self.dialog if w == "bot")
+        cities = ["Пятигорск", "Минеральные Воды"]
+        my_city = cities[min(int(p.get("city") or 1), 2) - 1]
+        other = cities[1] if my_city == cities[0] else cities[0]
+        for w, t in self.dialog:                     # самовывоз: магазины только выбранного города (Абдулла 17.11)
+            if w == "bot" and t.startswith("Из какого магазина") and other in t and "city" in self.facts:
+                self.problem("🏪 Предлагает магазины другого города", t[:200])
+                break
+        if not self.s.get("tree") or not self.order:
+            return
+        o = self.order
+        way_o = str(o.get("получение") or "").lower()
+        if p["way"] == "самовывоз" and not way_o.startswith("самовывоз"):
+            self.problem("🧾 В заявке не самовывоз", f"Клиент выбрал самовывоз, в заявке: {way_o or '—'}")
+        if p["way"] == "доставка" and not way_o.startswith("доставк"):
+            self.problem("🧾 В заявке не доставка", f"Клиент выбрал доставку, в заявке: {way_o or '—'}")
+        card_o = str(o.get("открытка") or "").strip().lower()
+        if p["card"] == "нет" and card_o not in ("", "нет", "не нужна", "—", "-"):
+            self.problem("💌 Открытка в заявке, хотя клиент отказался", card_o)
+        if p["card"] == "да":
+            has_card = card_o not in ("", "нет", "не нужна", "—", "-") or any(
+                CARD_TITLE_RE.search(str(it.get("название") or "")) for it in o.get("товары") or [] if isinstance(it, dict))
+            if not has_card:
+                self.problem("💌 Клиент хотел открытку — в заявке её нет", json.dumps(o.get("товары"), ensure_ascii=False)[:200])
+            elif p["card_text"] != "без текста" and p["card_text"].lower()[:10] not in card_o:
+                self.problem("💌 Не тот текст открытки", f"Клиент: «{p['card_text']}», в заявке: «{card_o}»")
+        if p["way"] == "доставка" and p.get("window") == "2" and "точно" not in json.dumps(o, ensure_ascii=False).lower() \
+                and "точно" not in bot_all.lower():
+            self.problem("🕒 «Нужно точно к» не попало в заявку", str(o.get("время")))
+        if p["way"] == "самовывоз" and other in str(o.get("адрес") or ""):
+            self.problem("🏪 Самовывоз из магазина другого города", str(o.get("адрес")))
+        if p.get("pack") == "поинтереснее" and "упаковк" in bot_all.lower() and not re.search(
+                r"пышн|упаковк", json.dumps(o, ensure_ascii=False), re.I):
+            self.problem("🎀 Пышная упаковка не попала в заявку", "")
 
     def _order_check(self):
         rows = db._exec("SELECT data FROM orders WHERE client=? ORDER BY id DESC LIMIT 1", (self.client,)).fetchall()
