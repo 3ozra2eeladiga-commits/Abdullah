@@ -2,13 +2,11 @@
 /**
  * Сторож: каждые 5 минут его открывает расписание хостинга (deploy/hosting-update.sh).
  * Проверяет бот ЖК (приём сообщений), сервер бота цветов (он же реле для Telegram) и сайт.
- * Если что-то сломалось — пишет Абдулле в Telegram (не чаще раза в 30 минут на одну проблему),
- * а когда починилось — «✅ снова работает». Ничего секретного не показывает.
+ * Сбои записывает в журнал watch.log на хостинге (в Telegram-бот ЖК ничего не пишет).
  */
 require __DIR__ . '/gk-lib.php';
 header('Content-Type: text/plain; charset=utf-8');
 header('X-Robots-Tag: noindex');
-const WATCH_TO = '1247310515';   // Абдулла
 $stateFile = GK_HOME . '/.watch.json';
 $st = is_file($stateFile) ? (json_decode((string)file_get_contents($stateFile), true) ?: []) : [];
 if (time() - ($st['_run'] ?? 0) < 200) { echo "skip\n"; exit; }   // не чаще раза в ~4 минуты
@@ -54,5 +52,6 @@ foreach ($names as $k => $n) {
     }
 }
 @file_put_contents($stateFile, json_encode($st), LOCK_EX);
-if ($msgs) gk_tg('sendMessage', ['chat_id' => WATCH_TO, 'text' => "🛡 Сторож сайта и ботов\n\n" . implode("\n\n", $msgs), 'disable_web_page_preview' => true]);
+// В бот ЖК технические сообщения НЕ шлём (Абдулла 17.11: бот — только для заявок). Пишем в журнал на хостинге.
+if ($msgs) @file_put_contents(GK_HOME . '/watch.log', date('d.m.Y H:i') . ' ' . str_replace("\n", ' ', implode(' | ', $msgs)) . "\n", FILE_APPEND | LOCK_EX);
 echo $problems ? "problems: " . implode(', ', array_keys($problems)) . "\n" : "ok\n";
