@@ -2303,6 +2303,30 @@ def _apply_client_state(order, client, city):
             order["товары"] = [it for it in order["товары"] if it not in bouquets]
             order["товары"].insert(0, {"код": ch_it["code"], "название": ch_it["title"], "кол-во": 1,
                                        "цена_за_шт": ch_it["price"], "сумма": ch_it["price"]})
+    um_all = " ".join(m["content"] for m in db.history(client, 80) if m["role"] == "user")
+    many_bq = re.search(r"(?:\d+|два|две|три|четыре|пять|шесть|семь|восемь|девять|десять)\s+(?:одинаков\w*\s+)?"
+                        r"(?:букет\w*|одинаков\w*|таких|штук\w*\s+таких)", um_all, re.I)
+    for it in order["товары"]:
+        if not isinstance(it, dict) or CARD_RE.search(str(it.get("название") or "")):
+            continue
+        c_it = catalog.get(str(it.get("код") or "").lower(), city) or catalog.get(str(it.get("код") or "").lower()) \
+            or _find_by_title(str(it.get("название") or ""), city)
+        try:
+            qty = int(it.get("кол-во") or 1)
+        except (TypeError, ValueError):
+            qty = 1
+        if qty > 1 and (not c_it or c_it.get("stock") is None) and not many_bq:
+            # «12 цветов» в БУКЕТЕ — это состав, а не 12 букетов (флорист собрала бы 12 штук).
+            it["кол-во"] = 1
+            if it.get("цена_за_шт"):
+                it["сумма"] = it["цена_за_шт"]
+            note_q = f"Клиент просит в букете: {qty} цветов"
+            if note_q not in str(order.get("комментарий") or ""):
+                order["комментарий"] = (str(order.get("комментарий") or "") + "; " + note_q).strip("; ")
+        if not c_it and not re.search(r"фото\s+клиента|как\s+на\s+фото|пышн\w*\s+упаковк", str(it.get("название") or ""), re.I):
+            note_c = f"⚠️ «{it.get('название')}» нет в каталоге — уточните у клиента, что собрать и цену"
+            if note_c not in str(order.get("комментарий") or ""):
+                order["комментарий"] = (str(order.get("комментарий") or "") + "; " + note_c).strip("; ")
     # Одна и та же позиция дважды (ИИ + код добавили одну открытку) — оставляем одну.
     uniq, seen_t = [], set()
     for it in order["товары"]:
@@ -3961,6 +3985,16 @@ def respond(client, incoming, from_staff=False, quote=""):
             text = f"Хорошо, заказ №{db.order_no(oid)} в силе 🌸"
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
+    # «Отмените» на итоге, когда заказ ещё НЕ отправлен — просто не оформляем (флористу нечего отменять).
+    if not from_staff and re.search(r"\bотмен\w*|не\s+буду\s+заказ|передумал\w*\s+заказ", incoming or "", re.I) \
+            and db.get_pending_order(client) and not db.get_setting(f"ocheck:{client}"):
+        db.clear_pending_order(client)
+        for k in ("chosen", "availq", "upsize", "lastq"):
+            db.del_setting(f"{k}:{client}")
+        text = ("Хорошо, не оформляем 🌸 Если захотите — подберу другой букет"
+                + (" под ваш бюджет" if re.search(r"бюджет|дорог|дешев", incoming or "", re.I) else "") + ".")
+        db.add_message(client, "assistant", text)
+        return Reply(text=text, city=city)
     if not from_staff and re.search(r"\bотмен\w*", incoming or "", re.I) and db.has_order(client):
         oid = db.last_order_id(client)
         row = db.get_order(oid)
