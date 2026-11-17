@@ -2346,6 +2346,10 @@ def _apply_client_state(order, client, city):
     if latest_t and not db.get_setting(f"asap:{client}"):
         order["время"] = latest_t
     h_ai = _hour_from_text(str(order.get("время") or ""))
+    if not latest_t and h_ai is not None and (h_ai < 7 or h_ai >= 23) and not db.get_setting(f"asap:{client}") \
+            and not db.get_setting(f"notime:{client}"):
+        order["время"] = ""                      # «с 00:30 до 01:30» — время придумал ИИ, клиент его не называл: спросим
+        h_ai = None
     if not latest_t and h_ai is not None and str(order.get("дата") or "").strip().lower() == "сегодня" \
             and h_ai <= datetime.datetime.now(_MSK).hour + 1 and not db.get_setting(f"asap:{client}"):
         db.set_setting(f"asap:{client}", "1")   # клиент времени не называл, а ИИ поставил «сейчас» — это «как можно скорее»
