@@ -563,7 +563,7 @@ def _has_address(user_msgs):
     # Ответ на анкету: «…время и адрес: завтра к 15:00, Крайнего, 90.» — берём адрес без времени.
     labeled = []
     for m in user_msgs:
-        for tail in re.findall(r"адрес\w*\s*:\s*([^\n.]+(?:\.\d[^\n.]*)?)", m or "", re.I):
+        for tail in re.findall(r"адрес\w*\s*[:—-]?\s*([^\n.]+(?:\.\d[^\n.]*)?)", m or "", re.I):
             tail = re.sub(r"\b(?:к|в|до|с|после|около)\s*\d{1,2}(?:[:.]\d{2})?\b|\b\d{1,2}:\d{2}\b|\bсегодня\b|"
                           r"\bзавтр\w*|\bпослезавтра\b|\bутр\w*|\bвечер\w*", " ", tail, flags=re.I)
             rest = " ".join(x.strip() for x in tail.split(",") if x.strip() and not _not_address(x.strip()))
@@ -2563,7 +2563,8 @@ _KNOWN_Q = [  # (вопрос ИИ, как понять, что ответ уж�
     (re.compile(r"адрес", re.I),
      lambda k, um, c: (_meaningful(k.get("адрес")) and len(str(k.get("адрес"))) >= 6) or _has_address(um)
      or k.get("получение") == "самовывоз"),
-    (re.compile(r"бюджет|на\s+какую\s+сумму|сколько\s+(?:готовы|планируете)", re.I),
+    (re.compile(r"^(?!.*(?:уменьш|увелич|его\s+собрать|подберу\s+под)).*(?:бюджет|на\s+какую\s+сумму|сколько\s+(?:готовы|планируете))",
+                re.I),
      lambda k, um, c: any(catalog_budget(m) for m in um)),
     (re.compile(r"по\s+какому\s+поводу|какой\s+повод|для\s+какого\s+случая", re.I),
      lambda k, um, c: any(OCCASION_RE.search(m) for m in um)),
