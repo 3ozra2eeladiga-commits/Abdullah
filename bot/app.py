@@ -1613,7 +1613,15 @@ def qa_live():
     path = os.path.join(QA_DIR, "live.json")
     if not os.path.exists(path):
         abort(404)
-    return send_from_directory(QA_DIR, "live.json", max_age=0)
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        abort(404)
+    # «Идёт» — по-настоящему (процесс жив), а не по файлу: после перезапуска бота файл мог остаться «running».
+    data["running"] = _qa_lock.locked()
+    return Response(json.dumps(data, ensure_ascii=False), mimetype="application/json",
+                    headers={"Cache-Control": "no-store"})
 
 
 @app.get("/qa/dialogs.txt")

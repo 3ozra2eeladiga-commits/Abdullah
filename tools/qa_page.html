@@ -39,7 +39,7 @@ async function act(w){msg.textContent=w=="start"?"запускаю…":"оста
 const esc=t=>String(t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 function bubbles(dl){return dl.map(([w,t])=>w=="client"?`<div class="b c">👤 ${esc(t)}</div>`:w=="bot"?`<div class="b o">${esc(t)}</div>`:`<div class="s">${esc(t)}</div>`).join("")}
 function draw(){if(KEY){btns.style.display="flex";}if(!D)return;
- bstart.style.display=D.running?"none":"";bstop.style.display=D.running?"":"none";
+ bstart.disabled=!!D.running;bstop.disabled=!D.running;bstart.style.opacity=D.running?.4:1;bstop.style.opacity=D.running?1:.4;
  const runs=D.runs||[];const done=runs.length,total=D.total||0;
  st.textContent=D.running?(D.loop?`🟢 Идёт проверка: разговор №${D.index}`:`🟢 Идёт проверка: ${D.index} из ${total}`):`Проверка закончена: ${done} разговоров`;
  pb.style.width=(D.loop?(D.running?((D.index%10)*10+5):100):total?Math.round(100*(D.running?D.index-1:done)/total):0)+"%";
@@ -57,7 +57,7 @@ function draw(){if(KEY){btns.style.display="flex";}if(!D)return;
  runs_.innerHTML=runs.map((x,i)=>`<div class="run" onclick="sel=${i};draw();scrollTo(0,0)"><span>${esc(x.title)}</span><span class="${x.problems.length?"no":"ok"}">${x.order?"🧾":"—"} ${x.problems.length?"❗"+x.problems.length:"✅"}</span></div>`).reverse().join("")||"пока нет";
 }
 const runs_=document.getElementById("runs");
-async function tick(){try{const r=await fetch("qa/live.json?"+Date.now());if(r.ok){D=await r.json();draw()}else{st.textContent="Проверок ещё не было"+(KEY?" — нажмите «Начать проверку»":" — отправьте /qa в боте");if(KEY){btns.style.display="flex";bstop.style.display="none"}}}catch(e){}
+async function tick(){try{const r=await fetch("qa/live.json?"+Date.now());if(r.ok){D=await r.json();draw()}else{st.textContent="Проверок ещё не было"+(KEY?" — нажмите «Начать проверку»":" — отправьте /qa в боте");if(KEY){btns.style.display="flex";bstop.disabled=true;bstop.style.opacity=.4}}}catch(e){}
  setTimeout(tick,2500)}
 tick();
 </script></body></html>
