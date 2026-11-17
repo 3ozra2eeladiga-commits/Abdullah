@@ -2298,11 +2298,15 @@ def _apply_client_state(order, client, city):
     # Одна и та же позиция дважды (ИИ + код добавили одну открытку) — оставляем одну.
     uniq, seen_t = [], set()
     for it in order["товары"]:
-        key = (str(it.get("код") or "").strip().lower() or
-               re.sub(r"[\W_]+", "", str(it.get("название") or "").lower())) if isinstance(it, dict) else str(it)
-        if key in seen_t:
+        if not isinstance(it, dict):
+            uniq.append(it)
             continue
-        seen_t.add(key)
+        code_k = str(it.get("код") or "").strip().lower()
+        it_cat = catalog.get(code_k, city) or catalog.get(code_k) if code_k else None
+        name_k = re.sub(r"[\W_]+", "", str((it_cat or {}).get("title") or it.get("название") or "").lower())[:40]
+        if (code_k and code_k in seen_t) or (name_k and name_k in seen_t):
+            continue                       # тот же букет второй раз (один раз с кодом, другой — только названием)
+        seen_t.update(k for k in (code_k, name_k) if k)
         uniq.append(it)
     order["товары"] = uniq
     items = order["товары"]
