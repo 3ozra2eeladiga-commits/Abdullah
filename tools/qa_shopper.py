@@ -583,7 +583,12 @@ def _llm_customer(p, dialog, char=None):
     while msgs and msgs[0]["role"] != "user":
         msgs.pop(0)
     try:
-        ans = llm.complete(sys_prompt, msgs or [{"role": "user", "content": "Здравствуйте!"}], attempts=2).strip()
+        keep = config.YANDEX_MODEL
+        config.YANDEX_MODEL = config.QA_CUSTOMER_MODEL or keep     # «клиента» играет дешёвая модель (Lite) — бот на своей
+        try:
+            ans = llm.complete(sys_prompt, msgs or [{"role": "user", "content": "Здравствуйте!"}], attempts=2).strip()
+        finally:
+            config.YANDEX_MODEL = keep
         # ИИ иногда дописывает за магазин («Пользователь: …», «Дана: …», «Ответ 1») — берём только реплику клиента.
         ans = re.split(r"\b(?:Пользователь|Ассистент|Магазин|Флорист|Дана|Бот|Вопрос\s*\d*|Ответ\s*\d*)\s*:", ans)[0]
         ans = re.sub(r"^\W*(?:Клиент|Я)\s*:\s*", "", ans.strip(), flags=re.I)
@@ -1061,6 +1066,12 @@ def main():
             s = order.pop(0)
         if stop_requested() or time.time() - t0 > a.hours * 3600:
             break
+        if day_chats() >= config.QA_DAY_LIMIT:          # дневной лимит — деньги ИИ (Абдулла 17.11: долг 22 тыс. ₽)
+            LIVE["note"] = f"Дневной лимит {config.QA_DAY_LIMIT} разговоров исчерпан — продолжим завтра"
+            break
+        if len(runs) >= 2 and all(any(p.startswith("💥 Техническая заминка") for p, _ in x.problems) for x in runs[-2:]):
+            LIVE["note"] = "ИИ не отвечает (возможно, закончились деньги в Яндексе) — проверка остановлена"
+            break
         r = Run(s, i)
         i += 1
         LIVE.update(index=i, title=s["title"], key=s["key"], dialog=[], problems_now=[])
@@ -1096,6 +1107,16 @@ def main():
     print("\n" + rep)
 
 
+def day_chats():
+    """Сколько тестовых разговоров уже было сегодня (для дневного лимита)."""
+    try:
+        st = json.load(open(os.path.join(QA_DIR, "stats.json"), encoding="utf-8"))
+    except (OSError, ValueError):
+        return 0
+    d = st.get("day") or {}
+    return d.get("n", 0) if d.get("date") == time.strftime("%Y-%m-%d") else 0
+
+
 def add_stats(r):
     """Счётчики за всё время (для «офиса агента»): сколько чатов, заявок, найденных проблем."""
     path = os.path.join(QA_DIR, "stats.json")
@@ -1107,6 +1128,9 @@ def add_stats(r):
     st["orders"] = st.get("orders", 0) + (1 if r.order else 0)
     st["found"] = st.get("found", 0) + len(r.problems)
     st["last"] = time.time()
+    today = time.strftime("%Y-%m-%d")
+    d = st.get("day") or {}
+    st["day"] = {"date": today, "n": (d.get("n", 0) if d.get("date") == today else 0) + 1}
     with open(path, "w", encoding="utf-8") as f:
         json.dump(st, f)
 
