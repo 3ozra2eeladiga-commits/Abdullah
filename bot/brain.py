@@ -2311,6 +2311,12 @@ def _apply_client_state(order, client, city):
         if not str(order.get("получатель") or "").strip() or str(order.get("получатель")).strip() in ("—", "-"):
             order["получатель"] = "самовывоз — заберёт заказчик"
     sur = db.get_setting(f"surprise:{client}") or ""
+    # Свой номер клиент не дал, а ИИ подставил заказчику номер получателя — убираем чужой номер у заказчика.
+    ph_c = PHONE_RE.search(str(order.get("заказчик") or ""))
+    ph_r = PHONE_RE.search(str(order.get("получатель") or ""))
+    if (sur or db.get_setting(f"ownref:{client}")) and ph_c and ph_r \
+            and re.sub(r"\D", "", ph_c.group(0))[-10:] == re.sub(r"\D", "", ph_r.group(0))[-10:]:
+        order["заказчик"] = (PHONE_RE.sub("", str(order["заказчик"])).strip(" ,") or "—") + " (свой номер не дал(а))"
     if sur in ("1", "2"):
         order["_сюрприз"] = sur
         if not (ct_.get("me_name") and ct_.get("me_phone")):
