@@ -6,7 +6,10 @@
 и возвращают текст ответа.
 """
 import base64
+import datetime
+import json
 import logging
+import os
 import re
 import time
 import uuid
@@ -35,7 +38,76 @@ def _yandex(system, messages):
     )
     if r.status_code != 200:
         raise RuntimeError(f"YandexGPT ответил ошибкой {r.status_code}: {r.text[:500]}")
-    return r.json()["result"]["alternatives"][0]["message"]["text"]
+    res = r.json()["result"]
+    try:
+        _spend(int((res.get("usage") or {}).get("totalTokens") or 0), config.YANDEX_MODEL)
+    except Exception as e:                       # учёт денег не должен ломать ответ клиенту
+        log.warning("Не удалось учесть расход ИИ: %s", e)
+    return res["alternatives"][0]["message"]["text"]
+
+
+# ── Стоп-кран по деньгам (Абдулла 17.11: долг в Яндексе 22 тыс. ₽ — «чтобы это не повторилось») ──────────────
+# Яндекс выставляет счёт с опозданием и уходит в минус. Поэтому считаем сами: токены из ответа × цена за 1000.
+# Дневной лимит на ВСЁ (клиенты + тесты) и отдельный — на тесты. Достигли — к ИИ больше не обращаемся до завтра.
+class BudgetExceeded(RuntimeError):
+    pass
+
+
+on_budget = None          # app подставляет функцию: сообщить владельцу (70% и 100%)
+_SPEND_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "cache", "llm_spend.json")
+_IS_QA = os.getenv("QA_SPEND") == "1"
+
+
+def _price(model):
+    return config.LLM_PRICE_LITE if "lite" in (model or "") else config.LLM_PRICE_PRO
+
+
+def spend_today():
+    try:
+        d = json.load(open(_SPEND_PATH, encoding="utf-8"))
+    except (OSError, ValueError):
+        d = {}
+    if d.get("date") != datetime.date.today().isoformat():
+        d = {"date": datetime.date.today().isoformat(), "rub": 0.0, "qa_rub": 0.0, "warned": 0}
+    return d
+
+
+def _save_spend(d):
+    os.makedirs(os.path.dirname(_SPEND_PATH), exist_ok=True)
+    tmp = _SPEND_PATH + f".{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(d, f)
+    os.replace(tmp, _SPEND_PATH)
+
+
+def _spend(tokens, model):
+    if not tokens:
+        return
+    rub = tokens / 1000 * _price(model)
+    d = spend_today()
+    d["rub"] = round(d.get("rub", 0) + rub, 2)
+    if _IS_QA:
+        d["qa_rub"] = round(d.get("qa_rub", 0) + rub, 2)
+    lim = config.LLM_DAY_RUB
+    level = 100 if d["rub"] >= lim else 70 if d["rub"] >= lim * 0.7 else 0
+    notify = level > d.get("warned", 0)
+    if notify:
+        d["warned"] = level
+    _save_spend(d)
+    if notify and on_budget:
+        try:
+            on_budget(level, d)
+        except Exception as e:
+            log.warning("Не удалось сообщить о расходе ИИ: %s", e)
+
+
+def budget_check():
+    """Бросает BudgetExceeded, если дневной лимит денег на ИИ исчерпан (для тестов — свой, меньший лимит)."""
+    d = spend_today()
+    if d.get("rub", 0) >= config.LLM_DAY_RUB:
+        raise BudgetExceeded(f"дневной лимит на ИИ {config.LLM_DAY_RUB:g} ₽ исчерпан (потрачено ~{d['rub']:.0f} ₽)")
+    if _IS_QA and d.get("qa_rub", 0) >= config.QA_DAY_RUB:
+        raise BudgetExceeded(f"дневной лимит на проверки {config.QA_DAY_RUB:g} ₽ исчерпан")
 
 
 _giga_token = {"value": "", "expires": 0}
@@ -121,6 +193,7 @@ def complete(system, messages, attempts=3):
     fn = PROVIDERS.get(config.LLM_PROVIDER)
     if fn is None:
         raise ValueError(f"Неизвестный LLM_PROVIDER: {config.LLM_PROVIDER}")
+    budget_check()                                 # лимит денег на день — до запроса, а не после
     last_error = None
     last_refusal = ""
     for i in range(attempts):

@@ -1066,6 +1066,10 @@ def main():
             s = order.pop(0)
         if stop_requested() or time.time() - t0 > a.hours * 3600:
             break
+        _sp = llm.spend_today()
+        if _sp.get("qa_rub", 0) >= config.QA_DAY_RUB or _sp.get("rub", 0) >= config.LLM_DAY_RUB:
+            LIVE["note"] = f"Дневной лимит денег на проверки ({config.QA_DAY_RUB:g} ₽) исчерпан — продолжим завтра"
+            break
         if day_chats() >= config.QA_DAY_LIMIT:          # дневной лимит — деньги ИИ (Абдулла 17.11: долг 22 тыс. ₽)
             LIVE["note"] = f"Дневной лимит {config.QA_DAY_LIMIT} разговоров исчерпан — продолжим завтра"
             break

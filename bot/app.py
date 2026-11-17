@@ -559,6 +559,12 @@ def deliver(client, text, from_staff=False, quote=""):
             if not from_staff and reply and reply.text and not reply.order and _bot_stuck(client, reply.text):
                 _to_human(client, f"(бот не понимает клиента — повторяет одно и то же) {text}", saved=True)
                 return
+        except llm.BudgetExceeded as e:
+            # Дневной лимит денег на ИИ исчерпан — к ИИ не обращаемся, клиента ведёт флорист (Абдулла 17.11).
+            log.warning("Лимит ИИ: %s", e)
+            if not from_staff:
+                _to_human(client, f"(у бота закончился дневной лимит на ИИ — ответьте клиенту сами) {text}", saved=True)
+            return
         except Exception:
             log.exception("Ошибка ИИ для %s", client)
             _send_text(client, SORRY)
@@ -1063,6 +1069,7 @@ def run_qa(args, title="🕵️ Проверка"):
                     os.remove(os.path.join(QA_DIR, name))
             env = dict(os.environ)
             env.pop("DB_PATH", None)
+            env["QA_SPEND"] = "1"                          # расход проверки считаем отдельно (свой дневной лимит)
             p = subprocess.run([sys.executable, "-m", "tools.qa_shopper"] + list(args), cwd=root, env=env,
                                capture_output=True, text=True, timeout=4 * 3600)
             try:
@@ -1886,6 +1893,23 @@ def _disable_windows_quick_edit():
             kernel32.SetConsoleMode(handle, (mode.value & ~ENABLE_QUICK_EDIT_MODE) | ENABLE_EXTENDED_FLAGS)
     except Exception:
         log.warning("Не удалось отключить паузу от щелчка мышкой — не щёлкайте по окну бота")
+
+
+def _on_budget(level, d):
+    """Расход ИИ за день дошёл до 70% / 100% лимита — пишем владельцу (QA_REPORT_TO) и флористам при 100%."""
+    to = config.QA_REPORT_TO
+    if level >= 100:
+        msg = (f"⛔️ Дневной лимит на ИИ исчерпан: ~{d['rub']:.0f} ₽ из {config.LLM_DAY_RUB:g} ₽ "
+               f"(из них проверки ~{d.get('qa_rub', 0):.0f} ₽). До полуночи бот не обращается к ИИ — "
+               "клиентов передаёт флористам. Поднять лимит: LLM_DAY_RUB в .env на сервере.")
+    else:
+        msg = (f"⚠️ Расход на ИИ сегодня ~{d['rub']:.0f} ₽ — это 70% дневного лимита {config.LLM_DAY_RUB:g} ₽ "
+               f"(проверки ~{d.get('qa_rub', 0):.0f} ₽).")
+    if to:
+        telegram_bot.send(to, msg)
+
+
+llm.on_budget = _on_budget
 
 
 def main():

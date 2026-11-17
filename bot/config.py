@@ -167,6 +167,11 @@ QA_REPORT_TO = int(os.getenv("QA_REPORT_TO", "1247310515") or 0)
 QA_NIGHT_AT = os.getenv("QA_NIGHT_AT", "03:10")             # время ночного запуска (по Москве)
 QA_NIGHT_N = int(os.getenv("QA_NIGHT_N", "0"))              # сколько разговоров ночью (по кругу); 0 — не запускать (Абдулла: пока не нужно)
 QA_MAX_HOURS = float(os.getenv("QA_MAX_HOURS", "1"))       # страховка: «Старт» сам остановится через N часов (деньги ИИ)
+# Стоп-кран по деньгам ИИ (₽ в день). Цены — ₽ за 1000 токенов (проверьте по тарифу Яндекса).
+LLM_DAY_RUB = float(os.getenv("LLM_DAY_RUB", "1500"))        # всё вместе: клиенты + проверки
+QA_DAY_RUB = float(os.getenv("QA_DAY_RUB", "300"))           # из них — на тайного покупателя
+LLM_PRICE_PRO = float(os.getenv("LLM_PRICE_PRO", "1.2"))
+LLM_PRICE_LITE = float(os.getenv("LLM_PRICE_LITE", "0.2"))
 QA_DAY_LIMIT = int(os.getenv("QA_DAY_LIMIT", "30"))        # больше N тестовых разговоров в день не запускаем (деньги ИИ)
 QA_CUSTOMER_MODEL = os.getenv("QA_CUSTOMER_MODEL", "yandexgpt-lite/latest")   # кем играем «клиента» — дешёвая модель
 QA_N = int(os.getenv("QA_N", "10"))                         # сколько разговоров по команде /qa
