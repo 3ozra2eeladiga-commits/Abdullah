@@ -3198,7 +3198,8 @@ _NUM_TEENS = {"десять": 10, "одиннадцать": 11, "двенадц�
 _NUM_TENS = {"двадцать": 20, "тридцать": 30, "сорок": 40, "пятьдесят": 50, "шестьдесят": 60, "семьдесят": 70,
              "восемьдесят": 80, "девяносто": 90}
 _NUM_HUND = {"сто": 100, "двести": 200, "триста": 300, "четыреста": 400, "пятьсот": 500, "шестьсот": 600,
-             "семьсот": 700, "восемьсот": 800, "девятьсот": 900}
+             "семьсот": 700, "восемьсот": 800, "девятьсот": 900,
+             "пятьста": 500, "шестьста": 600, "семьста": 700, "восемьста": 800, "девятьста": 900}   # так пишут/слышат
 _NUM_WORD_RE = "|".join(sorted(list(_NUM_UNITS) + list(_NUM_TEENS) + list(_NUM_TENS) + list(_NUM_HUND), key=len, reverse=True))
 _SPOKEN_RUN_RE = re.compile(rf"(?<![а-яё])(?:(?:{_NUM_WORD_RE})(?![а-яё])[\s,.\-]*){{4,}}", re.I)
 
@@ -3225,6 +3226,12 @@ def _spoken_digits(run):
             else:
                 groups.append([_NUM_UNITS[w], 1])
     return "".join(str(v) for v, _ in groups)
+
+
+def _spoken_numbers_after_no(text):
+    """«букет номер шестьсот девяносто три» → «букет номер 693» (номер букета с сайта словами)."""
+    return re.sub(rf"(\b(?:номер|№)\s*)((?:(?:{_NUM_WORD_RE})(?![а-яё])\s*){{1,4}})",
+                  lambda m: m.group(1) + _spoken_digits(m.group(2)) + " ", text or "", flags=re.I)
 
 
 def _spoken_phones(text):
@@ -3283,7 +3290,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     quote — текст сообщения, на которое клиент ответил (reply): подпись фото букета и т.п. Используется
     ТОЛЬКО для распознавания (какой букет), но НЕ подмешивается в сам текст для ИИ, чтобы его не путать."""
     if not from_staff:
-        incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(_spoken_money_time(_spoken_phones(incoming)))),
+        incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(_spoken_money_time(_spoken_numbers_after_no(_spoken_phones(incoming))))),
                                     db.get_setting(f"lastq:{client}") or "")
         incoming = _fix_budget_answer(client, incoming, db.get_setting(f"lastq:{client}") or "")    # «саморезов» → «самовывоз», «дастафка» → «доставка»
     # На «на какую дату?» ответили «сейчас / срочно / прямо сейчас» — это СЕГОДНЯ, как можно скорее (1–2 часа), Абдулла.
@@ -3383,6 +3390,13 @@ def respond(client, incoming, from_staff=False, quote=""):
                 else:
                     ct["to_where"] = ans[3]
                     ct["to_name"] = ans[3].split(",")[0].strip()[:60]
+            if not ct.get("me_phone"):        # свой номер клиент написал раньше (в первом сообщении) — берём его
+                early = [p.group(0).strip() for m in db.history(client, 60) if m["role"] == "user"
+                         for p in PHONE_RE.finditer(m["content"])]
+                to_d = re.sub(r"\D", "", ct.get("to_phone") or "")[-10:]
+                own = [p for p in early if re.sub(r"\D", "", p)[-10:] != to_d]
+                if own:
+                    ct["me_phone"] = own[0]
             db.set_setting(f"contacts:{client}", json.dumps(ct, ensure_ascii=False))
             bits = []
             if ans.get(0):
