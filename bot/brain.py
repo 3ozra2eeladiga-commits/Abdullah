@@ -3426,6 +3426,10 @@ def respond(client, incoming, from_staff=False, quote=""):
     if ((quote and (picked or addons)) or (addons and not picked)) and not from_staff:
         it0 = (picked or addons)[0]
         content = f"{incoming} — про «{it0['title']}» ({it0['price']} ₽)"
+    if not from_staff and re.search(r"адрес|" + re.escape(FORM_HEAD), last_q or _last_bot_text(client, ""), re.I):
+        incoming = re.sub(rf"(?<=[,\s])((?:(?:{_NUM_WORD_RE})(?![а-яё])\s*){{1,3}})",
+                          lambda m: _spoken_digits(m.group(1)) + " ", incoming or "", flags=re.I).strip()
+        content = incoming          # в историю — уже с цифрами («Крайнего, 90»), чтобы адрес был виден
     db.add_message(client, "user", content)
     # Клиент выбрал открытку (ответом на фото / названием) — сразу просим текст для неё (или показываем уже
     # названный текст на подтверждение). Не зависим от того, собрал ли ИИ заказ.
@@ -3458,9 +3462,6 @@ def respond(client, incoming, from_staff=False, quote=""):
             st = _contacts(client)
             st.update({k: v for k, v in both.items() if v})
             db.set_setting(f"contacts:{client}", json.dumps(st, ensure_ascii=False))
-    if not from_staff and re.search(r"адрес|" + re.escape(FORM_HEAD), last_q or _last_bot_text(client, ""), re.I):
-        incoming = re.sub(rf"(?<=[,\s])((?:(?:{_NUM_WORD_RE})(?![а-яё])\s*){{1,3}})",
-                          lambda m: _spoken_digits(m.group(1)) + " ", incoming or "", flags=re.I).strip()
     # Назвал точное время («к 15:00») после «как можно скорее» — время клиента главнее «скорее».
     if not from_staff and re.search(r"\b\d{1,2}[:.]\d{2}\b|\bк\s*\d{1,2}\b", incoming or "") \
             and not SOON_RE.search(incoming or "") and not re.search(r"как можно|срочно|скорее|быстрее", incoming or "", re.I):
