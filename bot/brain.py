@@ -490,6 +490,8 @@ def _pick_wish(incoming):
     rest = rest[:150].strip(" ,.")
     if re.search(r"\d[\d\s]{2,6}\s*₽", rest):
         return ""                                     # клиент скопировал подпись фото «… — 2889 ₽» — это выбор
+    rest = re.sub(r"[^.!?]*\b(?:он|она|оно|такой|такая|очень|какой|какая)\s+(?:такой\s+|такая\s+|очень\s+)?"
+                  r"(?:нежн|красив|мил|прекрасн|шикарн|чудесн|симпатичн)\w*[^.!?]*[.!?]*", " ", rest, flags=re.I).strip(" ,.")
     if not WISH_SIGNAL_RE.search(rest) or re.search(r"кажется|наверн|вроде\b|по-моему|если\s+не\s+ошиба", rest, re.I):
         return ""                                     # «он такой красивый», «доченька» — не пожелание к сборке
     # Это не пожелание к сборке, а дата/время/доставка или вопрос — их ведёт обычная логика.
@@ -1590,7 +1592,8 @@ def _next_question(user_msgs, city, order=None):
 
 
 # Клиент отказался от открытки коротким «нет» в ответ на вопрос про открытку.
-NO_CARD_RE = re.compile(r"^\W*(?:(?:нет|неа|нет-нет|ноу|no|не\s*нужн\w*|не\s*надо|не\s*хочу|без\s+открытк\w*|без\s+неё|"
+NO_CARD_RE = re.compile(r"^\W*нет\b(?![^?]*(?:\bно\b|хочу|давай|добав|нужна\s+открыт))[^?]{0,45}$|"
+                        r"^\W*(?:(?:нет|неа|нет-нет|ноу|no|не\s*нужн\w*|не\s*надо|не\s*хочу|без\s+открытк\w*|без\s+неё|"
                         r"ничего\s+не\s+(?:надо|пиш\w*|нужно)|не\s+буду|не)\W*){1,3}"
                         r"(?:спасибо)?\W*$", re.I)
 
@@ -4048,7 +4051,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff and lbt.startswith(PICKUP_Q_HEAD):
         shops = _pickup_shops(city)
         m_n = re.match(r"^\D*(\d)\D*$", (incoming or "").strip())
-        m_w = re.match(r"^\W*(перв|втор|трет)\w*", (incoming or "").strip(), re.I)
+        m_w = re.search(r"\b(перв|втор|трет)(?:ый|ой|ий|ая|ое|ую)\b", (incoming or "").strip(), re.I)
         if not m_n and m_w:
             m_n = re.match(r"(\d)", str({"перв": 1, "втор": 2, "трет": 3}[m_w.group(1).lower()]))
         pick = shops[int(m_n.group(1)) - 1] if m_n and 1 <= int(m_n.group(1)) <= len(shops) else _shop_in(incoming, shops)
