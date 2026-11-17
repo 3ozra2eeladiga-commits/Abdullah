@@ -544,9 +544,12 @@ def _handle(msg, deliver):
         return
     if text.startswith("/agent") and config.QA_REPORT_TO and user_id == config.QA_REPORT_TO and _hooks.get("agent_link"):
         link = _hooks["agent_link"]()
-        send(chat_id, "🤖 Мой ИИ-агент работает в офисе: сам переписывается с ботом как разные клиенты, находит ошибки "
-                      "и чинит их. Откройте — посмотрите и спросите его, как идут дела 👇",
-             reply_markup={"inline_keyboard": [[{"text": "🏢 Открыть офис агента", "web_app": {"url": link}}]]})
+        intro = ("🤖 Мой ИИ-агент работает в офисе: сам переписывается с ботом как разные клиенты, находит ошибки "
+                 "и чинит их. Откройте — посмотрите и спросите его, как идут дела 👇")
+        ok = send(chat_id, intro, reply_markup={"inline_keyboard": [[{"text": "🏢 Открыть офис агента", "web_app": {"url": link}}]]})
+        if not ok:                          # Telegram не принял кнопку-приложение — даём обычную ссылку
+            send(chat_id, intro + "\n" + link,
+                 reply_markup={"inline_keyboard": [[{"text": "🏢 Открыть офис агента", "url": link}]]})
         call("setChatMenuButton", chat_id=chat_id,
              menu_button={"type": "web_app", "text": "🤖 Агент", "web_app": {"url": link}})
         return
