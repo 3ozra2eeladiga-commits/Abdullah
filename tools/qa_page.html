@@ -44,7 +44,7 @@ function draw(){if(KEY){btns.style.display="flex";}if(!D)return;
  st.textContent=D.running?(D.loop?`🟢 Идёт проверка: разговор №${D.index}`:`🟢 Идёт проверка: ${D.index} из ${total}`):`Проверка закончена: ${done} разговоров`;
  pb.style.width=(D.loop?(D.running?((D.index%10)*10+5):100):total?Math.round(100*(D.running?D.index-1:done)/total):0)+"%";
  const np=runs.reduce((a,r)=>a+r.problems.length,0)+(D.running?(D.problems_now||[]).length:0);
- sub.textContent=`Заявок дошло: ${runs.filter(r=>r.order).length} · проблем: ${np} · ИИ: ${(D.usage||{}).calls||0} запросов`;
+ sub.textContent=`Заявок дошло: ${runs.filter(r=>r.order).length} · проблем: ${np} · ИИ: ${(D.usage||{}).calls||0} запросов, ~${Math.round(((D.usage||{}).chars||0)/3500)} тыс. токенов`;
  let r=sel!=null?runs[sel]:null;
  ct.textContent=r?r.title:(D.running?"Сейчас: "+D.title:"Последний разговор");
  const dl=r?r.dialog:(D.running?D.dialog:(runs.length?runs[runs.length-1].dialog:[]));

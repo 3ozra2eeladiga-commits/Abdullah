@@ -543,7 +543,9 @@ def _handle(msg, deliver):
         send(chat_id, secret)
         return
     if text.startswith("/qa") and config.QA_REPORT_TO and user_id == config.QA_REPORT_TO and _hooks.get("on_qa"):
-        send(chat_id, _hooks["on_qa"](text[3:].strip()))      # «тайный покупатель» — только владельцу бота
+        answer, link = _hooks["on_qa"](text[3:].strip())      # «тайный покупатель» — только владельцу бота
+        send(chat_id, answer, **({"reply_markup": {"inline_keyboard": [[{"text": "🕵️ Открыть проверку: ▶️ Старт / ⏹ Стоп",
+                                                                       "url": link}]]}} if link else {}))
         return
     if not config.is_staff(user_id):
         if text.startswith("/start") or text.startswith("/myid"):
