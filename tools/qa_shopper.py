@@ -849,6 +849,7 @@ def main():
                              "order": bool(r.order), "problems": r.problems, "dialog": r.dialog})
         write_live()
         save(runs, t0)
+        add_stats(r)
         print(f"[{i}] {s['title']}: {'заказ' if r.order else 'без заказа'}, проблем {len(r.problems)}", flush=True)
         if stopped:
             break
@@ -865,6 +866,21 @@ def main():
     if os.path.exists(STOP_FILE):
         os.remove(STOP_FILE)
     print("\n" + rep)
+
+
+def add_stats(r):
+    """Счётчики за всё время (для «офиса агента»): сколько чатов, заявок, найденных проблем."""
+    path = os.path.join(QA_DIR, "stats.json")
+    try:
+        st = json.load(open(path, encoding="utf-8"))
+    except (OSError, ValueError):
+        st = {}
+    st["chats"] = st.get("chats", 0) + 1
+    st["orders"] = st.get("orders", 0) + (1 if r.order else 0)
+    st["found"] = st.get("found", 0) + len(r.problems)
+    st["last"] = time.time()
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(st, f)
 
 
 def save(runs, t0):

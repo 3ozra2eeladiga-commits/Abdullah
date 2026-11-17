@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Офис ИИ-агента</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0f1420;--card:#171e2e;--card2:#1e2740;--txt:#eef2fb;--mut:#8f9bb8;--acc:#7c9cff;--ok:#3ddc97;--bad:#ff6b6b;--warm:#ffcf6b}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(1200px 600px at 50% -200px,#26345c 0%,var(--bg) 60%);color:var(--txt);
+ font:15px/1.45 -apple-system,"SF Pro Text",Roboto,"Segoe UI",sans-serif;min-height:100vh}
+.wrap{max-width:560px;margin:0 auto;padding:14px 16px 30px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+h1{font-size:19px;font-weight:700;letter-spacing:.2px}
+.pill{font-size:13px;padding:5px 10px;border-radius:20px;background:#ffffff14;white-space:nowrap}
+.pill.on{background:#3ddc9722;color:var(--ok)}.pill.on::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;
+ background:var(--ok);margin-right:6px;box-shadow:0 0 0 0 #3ddc97aa;animation:pulse 1.6s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px #3ddc9700}100%{box-shadow:0 0 0 0 #3ddc9700}}
+.scene{position:relative;background:linear-gradient(180deg,#1b2440,#141a2b);border-radius:20px;padding:16px;overflow:hidden;
+ border:1px solid #ffffff10}
+.office{display:flex;gap:14px;align-items:flex-end}
+.bot{width:96px;flex:none}
+.bot svg{width:96px;height:auto;display:block}
+.eye{animation:blink 4s infinite;transform-origin:center}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.arm{animation:type .35s infinite alternate;transform-origin:50% 0}
+.idle .arm{animation:none}
+@keyframes type{to{transform:translateY(3px)}}
+.monitor{flex:1;min-width:0;background:#0b0f19;border:2px solid #2c3a63;border-radius:12px;padding:8px;height:168px;overflow:hidden;
+ position:relative;box-shadow:0 0 30px #7c9cff22 inset}
+.monitor .ttl{font-size:11px;color:var(--mut);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mm{display:flex;flex-direction:column;gap:4px}
+.mb{font-size:11px;line-height:1.3;padding:4px 7px;border-radius:9px;max-width:88%;overflow:hidden;display:-webkit-box;
+ -webkit-line-clamp:2;-webkit-box-orient:vertical;animation:pop .3s ease}
+.mb.c{background:#ffffff14;align-self:flex-start}.mb.b{background:#7c9cff33;align-self:flex-end}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}}
+.typing{position:absolute;right:10px;bottom:8px;display:flex;gap:3px}
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--acc);animation:dot 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes dot{50%{opacity:.2;transform:translateY(-2px)}}
+.desk{height:10px;background:linear-gradient(90deg,#5b4a3a,#7a6350);border-radius:5px;margin-top:8px}
+.mug{position:absolute;right:22px;bottom:18px;font-size:18px}
+.steam{position:absolute;right:28px;bottom:40px;width:8px;height:16px;border-radius:50%;border-left:2px solid #ffffff40;animation:steam 2.4s infinite}
+@keyframes steam{0%{opacity:0;transform:translateY(4px)}50%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+.doing{margin-top:12px;font-size:14px;color:var(--mut)}.doing b{color:var(--txt)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
+.st{background:var(--card);border:1px solid #ffffff0d;border-radius:16px;padding:12px}
+.st .n{font-size:28px;font-weight:800;letter-spacing:-.5px}.st .l{font-size:12.5px;color:var(--mut)}
+.st.g .n{color:var(--ok)}.st.r .n{color:var(--warm)}.st.b .n{color:var(--acc)}
+.card{background:var(--card);border:1px solid #ffffff0d;border-radius:18px;padding:14px;margin:12px 0}
+.card h2{font-size:15px;margin-bottom:10px}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:46vh;overflow-y:auto;padding-right:2px}
+.q,.a{padding:9px 12px;border-radius:16px;max-width:88%;white-space:pre-wrap;animation:pop .25s ease}
+.q{align-self:flex-end;background:var(--acc);color:#0b1020;border-bottom-right-radius:4px}
+.a{align-self:flex-start;background:var(--card2);border-bottom-left-radius:4px}
+.a.t::after{content:"печатает…";color:var(--mut);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.chip{border:1px solid #7c9cff66;background:#7c9cff14;color:var(--txt);border-radius:16px;padding:7px 11px;font-size:13.5px;cursor:pointer}
+.ask{display:flex;gap:8px}.ask input{flex:1;min-width:0;background:#0b0f19;border:1px solid #2c3a63;color:var(--txt);border-radius:14px;
+ padding:10px 12px;font-size:15px}.ask button{border:0;background:var(--acc);color:#0b1020;border-radius:14px;padding:0 14px;font-weight:700}
+.list div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:14px}
+.list div:last-child{border:0}.ok{color:var(--ok)}.bad{color:var(--warm)}
+.fx{font-size:14px;padding:6px 0;border-bottom:1px solid #ffffff0a}.fx:last-child{border:0}
+.foot{color:var(--mut);font-size:12px;text-align:center;margin-top:16px}
+</style></head><body><div class="wrap">
+<div class="top"><h1>🏢 Офис ИИ-агента</h1><span class="pill" id="pill">…</span></div>
+
+<div class="scene" id="scene">
+ <div class="office">
+  <div class="bot"><svg viewBox="0 0 100 120" aria-hidden="true">
+   <line x1="50" y1="4" x2="50" y2="16" stroke="#7c9cff" stroke-width="3"/><circle cx="50" cy="4" r="4" fill="#ffcf6b"/>
+   <rect x="18" y="16" width="64" height="48" rx="16" fill="#dfe6ff"/>
+   <rect x="26" y="26" width="48" height="26" rx="10" fill="#1b2440"/>
+   <g class="eye"><circle cx="40" cy="39" r="5" fill="#3ddc97"/><circle cx="60" cy="39" r="5" fill="#3ddc97"/></g>
+   <rect x="22" y="68" width="56" height="40" rx="14" fill="#c8d3ff"/>
+   <circle cx="50" cy="86" r="6" fill="#7c9cff"/>
+   <g class="arm"><rect x="8" y="74" width="12" height="30" rx="6" fill="#b7c4ff"/><rect x="80" y="74" width="12" height="30" rx="6" fill="#b7c4ff"/></g>
+  </svg></div>
+  <div class="monitor"><div class="ttl" id="mt">Тестовый чат</div><div class="mm" id="mm"></div>
+   <div class="typing" id="typ"><i></i><i></i><i></i></div></div>
+ </div>
+ <div class="desk"></div><div class="steam"></div><div class="mug">☕️</div>
+ <div class="doing" id="doing"></div>
+</div>
+
+<div class="stats">
+ <div class="st b"><div class="n" id="s1">0</div><div class="l">чатов проверил как «клиент»</div></div>
+ <div class="st g"><div class="n" id="s2">0</div><div class="l">заявок дошло до флориста</div></div>
+ <div class="st r"><div class="n" id="s3">0</div><div class="l">раз нашёл проблему</div></div>
+ <div class="st g"><div class="n" id="s4">0</div><div class="l">ошибок исправил в боте</div></div>
+</div>
+
+<div class="card"><h2>💬 Спросить агента</h2>
+ <div class="chat" id="chat"><div class="a">Привет! Я ИИ-агент. Сам переписываюсь с ботом как разные клиенты — торопыга, бабушка, недовольный… — нахожу ошибки и исправляю их. Спросите меня 🙂</div></div>
+ <div class="chips" id="chips"></div>
+ <div class="ask"><input id="inp" placeholder="Свой вопрос…" maxlength="300"><button id="send">➤</button></div>
+</div>
+
+<div class="card"><h2>🕵️ Последние проверки</h2><div class="list" id="recent">…</div></div>
+<div class="card"><h2>🛠 Что уже исправил</h2><div id="fixes">…</div></div>
+<div class="foot" id="foot"></div>
+</div>
+<script>
+const tg=window.Telegram&&Telegram.WebApp; if(tg){tg.ready();tg.expand();try{tg.setHeaderColor("#0f1420");tg.setBackgroundColor("#0f1420")}catch(e){}}
+const KEY=new URLSearchParams(location.search).get("key")||"";
+const QUICK=["Как идёт работа?","Что делаешь сейчас?","Что ты исправил?","Сколько это стоит?"];
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const shown={};
+function count(el,to){const from=shown[el.id]||0;if(from===to){el.textContent=to;return}const t0=performance.now();
+ const step=n=>{const k=Math.min(1,(n-t0)/900);el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(step)};
+ requestAnimationFrame(step);shown[el.id]=to}
+QUICK.forEach(q=>{const b=document.createElement("button");b.className="chip";b.textContent=q;b.onclick=()=>ask(q);$("chips").appendChild(b)});
+async function ask(q){if(!q.trim())return;const c=$("chat");c.insertAdjacentHTML("beforeend",`<div class="q">${esc(q)}</div>`);
+ const a=document.createElement("div");a.className="a t";c.appendChild(a);c.scrollTop=c.scrollHeight;
+ try{const r=await fetch("agent/ask?key="+encodeURIComponent(KEY),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({q})});
+  const j=await r.json();await new Promise(r=>setTimeout(r,500));a.className="a";typeOut(a,j.a||"…")}
+ catch(e){a.className="a";a.textContent="Нет связи 🙏"}
+ if(tg&&tg.HapticFeedback)tg.HapticFeedback.impactOccurred("light")}
+function typeOut(el,txt){let i=0;const c=$("chat");const t=setInterval(()=>{i+=3;el.textContent=txt.slice(0,i);c.scrollTop=c.scrollHeight;if(i>=txt.length)clearInterval(t)},16)}
+$("send").onclick=()=>{ask($("inp").value);$("inp").value=""};
+$("inp").addEventListener("keydown",e=>{if(e.key==="Enter"){ask($("inp").value);$("inp").value=""}});
+let lastKey="";
+async function tick(){try{const r=await fetch("agent/state.json?"+Date.now());const s=await r.json();
+ $("pill").className="pill"+(s.running?" on":"");$("pill").textContent=s.running?"Работает":"⏸ Отдыхает";
+ $("scene").classList.toggle("idle",!s.running);$("typ").style.display=s.running?"flex":"none";
+ $("doing").innerHTML=s.running?`Сейчас играет клиента <b>«${esc(s.title)}»</b> и проверяет, правильно ли отвечает бот`
+   :`Проверка остановлена. Запуск — команда <b>/qa</b> в боте`;
+ $("mt").textContent=s.running?("Тестовый чат: "+s.title):"Последний тестовый чат";
+ const k=JSON.stringify(s.dialog);if(k!==lastKey){lastKey=k;$("mm").innerHTML=s.dialog.slice(-6).map(([w,t])=>`<div class="mb ${w==="client"?"c":"b"}">${w==="client"?"👤 ":"🤖 "}${esc(t)}</div>`).join("")}
+ count($("s1"),s.chats);count($("s2"),s.orders);count($("s3"),s.found);count($("s4"),s.fixed);
+ $("recent").innerHTML=s.recent.length?s.recent.map(r=>`<div><span>${esc(r.title)}</span><span class="${r.problems?"bad":"ok"}">${r.order?"🧾 заявка":"—"} ${r.problems?"❗"+r.problems:"✅"}</span></div>`).join(""):"пока нет";
+ $("fixes").innerHTML=s.fixes.map(t=>`<div class="fx">✅ ${esc(t)}</div>`).join("");
+ $("foot").textContent=`Версия бота ${s.version} · все чаты тестовые, клиентам и флористам ничего не уходит`;
+}catch(e){}setTimeout(tick,3000)}
+tick();
+</script></body></html>

@@ -1655,6 +1655,109 @@ def qa_stop_btn():
     return {"ok": qa_stop(), "running": _qa_lock.locked()}
 
 
+# ---------- «Офис агента»: красивый экран для Telegram (Mini App) — что делает ИИ-агент, можно спросить его ----------
+
+def _agent_log():
+    try:
+        with open(os.path.join(_REPO_ROOT, "tools", "agent_log.json"), encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {"base": {}, "fixes": []}
+
+
+def agent_state():
+    """Всё для экрана агента: идёт ли проверка, что он делает сейчас, счётчики, последние правки."""
+    log_ = _agent_log()
+    try:
+        with open(os.path.join(QA_DIR, "live.json"), encoding="utf-8") as f:
+            live = json.load(f)
+    except (OSError, ValueError):
+        live = {}
+    try:
+        with open(os.path.join(QA_DIR, "stats.json"), encoding="utf-8") as f:
+            st = json.load(f)
+    except (OSError, ValueError):
+        st = {}
+    base = log_.get("base") or {}
+    dialog = [d for d in (live.get("dialog") or []) if d[0] in ("client", "bot")][-8:]
+    runs = live.get("runs") or []
+    return {
+        "running": _qa_lock.locked(),
+        "title": live.get("title", ""),
+        "dialog": dialog,
+        "chats": base.get("chats", 0) + st.get("chats", 0),
+        "orders": base.get("orders", 0) + st.get("orders", 0),
+        "found": base.get("found", 0) + st.get("found", 0),
+        "fixed": len(log_.get("fixes") or []),
+        "fixes": [x["t"] for x in (log_.get("fixes") or [])[:12]],
+        "recent": [{"title": r["title"], "order": r["order"], "problems": len(r["problems"])} for r in runs[-6:]][::-1],
+        "version": VERSION.split(" ")[0],
+        "calls": (live.get("usage") or {}).get("calls", 0),
+    }
+
+
+AGENT_QUICK = {
+    "status": "Как идёт работа?",
+    "now": "Что делаешь сейчас?",
+    "fixes": "Что ты исправил?",
+    "cost": "Сколько это стоит?",
+}
+
+
+def agent_answer(q):
+    """Ответ агента: на быстрые вопросы — по живым данным (без ИИ), на свободный — коротко через ИИ."""
+    s = agent_state()
+    key = next((k for k, v in AGENT_QUICK.items() if v == q), None)
+    work = "🟢 Сейчас работаю — переписываюсь с тестовыми клиентами." if s["running"] else "⏸ Сейчас отдыхаю — проверка остановлена."
+    if key == "status" or (not key and re.search(r"как\s+(?:идёт|идет|дела|успехи)|статус", q or "", re.I)):
+        return (f"{work}\nВсего проверил {s['chats']} чатов как «тайный покупатель», до флориста дошло {s['orders']} заявок. "
+                f"Нашёл проблемы {s['found']} раз и исправил {s['fixed']} ошибок в боте. Версия бота: {s['version']}.")
+    if key == "now":
+        if not s["running"]:
+            return f"{work} Нажмите «Старт» в боте (/qa) — и я снова начну проверять."
+        last = s["dialog"][-1][1][:160] if s["dialog"] else "начинаю новый разговор"
+        return f"Играю клиента «{s['title']}». Последнее сообщение в чате: «{last}»"
+    if key == "fixes":
+        return "Последние исправления:\n" + "\n".join(f"✅ {t}" for t in s["fixes"][:6])
+    if key == "cost":
+        return ("Один тестовый чат стоит примерно 50–80 ₽ (ИИ Яндекса отвечает как живому клиенту). "
+                "Час проверки — около 1000 ₽, после часа я сам останавливаюсь, чтобы не тратить лишнее.")
+    try:
+        ctx = (f"Ты — ИИ-агент, который тестирует и чинит бота цветочного магазина: сам играет разных клиентов, "
+               f"находит ошибки и исправляет. Данные: проверено чатов {s['chats']}, заявок дошло {s['orders']}, "
+               f"проблем найдено {s['found']}, исправлено {s['fixed']}, сейчас {'работаешь' if s['running'] else 'отдыхаешь'}. "
+               f"Последние правки: {'; '.join(s['fixes'][:6])}. Отвечай по-русски, коротко (2–3 предложения), бодро, "
+               "от первого лица, без выдумок.")
+        return llm.complete(ctx, [{"role": "user", "content": (q or "")[:300]}], attempts=2).strip()[:700]
+    except Exception:
+        return "Сейчас не могу ответить — попробуйте быстрый вопрос кнопкой 🙂"
+
+
+@app.get("/agent")
+def agent_page():
+    return send_from_directory(os.path.join(_REPO_ROOT, "tools"), "agent_page.html", max_age=0)
+
+
+@app.get("/agent/state.json")
+def agent_state_json():
+    return Response(json.dumps(agent_state(), ensure_ascii=False), mimetype="application/json",
+                    headers={"Cache-Control": "no-store"})
+
+
+@app.post("/agent/ask")
+def agent_ask():
+    data = request.get_json(silent=True) or {}
+    q = str(data.get("q") or "")[:300]
+    if q not in AGENT_QUICK.values() and (not qa_key() or request.args.get("key") != qa_key()):
+        return {"a": "Свободные вопросы — только владельцу. Нажмите быстрый вопрос 🙂"}
+    return {"a": agent_answer(q)}
+
+
+def agent_link():
+    base = config.PUBLIC_BASE_URL or "https://186-246-61-173.sslip.io"
+    return f"{base}/agent?key={qa_key()}"
+
+
 @app.get("/qa/live.json")
 def qa_live():
     path = os.path.join(QA_DIR, "live.json")
@@ -1708,7 +1811,8 @@ def main():
     threading.Thread(target=qa_resume_after_restart, daemon=True).start()
     telegram_bot.start(deliver_debounced, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
                        on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts, on_delivered=on_delivered,
-                       on_question=on_question, on_resume=on_resume, on_qa=on_qa)
+                       on_question=on_question, on_resume=on_resume, on_qa=on_qa,
+                       agent_link=agent_link)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
 
