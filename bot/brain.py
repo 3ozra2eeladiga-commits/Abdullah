@@ -560,6 +560,8 @@ def _has_address(user_msgs):
     labeled = []
     for m in user_msgs:
         for tail in re.findall(r"адрес\w*\s*:\s*([^\n.]+(?:\.\d[^\n.]*)?)", m or "", re.I):
+            tail = re.sub(r"\b(?:к|в|до|с|после|около)\s*\d{1,2}(?:[:.]\d{2})?\b|\b\d{1,2}:\d{2}\b|\bсегодня\b|"
+                          r"\bзавтр\w*|\bпослезавтра\b|\bутр\w*|\bвечер\w*", " ", tail, flags=re.I)
             rest = " ".join(x.strip() for x in tail.split(",") if x.strip() and not _not_address(x.strip()))
             if rest:
                 labeled.append(rest)
@@ -2471,6 +2473,10 @@ def _known_order(client):
     if (not _meaningful(cust) or mixed or not re.search(r"[А-Яа-яЁёA-Za-z]{2}", PHONE_RE.sub("", cust))) \
             and ct0.get("me_name") and ct0.get("me_phone"):
         d["заказчик"] = f"{ct0['me_name']}, {ct0['me_phone']}"
+    elif ct0.get("me_name") and not re.search(r"[А-Яа-яЁёA-Za-z]{2}", re.sub(r"ваш\w*|имя|телефон|\.\.\.", "",
+                                                                             PHONE_RE.sub("", cust), flags=re.I)):
+        ph = PHONE_RE.search(cust)                 # имя из анкеты, телефон — тот, что клиент дал раньше
+        d["заказчик"] = ct0["me_name"] + (f", {ph.group(0)}" if ph else "")
     if not _meaningful(d.get("получатель")) and ct0.get("to_name") and ct0.get("to_phone"):
         d["получатель"] = f"{ct0['to_name']}, {ct0['to_phone']}"
     if ct0.get("pickup") and ct0.get("me_name") and (ct0.get("me_phone") or ct0.get("nophone")):
