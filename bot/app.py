@@ -181,6 +181,17 @@ STUCK_RE = re.compile(r"не\s+понима\w*|не\s+понял\w*\s+(?:мен�
                       r"|опять\s+то\s+же|по\s+кругу", re.I)
 
 
+def _irritated_answer(text):
+    """«Доставка, сколько можно спрашивать!», «Второй, я же написала!» — клиент раздражён, но ОТВЕТИЛ: продолжаем
+    оформление, а не бросаем его флористу (тайный покупатель). «Не понимаю», «ты бот?», «бред» — по-прежнему флористу."""
+    t = text or ""
+    if re.search(r"не\s+понима|не\s+понял|бот|робот|тупо|бред|бесполезн|по\s+кругу|опять\s+то\s+же", t, re.I):
+        return False
+    rest = STUCK_RE.sub(" ", t)
+    rest = re.sub(r"\b(?:уже|же|я|вам|вас|ну|блин|спрашивать|писать|вы|ещё|еще|раз|сто|тысячу)\b", " ", rest, flags=re.I)
+    return bool(re.search(r"[А-Яа-яЁёA-Za-z0-9]{3,}|\b\d\b", rest))
+
+
 def _bot_stuck(client, new_text):
     """Бот в третий раз подряд пишет то же самое — значит, не понимает клиента."""
     norm = lambda x: re.sub(r"\W+", "", (x or "").lower())[:120]
@@ -466,7 +477,7 @@ def deliver(client, text, from_staff=False, quote=""):
         if not from_staff and _review_reply(client, text):     # оценка после доставки (1–5) и «почему плохо»
             return
         if not from_staff and not db.is_paused(client) and STUCK_RE.search(text or "") \
-                and len(db.history(client, 6)) >= 4:       # недоволен ботом посреди разговора
+                and len(db.history(client, 6)) >= 4 and not _irritated_answer(text):   # недоволен ботом посреди разговора
             _to_human(client, text)
             return
         if not from_staff and not db.is_paused(client) and (CALLBACK_RE.search(text or "") or (HUMAN_REQ_RE.search(text or "")

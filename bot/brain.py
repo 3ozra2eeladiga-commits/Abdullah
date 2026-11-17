@@ -523,6 +523,17 @@ def _picked_by_digit(client, incoming, city):
         bool(db.get_setting(f"album_all:{client}")) and not db.get_setting(f"lastq:{client}"))
     if not m and after_album:
         m = re.match(r"\W*([1-9]\d?)\s*[,.:—-]\s+(?=[^\d\s])", incoming or "")   # «3, в зелёной упаковке» сразу после фото
+    # «11» после «Выберите открытку» (альбом открыток — нумерация продолжается: 11, 12…) — это выбор открытки.
+    if m and re.search(r"выберите\s+открытку|ещё\s+открытки|открытк\w*[^.\n]{0,40}(?:на\s+фото|«эту»)", _last_bot_text(client, ""), re.I):
+        cards = [c for c in (db.get_setting(f"cards_shown:{client}") or "").split(",") if c]
+        album = [c for c in (db.get_setting(f"album_all:{client}") or "").split(",") if c]
+        n = int(m.group(1))
+        code = album[n - 1] if 0 < n <= len(album) and album[n - 1] in cards else (
+            (db.get_setting(f"shown:{client}") or "").split(",")[n - 1]
+            if 0 < n <= len((db.get_setting(f"shown:{client}") or "").split(",")) else "")
+        it = (catalog.get(code, city) or catalog.get(code)) if code else None
+        if it and CARD_RE.search(it.get("title", "")):
+            return [it]
     m2 = None if m else PHOTO_NUM_RE.search(incoming or "")
     if m2:
         m = type("M", (), {"group": lambda self, i, _g=next(g for g in m2.groups() if g): _g})()
@@ -2093,7 +2104,7 @@ def _stock_answer(items):
 
 
 QUESTION_LIKE_RE = re.compile(r"\?\s*$|^\W*(?:как|когда|сколько|можно|а\s+если|где|почему|зачем|есть\s+ли|что\s+(?:если|будет|можно))\b", re.I)
-NO_TEXT_RE = re.compile(r"^\W*(?:без\s+текст\w*|без\s+надпис\w*|текст\s+не\s+нуж\w*|ничего\s+не\s+пиш\w*|не\s+надо\s+пис\w*|ничего|ни\s*какой(?:\s+пока)?|не\s+какой(?:\s+пока)?|никак\w*\s+не\s+надо)\W*$", re.I)
+NO_TEXT_RE = re.compile(r"^\W*(?:(?:нет|не\s+надо|не\s+нужно)\W*)?(?:без\s+текст\w*|без\s+надпис\w*|текст\s+не\s+нуж\w*|ничего\s+не\s+пиш\w*|не\s+надо\s+пис\w*|ничего|ни\s*какой(?:\s+пока)?|не\s+какой(?:\s+пока)?|никак\w*\s+не\s+надо)\W*$", re.I)
 NO_CARD_AT_ALL_RE = re.compile(r"без\s+открытк|открытк\w*\s+не\s+нуж|не\s+нужн\w*\s+открытк", re.I)
 CARD_PICK_Q = "Выберите открытку — ответьте «эту» на фото. Текст «{text}» напишем на ней 🌸"
 
@@ -3990,9 +4001,14 @@ def respond(client, incoming, from_staff=False, quote=""):
             photos = (cc.relevant_items(incoming or "популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True,
                                         ready_first=_ready_first(client, incoming))
                       [:MIN_OPTIONS] if cc else [])
+            if not photos and cc:          # длинное первое сообщение (адрес, телефоны…) — по нему ничего не ищется
+                photos = cc.relevant_items("популярные букеты", limit=MIN_OPTIONS + 3, bouquets_only=True,
+                                           ready_first=_ready_first(client, incoming))[:MIN_OPTIONS]
             if photos:
                 text = text.split("\n", 1)[0] + "\nВот варианты 🌸 Какой нравится? Ответьте «этот» на фото."
                 db.set_setting(f"shown:{client}", ",".join(p["code"] for p in photos))
+            elif "Вот варианты" in text:   # «Вот варианты» без фото — клиенту не из чего выбрать
+                text = text.split("\n", 1)[0] + "\nКакой букет хотите? Напишите номер с сайта или пару слов — подберу 🌸"
         db.add_message(client, "assistant", text)
         return Reply(text=text, city=city, photos=photos)
     # ОТМЕНА заказа: «хочу отменить» → «Отменить заказ №N (…)? да / нет» → «да» → отменён, флористу — уведомление.

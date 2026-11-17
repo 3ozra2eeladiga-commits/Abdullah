@@ -769,7 +769,7 @@ class Run:
         for line in whole.splitlines():
             if FRESH_RE.search(line) and not re.search(r"флорист|уточн|провер|спрош|узна", line, re.I):
                 self.problem("🌹 Бот сам ответил про свежесть (правило 4)", f"Клиент: «{text}»\nБот: {line}")
-        if albums and self.chosen and not MORE_RE.search(text):
+        if albums and self.chosen and not MORE_RE.search(text) and not re.search(r"открытк", whole, re.I):   # альбом открыток — можно
             self.problem("📷 Прислал букеты без просьбы после выбора", f"Клиент: «{text}»")
         if albums and not ({"date"} & self.facts) and not self.s["key"].startswith("photo"):
             self.problem("📅 Показал букеты без даты (правило 6)", f"Клиент: «{text}»")
