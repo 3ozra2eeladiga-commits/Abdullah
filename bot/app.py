@@ -1004,7 +1004,9 @@ def run_qa(args, title="🕵️ Проверка"):
         try:
             root = _REPO_ROOT
             os.makedirs(QA_DIR, exist_ok=True)
-            for name in ("report.txt", "dialogs.txt", "live.json", "stop"):
+            if os.path.exists(os.path.join(QA_DIR, "dialogs.txt")):      # прошлые переписки — не теряем
+                os.replace(os.path.join(QA_DIR, "dialogs.txt"), os.path.join(QA_DIR, "dialogs_prev.txt"))
+            for name in ("report.txt", "live.json", "stop"):
                 if os.path.exists(os.path.join(QA_DIR, name)):
                     os.remove(os.path.join(QA_DIR, name))
             env = dict(os.environ)
@@ -1017,6 +1019,7 @@ def run_qa(args, title="🕵️ Проверка"):
             except OSError:
                 rep = "❌ Проверка не завершилась:\n" + (p.stderr or p.stdout or "")[-1500:]
             rep = f"{title}\n{rep}"
+            _qa_active_clear()
             for i in range(0, len(rep), 3800):
                 telegram_bot.send(to, rep[i:i + 3800], disable_notification=True)
             path = os.path.join(QA_DIR, "dialogs.txt")
@@ -1048,6 +1051,7 @@ def qa_link():
 
 def qa_stop():
     """«Стоп»: тайный покупатель заканчивает текущий ход, присылает отчёт о том, что успел."""
+    _qa_active_clear()
     if not _qa_lock.locked():
         return False
     os.makedirs(QA_DIR, exist_ok=True)
@@ -1055,8 +1059,38 @@ def qa_stop():
     return True
 
 
-def qa_start():
-    return run_qa(["--loop", "--hours", str(config.QA_MAX_HOURS)], "🕵️ Проверка остановлена")
+QA_ACTIVE = os.path.join(QA_DIR, "active.json")   # «Старт» нажат и ещё не «Стоп» — после перезапуска бота продолжаем
+
+
+def _qa_active_clear():
+    try:
+        os.remove(QA_ACTIVE)
+    except OSError:
+        pass
+
+
+def qa_start(hours=None):
+    hours = float(hours or config.QA_MAX_HOURS)
+    ok = run_qa(["--loop", "--hours", f"{hours:.2f}"], "🕵️ Проверка остановлена")
+    if ok and hours == float(config.QA_MAX_HOURS):
+        os.makedirs(QA_DIR, exist_ok=True)
+        with open(QA_ACTIVE, "w") as f:
+            json.dump({"until": time.time() + hours * 3600}, f)
+    return ok
+
+
+def qa_resume_after_restart():
+    """Бот перезапустился (обновление с правками), а проверка была запущена — продолжаем её сами."""
+    try:
+        with open(QA_ACTIVE) as f:
+            left = (json.load(f).get("until", 0) - time.time()) / 3600
+    except (OSError, ValueError):
+        return
+    if left > 0.05:
+        time.sleep(20)
+        qa_start(left)
+    else:
+        _qa_active_clear()
 
 
 def on_qa(arg):
@@ -1658,6 +1692,7 @@ def main():
     _disable_windows_quick_edit()
     catalog.refresh()
     threading.Thread(target=_daily_loop, daemon=True).start()
+    threading.Thread(target=qa_resume_after_restart, daemon=True).start()
     telegram_bot.start(deliver_debounced, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
                        on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts, on_delivered=on_delivered,
                        on_question=on_question, on_resume=on_resume, on_qa=on_qa)
