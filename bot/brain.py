@@ -316,10 +316,12 @@ NUM_STRONG_RE = re.compile(r"(?:№|#|\bномер\w*)\s*№?\s*(\d{2,4})", re.I
 SITE_ITEM_RE = re.compile(r"bukid=(?:item-)?([0-9a-f]{8}(?:-?[0-9a-f]{4}){3}-?[0-9a-f]{12})", re.I)
 
 
-def _picked_by_number(text, city):
-    """Если клиент назвал номер(а) букета с сайта (№600) — находим эти товары в каталоге."""
+def _picked_by_number(text, city, client=None):
+    """Если клиент назвал номер(а) букета с сайта (№600) — находим эти товары в каталоге.
+    «Букет №14», когда в чате показано 14+ фото, — это фото №14 из альбома, а не товар «Букет №14» в каталоге."""
     t = text or ""
-    strong = [m.group(1) for m in NUM_STRONG_RE.finditer(t)]
+    n_album = len([c for c in (db.get_setting(f"album_all:{client}") or "").split(",") if c]) if client else 0
+    strong = [m.group(1) for m in NUM_STRONG_RE.finditer(t) if not int(m.group(1)) <= n_album]
     if not strong:
         return []
     # Раз клиент явно перечисляет номера — добираем и остальные числа из того же сообщения («№600 и 740»).
@@ -3329,7 +3331,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         incoming = "к " + re.search(r"Например: (?:завтра )?к (\d{1,2}:\d{2})", _last_bot_text(client, last_q)).group(1)
         content = incoming
     # Букет, выбранный клиентом: по номеру (№600), ссылке с сайта или ответу (reply) на фото букета.
-    picked = ((_picked_by_number(detect, city) + _picked_from_site(detect, city)
+    picked = ((_picked_by_number(detect, city, client) + _picked_from_site(detect, city)
                + _picked_from_caption(detect, city)
                + (_picked_card_by_name(incoming, city) if _card_pick_turn(client, incoming, last_q) else [])
                + _card_yes(client, incoming, city, last_q)
