@@ -946,9 +946,22 @@ def _pickup_shops(city):
     """Все магазины для самовывоза (Абдулла: показываем все адреса): сначала города клиента, потом остальные —
     к адресу другого города дописываем город. [(адрес, часы), ...]"""
     own = [(a, h) for a, h in _city_shops(city)]
-    other = [(f"{c['name']}, {a}", h) for c in config.city_list() if c.get("name") and c.get("name") != city
+    other = [(a, h) for c in config.city_list() if c.get("name") and c.get("name") != city
              for a, h in (c.get("shops") or [])]
     return own + other
+
+
+def _shop_city(addr):
+    """В каком городе магазин с этим адресом (по shop.json)."""
+    return next((c.get("name") for c in config.city_list() if any(a == addr for a, _h in (c.get("shops") or []))), "")
+
+
+def _shop_full(addr):
+    """«Минеральные Воды, ул. Пятигорская, 41а» — город у КАЖДОГО адреса, если городов несколько
+    («ул. Пятигорская» в Минводах без города путают с городом Пятигорском)."""
+    many = len([c for c in config.city_list() if c.get("shops")]) > 1
+    cty = _shop_city(addr)
+    return f"{cty}, {addr}" if many and cty else addr
 
 
 def _shop_aliases(addr):
@@ -963,7 +976,7 @@ def _shop_aliases(addr):
 def _shop_label(addr, hours):
     """«ул. Украинская, 47 «Квартал» (08:00–22:00)» — для вопроса «из какого магазина заберёте»."""
     al = _shop_aliases(addr)
-    return f"{addr}{f' «{al[0]}»' if al else ''} ({hours})"
+    return f"{_shop_full(addr)}{f' «{al[0]}»' if al else ''} ({hours})"
 
 
 def _shop_in(text, shops):
@@ -4053,7 +4066,7 @@ def respond(client, incoming, from_staff=False, quote=""):
     # «Ближайший — Украинская, 47. Верно?» → «Да» — это выбор магазина (иначе бот снова спросит магазин).
     if shops_all and not lbt.startswith(PICKUP_Q_HEAD) and CONFIRM_YES_RE.search(incoming or "") \
             and not CORRECTION_RE.search(incoming or "") and _shop_in(lbt, shops_all):
-        db.set_setting(f"pickup_shop:{client}", _shop_in(lbt, shops_all)[0])
+        db.set_setting(f"pickup_shop:{client}", _shop_full(_shop_in(lbt, shops_all)[0]))
         db.clear_pending_order(client)
         incoming = "Магазин для самовывоза выбран, продолжаем оформление."
         card_done = True
@@ -4065,7 +4078,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             m_n = re.match(r"(\d)", str({"перв": 1, "втор": 2, "трет": 3}[m_w.group(1).lower()]))
         pick = shops[int(m_n.group(1)) - 1] if m_n and 1 <= int(m_n.group(1)) <= len(shops) else _shop_in(incoming, shops)
         if pick:
-            db.set_setting(f"pickup_shop:{client}", pick[0])
+            db.set_setting(f"pickup_shop:{client}", _shop_full(pick[0]))
             card_pend = db.get_pending_order(client)
             db.clear_pending_order(client)
             incoming = "Магазин для самовывоза выбран, продолжаем оформление."
