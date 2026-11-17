@@ -4676,10 +4676,11 @@ def respond(client, incoming, from_staff=False, quote=""):
     if not from_staff:
         confirmed = bool(CONFIRM_YES_RE.search(incoming or "")) and not CORRECTION_RE.search(incoming or "")
         prev = db.get_pending_order(client)      # итог, который клиент уже видел
-        lb_sum = " ".join([m["content"] for m in db.history(client, 8) if m["role"] == "assistant"][-2:])
-        if re.search(r"Флорист подтвердила", lb_sum):          # после итога пришло «флорист подтвердила» — итог в силе
-            lb_sum += " всё верно"
-        if confirmed and prev and not re.search(r"вс[её]\s+(?:ли\s+)?верно|всё\s+записала|пришлю\s+итог", lb_sum, re.I):
+        lb_sum = ([m["content"] for m in db.history(client, 8) if m["role"] == "assistant"] or [""])[-1]
+        offered_new = bool(re.search(r"вот\s+(?:ещё|еще|другой)|ещё\s+(?:один\s+)?вариант|нравится\s+ли|подходит\s+ли|"
+                                     r"хотите\s+(?:ли\s+)?(?:этот|его)", lb_sum, re.I) and re.search(r"\d\s*₽", lb_sum)
+                           and not re.search(r"всё\s+записала|итого", lb_sum, re.I))
+        if confirmed and prev and offered_new:
             # «Да, этот нравится» в ответ на «Вот ещё вариант: №691 — нравится?» — это НЕ «да» на итог:
             # итог устарел (букет мог смениться) — показываем новый итог, а не отправляем старый.
             confirmed = False
