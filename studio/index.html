@@ -77,6 +77,7 @@ header{position:fixed;top:14px;left:0;right:0;z-index:20}
 #wkPill.sleep .dot{background:#ffb15c;box-shadow:0 0 10px #ffb15c;animation:none}
 .bubble{position:absolute;left:0;top:calc(100% + 10px);z-index:5;max-width:380px;padding:14px 18px;border-radius:20px 20px 20px 6px;background:rgba(30,30,34,.92);animation:mup .3s}
 .bubble[hidden]{display:none}
+.bubble.bye{opacity:0;transform:translateY(6px);transition:opacity .4s,transform .4s}
 .bubble p{font-size:15.5px !important;margin:0 !important;color:#fff !important;display:block !important;line-height:1.4}
 .bubble small{display:block;margin-top:6px;color:var(--muted);font-size:12.5px}
 .dot{width:8px;height:8px;border-radius:50%;background:#34d27b;box-shadow:0 0 10px #34d27b;animation:blink 1.8s infinite}
@@ -358,7 +359,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
             <g class="b-sleep"><path d="M46 35h13"/><circle cx="37" cy="28" r="6"/><path d="M22 33Q21 22 31 27M22 33H33V45M29 32H45"/><text x="45" y="20" class="z z1">z</text><text x="51" y="12" class="z z2">z</text><text x="57" y="6" class="z z3">Z</text></g>
           </svg>
         </button>
-        <div class="bubble glass" id="bubble" hidden><p id="bubTxt"></p><small id="bubHint" data-ru="Нажмите ещё раз">Нажмите ещё раз</small></div>
+        <div class="bubble glass" id="bubble" hidden><p id="bubTxt"></p></div>
         <span class="pill">Сайты · AI · Игры · Съёмка</span>
       </div>
       <h1>Красиво снаружи.<br><span>Надёжно внутри.</span></h1>
@@ -676,13 +677,14 @@ document.querySelectorAll('#services .card:not(.card-hero)').forEach(c=>{
   const OPEN=9,CLOSE=22;
   const DAY=['Привет! Я сейчас за компьютером. Мы на связи каждый день с 9:00 до 22:00 по Москве.','Мы делаем сайты, ботов, AI-помощников, игры и приложения. И снимаем видео.','Каждую работу перед запуском вручную проверяет программист.','Нажмите на любую услугу ниже — там коротко написано, как она работает.','Хотите обсудить проект? Напишите нам в Telegram — ответим сегодня.'];
   const NIGHT=['Zzz… Сейчас мы отдыхаем. Работаем каждый день с 9:00 до 22:00 по Москве.','Напишите в Telegram уже сейчас — ответим утром, после 9:00.','Сайт работает круглосуточно: смотрите услуги и примеры, пока я сплю.'];
-  let working=true,i=0;
+  let working=true,i=0,tm=0,tm2=0;
   function mskHour(){try{return +new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Moscow',hour:'2-digit',hour12:false}).format(new Date())%24}catch(e){return (new Date().getUTCHours()+3)%24}}
   function upd(){const q=new URLSearchParams(location.search).get('wk');const h=mskHour();const w=q===null?(h>=OPEN&&h<CLOSE):q==='1';
     if(w!==working){i=0;bub.hidden=true}working=w;bd.classList.toggle('sleep',!w);pill.classList.toggle('sleep',!w);
     pt.dataset.ru=w?'Сейчас в работе · до 22:00':'Сейчас отдыхаем · ответим с 9:00';pt.textContent=T(pt.dataset.ru)}
   upd();setInterval(upd,60000);
-  bd.addEventListener('click',e=>{e.stopPropagation();const L=working?DAY:NIGHT;tx.dataset.ru=L[i%L.length];tx.textContent=T(tx.dataset.ru);i++;bub.hidden=false});
+  bd.addEventListener('click',e=>{e.stopPropagation();const L=working?DAY:NIGHT;tx.dataset.ru=L[i%L.length];tx.textContent=T(tx.dataset.ru);i++;bub.hidden=false;bub.classList.remove('bye');clearTimeout(tm);clearTimeout(tm2);
+    const ms=Math.min(9000,Math.max(3500,tx.textContent.length*70));tm=setTimeout(()=>{bub.classList.add('bye');tm2=setTimeout(()=>{bub.hidden=true;bub.classList.remove('bye')},400)},ms)});
   document.addEventListener('click',e=>{if(!e.target.closest('#bubble,#buddy'))bub.hidden=true});
 })();
 
