@@ -195,8 +195,8 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 }
 /* телефон: видно всю комнату — меньше зум фона, компактная панель сверху, ниже видно вас */
 @media (orientation:portrait) and (max-width:900px){
-  .bg-move{inset:-2%;animation-name:driftm}
-  @keyframes driftm{0%{transform:translate3d(-1%,0,0) scale(1.01)}100%{transform:translate3d(1%,.5%,0) scale(1.03)}}
+  .bg-move{inset:-2%;animation:driftm 16s ease-in-out infinite alternate}
+  @keyframes driftm{0%{transform:translate3d(-6%,0,0) scale(1.14)}50%{transform:translate3d(0,-1.5%,0) scale(1.1)}100%{transform:translate3d(6%,0,0) scale(1.14)}}
   .bg::after{background:linear-gradient(180deg,rgba(10,10,12,.25),rgba(10,10,12,0) 45%,rgba(10,10,12,.15))}
   .hero{align-items:flex-start;padding-top:96px;padding-bottom:10px;min-height:0}
   .hero-win{padding:20px 20px 22px;border-radius:26px}
