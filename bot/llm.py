@@ -88,6 +88,8 @@ def _spend(tokens, model):
     d["rub"] = round(d.get("rub", 0) + rub, 2)
     if _IS_QA:
         d["qa_rub"] = round(d.get("qa_rub", 0) + rub, 2)
+    if _night():
+        d["night_rub"] = round(d.get("night_rub", 0) + rub, 2)
     lim = config.LLM_DAY_RUB
     level = 100 if d["rub"] >= lim else 70 if d["rub"] >= lim * 0.7 else 0
     notify = level > d.get("warned", 0)
@@ -101,11 +103,19 @@ def _spend(tokens, model):
             log.warning("Не удалось сообщить о расходе ИИ: %s", e)
 
 
+def _night():
+    """Ночь по Москве (23:00–07:00): отдельный, маленький лимит — ночью пишут мало, а «шутник» может разорить."""
+    h = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=3))).hour
+    return h >= 23 or h < 7
+
+
 def budget_check():
     """Бросает BudgetExceeded, если дневной лимит денег на ИИ исчерпан (для тестов — свой, меньший лимит)."""
     d = spend_today()
     if d.get("rub", 0) >= config.LLM_DAY_RUB:
         raise BudgetExceeded(f"дневной лимит на ИИ {config.LLM_DAY_RUB:g} ₽ исчерпан (потрачено ~{d['rub']:.0f} ₽)")
+    if _night() and d.get("night_rub", 0) >= config.LLM_NIGHT_RUB:
+        raise BudgetExceeded(f"ночной лимит на ИИ {config.LLM_NIGHT_RUB:g} ₽ исчерпан")
     if _IS_QA and d.get("qa_rub", 0) >= config.QA_DAY_RUB:
         raise BudgetExceeded(f"дневной лимит на проверки {config.QA_DAY_RUB:g} ₽ исчерпан")
 

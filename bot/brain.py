@@ -3347,6 +3347,8 @@ def respond(client, incoming, from_staff=False, quote=""):
 
     quote — текст сообщения, на которое клиент ответил (reply): подпись фото букета и т.п. Используется
     ТОЛЬКО для распознавания (какой букет), но НЕ подмешивается в сам текст для ИИ, чтобы его не путать."""
+    if not from_staff and len(incoming or "") > config.MAX_INCOMING_CHARS:
+        incoming = incoming[:config.MAX_INCOMING_CHARS]     # спам огромными текстами — в ИИ уходит не больше N символов
     if not from_staff:
         incoming = _fix_time_answer(client, _fix_way_typos(client, _fix_common_typos(_spoken_money_time(_spoken_numbers_after_no(_spoken_phones(incoming))))),
                                     db.get_setting(f"lastq:{client}") or "")
@@ -4622,6 +4624,18 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city, staff_note=f"💬 Клиент пишет, пока ждёт подтверждения заявки: «{incoming}»")
         return Reply(text="", city=city, staff_note=f"💬 Клиент пишет, пока ждёт подтверждения заявки: «{incoming}»")
+    # Один клиент не может «съесть» деньги на ИИ: больше N ответов ИИ за сутки без заказа — дальше флорист.
+    if not from_staff and not client.startswith("tg:"):
+        key = f"aicalls:{client}:{datetime.datetime.now(_MSK):%Y-%m-%d}"
+        n_ai = int(db.get_setting(key) or 0) + 1
+        db.set_setting(key, n_ai)
+        if n_ai > config.AI_REPLIES_PER_CLIENT and not db.count_orders_since(
+                client, datetime.datetime.now(_MSK).timestamp() - 24 * 3600):
+            return _stop_chat(client, city,
+                              "Мы уже долго переписываемся 🙏 Чтобы ничего не перепутать, дальше вам поможет флорист — "
+                              "она напишет вам здесь. Бот пока не отвечает.",
+                              f"🚫 Бот остановил переписку: больше {config.AI_REPLIES_PER_CLIENT} ответов ИИ клиенту за сутки "
+                              "без заказа (бережём деньги на ИИ). Ответьте клиенту сами.")
     raw = llm.complete(system_prompt(history, city, picked, flower_block + up_block + addon_block, size_change,
                                      known=None if from_staff else _known_order(client)),
                        _merge_roles(history))
