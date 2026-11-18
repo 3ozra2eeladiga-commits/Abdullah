@@ -73,6 +73,7 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 
 /* о нас */
 .scrub{height:320vh;position:relative;padding:0}
+.scrub.auto{height:auto}.scrub.auto .scrub-stick{position:static;height:auto;padding:30px 0}.scrub.auto .scrub-hint{display:none}
 .scrub-stick{position:sticky;top:0;height:100svh;display:flex;align-items:center;padding:90px 0 30px}
 .scrub-win{width:100%;padding:8px;position:relative;overflow:hidden}
 .scrub-win video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:calc(var(--r) - 8px);background:#f4f4f4}
@@ -329,13 +330,25 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 </main>
 
 <script>
-// видео студии идёт вместе с прокруткой
+// видео студии: на компьютере идёт вместе с прокруткой, на телефоне играет само по кругу
 (()=>{const sec=document.getElementById('work'),wv=document.getElementById('workVideo'),bar=document.getElementById('workBar');if(!sec||!wv)return;
-  let target=0,cur=0,ready=false;wv.addEventListener('loadedmetadata',()=>{ready=true});
+  wv.muted=true;wv.setAttribute('muted','');wv.playsInline=true;
+  const touch=matchMedia('(pointer:coarse)').matches;
+  if(touch){
+    // телефон: перемотка прокруткой работает плохо (особенно iPhone) — просто играем по кругу, пока блок на экране
+    sec.classList.add('auto');wv.loop=true;
+    new IntersectionObserver(es=>es.forEach(e=>{e.isIntersecting?wv.play().catch(()=>{}):wv.pause()}),{threshold:.2}).observe(wv);
+    const kick=()=>{wv.play().catch(()=>{});removeEventListener('touchstart',kick)};addEventListener('touchstart',kick,{passive:true});
+    (function t(){if(wv.duration)bar.style.width=(wv.currentTime/wv.duration*100).toFixed(1)+'%';requestAnimationFrame(t)})();
+    return;
+  }
+  let target=0,cur=0,ready=false;
+  const ok=()=>{ready=true};wv.addEventListener('loadedmetadata',ok);if(wv.readyState>=1)ready=true;
+  wv.load();
   function prog(){const r=sec.getBoundingClientRect(),len=r.height-innerHeight;return Math.min(1,Math.max(0,-r.top/len))}
-  addEventListener('scroll',()=>{target=prog()},{passive:true});
+  addEventListener('scroll',()=>{target=prog()},{passive:true});target=prog();
   (function tick(){cur+=(target-cur)*.12;bar.style.width=(cur*100).toFixed(1)+'%';
-    if(ready&&wv.duration&&Math.abs(wv.currentTime-cur*wv.duration)>.03&&!wv.seeking)wv.currentTime=cur*(wv.duration-.05);
+    if(ready&&wv.duration&&!wv.seeking&&Math.abs(wv.currentTime-cur*(wv.duration-.05))>.03)wv.currentTime=cur*(wv.duration-.05);
     requestAnimationFrame(tick)})();
 })();
 
