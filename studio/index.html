@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Визуал × Код — студия сайтов и контента</title>
+<meta name="description" content="Студия из двух человек: визуал, фото и видео + надёжная и безопасная разработка сайтов.">
+<style>
+:root{
+  --bg:#0b0b0c; --panel:#161618; --panel-2:#1e1e21; --line:#2a2a2e;
+  --text:#f4f4f2; --muted:#9b9ba1; --accent:#ffdb4d; --accent-ink:#141414;
+  --hot:#ff4d6d; --violet:#7c5cff; --radius:28px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"SF Pro Display","Inter","Segoe UI",Roboto,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* шапка */
+header{position:fixed;inset:0 0 auto 0;z-index:20;transition:background .3s, backdrop-filter .3s}
+header.solid{background:rgba(11,11,12,.72);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+.logo{font-weight:800;font-size:19px;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+.logo i{width:26px;height:26px;border-radius:50%;background:conic-gradient(from 210deg,var(--accent),var(--hot),var(--violet),var(--accent));display:block}
+.nav nav{display:flex;gap:6px}
+.nav nav a{padding:9px 16px;border-radius:999px;font-size:15px;font-weight:500;color:#d8d8da;transition:background .2s,color .2s}
+.nav nav a:hover{background:rgba(255,255,255,.1);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:999px;font-weight:700;font-size:16px;border:0;cursor:pointer;transition:transform .2s,background .2s}
+.btn:hover{transform:scale(1.04)}
+.btn-accent{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;backdrop-filter:blur(10px)}
+.nav .btn{padding:10px 20px;font-size:15px}
+
+/* первый экран с видео */
+.hero{position:relative;height:100svh;min-height:600px;display:flex;align-items:flex-end;overflow:hidden}
+.hero canvas,.hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero video{opacity:0;transition:opacity 1s}
+.hero video.on{opacity:1}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,11,12,.35) 0%,rgba(11,11,12,0) 35%,rgba(11,11,12,.55) 70%,var(--bg) 100%)}
+.hero-in{position:relative;z-index:2;padding-bottom:9vh;width:100%}
+.tag{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.12);backdrop-filter:blur(10px);font-size:14px;font-weight:600;margin-bottom:22px}
+.tag b{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.3;transform:scale(.7)}}
+h1{font-size:clamp(44px,9vw,128px);line-height:.92;font-weight:800;letter-spacing:-.045em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.hero p{max-width:560px;font-size:clamp(17px,1.6vw,21px);color:#dcdcdf;margin:26px 0 32px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.play{width:22px;height:22px;border-radius:50%;background:var(--accent-ink);position:relative;flex:none}
+.play::after{content:"";position:absolute;left:8px;top:6px;border-left:8px solid var(--accent);border-top:5px solid transparent;border-bottom:5px solid transparent}
+
+/* секции */
+section{padding:110px 0 0}
+.eyebrow{color:var(--muted);font-size:14px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px}
+h2{font-size:clamp(34px,5.4vw,68px);line-height:1;font-weight:800;letter-spacing:-.04em;margin-bottom:44px;text-wrap:balance}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .7s,transform .7s}
+.reveal.in{opacity:1;transform:none}
+
+/* о нас */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.person{position:relative;border-radius:var(--radius);padding:34px;min-height:440px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;isolation:isolate}
+.person::before{content:"";position:absolute;inset:-30%;z-index:-1;filter:blur(50px);animation:drift 14s ease-in-out infinite alternate}
+.p-visual{background:#2a1220}
+.p-visual::before{background:radial-gradient(circle at 30% 30%,#ff4d6d 0,transparent 45%),radial-gradient(circle at 75% 60%,#ff9f1c 0,transparent 40%)}
+.p-code{background:#12142e}
+.p-code::before{background:radial-gradient(circle at 70% 25%,#7c5cff 0,transparent 45%),radial-gradient(circle at 25% 70%,#00c2ff 0,transparent 40%);animation-delay:-6s}
+@keyframes drift{to{transform:translate(8%,-6%) rotate(18deg) scale(1.12)}}
+.role{position:absolute;top:28px;left:34px;font-size:14px;font-weight:700;padding:7px 14px;border-radius:999px;background:rgba(0,0,0,.35);backdrop-filter:blur(8px)}
+.person h3{font-size:clamp(30px,3.6vw,46px);font-weight:800;letter-spacing:-.035em;line-height:1}
+.person p{color:rgba(255,255,255,.85);margin:14px 0 20px;font-size:17px;max-width:440px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips span{padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.16);font-size:14px;font-weight:600}
+.plus{text-align:center;color:var(--muted);font-size:18px;margin-top:30px}
+.plus b{color:var(--text)}
+
+/* услуги */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--panel);border-radius:var(--radius);padding:30px;transition:background .25s,transform .25s;min-height:230px;display:flex;flex-direction:column}
+.card:hover{background:var(--panel-2);transform:translateY(-4px)}
+.card .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:24px;margin-bottom:auto;background:var(--panel-2)}
+.card:hover .ic{background:var(--accent)}
+.card h3{font-size:23px;font-weight:700;letter-spacing:-.02em;margin:26px 0 8px}
+.card p{color:var(--muted);font-size:15.5px}
+.card.wide{grid-column:span 2;background:var(--accent);color:var(--accent-ink)}
+.card.wide p{color:rgba(20,20,20,.72)}
+.card.wide .ic{background:var(--accent-ink)}
+.card.wide:hover{background:#ffe370}
+
+/* как работаем */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:s}
+.step{border-top:2px solid var(--line);padding-top:22px;counter-increment:s}
+.step::before{content:"0" counter(s);font-size:15px;font-weight:700;color:var(--accent)}
+.step h3{font-size:21px;font-weight:700;margin:10px 0 6px;letter-spacing:-.02em}
+.step p{color:var(--muted);font-size:15.5px}
+
+/* контакт */
+.final{margin:110px 0 60px;border-radius:40px;padding:clamp(40px,7vw,90px);text-align:center;position:relative;overflow:hidden;isolation:isolate;background:#17122b}
+.final::before{content:"";position:absolute;inset:-40%;z-index:-1;filter:blur(70px);background:radial-gradient(circle at 25% 40%,var(--violet) 0,transparent 40%),radial-gradient(circle at 75% 55%,var(--hot) 0,transparent 38%),radial-gradient(circle at 50% 90%,var(--accent) 0,transparent 30%);animation:drift 16s ease-in-out infinite alternate}
+.final h2{margin-bottom:18px}
+.final p{font-size:19px;color:rgba(255,255,255,.85);max-width:520px;margin:0 auto 32px}
+footer{color:var(--muted);font-size:14px;padding:0 0 40px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+@media (max-width:860px){
+  .nav nav{display:none}
+  .duo,.grid{grid-template-columns:1fr}
+  .card.wide{grid-column:auto}
+  .steps{grid-template-columns:1fr 1fr}
+  .person{min-height:380px;padding:26px}
+  .role{left:26px}
+  section{padding-top:80px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <div class="wrap nav">
+    <a href="#top" class="logo"><i></i>Визуал × Код</a>
+    <nav>
+      <a href="#about">О нас</a>
+      <a href="#services">Услуги</a>
+      <a href="#process">Как работаем</a>
+    </nav>
+    <a href="#contact" class="btn btn-accent">Обсудить проект</a>
+  </div>
+</header>
+
+<!-- ПЕРВЫЙ ЭКРАН. Положи своё видео в studio/media/hero.mp4 — оно само появится поверх анимации. -->
+<div class="hero" id="top">
+  <canvas id="wave" aria-hidden="true"></canvas>
+  <video id="heroVideo" muted loop playsinline preload="auto" src="media/hero.mp4"></video>
+  <div class="wrap hero-in">
+    <div class="tag"><b></b>Студия из двух человек</div>
+    <h1>Красиво снаружи.<br><em>Надёжно</em> внутри.</h1>
+    <p>Один отвечает за то, как сайт выглядит: дизайн, фото и видео. Второй — за то, чтобы он работал быстро и без дыр в безопасности.</p>
+    <div class="cta">
+      <a href="#contact" class="btn btn-accent"><span class="play"></span>Обсудить проект</a>
+      <a href="#about" class="btn btn-ghost">Кто мы</a>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section id="about">
+    <div class="eyebrow reveal">О нас</div>
+    <h2 class="reveal">Два человека —<br>один результат</h2>
+    <div class="duo">
+      <article class="person p-visual reveal">
+        <span class="role">Визуал</span>
+        <h3>Абдулла</h3>
+        <p>Дизайн, фото и видео. Отвечаю за то, чтобы сайт хотелось рассматривать и чтобы он запоминался с первого экрана.</p>
+        <div class="chips"><span>Дизайн</span><span>Фото</span><span>Видео</span><span>Креатив</span></div>
+      </article>
+      <article class="person p-code reveal">
+        <span class="role">Код</span>
+        <h3>Программист</h3>
+        <p>Разработка и безопасность. Отвечаю за то, чтобы сайт быстро открывался, не ломался и был защищён.</p>
+        <div class="chips"><span>Разработка</span><span>Безопасность</span><span>Скорость</span><span>Поддержка</span></div>
+      </article>
+    </div>
+    <p class="plus reveal">Вы общаетесь напрямую с теми, <b>кто делает работу</b> — без менеджеров и посредников.</p>
+  </section>
+
+  <section id="services">
+    <div class="eyebrow reveal">Услуги</div>
+    <h2 class="reveal">Что мы делаем</h2>
+    <div class="grid">
+      <div class="card wide reveal"><div class="ic">✨</div><h3>Сайт под ключ</h3><p>От идеи и съёмки до запуска: дизайн, контент, разработка и защита — всё в одних руках, с одним сроком и одной ценой.</p></div>
+      <div class="card reveal"><div class="ic">🎨</div><h3>Дизайн</h3><p>Стиль, который отличает вас от конкурентов и хорошо смотрится на телефоне.</p></div>
+      <div class="card reveal"><div class="ic">🎬</div><h3>Видео</h3><p>Ролики для первого экрана и соцсетей: съёмка, монтаж, цвет.</p></div>
+      <div class="card reveal"><div class="ic">📷</div><h3>Фото</h3><p>Съёмка товаров, команды и пространства — живые кадры вместо стоков.</p></div>
+      <div class="card reveal"><div class="ic">🛡️</div><h3>Разработка и защита</h3><p>Чистый код, быстрая загрузка, защищённые формы и данные клиентов.</p></div>
+    </div>
+  </section>
+
+  <section id="process">
+    <div class="eyebrow reveal">Как работаем</div>
+    <h2 class="reveal">Четыре шага до запуска</h2>
+    <div class="steps">
+      <div class="step reveal"><h3>Знакомство</h3><p>Разбираемся в задаче и предлагаем решение со сроком и ценой.</p></div>
+      <div class="step reveal"><h3>Визуал</h3><p>Рисуем дизайн, снимаем фото и видео, согласуем с вами.</p></div>
+      <div class="step reveal"><h3>Разработка</h3><p>Собираем сайт, проверяем скорость и безопасность.</p></div>
+      <div class="step reveal"><h3>Запуск</h3><p>Публикуем и остаёмся на связи: правки и поддержка.</p></div>
+    </div>
+  </section>
+
+  <div class="final reveal" id="contact">
+    <h2>Расскажите о проекте</h2>
+    <p>Напишите пару слов о задаче — ответим в тот же день и предложим, с чего начать.</p>
+    <!-- TODO: заменить ссылку на свой Telegram -->
+    <a href="https://t.me/" class="btn btn-accent">Написать в Telegram</a>
+  </div>
+
+  <footer><span>© 2026 Визуал × Код</span><span>Дизайн · Фото · Видео · Разработка</span></footer>
+</main>
+
+<script>
+// шапка
+const hdr=document.getElementById('hdr');
+addEventListener('scroll',()=>hdr.classList.toggle('solid',scrollY>40),{passive:true});
+
+// плавное появление блоков
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.15});
+document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(i%4)*70+'ms';io.observe(el)});
+
+// видео: показываем, если файл есть; иначе остаётся анимация
+const v=document.getElementById('heroVideo');
+let hasVideo=false;
+v.addEventListener('canplay',()=>{hasVideo=true;v.classList.add('on');v.play().catch(()=>{})});
+
+// анимация-заглушка: мягкие цветные волны
+const c=document.getElementById('wave'),x=c.getContext('2d');
+const blobs=[['#ff4d6d',.25,.35,.55,1],['#7c5cff',.7,.3,.6,1.3],['#ffdb4d',.5,.75,.4,.8],['#00c2ff',.85,.75,.45,1.1]];
+function size(){c.width=innerWidth/4;c.height=innerHeight/4}
+size();addEventListener('resize',size);
+const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function draw(t){
+  if(!hasVideo){
+    const w=c.width,h=c.height,s=t/5000;
+    x.globalCompositeOperation='source-over';x.fillStyle='#0b0b0c';x.fillRect(0,0,w,h);
+    x.globalCompositeOperation='lighter';
+    blobs.forEach(([col,bx,by,r,sp],i)=>{
+      const px=(bx+Math.sin(s*sp+i*2)*.18)*w,py=(by+Math.cos(s*sp*.8+i)*.16)*h,rad=r*Math.max(w,h)*(.85+Math.sin(s*sp*1.7+i)*.15);
+      const g=x.createRadialGradient(px,py,0,px,py,rad);g.addColorStop(0,col+'cc');g.addColorStop(1,col+'00');
+      x.fillStyle=g;x.fillRect(0,0,w,h);
+    });
+  }
+  if(!still&&!hasVideo)requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
