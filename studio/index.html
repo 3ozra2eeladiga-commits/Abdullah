@@ -109,7 +109,8 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 .row span:last-child{text-align:right}
 
 /* услуги — карточки как в референсе */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.grid>.card{grid-column:span 2}.grid>.card-half{grid-column:span 3}
 .card{padding:20px;display:flex;flex-direction:column;gap:14px;transition:transform .3s,background .3s}
 .card:hover{transform:translateY(-4px);background:rgba(80,80,86,.42)}
 .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -119,7 +120,7 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 .badge.w{background:rgba(255,177,92,.18);color:var(--warm)}
 .card .rows .row{font-size:14px;padding:9px 0}
 .card .btn{width:100%;padding:11px;font-size:14.5px;margin-top:auto}
-.card-hero{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1fr;column-gap:26px;row-gap:12px;align-items:start;background:rgba(40,70,130,.5);border-color:rgba(58,139,255,.55)}
+.grid>.card-hero{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1fr;column-gap:26px;row-gap:12px;align-items:start;background:rgba(40,70,130,.5);border-color:rgba(58,139,255,.55)}
 .card-hero .stage{grid-row:1/5;height:100%;min-height:260px}
 .card-hero h3{font-size:clamp(24px,2.6vw,34px);font-weight:700;letter-spacing:-.02em}
 .card-hero .lead{font-size:17px;color:rgba(245,245,247,.9)}
@@ -177,6 +178,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 @media (max-width:900px){
   .nav nav,.clock{display:none}
   .duo,.grid,.about{grid-template-columns:1fr}
+  .grid>.card,.grid>.card-half,.grid>.card-hero{grid-column:auto}
   .card-hero{grid-template-columns:1fr}.card-hero .stage{grid-row:auto;min-height:170px;height:170px}
   .about-text{padding:6px 22px 24px}
   .team .p-body+.p-body{border-left:0;border-top:1px solid var(--line)}
@@ -241,7 +243,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
     <div class="hero-win glass reveal">
       <div class="status">
         <span class="pill"><span class="dot"></span>Сейчас в работе</span>
-        <span class="pill">AI · Сайты · Съёмка</span>
+        <span class="pill">Сайты · AI · Съёмка</span>
       </div>
       <h1>Красиво снаружи.<br><span>Надёжно внутри.</span></h1>
       <p>Двое в одной студии: снимаем видео, делаем сайты и дизайн, создаём ботов и AI-помощников, которые работают за вас.</p>
@@ -264,18 +266,23 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   </section>
 
   <section id="services">
-    <div class="sec-head reveal"><h2>Услуги</h2><span class="sub">AI · Сайты · Съёмка</span></div>
+    <div class="sec-head reveal"><h2>Услуги</h2><span class="sub">Сайты · AI · Съёмка</span></div>
     <div class="grid">
+      <div class="card card-half glass reveal" data-s="3">
+        <div class="card-top"><div><h3>Сайты и дизайн</h3></div><span class="badge">Сайты</span></div>
+        <div class="rows"><div class="row"><span>Дизайн</span><span>Свой, не шаблон</span></div><div class="row"><span>Экраны</span><span>Телефон и ПК</span></div><div class="row"><span>Защита</span><span>Безопасный код</span></div></div>
+        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
+      </div>
+      <div class="card card-half glass reveal" data-s="4">
+        <div class="card-top"><div><h3>Telegram-боты</h3></div><span class="badge">AI</span></div>
+        <div class="rows"><div class="row"><span>Что умеют</span><span>Отвечают как живой человек</span></div><div class="row"><span>Заказы</span><span>Принимают и передают вам</span></div><div class="row"><span>Работают</span><span>24/7 без выходных</span></div></div>
+        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
+      </div>
       <div class="card card-hero glass reveal" data-s="7">
         <div class="card-top"><div><h3>AI-администратор для отеля</h3></div><span class="badge">Главное</span></div>
         <p class="lead">Отвечает на звонки и сообщения, принимает брони и помогает гостям — сам, 24/7, без выходных и больничных.</p>
         <div class="rows"><div class="row"><span>Звонки</span><span>Берёт трубку и говорит как человек</span></div><div class="row"><span>Сообщения</span><span>Telegram, WhatsApp, сайт</span></div><div class="row"><span>Брони</span><span>Принимает и подтверждает</span></div><div class="row"><span>Языки</span><span>Любые</span></div></div>
         <a href="https://t.me/khwajev" class="btn btn-blue" target="_blank" rel="noopener">Хочу такого в свой отель</a>
-      </div>
-      <div class="card glass reveal" data-s="4">
-        <div class="card-top"><div><h3>Telegram-боты</h3></div><span class="badge">AI</span></div>
-        <div class="rows"><div class="row"><span>Что умеют</span><span>Отвечают как живой человек</span></div><div class="row"><span>Заказы</span><span>Принимают и передают вам</span></div><div class="row"><span>Работают</span><span>24/7 без выходных</span></div></div>
-        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
       <div class="card glass reveal" data-s="5">
         <div class="card-top"><div><h3>AI-агенты и помощники</h3></div><span class="badge">AI</span></div>
@@ -285,11 +292,6 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
       <div class="card glass reveal" data-s="6">
         <div class="card-top"><div><h3>AI-видеонаблюдение</h3></div><span class="badge">AI</span></div>
         <div class="rows"><div class="row"><span>Камеры</span><span>Подключаем к любым</span></div><div class="row"><span>Следит</span><span>Перчатки, форма, порядок</span></div><div class="row"><span>Пример</span><span>Кухня, склад, зал</span></div></div>
-        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
-      </div>
-      <div class="card glass reveal" data-s="3">
-        <div class="card-top"><div><h3>Сайты и дизайн</h3></div><span class="badge">Сайты</span></div>
-        <div class="rows"><div class="row"><span>Дизайн</span><span>Свой, не шаблон</span></div><div class="row"><span>Экраны</span><span>Телефон и ПК</span></div><div class="row"><span>Защита</span><span>Безопасный код</span></div></div>
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
       <div class="card glass reveal" data-s="8">
