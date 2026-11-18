@@ -18,6 +18,14 @@ if command -v rsync >/dev/null 2>&1; then
 else
   cp -a "$REPO/gradosfera/." "$WEB/"
 fi
+# сайт студии VIZKOD (папка studio/ → ~/vizkod/public_html; домен vizkod.ru привязывается к этой папке в панели Timeweb)
+VZ="$HOME/vizkod/public_html"
+mkdir -p "$VZ"
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a --delete --exclude cgi-bin --exclude logo/sheet.html "$REPO/studio/" "$VZ/"
+else
+  cp -a "$REPO/studio/." "$VZ/"
+fi
 # сброс кэша браузера: подставляем номер версии в ссылки на css/js (?v=__V__)
 sed -i "s/__V__/$(git rev-parse --short HEAD)/g" "$WEB/index.html"
 echo "$(date '+%F %T') сайт обновлён до $(git rev-parse --short HEAD)" >> "$HOME/deploy.log"
