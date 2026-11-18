@@ -145,6 +145,24 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 @keyframes grow{0%,100%{transform:scaleX(.3)}50%{transform:scaleX(1)}}.scene .grow{animation:grow 3.5s ease-in-out infinite;transform-origin:0 0;transform-box:fill-box}
 @keyframes pulse2{0%,100%{transform:scale(.9)}50%{transform:scale(1.08)}}.scene .pulse{animation:pulse2 2.4s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
 
+/* пример работы: мини-окно браузера */
+.case{display:grid;grid-template-columns:1.25fr 1fr;gap:26px;padding:16px;align-items:center;transition:transform .35s,background .3s}
+.case:hover{transform:translateY(-4px);background:rgba(80,80,86,.5)}
+.win{border-radius:18px;overflow:hidden;background:#17171a;box-shadow:0 24px 60px rgba(0,0,0,.45);transition:transform .5s}
+.case:hover .win{transform:scale(1.015)}
+.win-bar{display:flex;align-items:center;gap:7px;padding:10px 14px;background:#232327}
+.win-bar i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.win-bar i:nth-child(2){background:#febc2e}.win-bar i:nth-child(3){background:#28c840}
+.win-url{margin-left:10px;flex:1;text-align:center;font-size:13px;color:rgba(255,255,255,.7);background:rgba(255,255,255,.08);border-radius:8px;padding:4px 10px}
+.win-view{position:relative;aspect-ratio:16/10;overflow:hidden}
+.win-view img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.06);transition:opacity 1s,transform 5s linear}
+.win-view img.on{opacity:1;transform:scale(1)}
+.win-open{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);padding:12px 22px;border-radius:999px;background:rgba(255,255,255,.92);color:#111;font-weight:700;font-size:15px;opacity:0;transition:.3s}
+.case:hover .win-open{opacity:1;transform:translate(-50%,-50%)}
+.case-text{padding:8px 12px 8px 0;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.case-text h3{font-size:clamp(24px,2.6vw,34px);font-weight:700;letter-spacing:-.02em}
+.case-text p{color:rgba(245,245,247,.85);font-size:16px}
+.case-text .rows{width:100%}
+
 /* как работаем — как календарь в референсе */
 .cal{padding:20px;overflow:hidden}
 .cal-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
@@ -177,7 +195,8 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 
 @media (max-width:900px){
   .nav nav,.clock{display:none}
-  .duo,.grid,.about{grid-template-columns:1fr}
+  .duo,.grid,.about,.case{grid-template-columns:1fr}
+  .case-text{padding:4px 8px 10px}
   .grid>.card,.grid>.card-half,.grid>.card-hero{grid-column:auto}
   .card-hero{grid-template-columns:1fr}.card-hero .stage{grid-row:auto;min-height:170px;height:170px}
   .about-text{padding:6px 22px 24px}
@@ -229,6 +248,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
       <a href="#top" class="logo"><img src="logo/v4.svg" alt="VIZKOD"><div>VIZKOD<small>Студия</small></div></a>
       <nav>
         <a href="#services">Услуги</a>
+        <a href="#cases">Работы</a>
         <a href="#process">Как работаем</a>
       </nav>
       <span class="clock" id="clock">--:--</span>
@@ -315,6 +335,27 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
     </div>
+  </section>
+
+  <section id="cases">
+    <div class="sec-head reveal"><h2>Наши работы</h2><span class="sub">Сайт, который мы сделали</span></div>
+    <a class="case glass reveal" href="https://gradosfera.com" target="_blank" rel="noopener" aria-label="Открыть сайт gradosfera.com">
+      <div class="win">
+        <div class="win-bar"><i></i><i></i><i></i><span class="win-url">gradosfera.com</span></div>
+        <div class="win-view" id="caseView"><img src="media/grad/1.jpg" alt="" loading="lazy" class=on><img src="media/grad/2.jpg" alt="" loading="lazy"><img src="media/grad/3.jpg" alt="" loading="lazy"><img src="media/grad/4.jpg" alt="" loading="lazy"><img src="media/grad/5.jpg" alt="" loading="lazy"><img src="media/grad/6.jpg" alt="" loading="lazy"><img src="media/grad/7.jpg" alt="" loading="lazy"><span class="win-open">Открыть сайт ↗</span></div>
+      </div>
+      <div class="case-text">
+        <span class="pill">Сайт · Дизайн · Анимация</span>
+        <h3>ЖК «Новый Квартал»</h3>
+        <p>Сайт жилого комплекса бизнес-класса для застройщика «Градосфера». Листаешь — и поднимаешься по дому: фасад, паркинг, этажи, квартиры, крыша.</p>
+        <div class="rows">
+          <div class="row"><span>Что сделали</span><span>Дизайн, сайт, анимации</span></div>
+          <div class="row"><span>Особенность</span><span>Планировки «на тросе», гид по дому</span></div>
+          <div class="row"><span>Адрес</span><span>gradosfera.com</span></div>
+        </div>
+        <span class="btn btn-blue">Смотреть сайт ↗</span>
+      </div>
+    </a>
   </section>
 
   <section id="process">
@@ -418,6 +459,11 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
    const ty=off*-38+(mx-cx)*14, tx=off*16;a[2]+=(ty-a[2])*.12;a[3]+=(tx-a[3])*.12;
    a[1].style.transform=`rotateY(${a[2].toFixed(2)}deg) rotateX(${a[3].toFixed(2)}deg)`}requestAnimationFrame(loop)})();
 })();
+
+// пример работы: кадры сайта сменяются сами
+(()=>{const v=document.getElementById('caseView');if(!v)return;const im=[...v.querySelectorAll('img')];let i=0,vis=false;
+  new IntersectionObserver(e=>{vis=e[0].isIntersecting}).observe(v);
+  setInterval(()=>{if(!vis)return;im[i].classList.remove('on');i=(i+1)%im.length;im[i].classList.add('on')},2600)})();
 
 // часы в шапке (как в интерфейсе из референса)
 const clk=document.getElementById('clock');
