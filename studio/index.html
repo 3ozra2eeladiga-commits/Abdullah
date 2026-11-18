@@ -299,7 +299,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   <section class="scrub" id="work">
     <div class="scrub-stick">
       <div class="scrub-win glass">
-        <video id="workVideo" muted playsinline preload="auto" poster="media/work.jpg" src="media/work.mp4"></video>
+        <video id="workVideo" muted playsinline webkit-playsinline preload="auto" poster="media/work.jpg" src="media/work.mp4"></video>
         <div class="scrub-cap"><span class="pill"><span class="dot"></span>Мы работаем</span><span class="scrub-hint">Листайте вниз</span></div>
         <div class="scrub-bar"><i id="workBar"></i></div>
       </div>
@@ -559,6 +559,15 @@ const portrait=matchMedia('(orientation: portrait)');
 function pickBg(){const m=portrait.matches;const src=m?'media/office-m.mp4':'media/office.mp4';
   if(v.getAttribute('src')!==src){v.poster=m?'media/office-m.jpg':'media/office.jpg';v.src=src;v.play().catch(()=>{})}}
 pickBg();portrait.addEventListener('change',pickBg);
+// страховка: если телефон не запустил видео сам (режим энергосбережения, встроенный браузер Telegram/Instagram) —
+// запускаем при любом касании и пробуем снова каждые пару секунд
+v.muted=true;v.defaultMuted=true;v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');
+function wakeVideos(){document.querySelectorAll('video').forEach(x=>{if(x.id==='workVideo'&&!document.getElementById('work').classList.contains('auto'))return;
+  x.muted=true;if(x.paused){const pr=x.play();if(pr&&pr.catch)pr.catch(()=>{})}})}
+['touchstart','touchend','click','pointerdown','keydown'].forEach(e=>addEventListener(e,wakeVideos,{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)wakeVideos()});
+setInterval(()=>{if(v.paused)wakeVideos()},2500);
+v.addEventListener('playing',()=>{hasVideo=true;v.classList.add('on')});
 v.addEventListener('canplay',()=>{hasVideo=true;v.classList.add('on');v.play().catch(()=>{})});
 
 // заглушка фона: тёплый «интерьер» из мягких пятен света
