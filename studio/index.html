@@ -73,6 +73,7 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 .sub{color:var(--muted);font-size:16px}
 .sec-head h2,.sec-head .sub{text-shadow:0 2px 24px rgba(0,0,0,.55),0 1px 3px rgba(0,0,0,.4)}
 .sec-head .sub{color:#fff}
+.more{display:none}
 .reveal{opacity:0;transform:translateY(26px) scale(.985);transition:opacity .8s,transform .8s}
 .reveal.in{opacity:1;transform:none}
 
@@ -232,6 +233,15 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   .duo,.grid,.about,.case,.why{grid-template-columns:minmax(0,1fr)}
   .grid>*,.case>*,.why>*{min-width:0}
   .music{right:12px;bottom:14px;padding:12px 18px;font-size:15px}.music.on{padding:13px 14px}.music.on #musicTxt{display:none}
+  /* на телефоне услуги свёрнуты: нажал — раскрылись подробности */
+  .grid>.card:not(.card-hero){cursor:pointer;gap:0}
+  .grid>.card:not(.card-hero) .card-top{margin-top:14px;align-items:center}
+  .grid>.card:not(.card-hero) .rows,.grid>.card:not(.card-hero) .btn{max-height:0;opacity:0;overflow:hidden;margin:0;padding-top:0;padding-bottom:0;border-width:0;transition:max-height .45s ease,opacity .35s,margin .35s,padding .35s}
+  .grid>.card.open:not(.card-hero) .rows{max-height:260px;opacity:1;margin-top:14px;border-width:1px 0 0}
+  .grid>.card.open:not(.card-hero) .btn{max-height:80px;opacity:1;margin-top:14px;padding:12px;border-width:1px}
+  .more{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;padding:10px;border-radius:999px;background:rgba(255,255,255,.1);font-size:14px;font-weight:600}
+  .more::after{content:"";width:8px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translateY(-2px);transition:transform .3s}
+  .card.open .more::after{transform:rotate(-135deg) translateY(-2px)}
   /* на телефоне между карточками больше воздуха — виден фон */
   .grid{gap:34px}.days{gap:26px}#cases .case+.case{margin-top:34px}section{padding:64px 0}.scrub.auto .scrub-stick{padding:44px 0 10px}
   .row span:last-child{overflow-wrap:anywhere}
@@ -574,6 +584,12 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 (()=>{const v=document.getElementById('caseView');if(!v)return;const im=[...v.querySelectorAll('img')];let i=0,vis=false;
   new IntersectionObserver(e=>{vis=e[0].isIntersecting}).observe(v);
   setInterval(()=>{if(!vis)return;im[i].classList.remove('on');i=(i+1)%im.length;im[i].classList.add('on')},2600)})();
+
+// услуги на телефоне: раскрываются по нажатию
+document.querySelectorAll('#services .card:not(.card-hero)').forEach(c=>{
+  const m=document.createElement('div');m.className='more';m.textContent='Подробнее';c.querySelector('.card-top').after(m);
+  c.addEventListener('click',e=>{if(e.target.closest('a')||!matchMedia('(max-width:900px)').matches)return;
+    const o=c.classList.toggle('open');m.textContent=o?'Свернуть':'Подробнее'})});
 
 // часы в шапке (как в интерфейсе из референса)
 const clk=document.getElementById('clock');
