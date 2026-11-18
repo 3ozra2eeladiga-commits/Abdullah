@@ -163,6 +163,19 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 .case-text p{color:rgba(245,245,247,.85);font-size:16px}
 .case-text .rows{width:100%}
 
+#cases .case+.case{margin-top:16px}
+.case-rev{grid-template-columns:1fr .8fr}.case-rev .case-text{padding:8px 0 8px 12px}
+.phone{justify-self:center;width:min(100%,300px);border-radius:34px;background:#17212b;border:6px solid #0c0c0e;box-shadow:0 24px 60px rgba(0,0,0,.45);overflow:hidden;transition:transform .5s;font-size:14px}
+.case:hover .phone{transform:translateY(-4px) rotate(-1.5deg)}
+.ph-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#232e3c}
+.ph-head img{width:34px;height:34px;border-radius:50%}.ph-head b{display:block;font-size:14px}.ph-head small{color:#7f91a4;font-size:12px}
+.ph-body{padding:12px;display:flex;flex-direction:column;gap:8px;background:#0e1621}
+.ph-pet{border-radius:16px;overflow:hidden;aspect-ratio:16/11}.ph-pet img{width:100%;height:100%;object-fit:cover;animation:floaty 3s ease-in-out infinite}
+.msg{align-self:flex-start;max-width:86%;padding:8px 12px;border-radius:14px 14px 14px 4px;background:#182533;color:#fff}
+.msg.me{align-self:flex-end;border-radius:14px 14px 4px 14px;background:#2b5278}
+.ph-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}.ph-keys span{text-align:center;padding:8px 2px;border-radius:10px;background:#1f2c3a;font-size:12px;color:#dfe7ef}
+.cases-more{margin-top:16px;text-align:center;color:#fff;font-size:16px;text-shadow:0 2px 16px rgba(0,0,0,.6)}
+
 /* как работаем — как календарь в референсе */
 .cal{padding:20px;overflow:hidden}
 .cal-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
@@ -197,7 +210,8 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 @media (max-width:900px){
   .nav nav,.clock{display:none}
   .duo,.grid,.about,.case{grid-template-columns:1fr}
-  .case-text{padding:4px 8px 10px}
+  .case-text,.case-rev .case-text{padding:4px 8px 10px}
+  .case-rev .phone{order:-1}
   .grid>.card,.grid>.card-half,.grid>.card-hero{grid-column:auto}
   .card-hero{grid-template-columns:1fr}.card-hero .stage{grid-row:auto;min-height:170px;height:170px}
   .about-text{padding:6px 22px 24px}
@@ -264,7 +278,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
     <div class="hero-win glass reveal">
       <div class="status">
         <span class="pill"><span class="dot"></span>Сейчас в работе</span>
-        <span class="pill">Сайты · AI · Съёмка</span>
+        <span class="pill">Сайты · AI · Игры · Съёмка</span>
       </div>
       <h1>Красиво снаружи.<br><span>Надёжно внутри.</span></h1>
       <p>Двое в одной студии: снимаем видео, делаем сайты и дизайн, создаём ботов и AI-помощников, которые работают за вас.</p>
@@ -287,7 +301,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   </section>
 
   <section id="services">
-    <div class="sec-head reveal"><h2>Услуги</h2><span class="sub">Сайты · AI · Съёмка</span></div>
+    <div class="sec-head reveal"><h2>Услуги</h2><span class="sub">Сайты · AI · Игры · Съёмка</span></div>
     <div class="grid">
       <div class="card card-half glass reveal" data-s="3">
         <div class="card-top"><div><h3>Сайты и дизайн</h3></div><span class="badge">Сайты</span></div>
@@ -315,7 +329,17 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
         <div class="rows"><div class="row"><span>Камеры</span><span>Подключаем к любым</span></div><div class="row"><span>Следит</span><span>Перчатки, форма, порядок</span></div><div class="row"><span>Пример</span><span>Кухня, склад, зал</span></div></div>
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
-      <div class="card glass reveal" data-s="8">
+      <div class="card glass reveal" data-s="13">
+        <div class="card-top"><div><h3>Игры</h3></div><span class="badge">Игры</span></div>
+        <div class="rows"><div class="row"><span>Где</span><span>Telegram, сайт, телефон</span></div><div class="row"><span>Жанры</span><span>Питомцы, аркады, квесты</span></div><div class="row"><span>Пример</span><span>TmGotchai — питомец в Telegram</span></div></div>
+        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
+      </div>
+      <div class="card card-half glass reveal" data-s="14">
+        <div class="card-top"><div><h3>Приложения</h3></div><span class="badge">Приложения</span></div>
+        <div class="rows"><div class="row"><span>Платформы</span><span>iPhone, Android, веб</span></div><div class="row"><span>Для чего</span><span>Запись, заказы, личный кабинет</span></div><div class="row"><span>Внутри</span><span>AI и оплата</span></div></div>
+        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
+      </div>
+      <div class="card card-half glass reveal" data-s="8">
         <div class="card-top"><div><h3>Под ключ</h3></div><span class="badge">Главное</span></div>
         <div class="rows"><div class="row"><span>Что входит</span><span>Съёмка, сайт, AI</span></div><div class="row"><span>Команда</span><span>Одна на всё</span></div><div class="row"><span>Цена</span><span>Считаем под задачу</span></div></div>
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
@@ -339,7 +363,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   </section>
 
   <section id="cases">
-    <div class="sec-head reveal"><h2>Наши работы</h2><span class="sub">Сайт, который мы сделали</span></div>
+    <div class="sec-head reveal"><h2>Примеры работ</h2><span class="sub">Несколько наших проектов</span></div>
     <a class="case glass reveal" href="https://gradosfera.com" target="_blank" rel="noopener" aria-label="Открыть сайт gradosfera.com">
       <div class="win">
         <div class="win-bar"><i></i><i></i><i></i><span class="win-url">gradosfera.com</span></div>
@@ -357,6 +381,30 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
         <span class="btn btn-blue">Смотреть сайт ↗</span>
       </div>
     </a>
+    <a class="case case-rev glass reveal" href="https://t.me/TmGotchai" target="_blank" rel="noopener" aria-label="Открыть бота TmGotchai в Telegram">
+      <div class="case-text">
+        <span class="pill">Игра · Telegram-бот</span>
+        <h3>TmGotchai — питомец в Telegram</h3>
+        <p>Игра прямо в мессенджере: у вас свой питомец, который сам гуляет, заводит друзей и находит подарки. Его можно кормить, играть с ним и читать истории его прогулок.</p>
+        <div class="rows">
+          <div class="row"><span>Что сделали</span><span>Игру и бота целиком</span></div>
+          <div class="row"><span>Где работает</span><span>В Telegram, без установки</span></div>
+          <div class="row"><span>Адрес</span><span>@TmGotchai</span></div>
+        </div>
+        <span class="btn btn-blue">Открыть в Telegram ↗</span>
+      </div>
+      <div class="phone">
+        <div class="ph-head"><img src="media/tmgotchai.jpg" alt=""><div><b>TmGotchai 🐾</b><small>бот</small></div></div>
+        <div class="ph-body">
+          <div class="ph-pet"><img src="media/tmgotchai.jpg" alt="Питомец TmGotchai"></div>
+          <div class="msg">Я вернулся с прогулки! Нашёл подарок 🎁</div>
+          <div class="msg">И подружился с соседским питомцем 🐾</div>
+          <div class="msg me">Покормить 🍎</div>
+          <div class="ph-keys"><span>🍎 Кормить</span><span>🎾 Играть</span><span>📖 Истории</span></div>
+        </div>
+      </div>
+    </a>
+    <p class="cases-more reveal">Это часть проектов. Покажем больше и расскажем подробности при знакомстве.</p>
   </section>
 
   <section id="process">
@@ -459,7 +507,15 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 // поддержка: календарь, обновление, на связи
 ['<rect x="30" y="20" width="84" height="80" rx="10" class="gl"/><path d="M30 40h84M50 14v12M94 14v12"/><circle cx="50" cy="56" r="3" class="fwh"/><circle cx="72" cy="56" r="3" class="fwh"/><circle cx="94" cy="56" r="3" class="fwh"/><circle cx="50" cy="76" r="3" class="fwh"/><circle cx="72" cy="76" r="5" class="fa pulse"/><circle cx="94" cy="76" r="3" class="fwh"/>',
  '<g class="spin" style="transform-origin:140px 46px"><path d="M122 46a18 18 0 0131-12M158 46a18 18 0 01-31 12" class="w"/><path d="M153 26v9h-9M127 66v-9h9" class="w"/></g>',
- '<g class="float"><rect x="108" y="76" width="70" height="26" rx="13" fill="#34d27b" stroke="none"/><text x="143" y="94" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff" stroke="none" font-family="-apple-system,Inter,Arial">на связи</text></g>']];
+ '<g class="float"><rect x="108" y="76" width="70" height="26" rx="13" fill="#34d27b" stroke="none"/><text x="143" y="94" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff" stroke="none" font-family="-apple-system,Inter,Arial">на связи</text></g>'],
+// игры: экран, геймпад, звезда
+['<rect x="44" y="12" width="112" height="70" rx="10" class="gl"/><path d="M60 66l14-18 12 12 16-22 22 28"/><circle cx="134" cy="30" r="6" class="fw"/>',
+ '<path d="M52 76h96a16 16 0 0116 16v4a12 12 0 01-22 6l-6-8H64l-6 8a12 12 0 01-22-6v-4a16 16 0 0116-16z" class="gl"/><path d="M62 88v12M56 94h12"/><circle cx="134" cy="90" r="4" class="fh"/><circle cx="146" cy="98" r="4" class="fa"/>',
+ '<g class="float"><path d="M168 24l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z" class="fw"/></g><g class="pulse"><text x="30" y="40" font-size="16" font-weight="800" fill="#fff" stroke="none" font-family="-apple-system,Inter,Arial">+1</text></g>'],
+// приложения: телефон с иконками
+['<rect x="66" y="6" width="68" height="108" rx="14" class="gl"/><path d="M90 14h20"/>',
+ '<rect x="76" y="26" width="20" height="20" rx="6" class="fa"/><rect x="104" y="26" width="20" height="20" rx="6" class="fw"/><rect x="76" y="54" width="20" height="20" rx="6" class="fh"/><rect x="104" y="54" width="20" height="20" rx="6" class="gl"/><rect x="76" y="86" width="48" height="14" rx="7" class="fwh"/>',
+ '<g class="float"><rect x="128" y="20" width="48" height="24" rx="12" fill="#34d27b" stroke="none"/><path d="M144 32l5 5 10-11" stroke="#fff"/></g><g class="pulse"><circle cx="124" cy="26" r="6" class="fh"/></g>']];
  const stages=[];
  document.querySelectorAll('[data-s]').forEach(c=>{const i=+c.dataset.s;if(!S[i])return;const st=document.createElement('div');st.className='stage';
   st.innerHTML='<div class="scene">'+S[i].map((g,k)=>`<svg class="l${k}" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${g}</svg>`).join('')+'</div>';
