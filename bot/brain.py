@@ -1389,7 +1389,7 @@ def _contacts(client):
 
 # Состояние ОДНОГО заказа: после отправленной заявки — сбрасываем, следующий заказ с нуля.
 ORDER_STATE_KEYS = ("neworder", "activeq", "winq", "winok", "exacttime", "chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
-                    "pickup_shop", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
+                    "pickup_shop", "shop_said", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
                     "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item",
                     "delivq", "delivq_need", "ownref", "availq", "wish", "album_all")
 
@@ -1519,6 +1519,10 @@ def _parse_form_answer(text):
         val = parts[i + 1].strip(" ,;")
         if val:
             out[int(parts[i])] = val
+    if not out:      # «1 Абдулла 89911110018» — номер пункта без точки, имя и телефон одной строкой (Абдулла 18.11)
+        m = re.match(r"^\s*1\s+([А-ЯЁа-яёA-Za-z][А-ЯЁа-яёA-Za-z\s-]*?)[\s,]+(\+?[78][\d\s()-]{9,}\d)\s*$", text or "")
+        if m:
+            return {1: m.group(1).strip(), 2: m.group(2).strip()}
     return out if len(out) >= 1 and len(parts) >= 3 else {}
 
 
@@ -5180,6 +5184,19 @@ def respond(client, incoming, from_staff=False, quote=""):
         a1, h1 = _city_shops(city)[0]
         db.set_setting(f"pickup_shop:{client}", _shop_full(a1))
         reply.text = f"Заберёте из магазина: {_shop_full(a1)} ({h1}) 🌸\n\n" + re.sub(r"^\s*Хорошо\W*", "", reply.text or "")
+    # Магазин для самовывоза УЖЕ выбран, а ИИ снова спрашивает «Орджоникидзе, 2 или Украинская, 47?» (Абдулла 18.11) —
+    # не переспрашиваем: вместо этого следующий вопрос оформления (или «почти всё»).
+    if not from_staff and not reply.order and db.get_setting(f"pickup_shop:{client}") and reply.text \
+            and re.search(r"из\s+какого\s+магазин|какой\s+(?:из\s+)?магазин|(?:удобн\w*|выбер\w*)[^.?!]{0,40}магазин|"
+                          r"(?:орджоникидзе|украинск|пятигорск\w+|ромашк|квартал)[^?\n]{0,60}\bили\b[^?\n]{0,60}\?", reply.text, re.I):
+        nq = _next_question([m["content"] for m in history if m["role"] == "user"] + [incoming or ""], city, _known_order(client))
+        shop = db.get_setting(f"pickup_shop:{client}")
+        said = db.get_setting(f"shop_said:{client}") == shop
+        db.set_setting(f"shop_said:{client}", shop)
+        reply.text = (nq or ALMOST_DONE_Q) if said else f"Заберёте из магазина: {shop} 🌸" + (f"\n\n{nq}" if nq else "")
+        reply.photos, reply.question = [], ""
+        if nq:
+            db.set_setting(f"lastq:{client}", nq)
     # Самовывоз в городе с несколькими магазинами — всегда наш вопрос с цифрами (а не рассказ ИИ про улицы).
     if not from_staff and city and not order_text and not keep_photos and not reply.order \
             and len(_pickup_shops(city)) > 1 and not db.get_setting(f"pickup_shop:{client}") \
