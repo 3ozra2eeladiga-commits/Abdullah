@@ -27,7 +27,7 @@ a{color:inherit;text-decoration:none}
   50%{transform:translate3d(1.5%,-1%,0) scale(1.08) rotate(.3deg)}
   100%{transform:translate3d(2.5%,1.5%,0) scale(1.05) rotate(-.2deg)}
 }
-.bg::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%,rgba(10,10,12,.15),rgba(10,10,12,.6))}
+.bg::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%,rgba(10,10,12,.3),rgba(10,10,12,.7))}
 
 /* ===== стекло (как панели Vision Pro) ===== */
 .glass{background:var(--glass);-webkit-backdrop-filter:blur(34px) saturate(150%);backdrop-filter:blur(34px) saturate(150%);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 30px 80px rgba(0,0,0,.35),inset 0 1px 0 var(--glass-hi)}
@@ -130,6 +130,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 <div class="bg" aria-hidden="true">
   <div class="bg-move" id="bgMove">
     <canvas id="ph"></canvas>
+    <img src="media/office.jpg" alt="">
     <video id="bgVideo" muted loop playsinline autoplay preload="auto" src="media/office.mp4"></video>
   </div>
 </div>
@@ -276,10 +277,11 @@ const v=document.getElementById('bgVideo');let hasVideo=false;
 v.addEventListener('canplay',()=>{hasVideo=true;v.classList.add('on');v.play().catch(()=>{})});
 
 // заглушка фона: тёплый «интерьер» из мягких пятен света
+let officeOk=false;const oi=document.querySelector('.bg img');if(oi){oi.onload=()=>officeOk=true;if(oi.complete&&oi.naturalWidth)officeOk=true}
 const c=document.getElementById('ph'),x=c.getContext('2d');
 const L=[['#ffb15c',.22,.35,.5,1],['#6a5a4a',.7,.55,.7,.7],['#3a8bff',.82,.25,.35,1.2],['#ff8a5c',.4,.85,.45,.9]];
 function sz(){c.width=innerWidth/5;c.height=innerHeight/5}sz();addEventListener('resize',sz);
-function draw(t){if(hasVideo)return;const w=c.width,h=c.height,s=t/6000;
+function draw(t){if(hasVideo||officeOk)return;const w=c.width,h=c.height,s=t/6000;
   x.globalCompositeOperation='source-over';x.fillStyle='#1a1714';x.fillRect(0,0,w,h);x.globalCompositeOperation='lighter';
   L.forEach(([col,bx,by,r,sp],i)=>{const px=(bx+Math.sin(s*sp+i)*.12)*w,py=(by+Math.cos(s*sp*.8+i)*.1)*h,rad=r*Math.max(w,h);
     const g=x.createRadialGradient(px,py,0,px,py,rad);g.addColorStop(0,col+'88');g.addColorStop(1,col+'00');x.fillStyle=g;x.fillRect(0,0,w,h)});
