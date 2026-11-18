@@ -284,6 +284,11 @@ def get_city(client):
     return row["city"] if row else None
 
 
+def settings_like(pattern):
+    """Настройки по шаблону SQL LIKE («aicalls:%:2026-11-18») → [(key, value)]."""
+    return [(r["key"], r["value"]) for r in _exec("SELECT key, value FROM settings WHERE key LIKE ?", (pattern,)).fetchall()]
+
+
 def set_setting(key, value):
     _exec("INSERT OR REPLACE INTO settings VALUES (?,?)", (key, str(value)))
 

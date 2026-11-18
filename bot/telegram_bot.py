@@ -553,6 +553,11 @@ def _handle(msg, deliver):
         call("setChatMenuButton", chat_id=chat_id,
              menu_button={"type": "web_app", "text": "🤖 Агент", "web_app": {"url": link}})
         return
+    # 🛡 «Щит» — расходы на ИИ и защита (только владельцу бота, Абдулла 18.11).
+    if re.fullmatch(r"\s*(?:/shield|/shit|/щит|щит|🛡\ufe0f?)\s*", text or "", re.I) and config.QA_REPORT_TO \
+            and user_id == config.QA_REPORT_TO and _hooks.get("on_shield"):
+        send(chat_id, _hooks["on_shield"](), reply_markup={"inline_keyboard": [[{"text": "🔄 Обновить", "callback_data": "shield:x:0"}]]})
+        return
     if text.startswith("/qa") and config.QA_REPORT_TO and user_id == config.QA_REPORT_TO and _hooks.get("on_qa"):
         answer, link = _hooks["on_qa"](text[3:].strip())      # «тайный покупатель» — только владельцу бота
         send(chat_id, answer, **({"reply_markup": {"inline_keyboard": [[{"text": "🕵️ Открыть проверку: ▶️ Старт / ⏹ Стоп",
@@ -825,6 +830,15 @@ def _handle_callback(cq, on_check):
     """Сотрудник нажал кнопку: под заявкой (chk:<действие>:<номер заказа>), под фото клиента (ph:…:<номер>)
     или под вопросом бота (q:yes|no|other:<номер вопроса>)."""
     user_id = cq.get("from", {}).get("id")
+    if (cq.get("data") or "").startswith("shield:"):        # «🔄 Обновить» под 🛡 Щитом — только владельцу
+        m0 = cq.get("message") or {}
+        if not (config.QA_REPORT_TO and user_id == config.QA_REPORT_TO and _hooks.get("on_shield")):
+            call("answerCallbackQuery", callback_query_id=cq["id"], text="Нет доступа")
+            return
+        call("answerCallbackQuery", callback_query_id=cq["id"], text="Обновлено")
+        call("editMessageText", chat_id=m0.get("chat", {}).get("id"), message_id=m0.get("message_id"),
+             text=_hooks["on_shield"](), reply_markup={"inline_keyboard": [[{"text": "🔄 Обновить", "callback_data": "shield:x:0"}]]})
+        return
     if not config.is_staff(user_id):
         call("answerCallbackQuery", callback_query_id=cq["id"], text="Нет доступа")
         return
@@ -1028,10 +1042,11 @@ def run_polling(deliver, on_check):
 
 
 def start(deliver, on_check, on_photo=None, on_photo_button=None, on_question=None, on_more=None, on_pay=None,
-          on_report=None, on_show=None, counts=None, on_delivered=None, on_resume=None, on_qa=None, agent_link=None):
+          on_report=None, on_show=None, counts=None, on_delivered=None, on_resume=None, on_qa=None, agent_link=None,
+          on_shield=None):
     _hooks.update(on_photo=on_photo, on_photo_button=on_photo_button, on_question=on_question, on_more=on_more,
                   on_pay=on_pay, on_report=on_report, on_show=on_show, counts=counts, on_delivered=on_delivered,
-                  on_resume=on_resume, on_qa=on_qa, agent_link=agent_link)
+                  on_resume=on_resume, on_qa=on_qa, agent_link=agent_link, on_shield=on_shield)
     if not config.TELEGRAM_TOKEN:
         log.warning("TELEGRAM_TOKEN не задан — Telegram выключен")
         return

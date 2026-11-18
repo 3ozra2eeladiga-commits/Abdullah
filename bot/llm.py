@@ -68,7 +68,8 @@ def spend_today():
     except (OSError, ValueError):
         d = {}
     if d.get("date") != datetime.date.today().isoformat():
-        d = {"date": datetime.date.today().isoformat(), "rub": 0.0, "qa_rub": 0.0, "warned": 0}
+        prev = {k: d[k] for k in ("date", "rub", "qa_rub", "night_rub") if k in d} if d.get("date") else d.get("prev")
+        d = {"date": datetime.date.today().isoformat(), "rub": 0.0, "qa_rub": 0.0, "warned": 0, "prev": prev}
     return d
 
 

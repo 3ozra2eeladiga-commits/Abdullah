@@ -1938,6 +1938,50 @@ def _on_budget(level, d):
 llm.on_budget = _on_budget
 
 
+def shield_text():
+    """🛡 «Щит» — сводка защиты расходов на ИИ (только владельцу: /щит, /shield)."""
+    d = llm.spend_today()
+    lim, night_lim = config.LLM_DAY_RUB, config.LLM_NIGHT_RUB
+    rub = d.get("rub", 0)
+    pct = min(100, round(100 * rub / lim)) if lim else 0
+    bar = "🟩" * (pct // 10) + "⬜️" * (10 - pct // 10)
+    state = ("⛔️ Лимит дня исчерпан — до полуночи клиентов ведут флористы" if rub >= lim else
+             "⛔️ Ночной лимит исчерпан — до 07:00 клиентов ведут флористы" if llm._night() and d.get("night_rub", 0) >= night_lim
+             else "✅ Работает, всё в норме")
+    today = datetime.datetime.now(brain._MSK).strftime("%Y-%m-%d")
+    calls = sorted(((k.split(":")[1] + ":" + k.split(":")[2], int(v or 0)) for k, v in db.settings_like(f"aicalls:%:{today}")),
+                   key=lambda x: -x[1])
+    stopped = [c for c, n in calls if n > config.AI_REPLIES_PER_CLIENT]
+    top = "\n".join(f"   • {_label(c)} — {n}" for c, n in calls[:3]) or "   • пока никого"
+    prev = d.get("prev") or {}
+    lines = [
+        "🛡 Щит — защита расходов на ИИ",
+        state,
+        "",
+        f"💰 Сегодня: ~{rub:.0f} ₽ из {lim:g} ₽ ({pct}%)",
+        bar,
+        f"🌙 Ночью (23–07): ~{d.get('night_rub', 0):.0f} ₽ из {night_lim:g} ₽",
+        f"🕵️ Проверки: {'включены, ~' + format(d.get('qa_rub', 0), '.0f') + ' ₽ из ' + format(config.QA_DAY_RUB, 'g') + ' ₽' if config.QA_ENABLED else 'выключены'}",
+    ]
+    if prev.get("date"):
+        lines.append(f"📅 Вчера ({prev['date'][8:10]}.{prev['date'][5:7]}): ~{prev.get('rub', 0):.0f} ₽")
+    lines += [
+        "",
+        "🚧 Правила защиты:",
+        f"• день — не больше {lim:g} ₽, ночью — {night_lim:g} ₽",
+        f"• одному клиенту — до {config.AI_REPLIES_PER_CLIENT} ответов ИИ в сутки без заказа, дальше флорист",
+        f"• длинные сообщения обрезаются до {config.MAX_INCOMING_CHARS} знаков",
+        "• на 70% лимита — предупреждение вам",
+        "",
+        f"👥 Сегодня ИИ отвечал клиентам: {len(calls)}, остановлено лимитом: {len(stopped)}",
+        "Больше всего ответов ИИ:",
+        top,
+        "",
+        "ℹ️ Сумма примерная (по токенам). Точно — в «Детализации» Яндекса.",
+    ]
+    return "\n".join(lines)
+
+
 def main():
     _disable_windows_quick_edit()
     catalog.refresh()
@@ -1945,7 +1989,7 @@ def main():
     threading.Thread(target=qa_resume_after_restart, daemon=True).start()
     telegram_bot.start(deliver_debounced, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
                        on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts, on_delivered=on_delivered,
-                       on_question=on_question, on_resume=on_resume, on_qa=on_qa,
+                       on_question=on_question, on_resume=on_resume, on_qa=on_qa, on_shield=shield_text,
                        agent_link=agent_link)
     log.info("Сервер запущен на порту %s", config.PORT)
     serve(app, host="0.0.0.0", port=config.PORT, threads=8)
