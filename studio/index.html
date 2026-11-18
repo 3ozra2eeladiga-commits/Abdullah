@@ -120,6 +120,24 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 .card .rows .row{font-size:14px;padding:9px 0}
 .card .btn{width:100%;padding:11px;font-size:14.5px;margin-top:auto}
 
+/* 3D-сценки услуг: слои на разной глубине, поворот от прокрутки */
+.stage{height:150px;border-radius:20px;background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(0,0,0,.22));perspective:520px;overflow:hidden;position:relative}
+.scene{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
+.scene svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.scene .l0{transform:translateZ(-50px) scale(1.12);opacity:.45}
+.scene .l1{transform:translateZ(10px)}
+.scene .l2{transform:translateZ(70px) scale(.88)}
+.scene .a{stroke:var(--accent)}.scene .w{stroke:var(--warm)}.scene .h{stroke:var(--hot)}
+.scene .fa{fill:var(--accent);stroke:none}.scene .fw{fill:var(--warm);stroke:none}.scene .fh{fill:var(--hot);stroke:none}.scene .fwh{fill:#fff;stroke:none}
+.scene .gl{fill:rgba(255,255,255,.1)}
+@keyframes blinkr{50%{opacity:.15}}.scene .blink{animation:blinkr 1.2s infinite}
+@keyframes scan{0%,100%{transform:translateX(-22px)}50%{transform:translateX(22px)}}.scene .scan{animation:scan 3s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(-4px)}50%{transform:translateY(4px)}}.scene .float{animation:floaty 3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}.scene .spin{animation:spin 9s linear infinite;transform-origin:100px 60px}.scene .spin.rv{animation-duration:14s;animation-direction:reverse}
+@keyframes dots{0%,100%{opacity:.2}50%{opacity:1}}.scene .d1{animation:dots 1.2s infinite}.scene .d2{animation:dots 1.2s .2s infinite}.scene .d3{animation:dots 1.2s .4s infinite}
+@keyframes grow{0%,100%{transform:scaleX(.3)}50%{transform:scaleX(1)}}.scene .grow{animation:grow 3.5s ease-in-out infinite;transform-origin:0 0;transform-box:fill-box}
+@keyframes pulse2{0%,100%{transform:scale(.9)}50%{transform:scale(1.08)}}.scene .pulse{animation:pulse2 2.4s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+
 /* как работаем — как календарь в референсе */
 .cal{padding:20px;overflow:hidden}
 .cal-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
@@ -339,6 +357,56 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   (function tick(){cur+=(target-cur)*.12;bar.style.width=(cur*100).toFixed(1)+'%';
     if(ready&&wv.duration&&!wv.seeking&&Math.abs(wv.currentTime-cur*(wv.duration-.05))>.03)wv.currentTime=cur*(wv.duration-.05);
     requestAnimationFrame(tick)})();
+})();
+
+// 3D-сценки над услугами
+(()=>{const S=[
+// охота: горы, прицел-видоискатель, REC
+['<path d="M0 95l40-45 25 25 30-40 40 50 30-25 35 35"/><circle cx="160" cy="28" r="9" class="w"/>',
+ '<circle cx="100" cy="60" r="26"/><path d="M100 26v16M100 78v16M66 60h16M118 60h16" class="h"/><circle cx="100" cy="60" r="3" class="fh"/>',
+ '<path d="M30 30V18h12M158 18h12v12M170 90v12h-12M42 102H30V90"/><circle cx="44" cy="30" r="4" class="fh blink"/>'],
+// недвижимость: солнце и облака, дом, дрон
+['<circle cx="40" cy="30" r="12" class="w"/><path d="M130 34h34M120 44h30"/>',
+ '<path d="M55 100V58l45-30 45 30v42z" class="gl"/><path d="M88 100V76h24v24M48 62l52-36 52 36"/><path d="M118 52h12v12h-12z" class="a"/>',
+ '<g class="float"><path d="M140 22h26M134 22h8M164 22h8M153 22v8M146 30h14v7h-14z" class="a"/></g>'],
+// видео: дорожки монтажа, кадр с play, курсор
+['<path d="M20 92h160M20 104h160"/><rect x="20" y="88" width="120" height="8" rx="3" class="fa grow"/><rect x="20" y="100" width="150" height="8" rx="3" class="fw grow"/>',
+ '<rect x="52" y="18" width="96" height="58" rx="10" class="gl"/><path d="M92 34v26l22-13z" class="fwh"/>',
+ '<g class="scan"><path d="M100 82v30" class="h"/><path d="M94 80h12l-6 8z" class="fh"/></g>'],
+// сайты: окно браузера, блоки, курсор
+['<rect x="30" y="16" width="140" height="92" rx="10" class="gl"/><path d="M30 34h140"/><circle cx="42" cy="25" r="2.5" class="fh"/><circle cx="52" cy="25" r="2.5" class="fw"/><circle cx="62" cy="25" r="2.5" class="fa"/>',
+ '<rect x="44" y="46" width="60" height="10" rx="4" class="fwh"/><rect x="44" y="64" width="42" height="6" rx="3" class="fwh" opacity=".5"/><rect x="44" y="82" width="34" height="14" rx="7" class="fa"/><rect x="116" y="46" width="40" height="50" rx="8" class="a"/>',
+ '<g class="float"><path d="M132 78l4 22 6-8 9-2z" class="fwh"/></g>'],
+// боты: телефон, вопрос, ответ с точками
+['<rect x="68" y="8" width="64" height="104" rx="12" class="gl"/><path d="M92 16h16"/>',
+ '<rect x="36" y="34" width="74" height="24" rx="12" class="gl"/><path d="M50 46h44"/>',
+ '<rect x="96" y="66" width="72" height="26" rx="13" class="fa"/><circle cx="120" cy="79" r="3.2" class="fwh d1"/><circle cx="132" cy="79" r="3.2" class="fwh d2"/><circle cx="144" cy="79" r="3.2" class="fwh d3"/>'],
+// AI-агенты: орбиты, ядро, документы
+['<g class="spin"><ellipse cx="100" cy="60" rx="78" ry="30"/></g><g class="spin rv"><ellipse cx="100" cy="60" rx="50" ry="46" class="a"/></g>',
+ '<circle cx="100" cy="60" r="17" class="fa pulse"/><path d="M92 60l6 6 11-12" stroke="#fff"/>',
+ '<g class="float"><rect x="30" y="26" width="26" height="32" rx="5" class="gl"/><path d="M36 36h14M36 44h14M36 52h8"/></g><rect x="146" y="66" width="30" height="24" rx="5" class="gl"/><path d="M152 84v-6M160 84v-12M168 84v-8" class="w"/>'],
+// видеонаблюдение: комната-сетка, человек в рамке, камера с лучом
+['<path d="M20 100h160M40 100l30-50h60l30 50M70 50v-30M130 50v-30"/>',
+ '<circle cx="104" cy="56" r="7"/><path d="M92 96V78a12 12 0 0124 0v18"/><path d="M82 52V42h10M116 42h10v10M126 92v10h-10M92 102H82V92" class="a"/><rect x="82" y="26" width="30" height="11" rx="5" class="fa"/>',
+ '<path d="M24 20h26v14H24zM50 24l10-4v14l-10-4" class="gl"/><g class="scan"><path d="M56 34l34 30" class="h" stroke-dasharray="3 5"/></g><circle cx="30" cy="27" r="2.5" class="fh blink"/>'],
+// отели: здание, звонок, сообщение 24/7
+['<rect x="58" y="18" width="84" height="90" rx="6" class="gl"/><path d="M74 34h10M96 34h10M118 34h10M74 52h10M96 52h10M118 52h10M74 70h10M118 70h10M92 108V84h16v24"/>',
+ '<path d="M28 96h44M34 96a16 16 0 0132 0M50 80v-6M46 74h8" class="w"/>',
+ '<g class="float"><rect x="118" y="60" width="62" height="28" rx="14" class="fa"/><text x="149" y="80" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" stroke="none" font-family="-apple-system,Inter,Arial">24/7</text></g>'],
+// под ключ: объектив, окно сайта, чат
+['<circle cx="64" cy="56" r="34" class="gl"/><circle cx="64" cy="56" r="20"/><circle cx="64" cy="56" r="7" class="fw"/>',
+ '<rect x="84" y="30" width="86" height="60" rx="9" class="gl"/><path d="M84 44h86"/><rect x="94" y="54" width="40" height="7" rx="3" class="fwh"/><rect x="94" y="70" width="26" height="10" rx="5" class="fa"/>',
+ '<g class="float"><rect x="24" y="78" width="60" height="24" rx="12" class="fh"/><circle cx="42" cy="90" r="3" class="fwh d1"/><circle cx="54" cy="90" r="3" class="fwh d2"/><circle cx="66" cy="90" r="3" class="fwh d3"/></g>']];
+ const stages=[];
+ document.querySelectorAll('#services .card').forEach((c,i)=>{if(!S[i])return;const st=document.createElement('div');st.className='stage';
+  st.innerHTML='<div class="scene">'+S[i].map((g,k)=>`<svg class="l${k}" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${g}</svg>`).join('')+'</div>';
+  c.prepend(st);stages.push([st,st.firstChild,0,0])});
+ if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+ let mx=0;addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5},{passive:true});
+ (function loop(){const vh=innerHeight;for(const a of stages){const r=a[0].getBoundingClientRect();if(r.bottom<-50||r.top>vh+50)continue;
+   const off=Math.max(-1,Math.min(1,((r.top+r.height/2)-vh/2)/(vh/2)));const cx=((r.left+r.width/2)/innerWidth-.5);
+   const ty=off*-38+(mx-cx)*14, tx=off*16;a[2]+=(ty-a[2])*.12;a[3]+=(tx-a[3])*.12;
+   a[1].style.transform=`rotateY(${a[2].toFixed(2)}deg) rotateX(${a[3].toFixed(2)}deg)`}requestAnimationFrame(loop)})();
 })();
 
 // часы в шапке (как в интерфейсе из референса)
