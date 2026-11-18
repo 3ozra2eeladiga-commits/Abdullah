@@ -86,6 +86,7 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 .about-photo{aspect-ratio:4/5;position:relative;overflow:hidden;border-radius:calc(var(--r) - 8px);margin:8px;background:#1c1f24}
 .about-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .about-text{padding:24px 30px 30px 18px}
+.about-solo{grid-template-columns:1fr}.about-solo .about-text{padding:34px 36px;max-width:760px}
 .about-text h2{margin:14px 0 14px}
 .about-text p{color:rgba(245,245,247,.82);font-size:17px;margin-bottom:12px}
 .team{overflow:hidden}
@@ -304,8 +305,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   </section>
 
   <section id="about">
-    <article class="about glass reveal">
-      <div class="about-photo"><img src="media/about.jpg" alt="Абдулла и Кирилл" loading="lazy"></div>
+    <article class="about about-solo glass reveal">
       <div class="about-text">
         <span class="pill">О нас</span>
         <h2>Абдулла и Кирилл</h2>
