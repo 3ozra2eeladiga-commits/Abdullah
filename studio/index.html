@@ -170,7 +170,8 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 .seg b{padding:6px 14px;border-radius:999px;font-size:13.5px;font-weight:600;color:var(--muted)}
 .seg b.on{background:var(--accent);color:#fff}
 .days{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.day{border-radius:20px;background:rgba(0,0,0,.18);padding:16px;min-height:170px;display:flex;flex-direction:column;gap:10px;border:1px solid transparent;transition:.3s}
+.day{padding:14px 16px 18px;display:flex;flex-direction:column;gap:8px}
+.day .stage{height:120px;margin:0 -2px 6px}
 .day.now{background:rgba(58,139,255,.22);border-color:rgba(58,139,255,.5)}
 .day small{color:var(--muted);font-weight:600;font-size:13px}
 .day h3{font-size:19px;font-weight:600}
@@ -316,7 +317,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
       </div>
       <div class="card glass reveal" data-s="8">
         <div class="card-top"><div><h3>Под ключ</h3></div><span class="badge">Главное</span></div>
-        <div class="rows"><div class="row"><span>Что входит</span><span>Съёмка, сайт, AI</span></div><div class="row"><span>Срок</span><span>Один</span></div><div class="row"><span>Цена</span><span>Одна</span></div></div>
+        <div class="rows"><div class="row"><span>Что входит</span><span>Съёмка, сайт, AI</span></div><div class="row"><span>Команда</span><span>Одна на всё</span></div><div class="row"><span>Цена</span><span>Считаем под задачу</span></div></div>
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
       <div class="card glass reveal" data-s="0">
@@ -359,17 +360,12 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   </section>
 
   <section id="process">
-    <div class="cal glass reveal">
-      <div class="cal-bar">
-        <h2>Как работаем</h2>
-        <div class="seg"><b>День</b><b class="on">Неделя</b><b>Месяц</b></div>
-      </div>
-      <div class="days">
-        <div class="day now"><small>Шаг 1</small><h3>Знакомство</h3><p>Разбираемся в задаче, называем срок и цену.</p><div class="ev">Созвон</div></div>
-        <div class="day"><small>Шаг 2</small><h3>Визуал</h3><p>Дизайн, фото и видео — согласуем с вами.</p><div class="ev">Съёмка</div></div>
-        <div class="day"><small>Шаг 3</small><h3>Разработка</h3><p>Собираем сайт, проверяем скорость и защиту.</p><div class="ev">Код</div></div>
-        <div class="day"><small>Шаг 4</small><h3>Запуск</h3><p>Публикуем и остаёмся на связи.</p><div class="ev">Поддержка</div></div>
-      </div>
+    <div class="sec-head reveal"><h2>Как работаем</h2><span class="sub">Четыре шага</span></div>
+    <div class="days">
+      <div class="day glass reveal" data-s="9"><small>Шаг 1</small><h3>Знакомство</h3><p>Обсуждаем задачу и договариваемся о сроках и цене. Можно встретиться лично или созвониться по видеосвязи.</p></div>
+      <div class="day glass reveal" data-s="10"><small>Шаг 2</small><h3>Визуал</h3><p>Рисуем дизайн, снимаем фото и видео. Показываем вам и правим, пока не понравится.</p></div>
+      <div class="day glass reveal" data-s="11"><small>Шаг 3</small><h3>Разработка</h3><p>Собираем сайт или бота, проверяем скорость и защиту на компьютере и телефоне.</p></div>
+      <div class="day glass reveal" data-s="12"><small>Шаг 4</small><h3>Запуск и поддержка</h3><p>Запускаем и не пропадаем: каждый месяц проверяем сайт, обновляем и вносим правки. Мы на связи в рабочее время.</p></div>
     </div>
   </section>
 
@@ -447,9 +443,25 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 // под ключ: объектив, окно сайта, чат
 ['<circle cx="64" cy="56" r="34" class="gl"/><circle cx="64" cy="56" r="20"/><circle cx="64" cy="56" r="7" class="fw"/>',
  '<rect x="84" y="30" width="86" height="60" rx="9" class="gl"/><path d="M84 44h86"/><rect x="94" y="54" width="40" height="7" rx="3" class="fwh"/><rect x="94" y="70" width="26" height="10" rx="5" class="fa"/>',
- '<g class="float"><rect x="24" y="78" width="60" height="24" rx="12" class="fh"/><circle cx="42" cy="90" r="3" class="fwh d1"/><circle cx="54" cy="90" r="3" class="fwh d2"/><circle cx="66" cy="90" r="3" class="fwh d3"/></g>']];
+ '<g class="float"><rect x="24" y="78" width="60" height="24" rx="12" class="fh"/><circle cx="42" cy="90" r="3" class="fwh d1"/><circle cx="54" cy="90" r="3" class="fwh d2"/><circle cx="66" cy="90" r="3" class="fwh d3"/></g>'],
+// знакомство: видеозвонок
+['<rect x="34" y="14" width="132" height="84" rx="10" class="gl"/><path d="M20 106h160"/>',
+ '<rect x="44" y="24" width="52" height="64" rx="8" class="gl"/><circle cx="70" cy="46" r="9"/><path d="M54 80a16 16 0 0132 0"/><rect x="104" y="24" width="52" height="64" rx="8" class="gl"/><circle cx="130" cy="46" r="9" class="a"/><path d="M114 80a16 16 0 0132 0" class="a"/>',
+ '<g class="pulse"><circle cx="100" cy="98" r="12" fill="#34d27b" stroke="none"/><path d="M95 98l4 4 7-8" stroke="#fff"/></g><circle cx="150" cy="30" r="3" class="fh blink"/>'],
+// визуал: макет, камера, палитра
+['<rect x="28" y="16" width="100" height="78" rx="8" class="gl"/><path d="M40 32h50M40 46h76M40 60h60"/>',
+ '<rect x="104" y="52" width="66" height="44" rx="9" class="gl"/><path d="M122 52l5-9h20l5 9"/><circle cx="137" cy="74" r="12" class="w"/><circle cx="137" cy="74" r="4" class="fw"/>',
+ '<g class="float"><circle cx="40" cy="96" r="8" class="fh"/><circle cx="62" cy="100" r="8" class="fw"/><circle cx="84" cy="96" r="8" class="fa"/></g>'],
+// разработка: код, щит
+['<rect x="26" y="14" width="124" height="88" rx="10" class="gl"/><path d="M26 30h124"/><circle cx="38" cy="22" r="2.5" class="fh"/><circle cx="47" cy="22" r="2.5" class="fw"/>',
+ '<path d="M48 58h58M48 70h40"/><path d="M40 82h28" class="w"/><rect x="40" y="43" width="60" height="6" rx="3" class="fa grow"/>',
+ '<g class="float"><path d="M148 44l22 8v18c0 14-9 24-22 30-13-6-22-16-22-30V52z" class="fa"/><path d="M138 72l8 8 14-16" stroke="#fff" stroke-width="3.5"/></g>'],
+// поддержка: календарь, обновление, на связи
+['<rect x="30" y="20" width="84" height="80" rx="10" class="gl"/><path d="M30 40h84M50 14v12M94 14v12"/><circle cx="50" cy="56" r="3" class="fwh"/><circle cx="72" cy="56" r="3" class="fwh"/><circle cx="94" cy="56" r="3" class="fwh"/><circle cx="50" cy="76" r="3" class="fwh"/><circle cx="72" cy="76" r="5" class="fa pulse"/><circle cx="94" cy="76" r="3" class="fwh"/>',
+ '<g class="spin" style="transform-origin:140px 46px"><path d="M122 46a18 18 0 0131-12M158 46a18 18 0 01-31 12" class="w"/><path d="M153 26v9h-9M127 66v-9h9" class="w"/></g>',
+ '<g class="float"><rect x="108" y="76" width="70" height="26" rx="13" fill="#34d27b" stroke="none"/><text x="143" y="94" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff" stroke="none" font-family="-apple-system,Inter,Arial">на связи</text></g>']];
  const stages=[];
- document.querySelectorAll('#services .card').forEach(c=>{const i=+c.dataset.s;if(!S[i])return;const st=document.createElement('div');st.className='stage';
+ document.querySelectorAll('[data-s]').forEach(c=>{const i=+c.dataset.s;if(!S[i])return;const st=document.createElement('div');st.className='stage';
   st.innerHTML='<div class="scene">'+S[i].map((g,k)=>`<svg class="l${k}" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${g}</svg>`).join('')+'</div>';
   c.prepend(st);stages.push([st,st.firstChild,0,0])});
  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
