@@ -476,6 +476,14 @@ def deliver(client, text, from_staff=False, quote=""):
     with _client_locks[client]:
         if not from_staff and _review_reply(client, text):     # оценка после доставки (1–5) и «почему плохо»
             return
+        # Ответ на «1 — покажу другие варианты / 2 — флорист подберёт замену» (после «🤖 Вернуть бота»).
+        if not from_staff and not db.is_paused(client) and db.get_setting(f"resumeq:{client}"):
+            db.del_setting(f"resumeq:{client}")
+            if re.fullmatch(r"\W*(?:2|два|второе|втор\w*)\W*", text or "", re.I) or re.search(r"флорист|человек|сотрудник|сам[аи]\s+подбер", text or "", re.I):
+                _to_human(client, f"(после «нет в наличии» клиент выбрал: пусть флорист подберёт замену) {text}")
+                return
+            if re.fullmatch(r"\W*(?:1|один|первое|перв\w*|да|давайте|покажите|покажи)\W*", text or "", re.I):
+                text = "покажите другие похожие варианты букетов"
         if not from_staff and not db.is_paused(client) and STUCK_RE.search(text or "") \
                 and len(db.history(client, 6)) >= 4 and not _irritated_answer(text):   # недоволен ботом посреди разговора
             _to_human(client, text)
@@ -1576,6 +1584,19 @@ def on_resume(client):
         db.resume(client)
         db.del_setting(f"complaint:{client}")
         db.del_setting(f"lastq:{client}")
+        # Флорист нажала «нет в наличии», но клиенту так и не написала — бот сам предлагает выход (Абдулла 18.11):
+        # показать другие варианты или пусть флорист подберёт замену.
+        hist = db.history(client, 12)
+        k = max([i for i, m in enumerate(hist) if m["role"] == "assistant" and "сейчас нет в наличии" in m["content"]] or [-1])
+        if k >= 0 and not any(m["role"] == "assistant" and m["content"].startswith("(флорист)") for m in hist[k + 1:]):
+            text = ("Я снова на связи 🌸 Этого букета, к сожалению, нет. Как вам удобнее?\n"
+                    "1 — покажу другие похожие варианты (фото)\n"
+                    "2 — флорист сама подберёт замену и напишет вам\n"
+                    "Ответьте цифрой 🌸")
+            db.set_setting(f"resumeq:{client}", "1")
+            _send_text(client, text)
+            db.add_message(client, "assistant", text)
+            return "🤖 Бот снова ведёт клиента — спросил: показать другие варианты или подберёт флорист."
         in_order = bool(db.get_setting(f"chosen:{client}") or db.get_setting(f"draft:{client}")
                         or db.get_pending_order(client)) and not db.get_setting(f"ocheck:{client}")
         if not in_order:

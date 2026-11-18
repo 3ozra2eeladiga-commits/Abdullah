@@ -416,6 +416,34 @@ ORDINAL_RE = re.compile(
     r"магазин|точк|филиал|адрес|пункт|вариант\s+доставк))", re.I)
 
 
+_LIST_LINE_RE = re.compile(r"^\s*(?:[-–•*]|\d{1,2}[.)])?\s*(.{4,120}?)\s*[—–-]\s*(?:от\s+)?(\d[\d\s]{2,6})\s*(?:₽|руб)", re.M | re.I)
+
+
+def _list_to_album(text, city):
+    """ИИ перечислил букеты текстом («- Гербера, маттиола… — 1699 ₽», 2+ строк) — находим их в каталоге по цене
+    и словам названия и отдаём фото. Строки «(сейчас недоступен / нет в наличии)» пропускаем. Не нашли — []."""
+    lines = [m for m in _LIST_LINE_RE.finditer(text or "")]
+    if len(lines) < 2 or not city:
+        return []
+    cc = catalog.get_city(city)
+    if not cc:
+        return []
+    items = [it for it in cc.by_code.values() if it.get("images")]
+    out = []
+    for m in lines:
+        line = text[m.start():m.end() + 40]
+        if re.search(r"недоступ|нет\s+в\s+наличии|закончил", line, re.I):
+            continue
+        price = int(re.sub(r"\s", "", m.group(2)))
+        words = {w for w in re.findall(r"[а-яё]{4,}", m.group(1).lower())}
+        best = sorted((it for it in items if it["price"] == price
+                       and words & set(re.findall(r"[а-яё]{4,}", it["title"].lower()))),
+                      key=lambda it: -len(words & set(re.findall(r"[а-яё]{4,}", it["title"].lower()))))
+        if best and best[0] not in out:
+            out.append(best[0])
+    return out if len(out) >= 2 else []
+
+
 def _picked_by_ordinal(client, incoming, city):
     t = incoming or ""
     m = ORDINAL_RE.search(t)
@@ -1389,7 +1417,7 @@ def _contacts(client):
 
 # Состояние ОДНОГО заказа: после отправленной заявки — сбрасываем, следующий заказ с нуля.
 ORDER_STATE_KEYS = ("neworder", "activeq", "winq", "winok", "exacttime", "chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
-                    "pickup_shop", "shop_said", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
+                    "pickup_shop", "shop_said", "resumeq", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
                     "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item",
                     "delivq", "delivq_need", "ownref", "availq", "wish", "album_all")
 
@@ -5602,4 +5630,12 @@ def respond(client, incoming, from_staff=False, quote=""):
             db.set_setting(f"lastq:{client}", DELIV_DEST_Q)
             reply.question = ""
             reply.photos = [] if not keep_photos else reply.photos
+    # Букеты СПИСКОМ ТЕКСТА («- Диантусы, розы — 2599 ₽») — так никогда (Абдулла 18.11): всегда фото с номерами.
+    if not from_staff and not reply.photos and not reply.order and reply.text:
+        album = _list_to_album(reply.text, city)
+        if album:
+            reply.photos = album
+            reply.text = "Вот варианты 🌸 Какой нравится? Напишите номер фото (1, 2, 3…) или ответьте на фото."
+            db.set_setting(f"shown:{client}", ",".join(p["code"] for p in album))
+            db.del_setting(f"lastq:{client}")
     return reply
