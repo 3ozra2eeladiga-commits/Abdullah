@@ -73,6 +73,12 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 
 /* о нас */
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.about{display:grid;grid-template-columns:1.1fr 1fr;gap:8px;overflow:hidden;align-items:center}
+.about-photo{aspect-ratio:4/3;position:relative;overflow:hidden;border-radius:calc(var(--r) - 8px);margin:8px;background:#fff}
+.about-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.about-text{padding:24px 30px 30px 18px}
+.about-text h2{margin:14px 0 14px}
+.about-text p{color:rgba(245,245,247,.82);font-size:17px;margin-bottom:12px}
 .team{overflow:hidden}
 .team-photo{aspect-ratio:16/9;position:relative;overflow:hidden;border-radius:calc(var(--r) - 8px);margin:8px 8px 0;background:#141416}
 .team-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -135,7 +141,8 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 
 @media (max-width:900px){
   .nav nav,.clock{display:none}
-  .duo,.grid{grid-template-columns:1fr}
+  .duo,.grid,.about{grid-template-columns:1fr}
+  .about-text{padding:6px 22px 24px}
   .team .p-body+.p-body{border-left:0;border-top:1px solid var(--line)}
   .days{grid-template-columns:1fr 1fr}
   section{padding:50px 0}
@@ -174,7 +181,8 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
     <div class="nav glass">
       <a href="#top" class="logo"><i></i><div>Визуал × Код<small>Студия</small></div></a>
       <nav>
-                <a href="#services">Услуги</a>
+        <a href="#services">Услуги</a>
+        <a href="#about">О нас</a>
         <a href="#process">Как работаем</a>
       </nav>
       <span class="clock" id="clock">--:--</span>
@@ -266,6 +274,18 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
         <div class="day"><small>Шаг 4</small><h3>Запуск</h3><p>Публикуем и остаёмся на связи.</p><div class="ev">Поддержка</div></div>
       </div>
     </div>
+  </section>
+
+  <section id="about">
+    <article class="about glass reveal">
+      <div class="about-photo"><img src="media/about.jpg" alt="Абдулла и Кирилл" loading="lazy"></div>
+      <div class="about-text">
+        <span class="pill">О нас</span>
+        <h2>Абдулла и Кирилл</h2>
+        <p>Мы небольшая студия из двух человек. Снимаем видео и фото, делаем сайты и дизайн, создаём ботов и AI-помощников, которые берут на себя рутину.</p>
+        <p>Вы общаетесь напрямую с теми, кто делает работу, — без менеджеров и посредников.</p>
+      </div>
+    </article>
   </section>
 
   <div class="final glass reveal" id="contact">
