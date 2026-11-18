@@ -19,7 +19,7 @@ a{color:inherit;text-decoration:none}
 /* ===== ЖИВОЙ ФОН: офис. Видео кладём в media/office.mp4 ===== */
 .bg{position:fixed;inset:0;z-index:-2;overflow:hidden;background:#141210}
 .bg-move{position:absolute;inset:-6%;animation:drift 26s ease-in-out infinite alternate;will-change:transform}
-.bg-move>*{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bg-move>*,.bg-move picture img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .bg video{opacity:0;transition:opacity 1.2s}
 .bg video.on{opacity:1}
 @keyframes drift{
@@ -134,6 +134,20 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   section{padding:50px 0}
 }
 @media (max-width:480px){.nav .btn{padding:10px 14px;font-size:14px}.logo{font-size:15px}.days{grid-template-columns:1fr}.day{min-height:0}.logo small{display:none}footer{border-radius:24px}}
+/* телефон: видно всю комнату — меньше зум фона, компактная панель сверху, ниже видно вас */
+@media (orientation:portrait) and (max-width:900px){
+  .bg-move{inset:-2%;animation-name:driftm}
+  @keyframes driftm{0%{transform:translate3d(-1%,0,0) scale(1.01)}100%{transform:translate3d(1%,.5%,0) scale(1.03)}}
+  .bg::after{background:linear-gradient(180deg,rgba(10,10,12,.25),rgba(10,10,12,0) 45%,rgba(10,10,12,.15))}
+  .hero{align-items:flex-start;padding-top:96px}
+  .hero-win{padding:20px 20px 22px;border-radius:26px}
+  .hero-win .status{margin-bottom:12px}.hero-win .pill{padding:6px 12px;font-size:13px}
+  .hero-win .status .pill:nth-child(2){display:none}
+  h1{font-size:clamp(26px,7.6vw,32px);line-height:1.08}
+  .hero p{display:none}
+  .cta{margin-top:16px}
+  .cta .btn{padding:12px 20px;font-size:15px}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 </style>
 </head>
@@ -143,8 +157,8 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 <div class="bg" aria-hidden="true">
   <div class="bg-move" id="bgMove">
     <canvas id="ph"></canvas>
-    <img src="media/office.jpg" alt="">
-    <video id="bgVideo" muted loop playsinline autoplay preload="auto" poster="media/office.jpg" src="media/office.mp4"></video>
+    <picture><source media="(orientation: portrait)" srcset="media/office-m.jpg"><img src="media/office.jpg" alt=""></picture>
+    <video id="bgVideo" muted loop playsinline autoplay preload="auto"></video>
   </div>
 </div>
 
@@ -292,10 +306,15 @@ addEventListener('pointermove',e=>{tx=(e.clientX/innerWidth-.5)*-24;ty=(e.client
 
 // видео офиса: если файл есть — показываем, иначе остаётся анимация
 const v=document.getElementById('bgVideo');let hasVideo=false;
+// телефон (вертикальный экран) — своё вертикальное видео, компьютер — горизонтальное
+const portrait=matchMedia('(orientation: portrait)');
+function pickBg(){const m=portrait.matches;const src=m?'media/office-m.mp4':'media/office.mp4';
+  if(v.getAttribute('src')!==src){v.poster=m?'media/office-m.jpg':'media/office.jpg';v.src=src;v.play().catch(()=>{})}}
+pickBg();portrait.addEventListener('change',pickBg);
 v.addEventListener('canplay',()=>{hasVideo=true;v.classList.add('on');v.play().catch(()=>{})});
 
 // заглушка фона: тёплый «интерьер» из мягких пятен света
-let officeOk=false;const oi=document.querySelector('.bg img');if(oi){oi.onload=()=>officeOk=true;if(oi.complete&&oi.naturalWidth)officeOk=true}
+let officeOk=false;const oi=document.querySelector('.bg picture img');if(oi){oi.onload=()=>officeOk=true;if(oi.complete&&oi.naturalWidth)officeOk=true}
 const c=document.getElementById('ph'),x=c.getContext('2d');
 const L=[['#ffb15c',.22,.35,.5,1],['#6a5a4a',.7,.55,.7,.7],['#3a8bff',.82,.25,.35,1.2],['#ff8a5c',.4,.85,.45,.9]];
 function sz(){c.width=innerWidth/5;c.height=innerHeight/5}sz();addEventListener('resize',sz);
