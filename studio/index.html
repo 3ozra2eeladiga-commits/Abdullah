@@ -119,6 +119,12 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 .badge.w{background:rgba(255,177,92,.18);color:var(--warm)}
 .card .rows .row{font-size:14px;padding:9px 0}
 .card .btn{width:100%;padding:11px;font-size:14.5px;margin-top:auto}
+.card-hero{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1fr;column-gap:26px;row-gap:12px;align-items:start;background:rgba(40,70,130,.5);border-color:rgba(58,139,255,.55)}
+.card-hero .stage{grid-row:1/5;height:100%;min-height:260px}
+.card-hero h3{font-size:clamp(24px,2.6vw,34px);font-weight:700;letter-spacing:-.02em}
+.card-hero .lead{font-size:17px;color:rgba(245,245,247,.9)}
+.card-hero .rows .row{font-size:15px}
+.card-hero .btn{padding:14px;font-size:16px}
 
 /* 3D-сценки услуг: слои на разной глубине, поворот от прокрутки */
 .stage{height:150px;border-radius:20px;background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(0,0,0,.22));perspective:520px;overflow:hidden;position:relative}
@@ -171,6 +177,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 @media (max-width:900px){
   .nav nav,.clock{display:none}
   .duo,.grid,.about{grid-template-columns:1fr}
+  .card-hero{grid-template-columns:1fr}.card-hero .stage{grid-row:auto;min-height:170px;height:170px}
   .about-text{padding:6px 22px 24px}
   .team .p-body+.p-body{border-left:0;border-top:1px solid var(--line)}
   .days{grid-template-columns:1fr 1fr}
@@ -234,7 +241,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
     <div class="hero-win glass reveal">
       <div class="status">
         <span class="pill"><span class="dot"></span>Сейчас в работе</span>
-        <span class="pill">Съёмка · Сайты · AI</span>
+        <span class="pill">AI · Сайты · Съёмка</span>
       </div>
       <h1>Красиво снаружи.<br><span>Надёжно внутри.</span></h1>
       <p>Двое в одной студии: снимаем видео, делаем сайты и дизайн, создаём ботов и AI-помощников, которые работают за вас.</p>
@@ -257,51 +264,52 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   </section>
 
   <section id="services">
-    <div class="sec-head reveal"><h2>Услуги</h2><span class="sub">Съёмка · Сайты · AI</span></div>
+    <div class="sec-head reveal"><h2>Услуги</h2><span class="sub">AI · Сайты · Съёмка</span></div>
     <div class="grid">
-      <div class="card glass reveal">
-        <div class="card-top"><div><h3>Съёмка охоты</h3></div><span class="badge w">Видео</span></div>
-        <div class="rows"><div class="row"><span>Что снимаем</span><span>Охота, природа, трофеи</span></div><div class="row"><span>Техника</span><span>Кинокамеры, дроны</span></div><div class="row"><span>Результат</span><span>Фильм, ролики, фото</span></div></div>
-        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
+      <div class="card card-hero glass reveal" data-s="7">
+        <div class="card-top"><div><h3>AI-администратор для отеля</h3></div><span class="badge">Главное</span></div>
+        <p class="lead">Отвечает на звонки и сообщения, принимает брони и помогает гостям — сам, 24/7, без выходных и больничных.</p>
+        <div class="rows"><div class="row"><span>Звонки</span><span>Берёт трубку и говорит как человек</span></div><div class="row"><span>Сообщения</span><span>Telegram, WhatsApp, сайт</span></div><div class="row"><span>Брони</span><span>Принимает и подтверждает</span></div><div class="row"><span>Языки</span><span>Любые</span></div></div>
+        <a href="https://t.me/khwajev" class="btn btn-blue" target="_blank" rel="noopener">Хочу такого в свой отель</a>
       </div>
-      <div class="card glass reveal">
-        <div class="card-top"><div><h3>Съёмка недвижимости</h3></div><span class="badge w">Видео</span></div>
-        <div class="rows"><div class="row"><span>Что снимаем</span><span>Дома, квартиры, ЖК</span></div><div class="row"><span>С воздуха</span><span>Дрон</span></div><div class="row"><span>Результат</span><span>Видео-тур и фото</span></div></div>
-        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
-      </div>
-      <div class="card glass reveal">
-        <div class="card-top"><div><h3>Видео и монтаж</h3></div><span class="badge w">Видео</span></div>
-        <div class="rows"><div class="row"><span>Формат</span><span>Реклама, Reels, клипы</span></div><div class="row"><span>Монтаж</span><span>Цвет, ритм, звук</span></div><div class="row"><span>Куда</span><span>Сайт и соцсети</span></div></div>
-        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
-      </div>
-      <div class="card glass reveal">
-        <div class="card-top"><div><h3>Сайты и дизайн</h3></div><span class="badge">Сайты</span></div>
-        <div class="rows"><div class="row"><span>Дизайн</span><span>Свой, не шаблон</span></div><div class="row"><span>Экраны</span><span>Телефон и ПК</span></div><div class="row"><span>Защита</span><span>Безопасный код</span></div></div>
-        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
-      </div>
-      <div class="card glass reveal">
+      <div class="card glass reveal" data-s="4">
         <div class="card-top"><div><h3>Telegram-боты</h3></div><span class="badge">AI</span></div>
         <div class="rows"><div class="row"><span>Что умеют</span><span>Отвечают как живой человек</span></div><div class="row"><span>Заказы</span><span>Принимают и передают вам</span></div><div class="row"><span>Работают</span><span>24/7 без выходных</span></div></div>
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
-      <div class="card glass reveal">
+      <div class="card glass reveal" data-s="5">
         <div class="card-top"><div><h3>AI-агенты и помощники</h3></div><span class="badge">AI</span></div>
         <div class="rows"><div class="row"><span>Сообщения</span><span>Отвечают клиентам сами</span></div><div class="row"><span>Рутина</span><span>Счета, учёт, отчёты</span></div><div class="row"><span>Итог</span><span>Меньше ручной работы</span></div></div>
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
-      <div class="card glass reveal">
+      <div class="card glass reveal" data-s="6">
         <div class="card-top"><div><h3>AI-видеонаблюдение</h3></div><span class="badge">AI</span></div>
         <div class="rows"><div class="row"><span>Камеры</span><span>Подключаем к любым</span></div><div class="row"><span>Следит</span><span>Перчатки, форма, порядок</span></div><div class="row"><span>Пример</span><span>Кухня, склад, зал</span></div></div>
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
-      <div class="card glass reveal">
-        <div class="card-top"><div><h3>AI для отелей</h3></div><span class="badge">AI</span></div>
-        <div class="rows"><div class="row"><span>Гости</span><span>Ответы на вопросы 24/7</span></div><div class="row"><span>Брони</span><span>Приём и подтверждение</span></div><div class="row"><span>Языки</span><span>Любые</span></div></div>
+      <div class="card glass reveal" data-s="3">
+        <div class="card-top"><div><h3>Сайты и дизайн</h3></div><span class="badge">Сайты</span></div>
+        <div class="rows"><div class="row"><span>Дизайн</span><span>Свой, не шаблон</span></div><div class="row"><span>Экраны</span><span>Телефон и ПК</span></div><div class="row"><span>Защита</span><span>Безопасный код</span></div></div>
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
-      <div class="card glass reveal">
+      <div class="card glass reveal" data-s="8">
         <div class="card-top"><div><h3>Под ключ</h3></div><span class="badge">Главное</span></div>
         <div class="rows"><div class="row"><span>Что входит</span><span>Съёмка, сайт, AI</span></div><div class="row"><span>Срок</span><span>Один</span></div><div class="row"><span>Цена</span><span>Одна</span></div></div>
+        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
+      </div>
+      <div class="card glass reveal" data-s="0">
+        <div class="card-top"><div><h3>Съёмка охоты</h3></div><span class="badge w">Видео</span></div>
+        <div class="rows"><div class="row"><span>Что снимаем</span><span>Охота, природа, трофеи</span></div><div class="row"><span>Техника</span><span>Кинокамеры, дроны</span></div><div class="row"><span>Результат</span><span>Фильм, ролики, фото</span></div></div>
+        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
+      </div>
+      <div class="card glass reveal" data-s="1">
+        <div class="card-top"><div><h3>Съёмка недвижимости</h3></div><span class="badge w">Видео</span></div>
+        <div class="rows"><div class="row"><span>Что снимаем</span><span>Дома, квартиры, ЖК</span></div><div class="row"><span>С воздуха</span><span>Дрон</span></div><div class="row"><span>Результат</span><span>Видео-тур и фото</span></div></div>
+        <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
+      </div>
+      <div class="card glass reveal" data-s="2">
+        <div class="card-top"><div><h3>Видео и монтаж</h3></div><span class="badge w">Видео</span></div>
+        <div class="rows"><div class="row"><span>Формат</span><span>Реклама, Reels, клипы</span></div><div class="row"><span>Монтаж</span><span>Цвет, ритм, звук</span></div><div class="row"><span>Куда</span><span>Сайт и соцсети</span></div></div>
         <a href="https://t.me/khwajev" class="btn" target="_blank" rel="noopener">Обсудить</a>
       </div>
     </div>
@@ -391,14 +399,14 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
  '<path d="M24 20h26v14H24zM50 24l10-4v14l-10-4" class="gl"/><g class="scan"><path d="M56 34l34 30" class="h" stroke-dasharray="3 5"/></g><circle cx="30" cy="27" r="2.5" class="fh blink"/>'],
 // отели: здание, звонок, сообщение 24/7
 ['<rect x="58" y="18" width="84" height="90" rx="6" class="gl"/><path d="M74 34h10M96 34h10M118 34h10M74 52h10M96 52h10M118 52h10M74 70h10M118 70h10M92 108V84h16v24"/>',
- '<path d="M28 96h44M34 96a16 16 0 0132 0M50 80v-6M46 74h8" class="w"/>',
+ '<path d="M28 96h44M34 96a16 16 0 0132 0M50 80v-6M46 74h8" class="w"/><g class="pulse"><path d="M30 30c0 14 8 22 22 22l4-7-8-5-3 3c-3-1-5-3-6-6l3-3-5-8z" class="fwh"/><path d="M52 22a12 12 0 0110 10M52 14a20 20 0 0118 18" class="a blink"/></g>',
  '<g class="float"><rect x="118" y="60" width="62" height="28" rx="14" class="fa"/><text x="149" y="80" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" stroke="none" font-family="-apple-system,Inter,Arial">24/7</text></g>'],
 // под ключ: объектив, окно сайта, чат
 ['<circle cx="64" cy="56" r="34" class="gl"/><circle cx="64" cy="56" r="20"/><circle cx="64" cy="56" r="7" class="fw"/>',
  '<rect x="84" y="30" width="86" height="60" rx="9" class="gl"/><path d="M84 44h86"/><rect x="94" y="54" width="40" height="7" rx="3" class="fwh"/><rect x="94" y="70" width="26" height="10" rx="5" class="fa"/>',
  '<g class="float"><rect x="24" y="78" width="60" height="24" rx="12" class="fh"/><circle cx="42" cy="90" r="3" class="fwh d1"/><circle cx="54" cy="90" r="3" class="fwh d2"/><circle cx="66" cy="90" r="3" class="fwh d3"/></g>']];
  const stages=[];
- document.querySelectorAll('#services .card').forEach((c,i)=>{if(!S[i])return;const st=document.createElement('div');st.className='stage';
+ document.querySelectorAll('#services .card').forEach(c=>{const i=+c.dataset.s;if(!S[i])return;const st=document.createElement('div');st.className='stage';
   st.innerHTML='<div class="scene">'+S[i].map((g,k)=>`<svg class="l${k}" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${g}</svg>`).join('')+'</div>';
   c.prepend(st);stages.push([st,st.firstChild,0,0])});
  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
