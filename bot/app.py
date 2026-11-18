@@ -1054,7 +1054,7 @@ QA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))
 
 def run_qa(args, title="🕵️ Проверка"):
     """Запускает тайного покупателя в фоне. False — уже идёт другая проверка."""
-    if not config.QA_REPORT_TO or not _qa_lock.acquire(blocking=False):
+    if not config.QA_ENABLED or not config.QA_REPORT_TO or not _qa_lock.acquire(blocking=False):
         return False
 
     def work():
@@ -1140,6 +1140,9 @@ def qa_start(hours=None):
 
 def qa_resume_after_restart():
     """Бот перезапустился (обновление с правками), а проверка была запущена — продолжаем её сами."""
+    if not config.QA_ENABLED:
+        _qa_active_clear()
+        return
     try:
         with open(QA_ACTIVE) as f:
             left = (json.load(f).get("until", 0) - time.time()) / 3600
@@ -1170,6 +1173,8 @@ def _on_qa(arg):
     a = (arg or "").strip().lower()
     if a in ("стоп", "stop", "остановить", "хватит"):
         return ("⏹ Останавливаю — отчёт пришлю через минуту." if qa_stop() else "Проверка сейчас не идёт.")
+    if not config.QA_ENABLED:
+        return "⏸ Тайный покупатель выключен, чтобы не тратить деньги на ИИ. Включить — попросите в чате с Claude."
     if a in ("мама", "мамы", "день матери", "mom"):
         if not run_qa(["--loop", "--tag", "mom_", "--hours", str(config.QA_MAX_HOURS)], "💐 Проверка «День матери» остановлена"):
             return "⏳ Проверка уже идёт. Остановить — /qa стоп"

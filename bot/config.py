@@ -172,6 +172,8 @@ LLM_DAY_RUB = float(os.getenv("LLM_DAY_RUB", "1500"))        # всё вмест
 QA_DAY_RUB = float(os.getenv("QA_DAY_RUB", "300"))           # из них — на тайного покупателя
 LLM_PRICE_PRO = float(os.getenv("LLM_PRICE_PRO", "1.2"))
 LLM_PRICE_LITE = float(os.getenv("LLM_PRICE_LITE", "0.2"))
+# Тайный покупатель ВЫКЛЮЧЕН (Абдулла 18.11: «не хочу тратить деньги»). Включить — QA_ENABLED=1 в .env.
+QA_ENABLED = os.getenv("QA_ENABLED", "0") == "1"
 QA_DAY_LIMIT = int(os.getenv("QA_DAY_LIMIT", "30"))        # больше N тестовых разговоров в день не запускаем (деньги ИИ)
 QA_CUSTOMER_MODEL = os.getenv("QA_CUSTOMER_MODEL", "yandexgpt-lite/latest")   # кем играем «клиента» — дешёвая модель
 QA_N = int(os.getenv("QA_N", "10"))                         # сколько разговоров по команде /qa

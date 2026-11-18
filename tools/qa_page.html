@@ -35,7 +35,7 @@ let D=null,sel=null;const KEY=new URLSearchParams(location.search).get("key")||"
 async function act(w){msg.textContent=w=="start"?"запускаю…":"останавливаю… (докончит текущий ответ)";
  try{const r=await fetch("qa/"+w+"?key="+encodeURIComponent(KEY),{method:"POST"});
  if(r.status==403){msg.textContent="нет доступа — откройте ссылку из бота";return}
- const j=await r.json();if(w=="start"&&!j.ok)msg.textContent="проверка уже идёт";}catch(e){msg.textContent="ошибка связи"}}
+ const j=await r.json();if(w=="start"&&!j.ok)msg.textContent=j.running?"проверка уже идёт":"проверка выключена (чтобы не тратить деньги на ИИ)";}catch(e){msg.textContent="ошибка связи"}}
 const esc=t=>String(t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 function bubbles(dl){return dl.map(([w,t])=>w=="client"?`<div class="b c">👤 ${esc(t)}</div>`:w=="bot"?`<div class="b o">${esc(t)}</div>`:`<div class="s">${esc(t)}</div>`).join("")}
 function draw(){if(KEY){btns.style.display="flex";}if(!D)return;
