@@ -58,13 +58,16 @@ h2{font-size:clamp(34px,5.4vw,68px);line-height:1;font-weight:800;letter-spacing
 
 /* о нас */
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.person{position:relative;border-radius:var(--radius);padding:34px;min-height:440px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;isolation:isolate}
+.person{position:relative;border-radius:var(--radius);padding:34px;min-height:580px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;isolation:isolate}
 .person::before{content:"";position:absolute;inset:-30%;z-index:-1;filter:blur(50px);animation:drift 14s ease-in-out infinite alternate}
 .p-visual{background:#2a1220}
 .p-visual::before{background:radial-gradient(circle at 30% 30%,#ff4d6d 0,transparent 45%),radial-gradient(circle at 75% 60%,#ff9f1c 0,transparent 40%)}
 .p-code{background:#12142e}
 .p-code::before{background:radial-gradient(circle at 70% 25%,#7c5cff 0,transparent 45%),radial-gradient(circle at 25% 70%,#00c2ff 0,transparent 40%);animation-delay:-6s}
 @keyframes drift{to{transform:translate(8%,-6%) rotate(18deg) scale(1.12)}}
+.person img{position:absolute;inset:0;width:100%;height:80%;object-fit:cover;object-position:50% 12%;z-index:-2}
+.has-photo::before{mix-blend-mode:color;opacity:.75}
+.has-photo::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(18,20,46,0) 40%,#12142e 78%)}
 .role{position:absolute;top:28px;left:34px;font-size:14px;font-weight:700;padding:7px 14px;border-radius:999px;background:rgba(0,0,0,.35);backdrop-filter:blur(8px)}
 .person h3{font-size:clamp(30px,3.6vw,46px);font-weight:800;letter-spacing:-.035em;line-height:1}
 .person p{color:rgba(255,255,255,.85);margin:14px 0 20px;font-size:17px;max-width:440px}
@@ -107,6 +110,8 @@ footer{color:var(--muted);font-size:14px;padding:0 0 40px;display:flex;justify-c
   .steps{grid-template-columns:1fr 1fr}
   .person{min-height:380px;padding:26px}
   .role{left:26px}
+  .has-photo{min-height:660px}
+  .person.has-photo img{height:62%}
   section{padding-top:80px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
@@ -153,9 +158,10 @@ footer{color:var(--muted);font-size:14px;padding:0 0 40px;display:flex;justify-c
         <p>Дизайн, фото и видео. Отвечаю за то, чтобы сайт хотелось рассматривать и чтобы он запоминался с первого экрана.</p>
         <div class="chips"><span>Дизайн</span><span>Фото</span><span>Видео</span><span>Креатив</span></div>
       </article>
-      <article class="person p-code reveal">
+      <article class="person p-code has-photo reveal">
+        <img src="media/kirill.jpg" alt="Кирилл, программист" loading="lazy">
         <span class="role">Код</span>
-        <h3>Программист</h3>
+        <h3>Кирилл</h3>
         <p>Разработка и безопасность. Отвечаю за то, чтобы сайт быстро открывался, не ломался и был защищён.</p>
         <div class="chips"><span>Разработка</span><span>Безопасность</span><span>Скорость</span><span>Поддержка</span></div>
       </article>
