@@ -61,6 +61,10 @@ header{position:fixed;top:14px;left:0;right:0;z-index:20}
 h1{font-size:clamp(42px,7.4vw,96px);line-height:.98;font-weight:700;letter-spacing:-.04em;text-wrap:balance}
 h1 span{color:var(--muted)}
 .hero p{font-size:clamp(17px,1.5vw,20px);color:rgba(245,245,247,.82);max-width:560px;margin:22px 0 30px}
+.twin{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:24px 0 28px;max-width:640px}
+.twin div{padding:14px 16px;border-radius:18px;background:rgba(0,0,0,.2);border:1px solid var(--line)}
+.twin b{display:block;font-size:16px;margin-bottom:4px}.twin div:nth-child(2) b{color:#8cbcff}
+.twin span{font-size:14.5px;color:rgba(245,245,247,.8);line-height:1.35;display:block}
 .cta{display:flex;gap:10px;flex-wrap:wrap}
 
 section{padding:70px 0}
@@ -192,6 +196,16 @@ h2{font-size:clamp(30px,4.4vw,54px);font-weight:700;letter-spacing:-.035em;line-
 .day p{color:rgba(245,245,247,.75);font-size:14.5px}
 .ev{margin-top:auto;border-left:3px solid var(--warm);padding:6px 10px;border-radius:6px;background:rgba(255,177,92,.12);font-size:13px}
 
+/* почему мы */
+.why{display:grid;grid-template-columns:1.1fr 1fr;gap:30px;padding:clamp(22px,4vw,44px);align-items:center}
+.why h2{margin:14px 0 16px;font-size:clamp(28px,3.6vw,46px)}
+.why p{color:rgba(245,245,247,.85);font-size:17px;margin-bottom:12px}
+.checks{list-style:none;display:grid;gap:10px}
+.checks li{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:18px;background:rgba(0,0,0,.2);border:1px solid var(--line)}
+.checks i{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent);position:relative;margin-top:2px}
+.checks i::after{content:"";position:absolute;left:9px;top:5px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.checks b{display:block;font-size:16.5px}.checks span{color:rgba(245,245,247,.75);font-size:14.5px}
+
 /* контакт */
 .final{padding:clamp(30px,6vw,70px);text-align:center;margin:20px 0 30px}
 .final p{color:rgba(245,245,247,.82);font-size:18px;max-width:520px;margin:14px auto 28px}
@@ -215,11 +229,14 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
 
 @media (max-width:900px){
   .nav nav,.clock{display:none}
-  .duo,.grid,.about,.case{grid-template-columns:1fr}
+  .duo,.grid,.about,.case,.why{grid-template-columns:minmax(0,1fr)}
+  .grid>*,.case>*,.why>*{min-width:0}
+  .row span:last-child{overflow-wrap:anywhere}
+  .card .btn{white-space:normal;text-align:center}
   .case-text,.case-rev .case-text{padding:4px 8px 10px}
   .case-rev .phone{order:-1}
   .grid>.card,.grid>.card-half,.grid>.card-hero{grid-column:auto}
-  .card-hero{grid-template-columns:1fr}.card-hero .stage{grid-row:auto;min-height:170px;height:170px}
+  .grid>.card-hero{grid-template-columns:minmax(0,1fr)}.card-hero>*{min-width:0}.card-hero .stage{grid-row:auto;min-height:170px;height:170px}
   .about-text{padding:6px 22px 24px}
   .team .p-body+.p-body{border-left:0;border-top:1px solid var(--line)}
   .days{grid-template-columns:1fr 1fr}
@@ -246,6 +263,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   .hero-win .status .pill:nth-child(2){display:none}
   h1{font-size:clamp(26px,7.6vw,32px);line-height:1.08}
   .hero p{display:none}
+  .twin{margin:14px 0 2px;gap:8px}.twin div{padding:10px 12px;border-radius:14px}.twin b{font-size:14px}.twin span{font-size:12.5px}
   .cta{margin-top:16px}
   .cta .btn{padding:12px 20px;font-size:15px}
 }
@@ -287,7 +305,10 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
         <span class="pill">Сайты · AI · Игры · Съёмка</span>
       </div>
       <h1>Красиво снаружи.<br><span>Надёжно внутри.</span></h1>
-      <p>Двое в одной студии: снимаем видео, делаем сайты и дизайн, создаём ботов и AI-помощников, которые работают за вас.</p>
+      <div class="twin">
+        <div><b>Красиво снаружи</b><span>Дизайном, фото и видео занимается дизайнер.</span></div>
+        <div><b>Надёжно внутри</b><span>Код и защиту вручную проверяет программист.</span></div>
+      </div>
       <div class="cta">
         <a href="#contact" class="btn btn-blue">Обсудить проект</a>
         <a href="#services" class="btn">Услуги</a>
@@ -415,6 +436,23 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
       <div class="day glass reveal" data-s="10"><small>Шаг 2</small><h3>Визуал</h3><p>Рисуем дизайн, снимаем фото и видео. Показываем вам и правим, пока не понравится.</p></div>
       <div class="day glass reveal" data-s="11"><small>Шаг 3</small><h3>Разработка</h3><p>Собираем сайт или бота, проверяем скорость и защиту на компьютере и телефоне.</p></div>
       <div class="day glass reveal" data-s="12"><small>Шаг 4</small><h3>Запуск и поддержка</h3><p>Запускаем и не пропадаем: каждый месяц проверяем сайт, обновляем и вносим правки. Мы на связи в рабочее время.</p></div>
+    </div>
+  </section>
+
+  <section id="why">
+    <div class="why glass reveal">
+      <div class="why-text">
+        <span class="pill">Почему мы</span>
+        <h2>Красивый сайт — это половина работы</h2>
+        <p>Сегодня сайт можно быстро собрать в конструкторе или с помощью нейросети. Выглядит он хорошо, но заглянуть внутрь часто некому: как работают формы, где хранятся данные клиентов, как быстро открывается страница на телефоне.</p>
+        <p>Мы тоже пользуемся современными инструментами. Разница в том, что у нас каждую работу до запуска вручную проверяет программист.</p>
+      </div>
+      <ul class="checks">
+        <li><i></i><div><b>Формы и данные клиентов</b><span>Заявки доходят и не утекают на сторону.</span></div></li>
+        <li><i></i><div><b>Скорость</b><span>Страница быстро открывается на телефоне и компьютере.</span></div></li>
+        <li><i></i><div><b>Все устройства</b><span>Проверяем на iPhone, Android и в разных браузерах.</span></div></li>
+        <li><i></i><div><b>После запуска</b><span>Каждый месяц проверяем сайт и обновляем его.</span></div></li>
+      </ul>
     </div>
   </section>
 
