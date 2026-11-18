@@ -605,7 +605,7 @@ def deliver(client, text, from_staff=False, quote=""):
             # Несколько букетов — это ПРИМЕРЫ работ: наличие цветов флорист уточнит после выбора (Абдулла).
             reply.text = re.sub(r"Ответьте\s+«этот»\s+на\s+фото\.?", "Напишите номер фото (1, 2, 3…) или ответьте на фото.",
                                 reply.text)
-            if not db.get_setting(f"availnote:{client}") and "🌹" not in reply.text:   # розы поштучно — не «примеры работ»
+            if not db.get_setting(f"availnote:{client}") and not re.search(r"за 1 шт|готовые букеты из|ближайшие по количеству|Осталось выбрать вариант|Вот букеты — ", reply.text):   # поштучно / «N роз» — не «примеры работ»
                 reply.text = reply.text.rstrip() + "\n\n" + AVAIL_NOTE
                 db.set_setting(f"availnote:{client}", "1")
         if reply.text:

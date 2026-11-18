@@ -420,9 +420,27 @@ ORDINAL_RE = re.compile(
 _LIST_LINE_RE = re.compile(r"^\s*(?:[-–•*]|\d{1,2}[.)])?\s*(.{4,120}?)\s*[—–-]\s*(?:от\s+)?(\d[\d\s]{2,6})\s*(?:₽|руб)", re.M | re.I)
 
 
-# ── Розы поштучно (Абдулла 18.11): «101 роза», «хочу розы» — показываем РОЗЫ ПОШТУЧНО с фото, спрашиваем какую
-# и сколько; «любые» — подбираем сами; в заказ — ровно N штук. Крупный заказ + «скидка» — просьбу передаём флористу.
+# ── Цветы с количеством (Абдулла 18.11, общее правило для ЛЮБЫХ цветов): «101 роза», «25 пионов», «51 тюльпан».
+# Сначала — готовые букеты с сайта, где это число в названии («Композиция №900 / 101 роза», «№509 / 25 пионов»):
+# ровно N, потом ближе по количеству. Поштучно — по просьбе («поштучно»): фото с ценой за 1 шт, выбор номером или
+# «любые», в заказ — ровно N штук. «Ничего не подходит» — заявка флористу. Крупный заказ + «скидка» — флористу.
+F_STEMS = {"роза": r"роз|розочк|розочек", "пион": r"пион(?!овид)", "тюльпан": r"тюльпан", "хризантема": r"хризантем",
+           "гербера": r"гербер", "гвоздика": r"гвоздик", "лилия": r"лили[ийяюе]", "калла": r"калл[аыуеой]?",
+           "эустома": r"эустом", "ромашка": r"ромаш", "гортензия": r"гортензи", "альстромерия": r"альстр[оё]мери",
+           "ирис": r"ирис", "орхидея": r"орхиде"}
+F_FORMS = {  # (род. ед. «из 101 розы», род. мн. «из 25 пионов», им. мн. «Пионы», эмодзи)
+    "роза": ("розы", "роз", "Розы", "🌹"), "пион": ("пиона", "пионов", "Пионы", "🌸"),
+    "тюльпан": ("тюльпана", "тюльпанов", "Тюльпаны", "🌷"), "хризантема": ("хризантемы", "хризантем", "Хризантемы", "🌼"),
+    "гербера": ("герберы", "гербер", "Герберы", "🌼"), "гвоздика": ("гвоздики", "гвоздик", "Гвоздики", "🌸"),
+    "лилия": ("лилии", "лилий", "Лилии", "🌸"), "калла": ("каллы", "калл", "Каллы", "🌸"),
+    "эустома": ("эустомы", "эустом", "Эустомы", "🌸"), "ромашка": ("ромашки", "ромашек", "Ромашки", "🌼"),
+    "гортензия": ("гортензии", "гортензий", "Гортензии", "💐"), "альстромерия": ("альстромерии", "альстромерий", "Альстромерии", "💐"),
+    "ирис": ("ириса", "ирисов", "Ирисы", "💐"), "орхидея": ("орхидеи", "орхидей", "Орхидеи", "🌸")}
+_F_ANY = "|".join(f"(?P<f{i}>{v})" for i, v in enumerate(F_STEMS.values()))
+_F_KEYS = list(F_STEMS)
+_ADJ = r"(?:[а-яё]+(?:ых|ые|ая|ую|ой|ий|их|ей|ое)\s+){0,2}"        # «101 белая роза», «15 крупных эквадорских роз»
 ROSE_WORD_RE = re.compile(r"(?<![а-яё])роз(?:а|ы|у|е|ой|ам|ами|ах|очк\w*|очек)?(?![а-яё])", re.I)
+FLOWER_WORD_RE = re.compile(r"(?<![а-яё])(?:" + _F_ANY + r")", re.I)
 _R_UNITS = {"одна": 1, "одну": 1, "один": 1, "две": 2, "два": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "семь": 7,
             "восемь": 8, "девять": 9}
 _R_TEENS = {"десять": 10, "одиннадцать": 11, "двенадцать": 12, "тринадцать": 13, "пятнадцать": 15, "семнадцать": 17,
@@ -431,36 +449,53 @@ _R_TENS = {"двадцать": 20, "тридцать": 30, "сорок": 40, "п
            "восемьдесят": 80, "девяносто": 90}
 
 
-def _rose_qty(text):
-    """Сколько роз просит клиент: «101 розу», «сто одну розу», «51 шт роз», «двадцать пять роз». 0 — не сказал."""
+def _which_flower(m):
+    return next(_F_KEYS[int(k[1:])] for k, v in m.groupdict().items() if v and k.startswith("f"))
+
+
+def _flower_word(text):
+    """Какой цветок назван в тексте («хочу пионы» → «пион»). Пусто — ни одного."""
+    m = FLOWER_WORD_RE.search(text or "")
+    return _which_flower(m) if m else ""
+
+
+def _flower_qty(text):
+    """(цветок, сколько штук): «101 розу», «25 пионов», «сто одну розу», «белые розы 15 штук». ("", 0) — не сказал."""
     t = (text or "").lower()
-    m = re.search(r"(?<![\d.,:])(?<!\bк\s)(?<!\bв\s)(?<!\bс\s)(?<!\bдо\s)(\d{1,3})\s*(?:шт\w*\.?\s*)?"
-                  r"(?:(?:красн|бел|розов|кустов|голланд|длинн|высок|эквадор)\w*\s+)?роз", t)
+    m = re.search(r"(?<![\d.,:])(?<!\bк\s)(?<!\bв\s)(?<!\bс\s)(?<!\bдо\s)(\d{1,3})\s*(?:шт\w*\.?\s*)?" + _ADJ
+                  + r"(?:" + _F_ANY + r")", t)
     if m:
-        return int(m.group(1))
-    m = re.search(r"роз\w*\s+(?:\w+\s+){0,2}(\d{1,3})\s*(?:шт|штук)", t)      # «белые розы 15 штук»
+        return _which_flower(m), int(m.group(1))
+    m = re.search(r"(?<![а-яё])(?:" + _F_ANY + r")\w*\s+(?:\w+\s+){0,2}(\d{1,3})\s*(?:шт|штук)", t)
     if m:
-        return int(m.group(1))
+        return _which_flower(m), int(m.groups()[-1])
     m = re.search(r"\b(сто\s+)?(?:(" + "|".join(_R_TENS) + r")\s+)?(?:(" + "|".join(_R_TEENS) + r"|" + "|".join(_R_UNITS)
-                  + r")\s+)?(?:(?:красн|бел|розов|кустов)\w*\s+)?роз", t)
-    if m and any(m.groups()):
+                  + r")\s+)?" + _ADJ + r"(?:" + _F_ANY + r")", t)
+    if m and any(m.group(i) for i in (1, 2, 3)):
         n = (100 if m.group(1) else 0) + _R_TENS.get(m.group(2) or "", 0) \
             + (_R_TEENS.get(m.group(3) or "") or _R_UNITS.get(m.group(3) or "", 0))
-        return n if n >= 3 else 0
-    return 0
+        if n >= 3:
+            return _which_flower(m), n
+    return "", 0
 
 
-def _piece_roses(city, qty=0, limit=10):
-    """Розы поштучно в наличии (хватает на qty штук), с фото; сначала популярные (много на складе)."""
+def _rose_qty(text):
+    f, n = _flower_qty(text)
+    return n if f == "роза" else 0
+
+
+def _piece_flowers(city, flower="роза", qty=0, limit=10):
+    """Цветы поштучно (раздел «поштучно») этого вида, в наличии ≥ qty, с фото; сначала тех, что больше на складе."""
     cc = catalog.get_city(city) if city else None
-    if not cc:
+    if not cc or flower not in F_STEMS:
         return []
+    pat = re.compile(r"(?<![а-яё])(?:" + F_STEMS[flower] + r")", re.I)
     out = []
     for name, items in cc.sections:
         if "поштучно" not in name.lower():
             continue
         for it in items:
-            if not it.get("images") or not ROSE_WORD_RE.search(it["title"]):
+            if not it.get("images") or not pat.search(it["title"]):
                 continue
             if it.get("stock") is not None and it["stock"] < max(qty, 1):
                 continue
@@ -468,21 +503,23 @@ def _piece_roses(city, qty=0, limit=10):
     return sorted(out, key=lambda x: -(x.get("stock") or 0))[:limit]
 
 
-_ROSE_N_RE = re.compile(r"(\d{1,3})\s*роз", re.I)
+def _piece_roses(city, qty=0, limit=10):
+    return _piece_flowers(city, "роза", qty, limit)
 
 
-def _rose_bouquets(city, qty=0, ready=False, limit=10):
-    """Готовые букеты/композиции «… / 101 роза» из каталога: сначала ровно qty роз, потом ближе по количеству.
-    Раздел «Готовые» — только если букет нужен сегодня/завтра (ready)."""
+def _count_bouquets(city, flower="роза", qty=0, ready=False, limit=10):
+    """Букеты/композиции с сайта, где в названии число этих цветов («… / 101 белая роза», «№509 / 25 пионов»):
+    сначала ровно qty, потом ближе по количеству. Раздел «Готовые» — только если нужен сегодня/завтра (ready)."""
     cc = catalog.get_city(city) if city else None
-    if not cc:
+    if not cc or flower not in F_STEMS:
         return []
+    pat = re.compile(r"(\d{1,3})\s+" + _ADJ + r"(?:" + F_STEMS[flower] + r")", re.I)
     out = []
     for name, items in cc.sections:
         if name in getattr(catalog_mod, "NON_BOUQUET", set()) or (name == getattr(catalog_mod, "READY_SECTION", "") and not ready):
             continue
         for it in items:
-            m = _ROSE_N_RE.search(it["title"])
+            m = pat.search(it["title"].lower())
             if not m or not it.get("images") or (it.get("stock") is not None and it["stock"] <= 0):
                 continue
             out.append((int(m.group(1)), it))
@@ -498,10 +535,18 @@ def _rose_bouquets(city, qty=0, ready=False, limit=10):
     return res[:limit]
 
 
-def _is_piece_rose(it, city):
+def _rose_bouquets(city, qty=0, ready=False, limit=10):
+    return _count_bouquets(city, "роза", qty, ready, limit)
+
+
+def _is_piece_flower(it, city):
     cc = catalog.get_city(city) if city else None
     sec = (cc.section_of(it["code"]) if cc and it else "") or ""
-    return bool(it) and "поштучно" in sec.lower() and bool(ROSE_WORD_RE.search(it.get("title", "")))
+    return bool(it) and "поштучно" in sec.lower()
+
+
+def _is_piece_rose(it, city):
+    return _is_piece_flower(it, city) and bool(ROSE_WORD_RE.search((it or {}).get("title", "")))
 
 
 def _add_user_once(client, text):
@@ -1509,7 +1554,7 @@ def _contacts(client):
 
 # Состояние ОДНОГО заказа: после отправленной заявки — сбрасываем, следующий заказ с нуля.
 ORDER_STATE_KEYS = ("neworder", "activeq", "winq", "winok", "exacttime", "chosen", "addons", "pack", "cardtext", "cardstep", "nocard", "wantcard", "wantcard_text", "shown",
-                    "pickup_shop", "shop_said", "resumeq", "roses", "roseqty", "rosebq", "discount_ask", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
+                    "pickup_shop", "shop_said", "resumeq", "roses", "roseqty", "rosebq", "fl", "discount_ask", "said_chosen", "surprise", "noaddr", "notime", "nightorder", "placeq", "addr_extra", "addr_base",
                     "upsize", "asap", "draft", "lastq", "anyday", "lateask", "florist_note", "replace_note", "photo_item",
                     "delivq", "delivq_need", "ownref", "availq", "wish", "album_all")
 
@@ -2511,7 +2556,7 @@ def _apply_client_state(order, client, city):
             for it in items):
         items.insert(0, {"код": ch, "кол-во": 1})
     rq = int(db.get_setting(f"roseqty:{client}") or 0)
-    if rq and ch and _is_piece_rose(catalog.get(ch, city) or catalog.get(ch) or {}, city):
+    if rq and ch and _is_piece_flower(catalog.get(ch, city) or catalog.get(ch) or {}, city):
         for it in items:                    # розы поштучно: в заказе ровно столько штук, сколько просил клиент
             if isinstance(it, dict) and str(it.get("код") or "").strip().lower() == ch:
                 c_r = catalog.get(ch, city) or catalog.get(ch)
@@ -4625,10 +4670,10 @@ def respond(client, incoming, from_staff=False, quote=""):
                     text = DATE_ONLY_Q if not city_new else f"Отлично, {city} 🌸 {DATE_ONLY_Q}"
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
-    # ── Розы поштучно ─────────────────────────────────────────────────────────────────────────────────────────
-    # «Сколько штук собрать?» → «51» / «51 шт» — количество роз.
+    # ── Цветы с количеством / поштучно (любые цветы, см. F_STEMS) ───────────────────────────────────────────────
+    # «Сколько штук собрать?» → «51» / «51 шт» — количество.
     if not from_staff and city and (db.get_setting(f"lastq:{client}") or "") == "Сколько штук собрать?":
-        m_q = re.fullmatch(r"\W*(\d{1,3})\s*(?:шт\w*|штук\w*|роз\w*)?\W*", _num_words_to_digits(incoming or ""), re.I)
+        m_q = re.fullmatch(r"\W*(\d{1,3})\s*(?:шт\w*|штук\w*|[а-яё]+)?\W*", _num_words_to_digits(incoming or ""), re.I)
         ch_q = db.get_setting(f"chosen:{client}") or ""
         it_q = catalog.get(ch_q, city) or catalog.get(ch_q) if ch_q else None
         if m_q and it_q and int(m_q.group(1)) > 0:
@@ -4637,132 +4682,147 @@ def respond(client, incoming, from_staff=False, quote=""):
             _add_user_once(client, incoming)
             nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city, _known_order(client))
             short = f" (в наличии {it_q['stock']} шт — флорист уточнит)" if it_q.get("stock") is not None and it_q["stock"] < qty else ""
-            text = (f"Отлично 🌹 {qty} шт — {it_q['title']}, {_rub(it_q['price'] * qty)}{short}."
+            text = (f"Отлично 🌸 {qty} шт — {it_q['title']}, {_rub(it_q['price'] * qty)}{short}."
                     + (f"\n\n{nq}" if nq and nq != ALMOST_DONE_Q else ""))
             db.set_setting(f"lastq:{client}", nq or "")
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
     _ch_now = db.get_setting(f"chosen:{client}") or ""
     if not from_staff and city and not addons and (not _ch_now or (picked and _ch_now == picked[0]["code"])):
-        r_qty = _rose_qty(incoming)
+        f_now, r_qty = _flower_qty(incoming)
         prev_user = [m["content"] for m in db.history(client, 30) if m["role"] == "user"]
         if not r_qty and not db.get_setting(f"roseqty:{client}"):
-            r_qty = next((q for q in (_rose_qty(m) for m in reversed(prev_user)) if q), 0)   # «101 роза» в 1-м сообщении
+            for m_ in reversed(prev_user):          # «101 роза» / «25 пионов» в первом сообщении
+                f_now, r_qty = _flower_qty(m_)
+                if r_qty:
+                    break
         if r_qty:
             db.set_setting(f"roseqty:{client}", r_qty)
+            db.set_setting(f"fl:{client}", f_now)
         qty = int(db.get_setting(f"roseqty:{client}") or 0)
-        rose_mode = db.get_setting(f"roses:{client}")
-        # Розы просили раньше (первым сообщением), а сейчас клиент только ответил на «дату и город» — показываем розы.
-        roses_before = not rose_mode and not _ch_now and not picked and after_anketa and any(ROSE_WORD_RE.search(m) for m in prev_user) \
-            and not any(re.search(r"букет\w*\s+(?:с|со)\s+роз|розов|коробк|корзин|шляп", m, re.I) for m in prev_user)
-        # 1) Клиент выбрал розу с фото (номер / «эту») — нужно количество.
-        if picked and _is_piece_rose(picked[0], city) and (rose_mode or qty):
+        flower = db.get_setting(f"fl:{client}") or _flower_word(incoming) or "роза"
+        g1, gn, pl, em = F_FORMS.get(flower, F_FORMS["роза"])
+        piece_mode = db.get_setting(f"roses:{client}")          # показаны цветы поштучно
+        # Просили цветы раньше (первым сообщением), а сейчас клиент только ответил на «дату и город».
+        f_before = next((_flower_word(m_) for m_ in reversed(prev_user) if _flower_word(m_)), "")
+        roses_before = not piece_mode and not db.get_setting(f"rosebq:{client}") and not _ch_now and not picked \
+            and after_anketa and (qty or f_before == "роза") \
+            and not any(re.search(r"букет\w*\s+(?:с|со)\s+[а-яё]+|розов|коробк|корзин|шляп", m_, re.I) for m_ in prev_user)
+        if roses_before and not qty:
+            flower = f_before or flower
+            g1, gn, pl, em = F_FORMS.get(flower, F_FORMS["роза"])
+        # 1) Выбрали цветок поштучно с фото (номер / «эту») — нужно количество.
+        if picked and _is_piece_flower(picked[0], city) and (piece_mode or qty):
             it = picked[0]
-            m_q = re.search(r"(\d{1,3})\s*(?:шт|штук|роз)", incoming or "")
+            m_q = re.search(r"(\d{1,3})\s*(?:шт|штук|[а-яё]{3,})", incoming or "")
             if m_q and int(m_q.group(1)) != int(re.sub(r"\D", "", (incoming or "").split(",")[0]) or 0):
                 qty = int(m_q.group(1))
                 db.set_setting(f"roseqty:{client}", qty)
             db.set_setting(f"chosen:{client}", it["code"])
             _add_user_once(client, incoming)
             if not qty:
-                text = f"Отлично 🌹 {it['title']} — {_rub(it['price'])} за штуку. Сколько штук собрать? Например: 51"
+                text = f"Отлично {em} {it['title']} — {_rub(it['price'])} за штуку. Сколько штук собрать? Например: 51"
                 db.set_setting(f"lastq:{client}", "Сколько штук собрать?")
                 db.add_message(client, "assistant", text)
                 return Reply(text=text, city=city)
             nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city, _known_order(client))
             short = f" (в наличии {it['stock']} шт — флорист уточнит)" if it.get("stock") is not None and it["stock"] < qty else ""
-            text = (f"Отлично 🌹 {qty} шт — {it['title']}, {_rub(it['price'] * qty)}{short}."
+            text = (f"Отлично {em} {qty} шт — {it['title']}, {_rub(it['price'] * qty)}{short}."
                     + (f"\n\n{nq}" if nq and nq != ALMOST_DONE_Q else ""))
             if nq:
                 db.set_setting(f"lastq:{client}", nq)
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
-        # 2) Ответ количеством на «Сколько штук собрать?» после выбора розы — обрабатывается в _apply_client_state.
-        # 2б) Розы показаны, а клиенту ничего не подходит — розы подберёт флорист лично; бот собирает заявку
-        # (ФИО, телефоны, дата, адрес), чтобы флорист не тратила время на расспросы (Абдулла 18.11).
-        if rose_mode and not picked and not _ch_now and re.search(
-                r"ничего\s+не\s+(?:нрав|подход)|не\s+нрав|не\s+подход|не\s+то\b|не\s+те\b|друг\w*\s+(?:сорт|роз)|"
+        shown_any = piece_mode or db.get_setting(f"rosebq:{client}")
+        # 2) Показали, а клиенту ничего не подходит — подберёт флорист лично; бот собирает заявку (ФИО, телефоны,
+        # дата, адрес), чтобы флорист не тратила время на расспросы (Абдулла 18.11).
+        if shown_any and not picked and not _ch_now and re.search(
+                r"ничего\s+не\s+(?:нрав|подход)|не\s+нрав|не\s+подход|не\s+то\b|не\s+те\b|друг\w*\s+(?:сорт|цвет|вариант)|"
                 r"живо\w*\s+(?:человек|сотрудн|флорист)|с\s+флорист|флористу?\b", incoming or "", re.I):
-            n = qty
-            title = f"Розы{f' {n} шт' if n else ''} — сорт подберёт флорист с клиентом"
+            title = f"{pl}{f' {qty} шт' if qty else ''} — подберёт флорист с клиентом"
             db.set_setting(f"photo_item:{client}", title)
-            db.set_setting(f"chosen:{client}", "photo:roses")
-            db.set_setting(f"wish:{client}", f"клиенту не подошли розы с фото — подберите сорт вместе с ним"
-                                             f"{' (крупный заказ!)' if n >= 51 else ''}")
+            db.set_setting(f"chosen:{client}", "photo:flowers")
+            db.set_setting(f"wish:{client}", "клиенту не подошли варианты с фото — подберите вместе с ним"
+                                             + (" (крупный заказ!)" if qty >= 51 else ""))
             _add_user_once(client, incoming)
             nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city, _known_order(client))
-            text = ("Поняла 🌸 Тогда розы подберёт флорист лично — она напишет вам и предложит варианты. "
+            text = ("Поняла 🌸 Тогда подберёт флорист лично — она напишет вам и предложит варианты. "
                     "Чтобы ей не тратить ваше время на расспросы, давайте сразу оформим заявку."
                     + (f"\n\n{nq}" if nq and nq != ALMOST_DONE_Q else ""))
             if nq:
                 db.set_setting(f"lastq:{client}", nq)
             db.add_message(client, "assistant", text)
             return Reply(text=text, city=city)
-        # 2в) «Я уже выбрал» (101 розу) — осталось выбрать сорт: снова фото роз.
-        if (rose_mode or qty) and not picked and not _ch_now and re.search(
+        # 3) «Я уже выбрал» (101 розу) — осталось выбрать конкретный вариант: снова фото.
+        if (shown_any or qty) and not picked and not _ch_now and re.search(
                 r"уже\s+выбрал|выбрал\w*\s+уже|я\s+же\s+(?:сказал|написал|выбрал)|уже\s+сказал|уже\s+написал", incoming or "", re.I):
-            pool = _piece_roses(city, qty)
+            pool = _count_bouquets(city, flower, qty, ready=_ready_first(client, incoming)) if not piece_mode else []
+            pool = pool or _piece_flowers(city, flower, qty)
             if pool:
-                db.set_setting(f"roses:{client}", "1")
                 _add_user_once(client, incoming)
-                text = (f"Да, {qty} шт 🌹 Осталось выбрать сорт — вот какие розы есть сейчас (цена под фото за 1 шт). "
-                        if qty else "Осталось выбрать сорт роз 🌹 Вот какие есть сейчас (цена под фото за 1 шт). ") + \
-                       "Напишите номер фото. Если не важно — «любые»; если ничего не подходит — подберёт флорист 🌸"
+                text = (f"Да, {qty} шт {em} " if qty else f"{pl} {em} ") + "Осталось выбрать вариант — вот что есть сейчас. " \
+                       "Напишите номер фото. Если ничего не подходит — подберёт флорист 🌸"
                 db.add_message(client, "assistant", text)
                 return Reply(text=text, city=city, photos=pool)
-        # 3) «Любые / не важно / на ваш выбор» после фото роз — подбираем сами.
-        if rose_mode and not picked and not _ch_now and re.search(r"любы|не\s+важн|без\s+разниц|на\s+ваш\s+выбор|на\s+ваш\s+вкус|"
-                                                  r"какие\s+есть|просто\s+роз|всё\s+равно|все\s+равно|сами\s+выбер|"
+        # 4) «Любые / не важно / на ваш выбор» после фото поштучно — подбираем сами.
+        if piece_mode and not picked and not _ch_now and re.search(r"любы|не\s+важн|без\s+разниц|на\s+ваш\s+выбор|на\s+ваш\s+вкус|"
+                                                  r"какие\s+есть|просто\s+[а-яё]+|всё\s+равно|все\s+равно|сами\s+выбер|"
                                                   r"не\s+хочу\s+выбир|без\s+выбора", incoming or "", re.I):
-            pool = _piece_roses(city, qty)
+            pool = _piece_flowers(city, flower, qty)
             it = next((x for x in pool if re.search(r"эксплорер|explorer", x["title"], re.I)), pool[0] if pool else None)
             if it:
                 db.set_setting(f"chosen:{client}", it["code"])
-                db.set_setting(f"wish:{client}", "сорт роз клиент не выбирал — подобрали сами, проверьте")
+                db.set_setting(f"wish:{client}", "сорт клиент не выбирал — подобрали сами, проверьте")
                 _add_user_once(client, incoming)
                 if not qty:
-                    text = f"Хорошо 🌹 Возьмём {it['title']} — {_rub(it['price'])} за штуку. Сколько штук собрать? Например: 51"
+                    text = f"Хорошо {em} Возьмём {it['title']} — {_rub(it['price'])} за штуку. Сколько штук собрать? Например: 51"
                     db.set_setting(f"lastq:{client}", "Сколько штук собрать?")
                 else:
                     nq = _next_question([m["content"] for m in db.history(client, 60) if m["role"] == "user"], city,
                                         _known_order(client))
-                    text = (f"Хорошо 🌹 Соберём {qty} шт — {it['title']}, {_rub(it['price'] * qty)}. "
+                    text = (f"Хорошо {em} Соберём {qty} шт — {it['title']}, {_rub(it['price'] * qty)}. "
                             "Флорист подтвердит наличие." + (f"\n\n{nq}" if nq and nq != ALMOST_DONE_Q else ""))
                     if nq:
                         db.set_setting(f"lastq:{client}", nq)
                 db.add_message(client, "assistant", text)
                 return Reply(text=text, city=city)
-        # 4) Просят розы (с количеством или «хочу розы / розы поштучно») — фото роз поштучно.
-        asks_roses = (ROSE_WORD_RE.search(incoming or "") or (db.get_setting(f"rosebq:{client}") and re.search(
-            r"поштучн|штучн|сорт|сами\s+(?:выбер|собер)", incoming or "", re.I))) and not picked and not _ch_now and (
-            r_qty or db.get_setting(f"rosebq:{client}") or re.search(r"поштучн|штучн|(?:хочу|нужн\w*|нужна|нужно|есть|какие|покаж\w*|интересу\w*)\s+(?:\w+\s+){0,2}роз|"
-                               r"^\W*роз\w*\W*$", incoming or "", re.I))
-        if (asks_roses and not re.search(r"букет\w*\s+(?:с|со)\s+роз|розов|коробк|корзин|шляп", incoming or "", re.I)) \
+        # 5) Просят цветы с количеством («101 роза», «25 пионов»), «поштучно», или розы вообще — сначала готовые
+        # букеты с этим числом в названии, потом (по просьбе «поштучно») — поштучно.
+        want_piece = bool(re.search(r"поштучн|штучн|сорт|сами\s+(?:выбер|собер)", incoming or "", re.I))
+        f_inc = _flower_word(incoming)
+        asks = not picked and not _ch_now and (
+            r_qty or (want_piece and (f_inc or db.get_setting(f"rosebq:{client}")))
+            or (f_inc == "роза" and re.search(r"(?:хочу|нужн\w*|нужна|нужно|есть|какие|покаж\w*|интересу\w*)\s+(?:\w+\s+){0,2}роз|"
+                                             r"^\W*роз\w*\W*$", incoming or "", re.I)))
+        if (asks and not re.search(r"букет\w*\s+(?:с|со)\s+[а-яё]+|розов|коробк|корзин|шляп", incoming or "", re.I)) \
                 or roses_before:
+            if f_inc and not r_qty and not db.get_setting(f"fl:{client}"):
+                flower = f_inc
+                g1, gn, pl, em = F_FORMS.get(flower, F_FORMS["роза"])
             n0 = r_qty or qty
-            bq = [] if re.search(r"поштучн|штучн", incoming or "", re.I) else \
-                _rose_bouquets(city, n0, ready=_ready_first(client, incoming))
+            bq = [] if want_piece else _count_bouquets(city, flower, n0, ready=_ready_first(client, incoming))
             if bq and not db.get_setting(f"rosebq:{client}"):
-                # На сайте есть готовые «… / 101 роза» — сначала их (Абдулла 18.11), поштучно — по просьбе.
                 db.set_setting(f"rosebq:{client}", "1")
-                exact = [it for it in bq if n0 and re.search(rf"(?<!\d){n0}\s*роз", it["title"], re.I)]
-                gen = "розы" if n0 % 10 == 1 and n0 % 100 != 11 else "роз"     # «из 101 розы», «из 51 розы», «из 35 роз»
-                head = (f"Вот готовые букеты из {n0} {gen} 🌹" if exact else
-                        f"Букетов ровно из {n0} {gen} сейчас нет — вот ближайшие по количеству 🌹" if n0 else "Вот букеты из роз 🌹")
-                text = (head + " Какой нравится? Напишите номер фото.\n"
-                        "Хотите собрать из роз поштучно (сами выберете сорт и длину) — напишите «поштучно» 🌸")
+                exact = [it for it in bq if n0 and re.search(rf"(?<!\d){n0}\s+" + _ADJ + r"(?:" + F_STEMS[flower] + r")",
+                                                             it["title"].lower())]
+                gen = g1 if n0 % 10 == 1 and n0 % 100 != 11 else gn
+                head = (f"Вот готовые букеты из {n0} {gen} {em}" if exact else
+                        f"Букетов ровно из {n0} {gen} сейчас нет — вот ближайшие по количеству {em}" if n0 else
+                        f"Вот букеты — {pl.lower()} {em}")
+                has_piece = bool(_piece_flowers(city, flower, n0))
+                text = (head + " Какой нравится? Напишите номер фото."
+                        + ("\nХотите собрать поштучно (сами выберете сорт) — напишите «поштучно» 🌸" if has_piece else ""))
                 _add_user_once(client, incoming)
                 db.add_message(client, "assistant", text)
                 db.del_setting(f"lastq:{client}")
                 return Reply(text=text, city=city, photos=bq)
-            pool = _piece_roses(city, r_qty or qty)
-            if pool:
-                db.set_setting(f"roses:{client}", "1")
-                n = r_qty or qty
-                word = "роза" if n % 10 == 1 and n % 100 != 11 else "розы" if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14 else "роз"
-                head = (f"{n} {word} — соберём 🌹 " if n else "Розы поштучно 🌹 ")
-                text = (head + "Вот какие сейчас есть — цена под фото за 1 шт. Какая нравится? Напишите номер фото"
-                        + ("" if n else " и сколько штук (например: «3, 51 шт»)")
+            pool = _piece_flowers(city, flower, n0)
+            if pool and (want_piece or flower == "роза" or r_qty):
+                db.set_setting(f"roses:{client}", flower)
+                db.set_setting(f"fl:{client}", flower)
+                head = (f"{n0} шт — соберём {em} " if n0 else f"{pl} поштучно {em} ")
+                text = (head + "Вот какие сейчас есть — цена под фото за 1 шт. Какой нравится? Напишите номер фото"
+                        + ("" if n0 else " и сколько штук (например: «3, 51 шт»)")
                         + ". Если не важно — напишите «любые», подберём сами; если ничего не подходит — подберёт флорист 🌸")
                 _add_user_once(client, incoming)
                 db.add_message(client, "assistant", text)
@@ -5182,7 +5242,7 @@ def respond(client, incoming, from_staff=False, quote=""):
         ch_d = db.get_setting(f"chosen:{client}") or ""
         it_d = catalog.get(ch_d, city) or catalog.get(ch_d) if ch_d and not ch_d.startswith("photo:") else None
         rq_d = int(db.get_setting(f"roseqty:{client}") or 0)
-        piece_d = bool(it_d) and _is_piece_rose(it_d, city)
+        piece_d = bool(it_d) and _is_piece_flower(it_d, city)
         total_d = (it_d["price"] * (max(rq_d, 1) if piece_d else 1)) if it_d else 0
         big = rq_d >= 51 or total_d >= 7000
         if big:     # крупный заказ (Абдулла 18.11): скидок нет, но просьбу передаём флористу — пусть решит сама
@@ -5371,7 +5431,13 @@ def respond(client, incoming, from_staff=False, quote=""):
     chosen_it = None if (from_staff or picked) else catalog.get(db.get_setting(f"chosen:{client}") or "", city)
     if chosen_it and not reply.order and not order_text and not keep_photos and ASK_WHICH_RE.search(reply.text or ""):
         nq = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client))
-        reply.text = f"Оформляем {chosen_it['title']} — {chosen_it['price']} ₽ 🌸 {nq}"
+        rq_o = int(db.get_setting(f"roseqty:{client}") or 0) if _is_piece_flower(chosen_it, city) else 0
+        if db.get_setting(f"said_chosen:{client}") == chosen_it["code"]:
+            reply.text = nq or ALMOST_DONE_Q              # «Оформляем …» уже говорили — не повторяем каждый раз
+        else:
+            db.set_setting(f"said_chosen:{client}", chosen_it["code"])
+            reply.text = (f"Оформляем {chosen_it['title']} — "
+                          + (f"{rq_o} шт, {_rub(chosen_it['price'] * rq_o)}" if rq_o else f"{_rub(chosen_it['price'])}") + f" 🌸 {nq}")
         reply.photos = []
         db.set_setting(f"lastq:{client}", nq)
     nxt = _next_question([m["content"] for m in history if m["role"] == "user"], city, _known_order(client)) if picked else ""
@@ -5745,7 +5811,7 @@ def respond(client, incoming, from_staff=False, quote=""):
             and re.search(r"как\w*\s+(?:из\s+(?:присланных|предложенных|этих)\s+)?букет\w*\s+(?:вам\s+)?(?:нрав|выбира|понрав)|"
                           r"номер\s+(?:выбранного\s+)?букета", reply.text or "", re.I):
         rq_ = int(db.get_setting(f"roseqty:{client}") or 0)
-        reply.text = (f"Какую розу собрать{f' — {rq_} шт' if rq_ else ''}? 🌹 Напишите номер фото роз выше. "
+        reply.text = (f"Какой вариант собрать{f' — {rq_} шт' if rq_ else ''}? 🌸 Напишите номер фото выше. "
                       "Если не важно — «любые»; если ничего не подходит — подберёт флорист 🌸")
         reply.photos = []
     # Букет (или розы) УЖЕ выбран — «какой из букетов нравится?» не спрашиваем: следующий вопрос оформления.
