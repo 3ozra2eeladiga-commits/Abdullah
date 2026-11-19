@@ -278,6 +278,33 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .stage{height:min(80vh,1200px)}
 [data-v=r] .stage::before{display:none}
 @media (max-width:760px){.stage{height:min(72vh,680px)}.tools{top:14px}.bar .chips{padding-top:6px}}
+.sosb{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;background:#fff0ef;color:#d70015;font:600 13px/1 var(--body);padding:6px 12px 6px 6px;white-space:nowrap}
+.sosb b{background:#ff3b30;color:#fff;font:800 10.5px/1 var(--body);letter-spacing:.04em;border-radius:999px;padding:5px 7px}
+.sosb:hover{background:#ffe2e0}
+.sheet{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.sheet-in{position:relative;background:#f5f5f7;border-radius:28px;width:min(820px,100%);max-height:min(88vh,1000px);overflow:auto;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.sheet-x{position:sticky;top:0;float:right;margin:-8px -8px 0 0;width:34px;height:34px;border:0;border-radius:50%;background:rgba(0,0,0,.08);font:500 20px/1 var(--body);color:#1d1d1f;z-index:2}
+.sos-h{font:700 clamp(26px,4vw,36px)/1.1 var(--display);letter-spacing:-.03em;margin:0 0 8px;padding-right:40px}
+.sos-lead{color:#1d1d1f;font-size:16px;margin:0 0 20px;max-width:60ch}
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.num{display:flex;flex-direction:column;gap:4px;background:#fff;border-radius:18px;padding:14px 16px;text-decoration:none;color:#1d1d1f;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.num b{font:800 34px/1 var(--display);letter-spacing:-.03em;color:#ff3b30}
+.num.main{background:#ff3b30;color:#fff}.num.main b{color:#fff}
+.num span{font:600 13px/1.25 var(--body)}
+.sos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.sos-card{background:#fff;border-radius:20px;padding:18px 18px 14px;box-shadow:0 2px 10px rgba(0,0,0,.05);min-width:0}
+.sos-card h3{font:700 17px/1.25 var(--display);letter-spacing:-.02em;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.sos-card h3 i{font-style:normal;font-size:20px}
+.sos-card ul{margin:0;padding-left:18px;display:grid;gap:5px;font-size:14.5px;line-height:1.4;color:#1d1d1f}
+.sos-card p{margin:8px 0 0;font-size:13.5px;color:#6e6e73}
+.sos-card.warn{background:#fff4f3;box-shadow:inset 0 0 0 1.5px rgba(255,59,48,.35)}
+.phrase{margin-top:10px;background:#f5f5f7;border-radius:14px;padding:10px 12px;font-size:14px}
+.phrase b{display:block;font:700 16px/1.3 var(--body);margin:3px 0 2px}
+.phrase small{color:#6e6e73}
+.sos-foot{margin:18px 0 0;font-size:13px;color:#6e6e73;display:grid;gap:4px}
+.sos-foot b{color:#1d1d1f}
+@media (max-width:760px){.sheet{padding:0;align-items:flex-end}.sheet-in{border-radius:24px 24px 0 0;max-height:92vh;padding:22px 16px calc(22px + env(safe-area-inset-bottom,0px))}.num b{font-size:28px}.sosb span{display:none}.sosb{padding:6px}}
 .hrow{display:flex;align-items:flex-end;gap:10px 26px;flex-wrap:wrap;margin:0 0 12px}
 .hrow h2.t{margin:0}
 .buddy{display:flex;align-items:flex-end;gap:4px;flex:none;max-width:100%}
@@ -324,6 +351,13 @@ details.stopsBox[open] summary::after{content:" ▴"}
   <svg class="lplane" id="lplane" viewBox="-34 -20 68 40" aria-hidden="true"><path d="M31 1 Q24 -6 6 -6 L-16 -6 L-25 -18 L-31 -18 L-27 -2 Q-28 4 -18 5 L18 6 Q28 6 31 1Z" fill="#fff"/><path d="M8 2 L-12 19 L-19 19 L-8 2Z" fill="#dfe6f5"/></svg>
   <div class="ltext"><h1 data-i="loadHi"></h1><p id="ltxt" data-i="loadSub"></p><div class="lbar"><u id="bar"></u></div><b id="pct">0</b></div>
 </div>
+<div class="sheet" id="sos" hidden role="dialog" aria-modal="true" aria-labelledby="sosT">
+  <div class="sheet-bg" data-close></div>
+  <div class="sheet-in">
+    <button class="sheet-x" type="button" data-close aria-label="Close">×</button>
+    <div id="sosBody"></div>
+  </div>
+</div>
 <header class="bar">
   <div class="top">
     <a class="brand" href="#top"><small data-i="brandTop"></small><span data-i="cPyat"></span></a>
@@ -337,6 +371,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
     <nav class="nav">
       <a href="#flats" data-i="navFlats"></a><a href="#sights" data-i="navSee"></a><a href="#holidays" data-i="navHol"></a><a href="#first" data-i="navFirst"></a>
     </nav>
+    <button class="sosb" id="sosBtn" type="button"><b>SOS</b><span data-i="sosBtn"></span></button>
     <span class="wx" id="wx" hidden></span>
     <div class="lang" role="group" aria-label="Language">
       <button data-l="en">EN</button><button data-l="fr">FR</button><button data-l="ru">RU</button>
@@ -575,6 +610,7 @@ brandTop:{en:'Student guide',fr:'Guide étudiant',ru:'Гид для студен
 swipe:{en:'Swipe sideways →',fr:'Faites défiler →',ru:'Листайте вбок →'},
 cPyat:{en:'Pyatigorsk',fr:'Piatigorsk',ru:'Пятигорск'},cNal:{en:'Nalchik',fr:'Naltchik',ru:'Нальчик'},cKra:{en:'Krasnodar',fr:'Krasnodar',ru:'Краснодар'},cRos:{en:'Rostov-on-Don',fr:'Rostov-sur-le-Don',ru:'Ростов-на-Дону'},
 loadSub:{en:'A guide for foreign students',fr:'Le guide des étudiants étrangers',ru:'Гид для иностранных студентов'},loadHi:{en:'Welcome to Russia',fr:'Bienvenue en Russie',ru:'Добро пожаловать в Россию'},
+sosBtn:{en:'Emergency',fr:'Urgences',ru:'Экстренно'},
 soon:{en:'soon',fr:'bientôt',ru:'скоро'},
 navFlats:{en:'Flats',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Sights',fr:'À voir',ru:'Места'},navHol:{en:'Holidays',fr:'Jours fériés',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
 h1:{en:'Your city, before you land.',fr:'Votre ville, avant d’atterrir.',ru:'Ваш город — ещё до приезда.'},
@@ -629,6 +665,48 @@ fr:[['Gardez votre carte migratoire.','Vous la recevez à la frontière. Sans el
 ru:[['Сохраните миграционную карту.','Её дают на границе. Без неё вас не зарегистрируют.'],['Оформите регистрацию.','В первые дни отдайте паспорт и миграционную карту в общежитие или хозяину квартиры.'],['Купите SIM-карту.','Билайн, МТС или МегаФон, по паспорту. Салон Билайн — у остановки «Универсам».'],['Оформите банковскую карту.','Иностранные Visa и Mastercard в России не работают. Карту «Мир» можно открыть в Сбербанке рядом с корпусом.'],['Установите приложения.','Яндекс Карты и 2ГИС — маршруты, Яндекс Go — такси, Яндекс Переводчик с камерой — вывески.'],['Запомните остановку.','«Универсам». Трамваи 2, 4, 6, 7 и 8.']]},
 foot:{en:'Independent student guide. Not an official page of the institute.',fr:'Guide étudiant indépendant. Page non officielle de l’institut.',ru:'Независимый гид для студентов. Не официальная страница института.'}
 };
+const SOS = {
+ en:{t:'Emergency & the law',lead:'Save this page. In an emergency call 112: it is free from any phone, even with no SIM card or zero balance.',
+  nums:[['112','All emergencies'],['103','Ambulance'],['102','Police'],['101','Fire & rescue (MChS)'],['104','Gas leak']],
+  call:['📞','What to say on the phone',['What happened.','The address: street, building, entrance, floor.','Your name and phone number.','Don’t hang up first.']],say:'Say in Russian:',tr:'Mne nuzhna pomoshch. Ya inostrannyy student. Adres: …',
+  cards:[['🪪','Always carry your documents',['Passport','Migration card','Registration slip (the tear-off part)'],'Keep photos and copies on your phone too. The police have the right to check a foreigner’s documents.'],
+   ['👮','If the police stop you',['Stay calm and polite.','Show your documents.','You may ask for the officer’s name and rank.','Don’t sign anything you don’t understand: you have the right to an interpreter.','Tell the institute straight away.']],
+   ['⛔','Strictly forbidden',['Drugs of any kind: prison and deportation.','Drinking alcohol in the street, parks and public places: a fine.','Smoking at bus and tram stops, near playgrounds and in stairwells: a fine.','Working without a permit: a fine and expulsion from Russia. Ask the institute how to work legally.','Joining unauthorised rallies: a fine and expulsion.','Living without registration or away from your registered address: a fine and visa problems.','Photographing military and security sites.'],'',1],
+   ['📝','Registration',['By law you must be registered within 7 working days of arrival. The institute may ask for it sooner, so check with them.','New address means new registration.','Watch the end dates of your visa and registration and renew early.']],
+   ['🧾','Lost your passport or got robbed',['Report it to the police (102) and keep the certificate they give you.','Tell the institute.','Contact your country’s embassy or consulate.']],
+   ['🩺','Health',['Medical insurance is compulsory for foreign students: carry your policy.','An ambulance in an emergency is free.']]],
+  inst:'PMPI (the institute): 8 (8793) 32-44-74, Mon–Sat 8:30–17:00',note:'A short reminder, not legal advice. Rules change, so always check with the institute.'},
+ fr:{t:'Urgences et loi',lead:'Enregistrez cette page. En cas d’urgence, appelez le 112 : c’est gratuit depuis n’importe quel téléphone, même sans carte SIM ni crédit.',
+  nums:[['112','Toutes les urgences'],['103','Ambulance'],['102','Police'],['101','Pompiers et secours (MTchS)'],['104','Fuite de gaz']],
+  call:['📞','Que dire au téléphone',['Ce qui s’est passé.','L’adresse : rue, numéro, entrée, étage.','Votre nom et votre numéro de téléphone.','Ne raccrochez pas le premier.']],say:'Dites en russe :',tr:'Mne noujna pomochtch. Ia inostranny student. Adres : …',
+  cards:[['🪪','Ayez toujours vos documents sur vous',['Passeport','Carte migratoire','Talon d’enregistrement (la partie détachable)'],'Gardez aussi des photos et des copies dans votre téléphone. La police a le droit de contrôler les documents d’un étranger.'],
+   ['👮','Si la police vous arrête',['Restez calme et poli.','Montrez vos documents.','Vous pouvez demander le nom et le grade de l’agent.','Ne signez rien que vous ne comprenez pas : vous avez droit à un interprète.','Prévenez l’institut tout de suite.']],
+   ['⛔','Strictement interdit',['Les drogues, quelles qu’elles soient : prison et expulsion.','Boire de l’alcool dans la rue, les parcs et les lieux publics : amende.','Fumer aux arrêts de bus et de tram, près des aires de jeux et dans les cages d’escalier : amende.','Travailler sans autorisation : amende et expulsion de Russie. Demandez à l’institut comment travailler légalement.','Participer à des manifestations non autorisées : amende et expulsion.','Vivre sans enregistrement ou ailleurs qu’à l’adresse enregistrée : amende et problèmes de visa.','Photographier des sites militaires ou sensibles.'],'',1],
+   ['📝','Enregistrement',['La loi impose d’être enregistré dans les 7 jours ouvrables suivant l’arrivée. L’institut peut le demander plus tôt : renseignez-vous.','Nouvelle adresse, nouvel enregistrement.','Surveillez la date de fin de votre visa et de votre enregistrement, et renouvelez à l’avance.']],
+   ['🧾','Passeport perdu ou vol',['Signalez-le à la police (102) et gardez l’attestation qu’on vous remet.','Prévenez l’institut.','Contactez l’ambassade ou le consulat de votre pays.']],
+   ['🩺','Santé',['L’assurance maladie est obligatoire pour les étudiants étrangers : gardez votre attestation sur vous.','L’ambulance est gratuite en cas d’urgence.']]],
+  inst:'PMPI (l’institut) : 8 (8793) 32-44-74, du lundi au samedi, 8 h 30–17 h',note:'Un simple aide-mémoire, pas un conseil juridique. Les règles changent : vérifiez toujours auprès de l’institut.'},
+ ru:{t:'Экстренная помощь и закон',lead:'Сохраните эту страницу. В экстренной ситуации звоните 112: это бесплатно с любого телефона, даже без SIM-карты и денег на счёте.',
+  nums:[['112','Единый номер, все службы'],['103','Скорая помощь'],['102','Полиция'],['101','Пожарные и МЧС'],['104','Утечка газа']],
+  call:['📞','Что сказать по телефону',['Что случилось.','Адрес: улица, дом, подъезд, этаж.','Ваше имя и номер телефона.','Не кладите трубку первым.']],say:'Скажите:',tr:'',
+  cards:[['🪪','Документы всегда с собой',['Паспорт','Миграционная карта','Отрывной талон о регистрации'],'Держите в телефоне их фото, а дома копии. Полиция имеет право проверить документы у иностранца.'],
+   ['👮','Если вас остановила полиция',['Сохраняйте спокойствие и вежливость.','Покажите документы.','Можно спросить фамилию и звание сотрудника.','Не подписывайте то, что не понимаете: у вас есть право на переводчика.','Сразу сообщите в институт.']],
+   ['⛔','Строго запрещено',['Наркотики в любом виде: уголовная ответственность и депортация.','Алкоголь на улице, в парках и общественных местах: штраф.','Курение на остановках, у детских площадок и в подъездах: штраф.','Работа без разрешения: штраф и выдворение из России. Спросите в институте, как работать легально.','Участие в несогласованных митингах: штраф и выдворение.','Жизнь без регистрации или не по адресу регистрации: штраф и проблемы с визой.','Съёмка военных и режимных объектов.'],'',1],
+   ['📝','Регистрация',['По закону встать на миграционный учёт нужно в течение 7 рабочих дней после приезда. Институт может требовать раньше — уточните.','Новый адрес — новая регистрация.','Следите за сроком визы и регистрации, продлевайте заранее.']],
+   ['🧾','Потеряли паспорт или обокрали',['Заявите в полицию (102) и возьмите справку.','Сообщите в институт.','Обратитесь в посольство или консульство своей страны.']],
+   ['🩺','Здоровье',['Полис медицинского страхования обязателен для иностранного студента — носите его с собой.','Скорая помощь в экстренной ситуации бесплатна.']]],
+  inst:'ПМФИ (институт): 8 (8793) 32-44-74, пн–сб 8:30–17:00',note:'Это короткая памятка, а не юридическая консультация. Правила меняются — уточняйте в институте.'}
+};
+function renderSos(){ const d = SOS[L] || SOS.en, li = a => a.map(x => `<li>${esc(x)}</li>`).join('');
+  $('#sosBody').innerHTML = `<h2 class="sos-h" id="sosT">${esc(d.t)}</h2><p class="sos-lead">${esc(d.lead)}</p>
+  <div class="nums">${d.nums.map((n,i) => `<a class="num${i?'':' main'}" href="tel:${n[0]}"><b>${n[0]}</b><span>${esc(n[1])}</span></a>`).join('')}</div>
+  <div class="sos-grid"><div class="sos-card"><h3><i>${d.call[0]}</i>${esc(d.call[1])}</h3><ol style="margin:0;padding-left:20px;display:grid;gap:5px;font-size:14.5px">${li(d.call[2])}</ol>
+    <div class="phrase"><small>${esc(d.say)}</small><b lang="ru">«Мне нужна помощь. Я иностранный студент. Адрес: …»</b>${d.tr ? `<small>${esc(d.tr)}</small>` : ''}</div></div>
+  ${d.cards.map(c => `<div class="sos-card${c[4]?' warn':''}"><h3><i>${c[0]}</i>${esc(c[1])}</h3><ul>${li(c[2])}</ul>${c[3]?`<p>${esc(c[3])}</p>`:''}</div>`).join('')}</div>
+  <div class="sos-foot"><b>${esc(d.inst)}</b><span>${esc(d.note)}</span></div>`; }
+let sosLast = null;
+function openSos(){ sosLast = document.activeElement; renderSos(); $('#sos').hidden = false; document.body.style.overflow = 'hidden'; $('#sos .sheet-x').focus(); }
+function closeSos(){ $('#sos').hidden = true; document.body.style.overflow = ''; if(sosLast && sosLast.focus) sosLast.focus(); }
 const HOL = [
  {m:1,d:1,off:1,n:{en:'New Year',fr:'Nouvel An',ru:'Новый год'},t:{en:'The biggest holiday of the year. Days off from 1 to 8 January, fireworks at midnight, a tree on Lenin Square.',fr:'La plus grande fête de l’année. Congés du 1er au 8 janvier, feux d’artifice à minuit, sapin place Lénine.',ru:'Главный праздник года. Выходные с 1 по 8 января, салют в полночь, ёлка на площади Ленина.'}},
  {m:1,d:7,off:1,n:{en:'Orthodox Christmas',fr:'Noël orthodoxe',ru:'Рождество'},t:{en:'Celebrated on 7 January by the Orthodox calendar.',fr:'Célébré le 7 janvier selon le calendrier orthodoxe.',ru:'Отмечают 7 января по православному календарю.'}},
@@ -696,6 +774,7 @@ function renderStatic(){
   const fmt = new Intl.DateTimeFormat(L==='en'?'en-GB':L, {day:'numeric', month:'long', year:'numeric'});
   $('#days').innerHTML = up.map(u => `<div class="day"><div class="in">${u.n===0?tx('today'):u.n+`<small>${tx('inDays')}</small>`}</div>
     <div class="when">${fmt.format(u.d)}${u.h.off?' · '+tx('dayOff'):''}</div><b>${u.h.n[L]}</b><p>${u.h.t[L]}</p></div>`).join('');
+  if(!$('#sos').hidden) renderSos();
   renderTramTable(); renderCard(); if(window.pinsRelabel) pinsRelabel(); if(window.wxRender) wxRender(); if(window.buddyText) buddyText();
 }
 function renderTramTable(){
@@ -734,7 +813,10 @@ function renderCard(){
 function setCat(k){ activeCat = k; subCat = null; sel = null; if(k!=='tram') setRoute(null, true); renderStatic(); if(window.pinsFilter) pinsFilter(); if(k!=='all' && window.fitCat) fitCat(k); }
 function setRoute(r, quiet){ selRoute = r; if(window.showRoute) showRoute(r); if(!quiet){ activeCat = 'tram'; sel = null; renderStatic(); if(window.pinsFilter) pinsFilter(); } }
 function select(p){ sel = p; if(p && !inAct(p)){ activeCat = 'all'; subCat = null; } renderStatic(); if(window.pinsFilter) pinsFilter(); if(p && window.flyTo) flyTo(p); }
+document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('#sos').hidden) closeSos(); });
 document.addEventListener('click', e => {
+  if(e.target.closest('[data-close]')){ closeSos(); return; }
+  if(e.target.closest('#sosBtn')){ openSos(); return; }
   const t = e.target.closest('button,a'); if(!t) return;
   if(t.dataset.l){ L = t.dataset.l; try{ localStorage.setItem('sg-lang', L); }catch(e){} renderStatic(); }
   else if(t.dataset.c) setCat(t.dataset.c);
