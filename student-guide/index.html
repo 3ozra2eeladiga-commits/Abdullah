@@ -511,6 +511,7 @@ const CITY = {
     med:{c:'#e6007e', en:'Hospitals', fr:'Hôpitaux', ru:'Больницы'},
     police:{c:'#5856d6', en:'Police', fr:'Police', ru:'Полиция'},
     pharm:{c:'#30b94d', en:'Pharmacies', fr:'Pharmacies', ru:'Аптеки'},
+    faith:{c:'#c9a227', en:'Mosque & churches', fr:'Mosquée et églises', ru:'Мечеть и церкви'},
     ship:{c:'#7d5cff', en:'Online orders & post', fr:'Commandes et poste', ru:'Заказы и почта'},
     bank:{c:'#0a7d74', en:'Banks & ATMs', fr:'Banques et DAB', ru:'Банки и банкоматы'},
     need:{c:'#00c7be', en:'Shops & services', fr:'Magasins et services', ru:'Магазины и услуги'},
@@ -527,7 +528,7 @@ const CITY = {
     tram:{c:'#af52de', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
     go:{c:'#34c759', cats:['meet','walk','see','hike','spring','coffee','food','study'], en:'Places to go', fr:'Sorties', ru:'Куда сходить'},
     st:{c:'#1d1d1f', cats:['go'], en:'Stations', fr:'Gares', ru:'Вокзалы'},
-    need:{c:'#00c7be', cats:['med','pharm','police','bank','ship','need'], en:'Help & services', fr:'Aide et services', ru:'Помощь и услуги'}
+    need:{c:'#00c7be', cats:['med','pharm','police','bank','ship','faith','need'], en:'Help & services', fr:'Aide et services', ru:'Помощь и услуги'}
   },
   places: [
     {k:'campus',id:'main',hl:'main',big:1,n:'PMFI Building No. 1 (main)',fr:'PMFI, bâtiment n° 1 (principal)',ru:'ПМФИ, корпус № 1 (главный) · пр. Калинина, 11',at:[43.06638,44.0533],
@@ -600,6 +601,10 @@ const CITY = {
     {k:'ship',id:'o4',n:'Central Post Office',fr:'Poste centrale',ru:'Центральное почтовое отделение · пр. Кирова, 52А',at:[43.07156,44.03643],d:{en:'The main post office of the city. Open 9:00–21:00.',fr:'La poste principale de la ville. Ouverte de 9 h à 21 h.',ru:'Главная почта города. Работает 9:00–21:00.'}},
     {k:'ship',id:'o5',n:'CDEK delivery',fr:'Livraison CDEK',ru:'СДЭК',at:[43.06291,44.05015],d:{en:'A private delivery company. Often faster than the post for parcels inside Russia.',fr:'Une société de livraison privée. Souvent plus rapide que la poste pour les colis en Russie.',ru:'Частная служба доставки. Посылки по России часто идут быстрее, чем почтой.'}},
     {k:'need',id:'mk3',n:'Lira and Lyudmila markets',fr:'Marchés Lira et Lioudmila',ru:'Рынки «Лира» и «Людмила»',at:[43.12833,44.03427],d:{en:'Very big markets on the edge of the city. Clothes, shoes, bags, things for home, all cheaper than in shopping centres. You can ask for a lower price. Go in the morning; it is far, so take a bus or a taxi.',fr:'De très grands marchés au bord de la ville. Vêtements, chaussures, sacs, objets pour la maison, moins cher que dans les centres commerciaux. Tu peux négocier le prix. Vas-y le matin ; c’est loin, prends un bus ou un taxi.',ru:'Очень большие рынки на краю города. Одежда, обувь, сумки, вещи для дома — дешевле, чем в торговых центрах. Можно торговаться. Езжай утром; это далеко, бери автобус или такси.'}},
+    {k:'faith',id:'mq',big:1,n:'Mosque (Cathedral Mosque)',fr:'Mosquée (mosquée-cathédrale)',ru:'Мечеть (Соборная мечеть)',at:[43.03271,44.03944],d:{en:'The mosque of Pyatigorsk, in the west of the city (50 Let VLKSM Street area). Address guides give two addresses, so call before you go the first time: +7 (879) 339-90-50. Friday prayer brings many people: come early.',fr:'La mosquée de Piatigorsk, à l’ouest de la ville (quartier de la rue 50 Let VLKSM). Les annuaires donnent deux adresses : appelle avant ta première visite : +7 (879) 339-90-50. Le vendredi, il y a beaucoup de monde : viens tôt.',ru:'Мечеть Пятигорска, на западе города (район улицы 50 лет ВЛКСМ). В справочниках два адреса, поэтому перед первым визитом позвони: +7 (879) 339-90-50. В пятницу много людей — приходи заранее.'}},
+    {k:'faith',id:'ch1',n:'Spassky Cathedral (Orthodox)',fr:'Cathédrale Spasski (orthodoxe)',ru:'Спасский кафедральный собор',at:[43.0781,44.0370],d:{en:'The main Orthodox church of the city, in the old centre.',fr:'La principale église orthodoxe de la ville, dans le vieux centre.',ru:'Главный православный храм города, в старом центре.'}},
+    {k:'faith',id:'ch2',n:'St Lazarus Church (Orthodox)',fr:'Église Saint-Lazare (orthodoxe)',ru:'Лазаревская церковь',at:[43.0751,44.0452],d:{en:'An old Orthodox church at the foot of Mashuk. The closest church to the main building.',fr:'Une vieille église orthodoxe au pied du Machouk. L’église la plus proche du bâtiment principal.',ru:'Старая православная церковь у подножия Машука. Ближайшая церковь к главному корпусу.'}},
+    {k:'faith',id:'ch3',n:'Archangel Michael Cathedral (Orthodox)',fr:'Cathédrale de l’Archange-Michel (orthodoxe)',ru:'Собор Михаила Архангела',at:[43.0521,44.0380],d:{en:'A big Orthodox cathedral near the railway station.',fr:'Une grande cathédrale orthodoxe près de la gare.',ru:'Большой православный собор у железнодорожного вокзала.'}},
     {k:'bank',id:'b1',n:'Sberbank ATM by the campus',fr:'DAB Sberbank près du campus',ru:'Банкомат Сбербанка у корпуса',at:[43.06618,44.05111],d:{en:'The nearest cash machine to the main building.',fr:'Le distributeur le plus proche du bâtiment principal.',ru:'Ближайший банкомат к главному корпусу.'}},
     {k:'bank',id:'b2',h24:1,n:'Sberbank ATM, 24/7',fr:'DAB Sberbank, 24 h/24',ru:'Банкомат Сбербанка, круглосуточно',at:[43.06337,44.06053]},
     {k:'bank',id:'b3',h24:1,n:'Sberbank ATM, 24/7 (centre)',fr:'DAB Sberbank, 24 h/24 (centre)',ru:'Банкомат Сбербанка, круглосуточно (центр)',at:[43.07345,44.04061]},
