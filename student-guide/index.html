@@ -2,9 +2,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Pyatigorsk Student Guide</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Lora:ital,wght@0,500;0,600;1,500;1,600&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: a live 3D tactical map of the city (contour lines, km grid, outlined buildings) is the first screen; controls float on it; the guide reads below it. Single light theme (white plan, red accents) by choice. */
+/* Layout: a live 3D tactical map of the city (contour lines, km grid, outlined buildings) is the first screen; controls float on it; the guide reads below it. Single light theme (vintage shaded-relief paper map) by choice. */
 :root{
   color-scheme:light;
   --night:#eef0f2; --deep:#eef0f2; --panel:#ffffff; --glass:rgba(255,255,255,.84); --line:rgba(20,24,31,.13);
@@ -184,6 +185,29 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .grid.row>.flat{flex:0 0 min(270px,78vw);scroll-snap-align:start}
 .swipe{font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:-14px 0 14px}
 @media (max-width:760px){.subs{top:104px}}
+/* ---- relief paper map (final look; overrides the blocks above) ---- */
+[data-v=r]{--night:#e6e3da;--deep:#e6e3da;--panel:#f4f2ec;--glass:rgba(244,242,236,.92);--line:rgba(60,44,30,.22);--fg:#2a2018;--muted:#6a5c4c;--amber:#b5482f;--amber-t:#8a342c;--display:"Cormorant Garamond",Georgia,serif;--body:"Lora",Georgia,serif}
+[data-v=r] #sky{background:#e6e3da}
+[data-v=r] .stage::before{background:linear-gradient(rgba(230,227,218,.85),transparent)}
+[data-v=r] #pins::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(50,40,25,.3) 100%)}
+[data-v=r] .headline h1{font:600 clamp(34px,6vw,64px)/1 "Cormorant Garamond",Georgia,serif;letter-spacing:.01em;color:#2a2018;text-shadow:0 0 22px #f4f2ec,0 0 10px #f4f2ec}
+[data-v=r] .headline p{color:#3d3024;text-shadow:0 0 10px #f4f2ec;font-weight:500}
+[data-v=r] h2.t{font-weight:700;font-size:clamp(28px,4.4vw,44px);line-height:1.05}
+[data-v=r] .card h2{font-size:22px;font-weight:700}
+[data-v=r] .brand span{font:700 20px/1 "Cormorant Garamond",Georgia,serif;letter-spacing:.04em}
+[data-v=r] .city,[data-v=r] .chip,[data-v=r] .lang,[data-v=r] .tools button,[data-v=r] .subs button{background:rgba(244,242,236,.94);border-color:rgba(60,44,30,.4);box-shadow:none;border-radius:4px;color:#2a2018}
+[data-v=r] .chip[aria-pressed="true"],[data-v=r] .lang button[aria-pressed="true"]{background:#2a2018;color:#f4f2ec}
+[data-v=r] .subs button[aria-pressed="true"]{background:var(--c)}
+[data-v=r] .flat,[data-v=r] .day,[data-v=r] .card,[data-v=r] .btn,[data-v=r] figure.ph{border-radius:4px;box-shadow:none}
+[data-v=r] .day:first-child{background:linear-gradient(140deg,rgba(181,72,47,.16),var(--panel) 70%);border-color:rgba(181,72,47,.45)}
+[data-v=r] .verdict{background:rgba(181,72,47,.1);border-color:rgba(181,72,47,.4)}
+[data-v=r] .pin i{filter:saturate(.55) brightness(.82);width:9px;height:9px;box-shadow:0 0 0 1.5px #f4f2ec,0 0 0 2.5px #2a2018}
+[data-v=r] .pin span{background:none;border:0;padding:0 2px;font:italic 600 12.5px/1 "Lora",Georgia,serif;color:#2a2018;text-shadow:0 0 4px #f4f2ec,0 0 4px #f4f2ec,0 0 2px #f4f2ec}
+[data-v=r] .pin.on span{background:#2a2018;color:#f4f2ec;padding:4px 7px;text-shadow:none}
+[data-v=r] .pin.peak span{font:600 16px/1.2 "Cormorant Garamond",Georgia,serif;letter-spacing:.7em;color:#3d3024;text-shadow:0 0 6px #f4f2ec;font-style:normal}
+[data-v=r] .loader{background:#1d1812}
+[data-v=r] .loader b{color:#e8c860;font-family:"Cormorant Garamond",Georgia,serif;letter-spacing:0}
+[data-v=r] .loader u{background:#e8c860}
 figure.ph{margin:0 0 4px;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/2;background:#e9e2d6}
 figure.ph img{width:100%;height:100%;object-fit:cover;display:block}
 figure.ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 5px;font:500 9.5px/1.2 var(--mono);color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -325,9 +349,9 @@ const CITY = {
   home: [43.06638, 44.0533],           // PMFI main building: walking times are counted from here
   campusStop: 'Универсам',
   cats: {
-    campus:{c:'#e5262b', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
+    campus:{c:'#b5482f', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
     flat:{c:'#ff7a66', en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
-    dorm:{c:'#f26058', en:'Dorms', fr:'Résidences', ru:'Общежития'},
+    dorm:{c:'#c8663c', en:'Dorms', fr:'Résidences', ru:'Общежития'},
     tram:{c:'#b69cff', en:'Trams', fr:'Tramways', ru:'Трамваи'},
     coffee:{c:'#5fd6b4', en:'Coffee', fr:'Cafés', ru:'Кофейни'},
     study:{c:'#6db7ff', en:'Study spots', fr:'Pour étudier', ru:'Где поработать'},
@@ -339,9 +363,9 @@ const CITY = {
     spring:{c:'#57d3ff', en:'Springs', fr:'Sources', ru:'Источники'}
   },
   groups: {
-    pmfi:{c:'#e5262b', cats:['campus','dorm'], en:'PMFI', fr:'PMFI', ru:'ПМФИ'},
+    pmfi:{c:'#b5482f', cats:['campus','dorm'], en:'PMFI', fr:'PMFI', ru:'ПМФИ'},
     flat:{c:'#ff7a66', cats:['flat'], en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
-    tram:{c:'#1f2430', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
+    tram:{c:'#2f4f86', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
     go:{c:'#ff9ed1', cats:['see','hike','spring','coffee','food','study'], en:'Where to go', fr:'Où aller', ru:'Куда сходить'},
     need:{c:'#6db7ff', cats:['need','go'], en:'Essentials', fr:'Essentiels', ru:'Нужное'}
   },
@@ -624,7 +648,7 @@ renderStatic();
   let renderer;
   try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, powerPreference:'high-performance'}); renderer.setClearColor(0x000000, 0); }
   catch(e){ fail('3D is not available in this browser'); return; }
-  const V = 'w';
+  const V = 'q'; document.documentElement.dataset.v = 'r'; document.documentElement.dataset.q = '1';
   const S = {
    t:{fog:0x171c13, lo:[.115,.14,.095], mid:[.17,.23,.12], hi:[.30,.32,.19], cont:0xd9c98a, ca:.30, grid:.13, wall:[40,48,34], roofLo:[52,62,44], roofHi:[52,62,44], edge:0xd9c98a, lit:false, hemi:1, sun:0, shadows:false,
       roadA:0xe8a13a, roadB:0x9a8850, roadC:0x4a4f38, rail:0xd8d2b0, tram:0xff6a3d, trail:0x9bd05a, park:0x263d22, water:0x1f3f4a, camp:[[255,96,40],[255,150,80]], dorm:[[255,176,60],[255,210,120]]},
@@ -632,17 +656,21 @@ renderStatic();
       roadA:0xc3c7ce, roadB:0xd6d9de, roadC:0xcfd3d9, rail:0x7c828c, tram:0x1f2430, trail:0x4fa35a, park:0xcfe6cf, water:0x2b3440, camp:[[229,38,43],[186,28,32]], dorm:[[242,96,88],[205,66,60]]},
    g:{fog:0xfde6c8, lo:[.80,.81,.68], mid:[.30,.62,.28], hi:[.70,.78,.48], cont:null, ca:0, grid:0, wall:[255,245,228], roofLo:[232,112,70], roofHi:[250,240,224], edge:null, lit:true, hemi:.8, sun:.72, shadows:true,
       roadA:0xffffff, roadB:0xfff4e0, roadC:0xd6cba6, rail:0x8a7a66, tram:0x7b5cff, trail:0xffc93c, park:0x56b84c, water:0x2f9bff, camp:[[255,92,72],[196,58,48]], dorm:[[255,168,40],[214,120,24]]},
+   r:{fog:0xe9e2d2, lo:[.93,.905,.85], mid:[.50,.55,.30], hi:[.90,.88,.82], cont:0x6e5238, ca:.17, grid:.09, wall:[232,196,96], roofLo:[240,208,112], roofHi:[244,216,128], edge:null, lit:true, hemi:.5, sun:1.0, shadows:true,
+      roadA:0x8a342c, roadB:0x5a4a40, roadC:0xa39883, rail:0x2a2420, tram:0x2f4f86, trail:0x6b7a2c, park:0x8f9c4c, water:0x9cbcc6, camp:[[178,44,36],[150,34,30]], dorm:[[204,84,40],[170,64,30]]},
+   q:{fog:0xe6e3da, lo:[.93,.925,.895], mid:[.37,.43,.21], hi:[.88,.87,.83], cont:0x5c4a3a, ca:.13, grid:.15, wall:[236,212,112], roofLo:[246,226,138], roofHi:[246,226,138], edge:null, lit:true, hemi:.42, sun:1.18, shadows:true,
+      roadA:0x7a2e28, roadB:0x463f39, roadC:0xb3ab9c, rail:0x1e1a17, tram:0x2f4f86, trail:0x6b7a2c, park:0x9aa65a, water:0xa9c6cf, camp:[[186,40,34],[160,32,28]], dorm:[[198,70,38],[170,56,30]]},
    p:{fog:0xefe5cf, lo:[.95,.91,.80], mid:[.62,.74,.48], hi:[.84,.85,.66], cont:0x6b4a2e, ca:.34, grid:0, wall:[232,212,178], roofLo:[190,108,76], roofHi:[240,230,208], edge:0x3f2a1c, lit:true, hemi:.86, sun:.42, shadows:true,
       roadA:0xfffaf0, roadB:0xfbf3e2, roadC:0xbfa98a, rail:0x3f2a1c, tram:0xa3301f, trail:0x4f7a2a, park:0x9cc07a, water:0x86aebd, camp:[[168,52,40],[120,36,30]], dorm:[[214,120,40],[150,80,30]]},
    d:{fog:0xdccfb8, lo:[.50,.62,.34], mid:[.30,.48,.22], hi:[.58,.60,.42], cont:null, ca:0, grid:0, wall:[236,220,194], roofLo:[176,96,64], roofHi:[226,214,196], edge:null, lit:true, hemi:.72, sun:.7, shadows:true,
       roadA:0xeadfc6, roadB:0xdfd2b6, roadC:0xa9b07c, rail:0x6b5a48, tram:0x8a3d1e, trail:0xf2e6b0, park:0x4f8a3a, water:0x4f96b8, camp:[[196,60,44],[130,40,34]], dorm:[[236,140,44],[160,90,34]]}
   }[V];
-  const FOG = S.fog, VE = 1.5, BASE = 500;
+  const FOG = S.fog, VE = V==='q' ? 2.3 : 1.5, BASE = 500;
   renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2)); renderer.shadowMap.enabled = S.shadows; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene(), skyEl = $('#sky'); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:9000, V==='d'?2e7:30000);
   const cam = new THREE.PerspectiveCamera(38, 1, 20, 60000);
   const hemi = new THREE.HemisphereLight(0xffffff, S.lit?0xb0a898:0xffffff, S.hemi); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xfff1dc, S.sun); sun.position.set(-6000, 3500, 2500); scene.add(sun); scene.add(sun.target); sun.castShadow = S.shadows; sun.shadow.mapSize.set(4096,4096); { const c = sun.shadow.camera; c.left=-3400; c.right=3400; c.top=3400; c.bottom=-3400; c.near=200; c.far=16000; c.updateProjectionMatrix(); } sun.shadow.bias = -0.0004; sun.shadow.normalBias = 3;
+  const sun = new THREE.DirectionalLight(0xfff1dc, S.sun); sun.position.set(-6000, 3500, 2500); scene.add(sun); scene.add(sun.target); sun.castShadow = S.shadows; sun.shadow.mapSize.set(4096,4096); { const c = sun.shadow.camera; c.left=-7000; c.right=7000; c.top=7000; c.bottom=-7000; c.near=200; c.far=16000; c.updateProjectionMatrix(); } sun.shadow.bias = -0.0004; sun.shadow.normalBias = 3;
 
   const D = data.dem;
   function hAt(x, y){
@@ -662,21 +690,30 @@ renderStatic();
     for(let j=0;j<D.h;j++) for(let i=0;i<D.w;i++){ const k=j*D.w+i, e=D.d[k];
       pos[k*3]=D.x0+i*D.st; pos[k*3+1]=(e-BASE)*VE; pos[k*3+2]=-(D.y0+j*D.st);
       let c = e<560 ? lo : e<900 ? mix(lo,mid,Math.min(1,(e-560)/160)) : mix(mid,hi,Math.min(1,(e-900)/450));
+      if(V==='r'){ const f = e<600 ? 0 : e<700 ? (e-600)/100 : e<880 ? 1 : e<1000 ? (1000-e)/120 : 0; c = mix(lo, mid, f*.9); }
+      if(V==='q'){ const f = e<660 ? 0 : e<760 ? (e-660)/100 : e<1150 ? 1 : e<1300 ? (1300-e)/150 : 0; c = mix(lo, mid, f); }
       const edge = Math.min(i,j,D.w-1-i,D.h-1-j)/14; if(edge<1 && V!=='d') c = mix(fogC,c,Math.max(0,edge));
       col.set(c,k*3); }
     for(let j=0;j<D.h-1;j++) for(let i=0;i<D.w-1;i++){ const a=j*D.w+i; idx.push(a,a+1,a+D.w, a+1,a+D.w+1,a+D.w); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3)); g.setAttribute('color', new THREE.BufferAttribute(col,3)); g.setIndex(idx); g.computeVertexNormals();
     const tmat = new THREE.MeshLambertMaterial({vertexColors:true});
     if(S.cont!==null) tmat.onBeforeCompile = sh => { sh.uniforms.uCont = {value:new THREE.Color(S.cont)}; sh.uniforms.uCA = {value:S.ca}; sh.uniforms.uGrid = {value:S.grid};
-      sh.vertexShader = 'varying vec3 vW;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vW = position;');
-      sh.fragmentShader = 'varying vec3 vW; uniform vec3 uCont; uniform float uCA; uniform float uGrid;\n'+sh.fragmentShader.replace('#include <dithering_fragment>',`#include <dithering_fragment>
+      sh.vertexShader = 'varying vec3 vW; varying vec3 vN2;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vW = position; vN2 = normal;');
+      sh.fragmentShader = `varying vec3 vW; varying vec3 vN2; uniform vec3 uCont; uniform float uCA; uniform float uGrid;
+        float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+        float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f); return mix(mix(h21(i),h21(i+vec2(1.,0.)),f.x), mix(h21(i+vec2(0.,1.)),h21(i+vec2(1.,1.)),f.x), f.y); }
+        float ridged(vec2 p){ float a = .5, s = 0.; for(int k=0;k<5;k++){ s += a*(1.-abs(2.*vn(p)-1.)); p = p*2.03+7.1; a *= .5; } return s; }
+`+sh.fragmentShader.replace('#include <dithering_fragment>',`#include <dithering_fragment>
+        { float sl = clamp((1.-normalize(vN2).y)*3.2, 0., 1.); vec2 q2 = vW.xz/260.; float e0 = ridged(q2), ex = ridged(q2+vec2(.035,0.)), ez = ridged(q2+vec2(0.,.035));
+          float lit = clamp(.5 + ((ex-e0)*1.0 + (ez-e0)*.75)*9., 0., 1.); gl_FragColor.rgb *= mix(1., .55+.75*lit, sl); }
         float e = vW.y/30.; float l = 1.-smoothstep(0., fwidth(e)*1.3, abs(fract(e-.5)-.5));
         float e5 = vW.y/150.; float l5 = 1.-smoothstep(0., fwidth(e5)*2.4, abs(fract(e5-.5)-.5));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uCont, min(1., max(l*uCA, l5*uCA*2.)));
         vec2 gq = vW.xz/1000.; vec2 gl2 = 1.-smoothstep(vec2(0.), fwidth(gq)*1.2, abs(fract(gq-.5)-.5));
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, uCont, max(gl2.x,gl2.y)*uGrid);`); };
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, uCont, max(gl2.x,gl2.y)*uGrid);
+        float gn = fract(sin(dot(floor(vW.xz/5.), vec2(12.9898,78.233)))*43758.5453); gl_FragColor.rgb *= .955+.07*gn;`); };
     tmat.extensions = {derivatives:true};
-    const tm = new THREE.Mesh(g, tmat);
+    const tm = new THREE.Mesh(g, tmat); tm.castShadow = true;
     if(V==='d'){ // earth sides of the cut-out block
       const sp=[], sc=[], yb=-520, ring=[]; for(let i=0;i<D.w;i++) ring.push([i,0]); for(let j=1;j<D.h;j++) ring.push([D.w-1,j]); for(let i=D.w-2;i>=0;i--) ring.push([i,D.h-1]); for(let j=D.h-2;j>=0;j--) ring.push([0,j]);
       for(let k=0;k<ring.length;k++){ const a=ring[k], b=ring[(k+1)%ring.length], P2=q=>[D.x0+q[0]*D.st,(D.d[q[1]*D.w+q[0]]-BASE)*VE,-(D.y0+q[1]*D.st)], A=P2(a), B=P2(b);
@@ -693,7 +730,7 @@ renderStatic();
     for(const b of list){ const p = b.p, n = p.length; let a2 = 0, cx = 0, cy = 0, base = 1e9;
       for(let i=0;i<n;i++){ const q=p[(i+1)%n]; a2 += p[i][0]*q[1]-q[0]*p[i][1]; cx+=p[i][0]; cy+=p[i][1]; base=Math.min(base,hAt(p[i][0],p[i][1])); }
       if(a2<0) p.reverse(); cx/=n; cy/=n;
-      const top = hAt(cx,cy) + b.h*1.35, [cw, cr] = colorFn(b); base -= 2;
+      const top = hAt(cx,cy) + b.h*.6, [cw, cr] = colorFn(b); base -= 2;
       for(let i=0;i<n;i++){ const a=p[i], q=p[(i+1)%n], dx=q[0]-a[0], dy=q[1]-a[1], l=Math.hypot(dx,dy)||1, nx=dy/l, nz=dx/l;
         if(S.edge!==null) ed.push(a[0],top+.3,-a[1], q[0],top+.3,-q[1], a[0],top,-a[1], a[0],base+2,-a[1]);
         put(a[0],base,-a[1],nx,0,nz,cw); put(q[0],base,-q[1],nx,0,nz,cw); put(q[0],top,-q[1],nx,0,nz,cw);
@@ -720,7 +757,7 @@ renderStatic();
     scene.add(m);
     let cx=0, cy=0; for(const v of p){ cx+=v[0]; cy+=v[1]; } cx/=p.length; cy/=p.length;
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 700, 8, 1, true), new THREE.MeshBasicMaterial({color:V==='w'?0xe5262b:0xf08a24, transparent:true, opacity:.22, depthWrite:false, side:THREE.DoubleSide, fog:false}));
-    beam.position.set(cx, hAt(cx,cy)+350, -cy); scene.add(beam); beams.push(beam);
+    beam.position.set(cx, hAt(cx,cy)+350, -cy); beams.push(beam);
   }
 
   await tick(86);
@@ -738,8 +775,8 @@ renderStatic();
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); if(!mat){ mat = new THREE.LineBasicMaterial({color}); unlit.push({m:mat, base:new THREE.Color(color)}); } return new THREE.LineSegments(g, mat); }
   const flat = c => { const m = new THREE.MeshBasicMaterial({color:c, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2}); unlit.push({m, base:new THREE.Color(c)}); return m; };
   scene.add(thin(data.roads.c.map(a => dec(a,1)), 1.2, S.roadC));
-  scene.add(ribbon(data.roads.b.map(a => dec(a,1)), 9, 1.4, flat(S.roadB)));
-  scene.add(ribbon(data.roads.a.map(a => dec(a,1)), 14, 1.6, flat(S.roadA)));
+  scene.add(ribbon(data.roads.b.map(a => dec(a,1)), 3.5, 1.4, flat(S.roadB)));
+  scene.add(ribbon(data.roads.a.map(a => dec(a,1)), 6, 1.6, flat(S.roadA)));
   scene.add(thin(data.rail.map(a => dec(a,1)), 2, S.rail));
   const allTram = []; const seen = new Set();
   for(const t of Object.values(data.tram)) for(const l of t.l){ const key = l.slice(0,6).join(); if(!seen.has(key)){ seen.add(key); allTram.push(dec(l,1)); } }
@@ -772,7 +809,7 @@ renderStatic();
     vertexShader:'uniform vec2 uC; varying float vD; void main(){ vD = length(position.xz-uC); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }',
     fragmentShader:'uniform float uR; uniform float uA; varying float vD; void main(){ float lit = 1.-smoothstep(uR-250.,uR,vD); float head = exp(-pow((vD-uR)/420.,2.)); vec3 c = mix(vec3(1.,.68,.06), vec3(1.,.97,.72), head); gl_FragColor = vec4(c, clamp(lit*.9+head,0.,1.)*uA); }'});
   const glow = [ribbon(data.roads.a.concat(data.roads.b).map(a => dec(a,1)), 18, 4, glowMat), thin(data.roads.c.map(a => dec(a,1)), 3, 0, glowMat)];
-  const DAY = new THREE.Color(FOG), NIGHT = new THREE.Color(0x0a1020);
+  const DAY = new THREE.Color(FOG), NIGHT = new THREE.Color(0x1d1812);
   function setDay(k){ hemi.intensity = S.hemi*(.05+.95*k); sun.intensity = S.sun*k; scene.fog.color.copy(NIGHT).lerp(DAY,k); skyEl.style.opacity = k;
     for(const u of unlit) u.m.color.copy(u.base).multiplyScalar(.1+.9*k); }
   const sstep = (a,b,x) => { x = Math.min(1,Math.max(0,(x-a)/(b-a))); return x*x*(3-2*x); };
@@ -815,7 +852,7 @@ renderStatic();
   for(const p of CITY.places){ const a = toXY(p.at), el = document.createElement('button');
     el.className = 'pin' + (p.big?' big left':''); el.style.setProperty('--c', CITY.cats[p.k].c); el.innerHTML = '<i></i><span></span>';
     el.onclick = () => select(p); pinsEl.appendChild(el);
-    pins.push({p, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1]) + (p.hl ? data.hl[p.hl].h*1.35+20 : 30), -a[1])}); }
+    pins.push({p, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1]) + (p.hl ? data.hl[p.hl].h*.6+14 : 22), -a[1])}); }
   for(const p of CITY.peaks){ const a = toXY(p.at), el = document.createElement('div'); el.className = 'pin peak'; el.innerHTML = '<i></i><span>'+p.n+'</span>'; pinsEl.appendChild(el);
     pins.push({p:{k:'peak'}, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+230, -a[1])}); }
   window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = q.p.k==='flat' ? Math.round(q.p.price/1000)+'k ₽ · '+T.rooms[L][q.p.rooms] : L==='ru' ? q.p.ru.split(' · ')[0] : q.p.n; };
@@ -837,7 +874,7 @@ renderStatic();
       if(t > 1.8) stage.classList.remove('intro');
       if(t > 3.3){ for(const g of glow){ scene.remove(g); g.geometry.dispose(); } setDay(1); intro = null; } }
     ctl.target.x = Math.min(8000, Math.max(-8000, ctl.target.x)); ctl.target.z = Math.min(6500, Math.max(-9000, ctl.target.z));
-    ctl.update(); sun.position.set(ctl.target.x-3600, ctl.target.y+2900, ctl.target.z-3900); sun.target.position.copy(ctl.target);
+    ctl.update(); sun.position.set(ctl.target.x-5600, ctl.target.y+2700, ctl.target.z-3400); sun.target.position.copy(ctl.target);
     const floor = hAt(cam.position.x, -cam.position.z) + 60; if(cam.position.y < floor) cam.position.y = floor;
     const pulse = .2 + .1*Math.sin(now/700); for(const b of beams) b.material.opacity = pulse;
     renderer.render(scene, cam);
