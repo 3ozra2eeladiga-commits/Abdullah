@@ -4,7 +4,7 @@
 <title>Pyatigorsk Student Guide</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: a live 3D tactical map of the city (contour lines, km grid, outlined buildings) is the first screen; controls float on it; the guide reads below it. Single dark olive theme by choice. */
+/* Layout: a live 3D tactical map of the city (contour lines, km grid, outlined buildings) is the first screen; controls float on it; the guide reads below it. Single bright sunny theme by choice. */
 :root{
   color-scheme:light;
   --night:#eef0f2; --deep:#eef0f2; --panel:#ffffff; --glass:rgba(255,255,255,.84); --line:rgba(20,24,31,.13);
@@ -156,41 +156,35 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
-/* ---- tactical map look (overrides the base above) ---- */
-.card p{color:#d5d3b8}
-.card .x{background:rgba(236,235,216,.1)}
-.btn{background:rgba(236,235,216,.07);border-radius:4px}
-.btn.main{color:#171c13}
-.routes button{background:rgba(236,235,216,.06);border-radius:3px}
-.verdict.no{background:rgba(236,235,216,.05)}
-.flat,.day{border-radius:6px;box-shadow:none}
-.day:first-child{background:linear-gradient(140deg,rgba(232,161,58,.2),var(--panel) 70%)}
-.tag{border-radius:2px}
-td .no{border-radius:3px}
-h2.t{text-transform:uppercase;letter-spacing:.01em}
-.stage.intro .headline h1{color:#ecebd8}
-.pin.on span{color:#171c13}
-:root{color-scheme:dark;--night:#171c13;--deep:#171c13;--panel:#20271b;--glass:rgba(26,32,22,.82);--line:rgba(217,201,138,.28);--fg:#ecebd8;--muted:#a9a98a;--amber:#e8a13a;--amber-t:#e8a13a;--display:"JetBrains Mono",ui-monospace,monospace}
-.headline h1{color:#ecebd8;text-shadow:0 2px 20px #000;text-transform:uppercase;letter-spacing:.02em;font-weight:700}
-.headline p{color:#c9c7a8;text-shadow:0 1px 8px #000}
-.city,.chip,.lang,.tools button{border-radius:3px;background:rgba(26,32,22,.82);color:#ecebd8;font-family:var(--mono);text-transform:uppercase;font-size:11px;letter-spacing:.05em}
-.chip::before{border-radius:0;transform:rotate(45deg)}
-.chip[aria-pressed="true"],.lang button[aria-pressed="true"]{background:#d9c98a;color:#171c13}
-.pin i{border-radius:0;transform:rotate(45deg);box-shadow:0 0 0 2px #171c13,0 0 0 3px var(--c)}
-.pin span{background:rgba(23,28,19,.9);color:#ecebd8;border-radius:2px;font:500 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;border-color:var(--c)}
-.pin.peak span{color:#d9c98a;text-shadow:0 1px 4px #000;border:0;background:none}
-.card{border-radius:4px}.card p{color:#d5d3b8}
-.hud{position:absolute;inset:112px 14px 46px 14px;pointer-events:none;z-index:3}
-.hud b{position:absolute;width:26px;height:26px;border:2px solid #d9c98a;opacity:.8}
-.hud b:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}.hud b:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
-.hud b:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}.hud b:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
-.hud span{position:absolute;left:50%;top:-4px;transform:translateX(-50%);font:500 10.5px/1 var(--mono);letter-spacing:.14em;color:#d9c98a;white-space:nowrap}
-.hint{color:#a9a98a;bottom:14px}
-@media (max-width:760px){.hud{inset:104px 10px 150px 10px}.hud span{display:none}}
+/* ---- sunny city look (overrides the base above) ---- */
+:root{color-scheme:light;--night:#fff8ec;--deep:#fff8ec;--panel:#ffffff;--glass:rgba(255,255,255,.86);--line:rgba(60,40,20,.13);--fg:#1f2430;--muted:#667085;--amber:#ff8a1f;--amber-t:#c2410c}
+.stage{background:#0a1020}
+#sky{position:absolute;inset:0;background:linear-gradient(#3f9bff 0%,#9fd0ff 24%,#ffe9cf 48%,#fde6c8 100%)}
+.stage::before{height:120px;background:linear-gradient(rgba(255,255,255,.6),transparent)}
+.headline h1{color:#1f2430;text-shadow:0 1px 0 #fff,0 0 26px #fff,0 0 12px #fff}
+.headline p{color:#2f3644;text-shadow:0 0 10px #fff,0 0 4px #fff;font-weight:600}
+.city,.chip,.lang,.tools button{box-shadow:0 4px 14px rgba(60,40,20,.12)}
+.flat,.day{box-shadow:0 8px 28px rgba(120,80,30,.08)}
+.pin i{width:13px;height:13px}
+details.stopsBox summary{cursor:pointer;font:600 12.5px/1 var(--body);color:var(--muted);padding:8px 0 2px;list-style:none}
+details.stopsBox summary::after{content:" ▾"}
+details.stopsBox[open] summary::after{content:" ▴"}
+@media (max-width:760px){
+  .card{padding:12px 14px;max-height:46%;border-radius:16px}
+  .card h2{font-size:13px;margin-bottom:0}
+  .card.tram h2{display:none}
+  .card.tram .x{top:6px;right:6px;width:28px;height:28px}
+  .card.tram .routes{margin:0 34px 8px 0;gap:4px}
+  .card.tram .routes button{aspect-ratio:auto;height:34px;font-size:14px}
+  .card.tram p{margin:0 0 6px;font-size:13px}
+  .card .verdict{padding:7px 10px;font-size:12px}
+  .stops{max-height:110px}
+}
 </style>
 
 
 <div class="stage busy intro" id="stage">
+  <div id="sky"></div>
   <canvas id="gl" aria-label="3D map of Pyatigorsk"></canvas>
   <div id="pins"></div>
   <div class="loading" id="loading">Loading the city…</div>
@@ -516,10 +510,11 @@ function renderCard(){
       (MAP ? Object.keys(MAP.tram).map(r => `<button style="--c:${CITY.tramColors[r]}" data-route="${r}" aria-pressed="${selRoute===r}">${r}</button>`).join('') : '') + `</div>`;
     if(selRoute && MAP){ const t = MAP.tram[selRoute], ok = t.stops.includes(CITY.campusStop);
       h += `<p><b>${esc(lat(cap(t.from)))} → ${esc(lat(cap(t.to)))}</b></p><div class="verdict ${ok?'':'no'}">${tx(ok?'passes':'notPasses')}</div>
-      <ul class="stops" style="--c:${CITY.tramColors[selRoute]}">${t.stops.map(s => `<li class="${s===CITY.campusStop?'me':''}">${esc(lat(s))}${L!=='ru'?' · '+esc(s):''}</li>`).join('')}</ul>`;
+      <details class="stopsBox" ${innerWidth>760?'open':''}><summary>${t.stops.length} ${tx('stopsN')}</summary><ul class="stops" style="--c:${CITY.tramColors[selRoute]}">${t.stops.map(s => `<li class="${s===CITY.campusStop?'me':''}">${esc(lat(s))}${L!=='ru'?' · '+esc(s):''}</li>`).join('')}</ul></details>`;
     } else h += `<p>${tx('tramPick')}</p>`;
-    c.innerHTML = h; c.hidden = false; $('#stage').classList.add('busy'); return;
+    c.innerHTML = h; c.classList.add('tram'); c.hidden = false; $('#stage').classList.add('busy'); return;
   }
+  c.classList.remove('tram');
   if(!sel){ c.hidden = true; $('#stage').classList.toggle('busy', activeCat!=='all' || !MAP); return; }
   const p = sel, cat = CITY.cats[p.k];
   c.innerHTML = `<button class="x" aria-label="Close">×</button>
@@ -558,12 +553,14 @@ renderStatic();
   MAP = data; O = data.o; renderStatic();
   if(!window.THREE){ $('#loading').textContent = '3D is not available in this browser'; return; }
   let renderer;
-  try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'}); }
+  try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, powerPreference:'high-performance'}); renderer.setClearColor(0x000000, 0); }
   catch(e){ $('#loading').textContent = '3D is not available in this browser'; return; }
-  const V = 't';
+  const V = 'g';
   const S = {
    t:{fog:0x171c13, lo:[.115,.14,.095], mid:[.17,.23,.12], hi:[.30,.32,.19], cont:0xd9c98a, ca:.30, grid:.13, wall:[40,48,34], roofLo:[52,62,44], roofHi:[52,62,44], edge:0xd9c98a, lit:false, hemi:1, sun:0, shadows:false,
       roadA:0xe8a13a, roadB:0x9a8850, roadC:0x4a4f38, rail:0xd8d2b0, tram:0xff6a3d, trail:0x9bd05a, park:0x263d22, water:0x1f3f4a, camp:[[255,96,40],[255,150,80]], dorm:[[255,176,60],[255,210,120]]},
+   g:{fog:0xfde6c8, lo:[.80,.81,.68], mid:[.30,.62,.28], hi:[.70,.78,.48], cont:null, ca:0, grid:0, wall:[255,245,228], roofLo:[232,112,70], roofHi:[250,240,224], edge:null, lit:true, hemi:.8, sun:.72, shadows:true,
+      roadA:0xffffff, roadB:0xfff4e0, roadC:0xd6cba6, rail:0x8a7a66, tram:0x7b5cff, trail:0xffc93c, park:0x56b84c, water:0x2f9bff, camp:[[255,92,72],[196,58,48]], dorm:[[255,168,40],[214,120,24]]},
    p:{fog:0xefe5cf, lo:[.95,.91,.80], mid:[.62,.74,.48], hi:[.84,.85,.66], cont:0x6b4a2e, ca:.34, grid:0, wall:[232,212,178], roofLo:[190,108,76], roofHi:[240,230,208], edge:0x3f2a1c, lit:true, hemi:.86, sun:.42, shadows:true,
       roadA:0xfffaf0, roadB:0xfbf3e2, roadC:0xbfa98a, rail:0x3f2a1c, tram:0xa3301f, trail:0x4f7a2a, park:0x9cc07a, water:0x86aebd, camp:[[168,52,40],[120,36,30]], dorm:[[214,120,40],[150,80,30]]},
    d:{fog:0xdccfb8, lo:[.50,.62,.34], mid:[.30,.48,.22], hi:[.58,.60,.42], cont:null, ca:0, grid:0, wall:[236,220,194], roofLo:[176,96,64], roofHi:[226,214,196], edge:null, lit:true, hemi:.72, sun:.7, shadows:true,
@@ -571,7 +568,7 @@ renderStatic();
   }[V];
   const FOG = S.fog, VE = 1.5, BASE = 500;
   renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2)); renderer.shadowMap.enabled = S.shadows; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(FOG); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:9000, V==='d'?2e7:30000);
+  const scene = new THREE.Scene(), skyEl = $('#sky'); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:9000, V==='d'?2e7:30000);
   const cam = new THREE.PerspectiveCamera(38, 1, 20, 60000);
   const hemi = new THREE.HemisphereLight(0xffffff, S.lit?0xb0a898:0xffffff, S.hemi); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff1dc, S.sun); sun.position.set(-6000, 3500, 2500); scene.add(sun); scene.add(sun.target); sun.castShadow = S.shadows; sun.shadow.mapSize.set(4096,4096); { const c = sun.shadow.camera; c.left=-3400; c.right=3400; c.top=3400; c.bottom=-3400; c.near=200; c.far=16000; c.updateProjectionMatrix(); } sun.shadow.bias = -0.0004; sun.shadow.normalBias = 3;
@@ -641,7 +638,7 @@ renderStatic();
   { const list = data.b.map(b => ({h:b[0], p:dec(b,2,1)})).filter(b => b.p.length>=3);
     let s = 7;
     scene.add(prisms(list, b => { s = (s*16807)%2147483647; const v = .82 + (s%100)/100*.3, t = Math.min(1,b.h/40);
-      const u = Math.min(1.06,v), r = b.h < 9 ? S.roofLo : S.roofHi; return [S.wall.map(c => c*u), r.map(c => Math.min(255,c*u))]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
+      const u = Math.min(1.06,v), r = b.h < 9 ? S.roofLo : S.roofHi; return [S.wall.map(c => Math.min(255,c*u*.97)), r.map(c => Math.min(255,c*u))]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
   // campus buildings glow
   const beams = [];
   for(const [id, b] of Object.entries(data.hl)){
@@ -683,14 +680,14 @@ renderStatic();
       for(const t of THREE.ShapeUtils.triangulateShape(p.map(v => new THREE.Vector2(v[0],v[1])), [])) for(const k of t) pos.push(p[k][0], hAt(p[k][0],p[k][1])+lift, -p[k][1]); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); scene.add(new THREE.Mesh(g, flat(color))); }
   areas(data.parks, S.park, .6); areas(data.water, S.water, .8);
-  if(V==='d' || V==='p'){ // little trees: in parks and on forested slopes
+  if(V==='d' || V==='p' || V==='g'){ // little trees: in parks and on forested slopes
     const pts = []; let sd = 11; const rnd = () => (sd = (sd*16807)%2147483647)/2147483647;
     for(const a of data.parks){ const p = dec(a,1); if(p.length<3) continue; let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; for(const q of p){ x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1]); }
       const n = Math.min(260, Math.round((x1-x0)*(y1-y0)/2600)); for(let k=0;k<n;k++){ const x=x0+rnd()*(x1-x0), y=y0+rnd()*(y1-y0); let ins=false; for(let i=0,j=p.length-1;i<p.length;j=i++) if((p[i][1]>y)!==(p[j][1]>y) && x < (p[j][0]-p[i][0])*(y-p[i][1])/(p[j][1]-p[i][1])+p[i][0]) ins=!ins; if(ins) pts.push([x,y]); } }
     for(let k=0;k<90000 && pts.length<9000;k++){ const x=D.x0+rnd()*(D.w-1)*D.st, y=D.y0+rnd()*(D.h-1)*D.st, e=hAt(x,y)/VE+BASE; if(e>590 && e<1250) pts.push([x,y]); }
     const cone = new THREE.ConeGeometry(V==='d'?17:12, V==='d'?46:30, 6); cone.translate(0,(V==='d'?46:30)/2,0);
     const im = new THREE.InstancedMesh(cone, new THREE.MeshLambertMaterial({color:0xffffff}), pts.length), m4 = new THREE.Matrix4(), col = new THREE.Color();
-    pts.forEach((q,i) => { const sc = .7+rnd()*.7; m4.makeScale(sc,sc,sc); m4.setPosition(q[0],hAt(q[0],q[1]),-q[1]); im.setMatrixAt(i,m4); col.setRGB(V==='d'?.16+rnd()*.1:.30+rnd()*.1, V==='d'?.40+rnd()*.14:.48+rnd()*.1, V==='d'?.16:.24); im.setColorAt(i,col); });
+    pts.forEach((q,i) => { const sc = .7+rnd()*.7; m4.makeScale(sc,sc,sc); m4.setPosition(q[0],hAt(q[0],q[1]),-q[1]); im.setMatrixAt(i,m4); col.setRGB(.16+rnd()*.14, .50+rnd()*.2, .18+rnd()*.06); im.setColorAt(i,col); });
     im.castShadow = true; scene.add(im); }
   if(V==='t'){ const hud = document.createElement('div'); hud.className = 'hud'; hud.innerHTML = '<b></b><b></b><b></b><b></b><span>GRID 1 KM · CONTOURS 20 M · 44.0522°N 43.0678°E · ELEV 512 M</span>'; stage.appendChild(hud); }
 
@@ -700,8 +697,8 @@ renderStatic();
     vertexShader:'uniform vec2 uC; varying float vD; void main(){ vD = length(position.xz-uC); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }',
     fragmentShader:'uniform float uR; uniform float uA; varying float vD; void main(){ float lit = 1.-smoothstep(uR-250.,uR,vD); float head = exp(-pow((vD-uR)/420.,2.)); vec3 c = mix(vec3(1.,.68,.06), vec3(1.,.97,.72), head); gl_FragColor = vec4(c, clamp(lit*.9+head,0.,1.)*uA); }'});
   const glow = [ribbon(data.roads.a.concat(data.roads.b).map(a => dec(a,1)), 18, 4, glowMat), thin(data.roads.c.map(a => dec(a,1)), 3, 0, glowMat)];
-  const DAY = new THREE.Color(FOG), NIGHT = new THREE.Color(0x050704);
-  function setDay(k){ hemi.intensity = S.hemi*(.05+.95*k); sun.intensity = S.sun*k; scene.background.copy(NIGHT).lerp(DAY,k); scene.fog.color.copy(scene.background);
+  const DAY = new THREE.Color(FOG), NIGHT = new THREE.Color(0x0a1020);
+  function setDay(k){ hemi.intensity = S.hemi*(.05+.95*k); sun.intensity = S.sun*k; scene.fog.color.copy(NIGHT).lerp(DAY,k); skyEl.style.opacity = k;
     for(const u of unlit) u.m.color.copy(u.base).multiplyScalar(.1+.9*k); }
   const sstep = (a,b,x) => { x = Math.min(1,Math.max(0,(x-a)/(b-a))); return x*x*(3-2*x); };
 
