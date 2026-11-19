@@ -190,7 +190,7 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 [data-v=r]{--night:#f5f5f7;--deep:#f5f5f7;--panel:#ffffff;--glass:rgba(255,255,255,.72);--line:rgba(0,0,0,.1);--fg:#1d1d1f;--muted:#6e6e73;--amber:#0071e3;--amber-t:#0066cc;
   --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Helvetica Neue",Arial,sans-serif;--body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;--mono:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif}
 [data-v=r] body{-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
-[data-v=r] #sky{background:linear-gradient(#cfe4f7 0%,#e9e7e1 55%)}
+[data-v=r] #sky{background:linear-gradient(#cfe4f7 0%,#e9e7e1 42%,#e9e7e1 100%)}
 [data-v=r] .stage::before{background:linear-gradient(rgba(245,245,247,.75),transparent)}
 [data-v=r] #pins::after{display:none}
 [data-v=r] .headline h1{font:700 clamp(34px,6.4vw,64px)/1.05 var(--display);letter-spacing:-.035em;color:#1d1d1f;text-shadow:0 0 22px #fff,0 0 10px #fff}
@@ -738,7 +738,7 @@ renderStatic();
   }[V];
   const FOG = S.fog, VE = V==='q' ? 1.75 : 1.5, BASE = 500;
   renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2)); renderer.shadowMap.enabled = S.shadows; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  const scene = new THREE.Scene(), skyEl = $('#sky'); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:11000, V==='d'?2e7:34000);
+  const scene = new THREE.Scene(), skyEl = $('#sky'); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:13000, V==='d'?2e7:40000);
   const cam = new THREE.PerspectiveCamera(38, 1, 20, 60000);
   const hemi = new THREE.HemisphereLight(0xffffff, S.lit?0xb0a898:0xffffff, S.hemi); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff1dc, S.sun); sun.position.set(-6000, 3500, 2500); scene.add(sun); scene.add(sun.target); sun.castShadow = S.shadows; sun.shadow.mapSize.set(4096,4096); { const c = sun.shadow.camera; c.left=-7000; c.right=7000; c.top=7000; c.bottom=-7000; c.near=200; c.far=16000; c.updateProjectionMatrix(); } sun.shadow.bias = -0.0004; sun.shadow.normalBias = 3;
@@ -782,9 +782,10 @@ renderStatic();
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uCont, min(1., max(l*uCA, l5*uCA*2.)));
         vec2 gq = vW.xz/1000.; vec2 gl2 = 1.-smoothstep(vec2(0.), fwidth(gq)*1.2, abs(fract(gq-.5)-.5));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uCont, max(gl2.x,gl2.y)*uGrid);
-        float gn = fract(sin(dot(floor(vW.xz/5.), vec2(12.9898,78.233)))*43758.5453); gl_FragColor.rgb *= .985+.025*gn;`); };
+        float gn = fract(sin(dot(floor(vW.xz/5.), vec2(12.9898,78.233)))*43758.5453); gl_FragColor.rgb *= .985+.025*gn;
+        { float ed = min(min(vW.x+9600., 9600.-vW.x), min(-vW.z+7600., 10400.+vW.z)); gl_FragColor.a *= smoothstep(150., 3200., ed); }`); };
     tmat.extensions = {derivatives:true};
-    const tm = new THREE.Mesh(g, tmat); tm.castShadow = true;
+    tmat.transparent = true; const tm = new THREE.Mesh(g, tmat); tm.castShadow = true; tm.renderOrder = -1;
     if(V==='d'){ // earth sides of the cut-out block
       const sp=[], sc=[], yb=-520, ring=[]; for(let i=0;i<D.w;i++) ring.push([i,0]); for(let j=1;j<D.h;j++) ring.push([D.w-1,j]); for(let i=D.w-2;i>=0;i--) ring.push([i,D.h-1]); for(let j=D.h-2;j>=0;j--) ring.push([0,j]);
       for(let k=0;k<ring.length;k++){ const a=ring[k], b=ring[(k+1)%ring.length], P2=q=>[D.x0+q[0]*D.st,(D.d[q[1]*D.w+q[0]]-BASE)*VE,-(D.y0+q[1]*D.st)], A=P2(a), B=P2(b);
