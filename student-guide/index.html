@@ -304,12 +304,12 @@ details.stopsBox[open] summary::after{content:" ▴"}
 
 <header class="bar">
   <div class="top">
-    <a class="brand" href="#top"><small data-i="brandTop"></small><span>Pyatigorsk</span></a>
+    <a class="brand" href="#top"><small data-i="brandTop"></small><span data-i="cPyat"></span></a>
     <div class="cities">
-      <span class="city" aria-current="true">Pyatigorsk</span>
-      <span class="city soon">Nalchik<em data-i="soon"></em></span>
-      <span class="city soon">Krasnodar<em data-i="soon"></em></span>
-      <span class="city soon">Rostov<em data-i="soon"></em></span>
+      <span class="city" aria-current="true" data-i="cPyat"></span>
+      <span class="city soon"><span data-i="cNal"></span><em data-i="soon"></em></span>
+      <span class="city soon"><span data-i="cKra"></span><em data-i="soon"></em></span>
+      <span class="city soon"><span data-i="cRos"></span><em data-i="soon"></em></span>
     </div>
     <span class="grow"></span>
     <nav class="nav">
@@ -328,7 +328,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
   <div id="sky"></div>
   <canvas id="gl" aria-label="3D map of Pyatigorsk"></canvas>
   <div id="pins"></div>
-  <div class="loader" id="loading"><div><b id="pct">0</b><i><u id="bar"></u></i><span id="ltxt">Pyatigorsk · PMFI</span></div></div>
+  <div class="loader" id="loading"><div><b id="pct">0</b><i><u id="bar"></u></i><span id="ltxt">Pyatigorsk · PMPI</span></div></div>
 
   <div class="headline">
     <h1 data-i="h1"></h1>
@@ -415,12 +415,12 @@ details.stopsBox[open] summary::after{content:" ▴"}
 const TG = 'khwajev';
 const CITY = {
   map: 'data/pyatigorsk.map.json',
-  home: [43.06638, 44.0533],           // PMFI main building: walking times are counted from here
+  home: [43.06638, 44.0533],           // PMPI main building: walking times are counted from here
   campusStop: 'Универсам',
   cats: {
-    campus:{c:'#ff3b30', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
-    flat:{c:'#007aff', en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
-    dorm:{c:'#ff9500', en:'Dorms', fr:'Résidences', ru:'Общежития'},
+    campus:{c:'#ff3b30', en:'PMPI campus', fr:'Campus PMPI', ru:'Корпуса ПМФИ'},
+    flat:{c:'#007aff', en:'Flats with registration', fr:'Logements avec enregistrement', ru:'Квартиры с регистрацией'},
+    dorm:{c:'#ff9500', en:'Dormitories', fr:'Résidences universitaires', ru:'Общежития'},
     tram:{c:'#af52de', en:'Trams', fr:'Tramways', ru:'Трамваи'},
     coffee:{c:'#a2845e', en:'Coffee', fr:'Cafés', ru:'Кофейни'},
     study:{c:'#8e8e93', en:'Study spots', fr:'Pour étudier', ru:'Где поработать'},
@@ -432,86 +432,86 @@ const CITY = {
     spring:{c:'#5ac8fa', en:'Springs', fr:'Sources', ru:'Источники'}
   },
   groups: {
-    pmfi:{c:'#ff3b30', cats:['campus','dorm'], en:'PMFI', fr:'PMFI', ru:'ПМФИ'},
-    flat:{c:'#007aff', cats:['flat'], en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
+    pmfi:{c:'#ff3b30', cats:['campus','dorm'], en:'PMPI', fr:'PMPI', ru:'ПМФИ'},
+    flat:{c:'#007aff', cats:['flat'], en:'Flats with registration', fr:'Logements avec enregistrement', ru:'Квартиры с регистрацией'},
     tram:{c:'#af52de', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
     go:{c:'#34c759', cats:['see','hike','spring','coffee','food','study'], en:'Where to go', fr:'Où aller', ru:'Куда сходить'},
     need:{c:'#00c7be', cats:['need','go'], en:'Essentials', fr:'Essentiels', ru:'Нужное'}
   },
   places: [
-    {k:'campus',id:'main',hl:'main',big:1,n:'PMFI Main Building',ru:'ПМФИ, главный корпус · пр. Калинина, 11',at:[43.06638,44.0533],
+    {k:'campus',id:'main',hl:'main',big:1,n:'PMPI Main Building',fr:'PMPI, bâtiment principal',ru:'ПМФИ, главный корпус · пр. Калинина, 11',at:[43.06638,44.0533],
       d:{en:'Main building of the Pyatigorsk Medical and Pharmaceutical Institute (branch of Volgograd State Medical University). Dean’s offices and most lectures.',fr:'Bâtiment principal de l’Institut médico-pharmaceutique de Piatigorsk (filiale de l’Université médicale de Volgograd). Décanats et la plupart des cours.',ru:'Главный корпус Пятигорского медико-фармацевтического института (филиал ВолгГМУ). Деканаты и большинство лекций.'}},
-    {k:'dorm',id:'dorm4',hl:'dorm4',n:'Dorm No. 4',ru:'Общежитие № 4 ПМФИ · пр. Калинина, 11',at:[43.06803,44.05202],d:{en:'9 floors. Most international students live here.',fr:'9 étages. La plupart des étudiants étrangers y vivent.',ru:'9 этажей. Здесь живёт большинство иностранных студентов.'}},
-    {k:'dorm',id:'dorm3',hl:'dorm3',n:'Dorm No. 3',ru:'Общежитие № 3 ПМФИ · пр. Калинина, 11 к2',at:[43.06746,44.05235],d:{en:'8 floors, next to the main building.',fr:'8 étages, à côté du bâtiment principal.',ru:'8 этажей, рядом с главным корпусом.'}},
-    {k:'dorm',id:'dorm2',hl:'dorm2',n:'Dorm No. 2',ru:'Общежитие № 2 ПМФИ · пр. Калинина, 11 к1',at:[43.06808,44.05271],d:{en:'5 floors.',fr:'5 étages.',ru:'5 этажей.'}},
-    {k:'tram',id:'stop',n:'Tram stop “Universam”',ru:'Остановка «Универсам»',at:[43.06303,44.05304],d:{en:'Your stop. Trams 2, 4, 6, 7 and 8 stop here.',fr:'Votre arrêt. Les trams 2, 4, 6, 7 et 8 s’arrêtent ici.',ru:'Ваша остановка. Здесь останавливаются трамваи 2, 4, 6, 7 и 8.'}},
+    {k:'dorm',id:'dorm4',hl:'dorm4',n:'Dorm No. 4',fr:'Résidence universitaire n° 4',ru:'Общежитие № 4 ПМФИ · пр. Калинина, 11',at:[43.06803,44.05202],d:{en:'9 floors. Most international students live here.',fr:'9 étages. La plupart des étudiants étrangers y vivent.',ru:'9 этажей. Здесь живёт большинство иностранных студентов.'}},
+    {k:'dorm',id:'dorm3',hl:'dorm3',n:'Dorm No. 3',fr:'Résidence universitaire n° 3',ru:'Общежитие № 3 ПМФИ · пр. Калинина, 11 к2',at:[43.06746,44.05235],d:{en:'8 floors, next to the main building.',fr:'8 étages, à côté du bâtiment principal.',ru:'8 этажей, рядом с главным корпусом.'}},
+    {k:'dorm',id:'dorm2',hl:'dorm2',n:'Dorm No. 2',fr:'Résidence universitaire n° 2',ru:'Общежитие № 2 ПМФИ · пр. Калинина, 11 к1',at:[43.06808,44.05271],d:{en:'5 floors.',fr:'5 étages.',ru:'5 этажей.'}},
+    {k:'tram',id:'stop',n:'Tram stop “Universam”',fr:'Arrêt de tram « Universam »',ru:'Остановка «Универсам»',at:[43.06303,44.05304],d:{en:'Your stop. Trams 2, 4, 6, 7 and 8 stop here.',fr:'Votre arrêt. Les trams 2, 4, 6, 7 et 8 s’arrêtent ici.',ru:'Ваша остановка. Здесь останавливаются трамваи 2, 4, 6, 7 и 8.'}},
 
-    {k:'flat',id:'f1',demo:1,n:'1-room flat, Kalinina Ave',ru:'пр. Калинина',at:[43.06598, 44.05159],price:28000,rooms:1,f:['furn', 'wash', 'wifi'],ph:'img/flats/f1.jpg'},
-    {k:'flat',id:'f2',demo:1,n:'2-room flat, Kuchury St',ru:'ул. Кучуры',at:[43.06804, 44.05123],price:38000,rooms:2,f:['two', 'furn', 'balc'],ph:'img/flats/f2.jpg'},
-    {k:'flat',id:'f3',demo:1,n:'Studio, 40 Let Oktyabrya Ave',ru:'пр. 40 лет Октября',at:[43.06373, 44.05131],price:24000,rooms:0,f:['tram', 'furn', 'wifi'],ph:'img/flats/f3.jpg'},
-    {k:'flat',id:'f4',demo:1,n:'1-room flat, Moskovskaya St',ru:'ул. Московская',at:[43.05864, 44.05124],price:30000,rooms:1,f:['quiet', 'newk', 'wash'],ph:'img/flats/f4.jpg'},
-    {k:'flat',id:'f5',demo:1,n:'1-room flat, Panagyurishte St',ru:'ул. Панагюриште',at:[43.06387, 44.05475],price:29000,rooms:1,f:['lift', 'furn', 'balc'],ph:'img/flats/f5.jpg'},
-    {k:'flat',id:'f6',demo:1,n:'2-room flat, Pushkinskaya St',ru:'ул. Пушкинская',at:[43.06601, 44.05059],price:36000,rooms:2,f:['two', 'quiet', 'wash'],ph:'img/flats/f6.jpg'},
-    {k:'flat',id:'f7',demo:1,n:'Studio, Ordzhonikidze St',ru:'ул. Орджоникидзе',at:[43.0622, 44.05402],price:23000,rooms:0,f:['tram', 'newk', 'wifi'],ph:'img/flats/f7.jpg'},
-    {k:'flat',id:'f8',demo:1,n:'1-room flat, 1st Bulvarnaya St',ru:'ул. 1-я Бульварная',at:[43.06198, 44.0533],price:27000,rooms:1,f:['furn', 'desk', 'wifi'],ph:'img/flats/f8.jpg'},
-    {k:'flat',id:'f9',demo:1,n:'2-room flat, Novorossiyskaya St',ru:'ул. Новороссийская',at:[43.0643, 44.04926],price:40000,rooms:2,f:['two', 'reno', 'balc'],ph:'img/flats/f9.jpg'},
-    {k:'flat',id:'f10',demo:1,n:'1-room flat, Sorge St',ru:'ул. Зорге',at:[43.0607, 44.05488],price:26000,rooms:1,f:['quiet', 'furn', 'wash'],ph:'img/flats/f10.jpg'},
-    {k:'flat',id:'f11',demo:1,n:'2-room flat, 295th Rifle Division St',ru:'ул. 295-й Стрелковой Дивизии',at:[43.06845, 44.05875],price:35000,rooms:2,f:['two', 'lift', 'desk'],ph:'img/flats/f11.jpg'},
-    {k:'flat',id:'f12',demo:1,n:'Studio, Fuchika St',ru:'ул. Юлиуса Фучика',at:[43.05958, 44.05689],price:22000,rooms:0,f:['cheap', 'furn', 'wifi'],ph:'img/flats/f12.jpg'},
-    {k:'flat',id:'f13',demo:1,n:'3-room flat, Kavkazskaya St',ru:'ул. Кавказская',at:[43.06283, 44.04703],price:45000,rooms:3,f:['three', 'reno', 'wash'],ph:'img/flats/f13.jpg'},
+    {k:'flat',id:'f1',demo:1,n:'1-bedroom flat, Kalinina Ave',fr:'1 pièce, av. Kalinine',ru:'пр. Калинина',at:[43.06598, 44.05159],price:28000,rooms:1,f:['furn', 'wash', 'wifi'],ph:'img/flats/f1.jpg'},
+    {k:'flat',id:'f2',demo:1,n:'2-bedroom flat, Kuchury St',fr:'2 pièces, rue Koutchoury',ru:'ул. Кучуры',at:[43.06804, 44.05123],price:38000,rooms:2,f:['two', 'furn', 'balc'],ph:'img/flats/f2.jpg'},
+    {k:'flat',id:'f3',demo:1,n:'Studio, 40 Let Oktyabrya Ave',fr:'Studio, av. des 40 ans d’Octobre',ru:'пр. 40 лет Октября',at:[43.06373, 44.05131],price:24000,rooms:0,f:['tram', 'furn', 'wifi'],ph:'img/flats/f3.jpg'},
+    {k:'flat',id:'f4',demo:1,n:'1-bedroom flat, Moskovskaya St',fr:'1 pièce, rue Moskovskaïa',ru:'ул. Московская',at:[43.05864, 44.05124],price:30000,rooms:1,f:['quiet', 'newk', 'wash'],ph:'img/flats/f4.jpg'},
+    {k:'flat',id:'f5',demo:1,n:'1-bedroom flat, Panagyurishte St',fr:'1 pièce, rue Panagurichté',ru:'ул. Панагюриште',at:[43.06387, 44.05475],price:29000,rooms:1,f:['lift', 'furn', 'balc'],ph:'img/flats/f5.jpg'},
+    {k:'flat',id:'f6',demo:1,n:'2-bedroom flat, Pushkinskaya St',fr:'2 pièces, rue Pouchkine',ru:'ул. Пушкинская',at:[43.06601, 44.05059],price:36000,rooms:2,f:['two', 'quiet', 'wash'],ph:'img/flats/f6.jpg'},
+    {k:'flat',id:'f7',demo:1,n:'Studio, Ordzhonikidze St',fr:'Studio, rue Ordjonikidzé',ru:'ул. Орджоникидзе',at:[43.0622, 44.05402],price:23000,rooms:0,f:['tram', 'newk', 'wifi'],ph:'img/flats/f7.jpg'},
+    {k:'flat',id:'f8',demo:1,n:'1-bedroom flat, 1st Bulvarnaya St',fr:'1 pièce, 1re rue Boulvarnaïa',ru:'ул. 1-я Бульварная',at:[43.06198, 44.0533],price:27000,rooms:1,f:['furn', 'desk', 'wifi'],ph:'img/flats/f8.jpg'},
+    {k:'flat',id:'f9',demo:1,n:'2-bedroom flat, Novorossiyskaya St',fr:'2 pièces, rue Novorossiïskaïa',ru:'ул. Новороссийская',at:[43.0643, 44.04926],price:40000,rooms:2,f:['two', 'reno', 'balc'],ph:'img/flats/f9.jpg'},
+    {k:'flat',id:'f10',demo:1,n:'1-bedroom flat, Sorge St',fr:'1 pièce, rue Sorge',ru:'ул. Зорге',at:[43.0607, 44.05488],price:26000,rooms:1,f:['quiet', 'furn', 'wash'],ph:'img/flats/f10.jpg'},
+    {k:'flat',id:'f11',demo:1,n:'2-bedroom flat, 295th Rifle Division St',fr:'2 pièces, rue de la 295e Division',ru:'ул. 295-й Стрелковой Дивизии',at:[43.06845, 44.05875],price:35000,rooms:2,f:['two', 'lift', 'desk'],ph:'img/flats/f11.jpg'},
+    {k:'flat',id:'f12',demo:1,n:'Studio, Fuchika St',fr:'Studio, rue Fučík',ru:'ул. Юлиуса Фучика',at:[43.05958, 44.05689],price:22000,rooms:0,f:['cheap', 'furn', 'wifi'],ph:'img/flats/f12.jpg'},
+    {k:'flat',id:'f13',demo:1,n:'3-bedroom flat, Kavkazskaya St',fr:'3 pièces, rue Kavkazskaïa',ru:'ул. Кавказская',at:[43.06283, 44.04703],price:45000,rooms:3,f:['three', 'reno', 'wash'],ph:'img/flats/f13.jpg'},
 
-    {k:'coffee',n:'Noir House',ru:'Нуар Хаус',at:[43.0630,44.0499]},
-    {k:'coffee',n:'Lermontov Coffee',ru:'Лермонтов кофе',at:[43.0749,44.0375]},
-    {k:'coffee',n:'Roboost',ru:'Кофейня Roboost',at:[43.0623,44.0370]},
-    {k:'coffee',n:'Paper',ru:'Paper',at:[43.0648,44.0371]},
-    {k:'coffee',n:'Cafeteria',ru:'Cafeteria',at:[43.0711,44.0405]},
-    {k:'study',n:'Gorky City Library',ru:'Библиотека им. М. Горького · ул. Козлова, 1',at:[43.0703,44.03888],d:{en:'Free reading rooms and quiet desks.',fr:'Salles de lecture gratuites et tables calmes.',ru:'Бесплатные читальные залы, тихие столы.'}},
-    {k:'food',n:'Brosco Halal',ru:'Brosco Halal',at:[43.0720,44.0374],d:{en:'Halal food in the centre.',fr:'Cuisine halal au centre-ville.',ru:'Халяль в центре.'}},
-    {k:'food',n:'Doner Home',ru:'Doner Home',at:[43.0636,44.0548]},
-    {k:'food',n:'Syty Slon canteen',ru:'Столовая «Сытый слон»',at:[43.0683,44.0489],d:{en:'Cheap canteen (stolovaya) close to the dorms.',fr:'Cantine bon marché (stolovaïa) près des résidences.',ru:'Недорогая столовая рядом с общежитиями.'}},
-    {k:'food',n:'Khychinok',ru:'Хычинок',at:[43.0705,44.0438],d:{en:'Khychiny: Caucasian flatbread with cheese or meat.',fr:'Khytchiny : galettes caucasiennes au fromage ou à la viande.',ru:'Хычины с сыром и мясом.'}},
-    {k:'food',n:'Roma Pizza',ru:'Рома Пицца',at:[43.0633,44.0526]},
-    {k:'need',n:'Magnit supermarket',ru:'Магнит',at:[43.0661,44.0511],d:{en:'Nearest supermarket to the dorms.',fr:'Supermarché le plus proche des résidences.',ru:'Ближайший к общежитиям супермаркет.'}},
-    {k:'need',n:'Pyaterochka supermarket',ru:'Пятёрочка',at:[43.0641,44.0496]},
-    {k:'need',n:'Universiti mall',ru:'ТЦ «Университи»',at:[43.0639,44.0541],d:{en:'Small mall by the tram stop. Pharmacy, Sberbank and a Beeline SIM shop are next door.',fr:'Petit centre commercial près du tram. Pharmacie, Sberbank et boutique Beeline à côté.',ru:'Небольшой ТЦ у остановки. Рядом аптека, Сбербанк и салон Билайн.'}},
-    {k:'need',n:'Pharmacy Vita-Plus',ru:'Аптека «Вита-Плюс»',at:[43.0636,44.0543]},
-    {k:'need',n:'Sberbank',ru:'Сбербанк',at:[43.0636,44.0546],d:{en:'Bank branch: open an account and get a Mir card.',fr:'Agence bancaire : ouvrir un compte et obtenir une carte Mir.',ru:'Отделение банка: счёт и карта «Мир».'}},
-    {k:'need',n:'City Polyclinic No. 1',ru:'Городская поликлиника № 1',at:[43.0598,44.0525]},
-    {k:'need',n:'Upper Market',ru:'Верхний рынок',at:[43.06855,44.04306],d:{en:'The big city market: fruit, vegetables, meat, spices, clothes.',fr:'Le grand marché : fruits, légumes, viande, épices, vêtements.',ru:'Главный рынок: фрукты, овощи, мясо, специи, одежда.'}},
-    {k:'need',n:'Galereya mall',ru:'ТРЦ «Галерея»',at:[43.0651,44.0355]},
-    {k:'need',n:'MFC public services',ru:'МФЦ',at:[43.0434,44.0319],d:{en:'State services centre. Landlords can file your registration here.',fr:'Centre de services publics. Le propriétaire peut y déposer votre enregistrement.',ru:'Центр госуслуг. Здесь хозяин может подать документы на регистрацию.'}},
-    {k:'go',n:'Pyatigorsk railway station',ru:'Ж/д вокзал Пятигорск',at:[43.0550,44.0378],d:{en:'Suburban trains to Mineralnye Vody (airport city), Yessentuki and Kislovodsk.',fr:'Trains de banlieue vers Mineralnye Vody (aéroport), Iessentouki et Kislovodsk.',ru:'Электрички в Минеральные Воды, Ессентуки и Кисловодск.'}},
-    {k:'go',n:'Lermontovskaya train stop',ru:'Платформа Лермонтовская',at:[43.0650,44.0630],d:{en:'Nearest suburban train stop to the campus.',fr:'Arrêt de train de banlieue le plus proche du campus.',ru:'Ближайшая к корпусу платформа электричек.'}},
-    {k:'go',n:'Bus station “Upper Market”',ru:'Автостанция «Верхний рынок»',at:[43.0679,44.0414]},
-    {k:'see',id:'s1',n:'Proval',ru:'Провал',at:[43.0987,44.0467],d:{en:'The symbol of the city: a 40 m deep cave in Mashuk with a turquoise sulphur lake at the bottom. You walk in through a tunnel. Free.',fr:'Le symbole de la ville : une grotte de 40 m dans le Machouk avec un lac sulfureux turquoise au fond. On y entre par un tunnel. Gratuit.',ru:'Символ города: пещера глубиной 40 м в Машуке с бирюзовым сероводородным озером. Вход через тоннель, бесплатно.'}},
-    {k:'see',id:'s2',n:'Mashuk summit, 993 m',ru:'Вершина Машука, 993 м',at:[43.0889,44.0500],d:{en:'View over the whole city, Beshtau and, on a clear day, Elbrus. TV tower and a viewing deck. Go up by cable car or on foot.',fr:'Vue sur toute la ville, le Bechtaou et, par temps clair, l’Elbrouz. Tour de télévision et plateforme panoramique. Montée en téléphérique ou à pied.',ru:'Вид на весь город, Бештау и в ясную погоду на Эльбрус. Телевышка и смотровая площадка. Подняться можно на канатке или пешком.'}},
-    {k:'see',id:'s3',n:'Mashuk cable car',ru:'Канатная дорога на Машук',at:[43.08135,44.04368],d:{en:'Lower station on Gagarin Boulevard. The ride to the top takes about 3 minutes.',fr:'Station basse sur le boulevard Gagarine. La montée dure environ 3 minutes.',ru:'Нижняя станция на бульваре Гагарина. Подъём занимает около 3 минут.'}},
-    {k:'see',id:'s4',n:'Aeolian Harp',ru:'Эолова арфа',at:[43.0883,44.0408],d:{en:'A stone pavilion from 1831 on the edge of a cliff. The best sunset view in the city.',fr:'Un pavillon de pierre de 1831 au bord d’une falaise. Le plus beau coucher de soleil de la ville.',ru:'Каменная беседка 1831 года на краю скалы. Лучший закат в городе.'}},
-    {k:'see',id:'s5',n:'Academic Gallery',ru:'Академическая галерея',at:[43.0880,44.0398],d:{en:'White gallery above the old town with a wide staircase and a view over the centre.',fr:'Galerie blanche au-dessus de la vieille ville avec un grand escalier et une vue sur le centre.',ru:'Белая галерея над старым городом, широкая лестница и вид на центр.'}},
-    {k:'see',id:'s6',n:'Tsvetnik Park',ru:'Парк «Цветник»',at:[43.08191,44.03679],d:{en:'The old resort centre: the Lermontov Gallery, Diana’s Grotto, fountains, evening walks.',fr:'Le vieux centre thermal : galerie Lermontov, grotte de Diane, fontaines, promenades du soir.',ru:'Старый курортный центр: Лермонтовская галерея, грот Дианы, фонтаны, вечерние прогулки.'}},
-    {k:'see',id:'s7',n:'Eagle sculpture',ru:'Скульптура «Орёл»',at:[43.0834,44.0373],d:{en:'A bronze eagle fighting a snake, the emblem of the Caucasus spa towns. Everyone takes a photo here.',fr:'Un aigle de bronze luttant contre un serpent, emblème des villes thermales du Caucase. Tout le monde s’y prend en photo.',ru:'Бронзовый орёл со змеёй — эмблема Кавказских Минеральных Вод. Здесь фотографируются все.'}},
-    {k:'see',id:'s8',n:'Chinese Pavilion',ru:'Китайская беседка',at:[43.0830,44.0355],d:{en:'Colourful pavilion on Goryachaya hill with a view of the city and the mountains.',fr:'Pavillon coloré sur la colline Goriatchaïa avec vue sur la ville et les montagnes.',ru:'Яркая беседка на горе Горячей с видом на город и горы.'}},
-    {k:'see',id:'s9',n:'Lermontov’s Grotto',ru:'Грот Лермонтова',at:[43.0871,44.0399],d:{en:'A small cave in the rock where the poet Lermontov liked to sit.',fr:'Une petite grotte dans la roche où le poète Lermontov aimait s’asseoir.',ru:'Небольшой грот в скале, где любил бывать Лермонтов.'}},
-    {k:'see',id:'s10',n:'Lermontov duel site',ru:'Место дуэли Лермонтова',at:[43.0772,44.0590],d:{en:'Monument in the forest on the slope of Mashuk where the poet was killed in a duel in 1841.',fr:'Monument dans la forêt, sur la pente du Machouk, où le poète fut tué en duel en 1841.',ru:'Памятник в лесу на склоне Машука, где поэт погиб на дуэли в 1841 году.'}},
-    {k:'see',id:'s11',n:'Lermontov House Museum',ru:'Домик Лермонтова',at:[43.0778,44.0399],d:{en:'The small house where Lermontov spent his last months.',fr:'La petite maison où Lermontov passa ses derniers mois.',ru:'Домик, где Лермонтов прожил последние месяцы.'}},
-    {k:'see',id:'s12',n:'Gates of Love',ru:'Ворота любви',at:[43.0775,44.0500],d:{en:'Stone arch on the slope of Mashuk. Couples walk through it holding hands.',fr:'Arche de pierre sur la pente du Machouk. Les couples la traversent main dans la main.',ru:'Каменная арка на склоне Машука. Пары проходят через неё, держась за руки.'}},
-    {k:'see',id:'s13',n:'Singing Fountain',ru:'Поющий фонтан',at:[43.0719,44.0400],d:{en:'Light and music fountain on Lenin Square in the warm season, in the evening.',fr:'Fontaine musicale et lumineuse place Lénine, le soir à la belle saison.',ru:'Светомузыкальный фонтан на площади Ленина, вечером в тёплый сезон.'}},
-    {k:'see',id:'s14',n:'Kirov Park',ru:'Парк им. Кирова',at:[43.06182,44.03275],d:{en:'Lake with boats, rides, a stadium.',fr:'Lac avec barques, manèges, stade.',ru:'Озеро с лодками, аттракционы, стадион.'}},
+    {k:'coffee',n:'Noir House',fr:'Noir House',ru:'Нуар Хаус',at:[43.0630,44.0499]},
+    {k:'coffee',n:'Lermontov Coffee',fr:'Lermontov Coffee',ru:'Лермонтов кофе',at:[43.0749,44.0375]},
+    {k:'coffee',n:'Roboost',fr:'Roboost',ru:'Кофейня Roboost',at:[43.0623,44.0370]},
+    {k:'coffee',n:'Paper',fr:'Paper',ru:'Paper',at:[43.0648,44.0371]},
+    {k:'coffee',n:'Cafeteria',fr:'Cafeteria',ru:'Cafeteria',at:[43.0711,44.0405]},
+    {k:'study',n:'Gorky City Library',fr:'Bibliothèque municipale Gorki',ru:'Библиотека им. М. Горького · ул. Козлова, 1',at:[43.0703,44.03888],d:{en:'Free reading rooms and quiet desks.',fr:'Salles de lecture gratuites et tables calmes.',ru:'Бесплатные читальные залы, тихие столы.'}},
+    {k:'food',n:'Brosco Halal',fr:'Brosco Halal',ru:'Brosco Halal',at:[43.0720,44.0374],d:{en:'Halal food in the centre.',fr:'Cuisine halal au centre-ville.',ru:'Халяль в центре.'}},
+    {k:'food',n:'Doner Home',fr:'Doner Home',ru:'Doner Home',at:[43.0636,44.0548]},
+    {k:'food',n:'Syty Slon canteen',fr:'Cantine Syty Slon',ru:'Столовая «Сытый слон»',at:[43.0683,44.0489],d:{en:'Cheap canteen (stolovaya) close to the dorms.',fr:'Cantine bon marché (stolovaïa) près des résidences.',ru:'Недорогая столовая рядом с общежитиями.'}},
+    {k:'food',n:'Khychinok',fr:'Khytchinok',ru:'Хычинок',at:[43.0705,44.0438],d:{en:'Khychiny: Caucasian flatbread with cheese or meat.',fr:'Khytchiny : galettes caucasiennes au fromage ou à la viande.',ru:'Хычины с сыром и мясом.'}},
+    {k:'food',n:'Roma Pizza',fr:'Roma Pizza',ru:'Рома Пицца',at:[43.0633,44.0526]},
+    {k:'need',n:'Magnit supermarket',fr:'Supermarché Magnit',ru:'Магнит',at:[43.0661,44.0511],d:{en:'Nearest supermarket to the dorms.',fr:'Supermarché le plus proche des résidences.',ru:'Ближайший к общежитиям супермаркет.'}},
+    {k:'need',n:'Pyaterochka supermarket',fr:'Supermarché Piatiorotchka',ru:'Пятёрочка',at:[43.0641,44.0496]},
+    {k:'need',n:'Universiti mall',fr:'Centre commercial Universiti',ru:'ТЦ «Университи»',at:[43.0639,44.0541],d:{en:'Small mall by the tram stop. Pharmacy, Sberbank and a Beeline SIM shop are next door.',fr:'Petit centre commercial près du tram. Pharmacie, Sberbank et boutique Beeline à côté.',ru:'Небольшой ТЦ у остановки. Рядом аптека, Сбербанк и салон Билайн.'}},
+    {k:'need',n:'Pharmacy Vita-Plus',fr:'Pharmacie Vita-Plus',ru:'Аптека «Вита-Плюс»',at:[43.0636,44.0543]},
+    {k:'need',n:'Sberbank',fr:'Sberbank',ru:'Сбербанк',at:[43.0636,44.0546],d:{en:'Bank branch: open an account and get a Mir card.',fr:'Agence bancaire : ouvrir un compte et obtenir une carte Mir.',ru:'Отделение банка: счёт и карта «Мир».'}},
+    {k:'need',n:'City Polyclinic No. 1',fr:'Polyclinique municipale n° 1',ru:'Городская поликлиника № 1',at:[43.0598,44.0525]},
+    {k:'need',n:'Upper Market',fr:'Marché Verkhni',ru:'Верхний рынок',at:[43.06855,44.04306],d:{en:'The big city market: fruit, vegetables, meat, spices, clothes.',fr:'Le grand marché : fruits, légumes, viande, épices, vêtements.',ru:'Главный рынок: фрукты, овощи, мясо, специи, одежда.'}},
+    {k:'need',n:'Galereya mall',fr:'Centre commercial Galereya',ru:'ТРЦ «Галерея»',at:[43.0651,44.0355]},
+    {k:'need',n:'MFC public services',fr:'MFC, services publics',ru:'МФЦ',at:[43.0434,44.0319],d:{en:'State services centre. Landlords can file your registration here.',fr:'Centre de services publics. Le propriétaire peut y déposer votre enregistrement.',ru:'Центр госуслуг. Здесь хозяин может подать документы на регистрацию.'}},
+    {k:'go',n:'Pyatigorsk railway station',fr:'Gare de Piatigorsk',ru:'Ж/д вокзал Пятигорск',at:[43.0550,44.0378],d:{en:'Suburban trains to Mineralnye Vody (airport city), Yessentuki and Kislovodsk.',fr:'Trains de banlieue vers Mineralnye Vody (aéroport), Iessentouki et Kislovodsk.',ru:'Электрички в Минеральные Воды, Ессентуки и Кисловодск.'}},
+    {k:'go',n:'Lermontovskaya train stop',fr:'Halte ferroviaire Lermontovskaïa',ru:'Платформа Лермонтовская',at:[43.0650,44.0630],d:{en:'Nearest suburban train stop to the campus.',fr:'Arrêt de train de banlieue le plus proche du campus.',ru:'Ближайшая к корпусу платформа электричек.'}},
+    {k:'go',n:'Bus station “Upper Market”',fr:'Gare routière « Verkhni rynok »',ru:'Автостанция «Верхний рынок»',at:[43.0679,44.0414]},
+    {k:'see',id:'s1',n:'Proval',fr:'Le Proval',ru:'Провал',at:[43.0987,44.0467],d:{en:'The symbol of the city: a 40 m deep cave in Mashuk with a turquoise sulphur lake at the bottom. You walk in through a tunnel. Free.',fr:'Le symbole de la ville : une grotte de 40 m dans le Machouk avec un lac sulfureux turquoise au fond. On y entre par un tunnel. Gratuit.',ru:'Символ города: пещера глубиной 40 м в Машуке с бирюзовым сероводородным озером. Вход через тоннель, бесплатно.'}},
+    {k:'see',id:'s2',n:'Mashuk summit, 993 m',fr:'Sommet du Machouk, 993 m',ru:'Вершина Машука, 993 м',at:[43.0889,44.0500],d:{en:'View over the whole city, Beshtau and, on a clear day, Elbrus. TV tower and a viewing deck. Go up by cable car or on foot.',fr:'Vue sur toute la ville, le Bechtaou et, par temps clair, l’Elbrouz. Tour de télévision et plateforme panoramique. Montée en téléphérique ou à pied.',ru:'Вид на весь город, Бештау и в ясную погоду на Эльбрус. Телевышка и смотровая площадка. Подняться можно на канатке или пешком.'}},
+    {k:'see',id:'s3',n:'Mashuk cable car',fr:'Téléphérique du Machouk',ru:'Канатная дорога на Машук',at:[43.08135,44.04368],d:{en:'Lower station on Gagarin Boulevard. The ride to the top takes about 3 minutes.',fr:'Station basse sur le boulevard Gagarine. La montée dure environ 3 minutes.',ru:'Нижняя станция на бульваре Гагарина. Подъём занимает около 3 минут.'}},
+    {k:'see',id:'s4',n:'Aeolian Harp',fr:'La Harpe éolienne',ru:'Эолова арфа',at:[43.0883,44.0408],d:{en:'A stone pavilion from 1831 on the edge of a cliff. The best sunset view in the city.',fr:'Un pavillon de pierre de 1831 au bord d’une falaise. Le plus beau coucher de soleil de la ville.',ru:'Каменная беседка 1831 года на краю скалы. Лучший закат в городе.'}},
+    {k:'see',id:'s5',n:'Academic Gallery',fr:'Galerie académique',ru:'Академическая галерея',at:[43.0880,44.0398],d:{en:'White gallery above the old town with a wide staircase and a view over the centre.',fr:'Galerie blanche au-dessus de la vieille ville avec un grand escalier et une vue sur le centre.',ru:'Белая галерея над старым городом, широкая лестница и вид на центр.'}},
+    {k:'see',id:'s6',n:'Tsvetnik Park',fr:'Parc Tsvetnik',ru:'Парк «Цветник»',at:[43.08191,44.03679],d:{en:'The old resort centre: the Lermontov Gallery, Diana’s Grotto, fountains, evening walks.',fr:'Le vieux centre thermal : galerie Lermontov, grotte de Diane, fontaines, promenades du soir.',ru:'Старый курортный центр: Лермонтовская галерея, грот Дианы, фонтаны, вечерние прогулки.'}},
+    {k:'see',id:'s7',n:'Eagle sculpture',fr:'Sculpture de l’Aigle',ru:'Скульптура «Орёл»',at:[43.0834,44.0373],d:{en:'A bronze eagle fighting a snake, the emblem of the Caucasus spa towns. Everyone takes a photo here.',fr:'Un aigle de bronze luttant contre un serpent, emblème des villes thermales du Caucase. Tout le monde s’y prend en photo.',ru:'Бронзовый орёл со змеёй — эмблема Кавказских Минеральных Вод. Здесь фотографируются все.'}},
+    {k:'see',id:'s8',n:'Chinese Pavilion',fr:'Pavillon chinois',ru:'Китайская беседка',at:[43.0830,44.0355],d:{en:'Colourful pavilion on Goryachaya hill with a view of the city and the mountains.',fr:'Pavillon coloré sur la colline Goriatchaïa avec vue sur la ville et les montagnes.',ru:'Яркая беседка на горе Горячей с видом на город и горы.'}},
+    {k:'see',id:'s9',n:'Lermontov’s Grotto',fr:'Grotte de Lermontov',ru:'Грот Лермонтова',at:[43.0871,44.0399],d:{en:'A small cave in the rock where the poet Lermontov liked to sit.',fr:'Une petite grotte dans la roche où le poète Lermontov aimait s’asseoir.',ru:'Небольшой грот в скале, где любил бывать Лермонтов.'}},
+    {k:'see',id:'s10',n:'Lermontov duel site',fr:'Lieu du duel de Lermontov',ru:'Место дуэли Лермонтова',at:[43.0772,44.0590],d:{en:'Monument in the forest on the slope of Mashuk where the poet was killed in a duel in 1841.',fr:'Monument dans la forêt, sur la pente du Machouk, où le poète fut tué en duel en 1841.',ru:'Памятник в лесу на склоне Машука, где поэт погиб на дуэли в 1841 году.'}},
+    {k:'see',id:'s11',n:'Lermontov House Museum',fr:'Maison-musée de Lermontov',ru:'Домик Лермонтова',at:[43.0778,44.0399],d:{en:'The small house where Lermontov spent his last months.',fr:'La petite maison où Lermontov passa ses derniers mois.',ru:'Домик, где Лермонтов прожил последние месяцы.'}},
+    {k:'see',id:'s12',n:'Gates of Love',fr:'Portes de l’amour',ru:'Ворота любви',at:[43.0775,44.0500],d:{en:'Stone arch on the slope of Mashuk. Couples walk through it holding hands.',fr:'Arche de pierre sur la pente du Machouk. Les couples la traversent main dans la main.',ru:'Каменная арка на склоне Машука. Пары проходят через неё, держась за руки.'}},
+    {k:'see',id:'s13',n:'Singing Fountain',fr:'Fontaine musicale',ru:'Поющий фонтан',at:[43.0719,44.0400],d:{en:'Light and music fountain on Lenin Square in the warm season, in the evening.',fr:'Fontaine musicale et lumineuse place Lénine, le soir à la belle saison.',ru:'Светомузыкальный фонтан на площади Ленина, вечером в тёплый сезон.'}},
+    {k:'see',id:'s14',n:'Kirov Park',fr:'Parc Kirov',ru:'Парк им. Кирова',at:[43.06182,44.03275],d:{en:'Lake with boats, rides, a stadium.',fr:'Lac avec barques, manèges, stade.',ru:'Озеро с лодками, аттракционы, стадион.'}},
 
-    {k:'hike',id:'h1',n:'Mashuk ring trail',ru:'Терренкур вокруг Машука',at:[43.0965,44.0574],d:{en:'An easy flat walk around the whole mountain through the forest: about 10 km, 2.5 to 3 hours. Passes Proval, the duel site and the Gates of Love. Good for a first weekend.',fr:'Une promenade facile et plate autour de toute la montagne, en forêt : environ 10 km, 2 h 30 à 3 h. Passe par le Proval, le lieu du duel et les Portes de l’amour. Idéal pour un premier week-end.',ru:'Лёгкая ровная прогулка вокруг всей горы по лесу: около 10 км, 2,5–3 часа. Проходит мимо Провала, места дуэли и Ворот любви. Хорошо для первых выходных.'}},
-    {k:'hike',id:'h2',n:'Walk up to Mashuk summit',ru:'Пеший подъём на Машук',at:[43.0883,44.0462],d:{en:'A forest trail from the ring path to the top, 993 m. About 1.5 hours up. Take water and normal shoes; ride the cable car down if you are tired.',fr:'Un sentier forestier du chemin circulaire jusqu’au sommet, 993 m. Environ 1 h 30 de montée. Prenez de l’eau et de bonnes chaussures ; redescendez en téléphérique si vous êtes fatigué.',ru:'Лесная тропа от терренкура до вершины, 993 м. Подъём около 1,5 часа. Возьмите воду и нормальную обувь; вниз можно на канатке.'}},
-    {k:'hike',id:'h3',n:'Mount Kazachka viewpoint',ru:'Гора Казачка',at:[43.0774,44.0460],d:{en:'A short climb close to the centre with a view over the city.',fr:'Une courte montée près du centre avec vue sur la ville.',ru:'Короткий подъём рядом с центром, вид на город.'}},
-    {k:'hike',id:'h4',n:'Mount Beshtau, 1400 m',ru:'Гора Бештау, 1400 м',at:[43.0221,44.0981],d:{en:'The five-peaked mountain you see from the dorms. A full-day hike for a group; in May the slopes are covered with wild poppies. Do not go alone or in bad weather.',fr:'La montagne à cinq sommets que l’on voit depuis les résidences. Une randonnée d’une journée, en groupe ; en mai, les pentes sont couvertes de coquelicots. N’y allez pas seul ni par mauvais temps.',ru:'Пятиглавая гора, которую видно из общежитий. Поход на целый день для компании; в мае склоны в маках. Не ходите в одиночку и в плохую погоду.'}},
-    {k:'hike',id:'h5',n:'Monastery Lake on Beshtau',ru:'Монастырское озеро',at:[43.0102,44.0849],d:{en:'A quiet forest lake near the monastery on the slope of Beshtau.',fr:'Un lac forestier paisible près du monastère, sur la pente du Bechtaou.',ru:'Тихое лесное озеро у монастыря на склоне Бештау.'}},
+    {k:'hike',id:'h1',n:'Mashuk ring trail',fr:'Sentier autour du Machouk',ru:'Терренкур вокруг Машука',at:[43.0965,44.0574],d:{en:'An easy flat walk around the whole mountain through the forest: about 10 km, 2.5 to 3 hours. Passes Proval, the duel site and the Gates of Love. Good for a first weekend.',fr:'Une promenade facile et plate autour de toute la montagne, en forêt : environ 10 km, 2 h 30 à 3 h. Passe par le Proval, le lieu du duel et les Portes de l’amour. Idéal pour un premier week-end.',ru:'Лёгкая ровная прогулка вокруг всей горы по лесу: около 10 км, 2,5–3 часа. Проходит мимо Провала, места дуэли и Ворот любви. Хорошо для первых выходных.'}},
+    {k:'hike',id:'h2',n:'Walk up to Mashuk summit',fr:'Montée à pied au Machouk',ru:'Пеший подъём на Машук',at:[43.0883,44.0462],d:{en:'A forest trail from the ring path to the top, 993 m. About 1.5 hours up. Take water and normal shoes; ride the cable car down if you are tired.',fr:'Un sentier forestier du chemin circulaire jusqu’au sommet, 993 m. Environ 1 h 30 de montée. Prenez de l’eau et de bonnes chaussures ; redescendez en téléphérique si vous êtes fatigué.',ru:'Лесная тропа от терренкура до вершины, 993 м. Подъём около 1,5 часа. Возьмите воду и нормальную обувь; вниз можно на канатке.'}},
+    {k:'hike',id:'h3',n:'Mount Kazachka viewpoint',fr:'Belvédère du mont Kazatchka',ru:'Гора Казачка',at:[43.0774,44.0460],d:{en:'A short climb close to the centre with a view over the city.',fr:'Une courte montée près du centre avec vue sur la ville.',ru:'Короткий подъём рядом с центром, вид на город.'}},
+    {k:'hike',id:'h4',n:'Mount Beshtau, 1400 m',fr:'Mont Bechtaou, 1400 m',ru:'Гора Бештау, 1400 м',at:[43.0221,44.0981],d:{en:'The five-peaked mountain you see from the dorms. A full-day hike for a group; in May the slopes are covered with wild poppies. Do not go alone or in bad weather.',fr:'La montagne à cinq sommets que l’on voit depuis les résidences. Une randonnée d’une journée, en groupe ; en mai, les pentes sont couvertes de coquelicots. N’y allez pas seul ni par mauvais temps.',ru:'Пятиглавая гора, которую видно из общежитий. Поход на целый день для компании; в мае склоны в маках. Не ходите в одиночку и в плохую погоду.'}},
+    {k:'hike',id:'h5',n:'Monastery Lake on Beshtau',fr:'Lac du monastère, Bechtaou',ru:'Монастырское озеро',at:[43.0102,44.0849],d:{en:'A quiet forest lake near the monastery on the slope of Beshtau.',fr:'Un lac forestier paisible près du monastère, sur la pente du Bechtaou.',ru:'Тихое лесное озеро у монастыря на склоне Бештау.'}},
 
-    {k:'spring',id:'w1',n:'“Shameless” hot pools',ru:'Бесстыжие ванны',at:[43.0929,44.0402],d:{en:'Free open-air pools with warm sulphur water on the slope of Mashuk. Locals bathe here all year. Bring a towel; the smell of sulphur is normal.',fr:'Bassins gratuits en plein air d’eau sulfureuse chaude sur la pente du Machouk. Les habitants s’y baignent toute l’année. Prenez une serviette ; l’odeur de soufre est normale.',ru:'Бесплатные открытые ванны с тёплой сероводородной водой на склоне Машука. Местные купаются круглый год. Возьмите полотенце; запах серы — это нормально.'}},
-    {k:'spring',id:'w2',n:'Pump room No. 7, warm narzan',ru:'Бювет источника № 7 (тёплый нарзан)',at:[43.0816,44.0429],d:{en:'Drink warm mineral water straight from the spring. Bring your own cup.',fr:'Buvez l’eau minérale chaude directement à la source. Apportez votre gobelet.',ru:'Тёплая минеральная вода прямо из источника. Возьмите свой стакан.'}},
-    {k:'spring',id:'w3',n:'Pump rooms No. 2 and No. 17',ru:'Бюветы источников № 2 и № 17',at:[43.0821,44.0375],d:{en:'Drinking springs in Tsvetnik Park, in the old resort centre.',fr:'Sources d’eau potable dans le parc Tsvetnik, au vieux centre thermal.',ru:'Питьевые источники в парке «Цветник», в старом курортном центре.'}},
-    {k:'spring',id:'w4',n:'Mikhailovsky spring',ru:'Михайловский источник',at:[43.0888,44.0406],d:{en:'A historic spring by the Mikhailovskaya Gallery, next to the Aeolian Harp.',fr:'Une source historique près de la galerie Mikhaïlovskaïa, à côté de la Harpe éolienne.',ru:'Исторический источник у Михайловской галереи, рядом с Эоловой арфой.'}},
-    {k:'spring',id:'w5',n:'Lermontov Baths',ru:'Лермонтовские ванны',at:[43.0824,44.0366],d:{en:'The oldest bathhouse in the city, 1831. Mineral baths are still given here.',fr:'Le plus ancien établissement de bains de la ville, 1831. On y prend encore des bains minéraux.',ru:'Старейшее здание ванн в городе, 1831 год. Минеральные ванны принимают до сих пор.'}},
-    {k:'spring',id:'w6',n:'Pirogov Baths',ru:'Пироговские ванны',at:[43.0921,44.0407],d:{en:'Sulphur baths on the slope of Mashuk.',fr:'Bains sulfureux sur la pente du Machouk.',ru:'Сероводородные ванны на склоне Машука.'}}
+    {k:'spring',id:'w1',n:'“Shameless” hot pools',fr:'Bains chauds « sans pudeur »',ru:'Бесстыжие ванны',at:[43.0929,44.0402],d:{en:'Free open-air pools with warm sulphur water on the slope of Mashuk. Locals bathe here all year. Bring a towel; the smell of sulphur is normal.',fr:'Bassins gratuits en plein air d’eau sulfureuse chaude sur la pente du Machouk. Les habitants s’y baignent toute l’année. Prenez une serviette ; l’odeur de soufre est normale.',ru:'Бесплатные открытые ванны с тёплой сероводородной водой на склоне Машука. Местные купаются круглый год. Возьмите полотенце; запах серы — это нормально.'}},
+    {k:'spring',id:'w2',n:'Pump room No. 7, warm narzan',fr:'Buvette n° 7, narzan chaud',ru:'Бювет источника № 7 (тёплый нарзан)',at:[43.0816,44.0429],d:{en:'Drink warm mineral water straight from the spring. Bring your own cup.',fr:'Buvez l’eau minérale chaude directement à la source. Apportez votre gobelet.',ru:'Тёплая минеральная вода прямо из источника. Возьмите свой стакан.'}},
+    {k:'spring',id:'w3',n:'Pump rooms No. 2 and No. 17',fr:'Buvettes n° 2 et n° 17',ru:'Бюветы источников № 2 и № 17',at:[43.0821,44.0375],d:{en:'Drinking springs in Tsvetnik Park, in the old resort centre.',fr:'Sources d’eau potable dans le parc Tsvetnik, au vieux centre thermal.',ru:'Питьевые источники в парке «Цветник», в старом курортном центре.'}},
+    {k:'spring',id:'w4',n:'Mikhailovsky spring',fr:'Source Mikhaïlovski',ru:'Михайловский источник',at:[43.0888,44.0406],d:{en:'A historic spring by the Mikhailovskaya Gallery, next to the Aeolian Harp.',fr:'Une source historique près de la galerie Mikhaïlovskaïa, à côté de la Harpe éolienne.',ru:'Исторический источник у Михайловской галереи, рядом с Эоловой арфой.'}},
+    {k:'spring',id:'w5',n:'Lermontov Baths',fr:'Bains Lermontov',ru:'Лермонтовские ванны',at:[43.0824,44.0366],d:{en:'The oldest bathhouse in the city, 1831. Mineral baths are still given here.',fr:'Le plus ancien établissement de bains de la ville, 1831. On y prend encore des bains minéraux.',ru:'Старейшее здание ванн в городе, 1831 год. Минеральные ванны принимают до сих пор.'}},
+    {k:'spring',id:'w6',n:'Pirogov Baths',fr:'Bains Pirogov',ru:'Пироговские ванны',at:[43.0921,44.0407],d:{en:'Sulphur baths on the slope of Mashuk.',fr:'Bains sulfureux sur la pente du Machouk.',ru:'Сероводородные ванны на склоне Машука.'}}
   ],
-  peaks: [{n:'Mashuk',at:[43.0889,44.0500]},{n:'Beshtau',at:[43.0290,44.1010]}],
+  peaks: [{n:'Mashuk',en:'Mashuk',fr:'Machouk',ru:'Машук',at:[43.0889,44.0500]},{n:'Beshtau',en:'Beshtau',fr:'Bechtaou',ru:'Бештау',at:[43.0290,44.1010]}],
   feat: {
     furn:{en:'Furnished',fr:'Meublé',ru:'С мебелью'}, wash:{en:'Washing machine',fr:'Lave-linge',ru:'Стиральная машина'}, wifi:{en:'Wi-Fi',fr:'Wi-Fi',ru:'Wi-Fi'},
     two:{en:'Good for two students',fr:'Idéal à deux',ru:'Удобно на двоих'}, three:{en:'For three students',fr:'Pour trois étudiants',ru:'На троих'}, balc:{en:'Balcony',fr:'Balcon',ru:'Балкон'},
@@ -525,8 +525,9 @@ const CITY = {
 const T = {
 brandTop:{en:'Student guide',fr:'Guide étudiant',ru:'Гид для студентов'},
 swipe:{en:'Swipe sideways →',fr:'Faites défiler →',ru:'Листайте вбок →'},
+cPyat:{en:'Pyatigorsk',fr:'Piatigorsk',ru:'Пятигорск'},cNal:{en:'Nalchik',fr:'Naltchik',ru:'Нальчик'},cKra:{en:'Krasnodar',fr:'Krasnodar',ru:'Краснодар'},cRos:{en:'Rostov-on-Don',fr:'Rostov-sur-le-Don',ru:'Ростов-на-Дону'},
 soon:{en:'soon',fr:'bientôt',ru:'скоро'},
-navFlats:{en:'Flats',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Sights',fr:'À voir',ru:'Места'},navHol:{en:'Holidays',fr:'Fêtes',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
+navFlats:{en:'Flats',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Sights',fr:'À voir',ru:'Места'},navHol:{en:'Holidays',fr:'Jours fériés',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
 h1:{en:'Your city, before you land.',fr:'Votre ville, avant d’atterrir.',ru:'Ваш город — ещё до приезда.'},
 h1p:{en:'Campus, dorms, trams, flats where registration is allowed, coffee and everything a new student needs in Pyatigorsk.',fr:'Campus, résidences, tramways, appartements avec enregistrement, cafés et tout ce qu’il faut à un nouvel étudiant à Piatigorsk.',ru:'Корпуса, общежития, трамваи, квартиры с регистрацией, кофейни и всё, что нужно новому студенту в Пятигорске.'},
 hint:{en:'Drag to move · right-drag or two fingers to rotate',fr:'Glisser pour déplacer · clic droit ou deux doigts pour tourner',ru:'Тяните, чтобы двигать · правая кнопка или два пальца — поворот'},
@@ -538,11 +539,11 @@ showMap:{en:'Show on map',fr:'Voir sur la carte',ru:'На карте'},
 demo:{en:'Example listing',fr:'Annonce d’exemple',ru:'Пример объявления'},
 regOk:{en:'Registration OK',fr:'Enregistrement OK',ru:'Регистрация есть'},
 perMonth:{en:'/ month',fr:'/ mois',ru:'/ мес'},
-rooms:{en:['Studio','1 room','2 rooms','3 rooms'],fr:['Studio','1 pièce','2 pièces','3 pièces'],ru:['Студия','1 комната','2 комнаты','3 комнаты']},
+rooms:{en:['Studio','1 bedroom','2 bedrooms','3 bedrooms'],fr:['Studio','1 pièce','2 pièces','3 pièces'],ru:['Студия','1 комната','2 комнаты','3 комнаты']},
 photo:{en:'Example photo',fr:'Photo d’exemple',ru:'Фото-пример'},
 tramPick:{en:'Pick a tram number to see where it goes.',fr:'Choisissez un numéro pour voir où va le tram.',ru:'Выберите номер трамвая — покажем, куда он едет.'},
 tramTitle:{en:'Trams of Pyatigorsk',fr:'Tramways de Piatigorsk',ru:'Трамваи Пятигорска'},
-passes:{en:'Stops at Universam, 5 min on foot from the PMFI main building.',fr:'S’arrête à Universam, à 5 min à pied du bâtiment principal du PMFI.',ru:'Останавливается на «Универсаме» — 5 минут пешком до главного корпуса ПМФИ.'},
+passes:{en:'Stops at Universam, 5 min on foot from the PMPI main building.',fr:'S’arrête à Universam, à 5 min à pied du bâtiment principal du PMPI.',ru:'Останавливается на «Универсаме» — 5 минут пешком до главного корпуса ПМФИ.'},
 notPasses:{en:'Does not pass the campus. Change at the centre to tram 2, 4, 6, 7 or 8.',fr:'Ne passe pas par le campus. Changez au centre pour le tram 2, 4, 6, 7 ou 8.',ru:'Мимо корпуса не идёт. Пересядьте в центре на 2, 4, 6, 7 или 8.'},
 stopsN:{en:'stops',fr:'arrêts',ru:'остановок'},
 flEyebrow:{en:'Housing',fr:'Logement',ru:'Жильё'},
@@ -554,7 +555,7 @@ st3b:{en:'Move in, get registered',fr:'Emménagez, soyez enregistré',ru:'Зае
 flNote:{en:'The flats and photos shown now are examples to show how the page works. Real listings will replace them.',fr:'Les appartements et photos affichés sont des exemples pour montrer le fonctionnement de la page. De vraies annonces les remplaceront.',ru:'Квартиры и фото сейчас — примеры, чтобы было видно, как работает страница. Их заменят настоящие объявления.'},
 rgEyebrow:{en:'The rule everyone asks about',fr:'La règle que tout le monde demande',ru:'Правило, о котором все спрашивают'},
 rgTitle:{en:'Registration, in plain words',fr:'L’enregistrement, simplement',ru:'Регистрация простыми словами'},
-rgLead:{en:'Rules change. Always confirm the current deadline with the PMFI international office before you move.',fr:'Les règles changent. Confirmez toujours le délai actuel auprès du bureau international du PMFI avant de déménager.',ru:'Правила меняются. Перед переездом уточняйте актуальные сроки в международном отделе ПМФИ.'},
+rgLead:{en:'Rules change. Always confirm the current deadline with the PMPI international office before you move.',fr:'Les règles changent. Confirmez toujours le délai actuel auprès du bureau international du PMPI avant de déménager.',ru:'Правила меняются. Перед переездом уточняйте актуальные сроки в международном отделе ПМФИ.'},
 rg:{en:[['What is it?','Migration registration is a paper that says at which address you stay in Russia. You need it together with your passport, visa and migration card.'],['Who does it?','Not you. The host does: the university if you live in a dorm, the owner if you rent a flat.'],['When?','Within 7 working days after you arrive or move to a new address.'],['Why is it hard to rent?','Many owners do not want to file papers for a foreign tenant. Without registration you risk a fine and problems with your visa.']],
 fr:[['Qu’est-ce que c’est ?','L’enregistrement migratoire est un document indiquant à quelle adresse vous séjournez en Russie. Il accompagne votre passeport, votre visa et votre carte migratoire.'],['Qui le fait ?','Pas vous. C’est l’hôte : l’université si vous êtes en résidence, le propriétaire si vous louez.'],['Quand ?','Dans les 7 jours ouvrables après votre arrivée ou votre déménagement.'],['Pourquoi est-ce difficile de louer ?','Beaucoup de propriétaires ne veulent pas faire les démarches pour un locataire étranger. Sans enregistrement, vous risquez une amende et des problèmes de visa.']],
 ru:[['Что это?','Миграционный учёт — документ о том, по какому адресу вы находитесь в России. Нужен вместе с паспортом, визой и миграционной картой.'],['Кто оформляет?','Не вы, а принимающая сторона: вуз, если вы в общежитии, или хозяин квартиры, если снимаете.'],['Когда?','В течение 7 рабочих дней после приезда или переезда на новый адрес.'],['Почему трудно снять?','Многие хозяева не хотят оформлять документы на иностранца. Без регистрации — штраф и проблемы с визой.']]},
@@ -605,6 +606,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 let MAP = null, O = [43.06,44.04,80000,110574];
 const toXY = ll => [(ll[0]-O[0])*O[2], (ll[1]-O[1])*O[3]];
 const walkMin = at => { const a = toXY(at), b = toXY(CITY.home); return Math.max(1, Math.round(Math.hypot(a[0]-b[0], a[1]-b[1])*1.3/78)); };
+const nm = p => L==='ru' ? (p.k==='flat' ? T.rooms.ru[p.rooms]+', '+p.ru : p.ru.split(' · ')[0]) : L==='fr' ? (p.fr||p.n) : p.n;
 const dsc = p => p.d ? p.d[L] : p.f ? p.f.map(k => CITY.feat[k][L]).join(' · ') : '';
 const tgLink = msg => 'https://t.me/'+TG+'?text='+encodeURIComponent(msg);
 const yLink = at => 'https://yandex.com/maps/?pt='+at[0]+','+at[1]+'&z=17&l=map';
@@ -625,14 +627,14 @@ function renderStatic(){
   $('#flatGrid').innerHTML = CITY.places.filter(p => p.k==='flat').map(p => `<article class="flat">
     <figure class="ph"><img src="${p.ph}" alt="" loading="lazy"><figcaption>${tx('photo')}</figcaption></figure>
     <div><span class="tag" style="--c:var(--coral)">${tx('regOk')}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}</div>
-    <h3>${esc(L==='ru'?T.rooms.ru[p.rooms]+', '+p.ru:p.n)}</h3>
+    <h3>${esc(nm(p))}</h3>
     <div class="price">${p.price.toLocaleString('ru-RU')} ₽ <small>${tx('perMonth')}</small></div>
     <ul><li>${T.rooms[L][p.rooms]} · ${walkMin(p.at)} ${tx('min')} ${tx('walk')}</li><li>${esc(dsc(p))}</li></ul>
     <div class="acts"><a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the flat: '+p.n)}">${tx('askFlat')}</a><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div>
   </article>`).join('');
   $('#seeGrid').innerHTML = CITY.places.filter(p => ['see','hike','spring'].includes(p.k)).map(p => `<article class="flat">
     <div><span class="tag" style="--c:${CITY.cats[p.k].c}">${CITY.cats[p.k][L]}</span></div>
-    <h3>${esc(L==='ru'?p.ru:p.n)}</h3><ul><li>${esc(p.d[L])}</li></ul>
+    <h3>${esc(nm(p))}</h3><ul><li>${esc(p.d[L])}</li></ul>
     <div class="acts"><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div></article>`).join('');
   $('#rgQa').innerHTML = T.rg[L].map(q => `<div><dt>${q[0]}</dt><dd>${q[1]}</dd></div>`).join('');
   $('#check').innerHTML = T.fi[L].map(q => `<li><b>${q[0]}</b> ${q[1]}</li>`).join('');
@@ -672,7 +674,7 @@ function renderCard(){
   c.innerHTML = `<button class="x" aria-label="Close">×</button>
     ${p.ph?`<figure class="ph"><img src="${p.ph}" alt=""><figcaption>${tx('photo')}</figcaption></figure>`:''}
     <span class="tag" style="--c:${cat.c}">${cat[L]}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}
-    <h2>${esc(L==='ru' ? (p.k==='flat' ? T.rooms.ru[p.rooms]+', '+p.ru : p.ru.split(' · ')[0]) : p.n)}</h2><div class="ru">${esc(p.ru)}</div>
+    <h2>${esc(nm(p))}</h2><div class="ru">${esc(p.ru)}</div>
     ${p.price?`<div class="facts"><div><b>${p.price.toLocaleString('ru-RU')} ₽</b>${tx('perMonth')}</div><div><b>${T.rooms[L][p.rooms]}</b>${tx('regOk')}</div></div>`:''}
     ${dsc(p)?`<p>${esc(dsc(p))}</p>`:''}
     ${p.id!=='main' && walkMin(p.at)<=75?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
@@ -734,7 +736,7 @@ renderStatic();
    d:{fog:0xdccfb8, lo:[.50,.62,.34], mid:[.30,.48,.22], hi:[.58,.60,.42], cont:null, ca:0, grid:0, wall:[236,220,194], roofLo:[176,96,64], roofHi:[226,214,196], edge:null, lit:true, hemi:.72, sun:.7, shadows:true,
       roadA:0xeadfc6, roadB:0xdfd2b6, roadC:0xa9b07c, rail:0x6b5a48, tram:0x8a3d1e, trail:0xf2e6b0, park:0x4f8a3a, water:0x4f96b8, camp:[[196,60,44],[130,40,34]], dorm:[[236,140,44],[160,90,34]]}
   }[V];
-  const FOG = S.fog, VE = V==='q' ? 2.3 : 1.5, BASE = 500;
+  const FOG = S.fog, VE = V==='q' ? 1.75 : 1.5, BASE = 500;
   renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2)); renderer.shadowMap.enabled = S.shadows; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene(), skyEl = $('#sky'); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:11000, V==='d'?2e7:34000);
   const cam = new THREE.PerspectiveCamera(38, 1, 20, 60000);
@@ -761,7 +763,7 @@ renderStatic();
       let c = e<560 ? lo : e<900 ? mix(lo,mid,Math.min(1,(e-560)/160)) : mix(mid,hi,Math.min(1,(e-900)/450));
       if(V==='r'){ const f = e<600 ? 0 : e<700 ? (e-600)/100 : e<880 ? 1 : e<1000 ? (1000-e)/120 : 0; c = mix(lo, mid, f*.9); }
       if(V==='q'){ const f = e<660 ? 0 : e<760 ? (e-660)/100 : e<1150 ? 1 : e<1300 ? (1300-e)/150 : 0; c = mix(lo, mid, f); }
-      const edge = Math.min(i,j,D.w-1-i,D.h-1-j)/14; if(edge<1 && V!=='d') c = mix(fogC,c,Math.max(0,edge));
+      const edge = Math.min(i,j,D.w-1-i,D.h-1-j)/28; if(edge<1 && V!=='d') c = mix(fogC,c,Math.max(0,edge));
       col.set(c,k*3); }
     for(let j=0;j<D.h-1;j++) for(let i=0;i<D.w-1;i++){ const a=j*D.w+i; idx.push(a,a+1,a+D.w, a+1,a+D.w+1,a+D.w); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3)); g.setAttribute('color', new THREE.BufferAttribute(col,3)); g.setIndex(idx); g.computeVertexNormals();
@@ -829,6 +831,11 @@ renderStatic();
     beam.position.set(cx, hAt(cx,cy)+350, -cy); beams.push(beam);
   }
 
+  { // TV tower on the top of Mashuk
+    const a = toXY([43.0889,44.0500]), g0 = hAt(a[0],a[1]), tw = new THREE.Group(), seg = 5, hh = 34;
+    for(let i=0;i<seg;i++){ const r0 = 9-i*1.6, r1 = 9-(i+1)*1.6, m = new THREE.Mesh(new THREE.CylinderGeometry(Math.max(.8,r1), r0, hh, 4, 1, true), new THREE.MeshLambertMaterial({color:i%2 ? 0xf4f4f4 : 0xe5483a, side:THREE.DoubleSide, fog:false})); m.position.y = hh*(i+.5); tw.add(m); }
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(.6,.9,40,5), new THREE.MeshLambertMaterial({color:0xe5483a, fog:false})); mast.position.y = seg*hh+20; tw.add(mast);
+    tw.position.set(a[0], g0, -a[1]); scene.add(tw); }
   await tick(86);
   // ribbons and lines draped on the terrain
   function densify(p, step){ const o = [p[0]]; for(let i=1;i<p.length;i++){ const a=p[i-1], b=p[i], l=Math.hypot(b[0]-a[0],b[1]-a[1]), n=Math.max(1,Math.ceil(l/step)); for(let k=1;k<=n;k++) o.push([a[0]+(b[0]-a[0])*k/n, a[1]+(b[1]-a[1])*k/n]); } return o; }
@@ -929,8 +936,8 @@ renderStatic();
     bm.add(core, halo, disc); bm.position.set(a[0], gy + (p.hl ? 0 : 3), -a[1]); bm.visible = false; scene.add(bm);
     pins.push({p, el, bm, core, halo, disc, v:new THREE.Vector3(a[0], gy + (p.hl ? data.hl[p.hl].h*1.0+14 : 22), -a[1])}); }
   for(const p of CITY.peaks){ const a = toXY(p.at), el = document.createElement('div'); el.className = 'pin peak'; el.innerHTML = '<i></i><span>'+p.n+'</span>'; pinsEl.appendChild(el);
-    pins.push({p:{k:'peak'}, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+230, -a[1])}); }
-  window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = q.p.k==='flat' ? Math.round(q.p.price/1000)+'k ₽ · '+T.rooms[L][q.p.rooms] : L==='ru' ? q.p.ru.split(' · ')[0] : q.p.n; };
+    pins.push({p:{k:'peak'}, pk:p, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+230, -a[1])}); }
+  window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = q.p.k==='flat' ? Math.round(q.p.price/1000)+'k ₽ · '+T.rooms[L][q.p.rooms] : nm(q.p); else if(q.pk) q.el.lastChild.textContent = q.pk[L]; };
   window.pinsFilter = () => { for(const q of pins){ const on = q.p.k==='peak' || inAct(q.p) || (activeCat==='tram' && q.p.k==='campus') || q.p===sel;
       q.hide = !on; q.el.classList.toggle('on', q.p===sel); q.el.classList.toggle('show', activeCat!=='all' && inAct(q.p)); } };
   pinsRelabel(); pinsFilter();
