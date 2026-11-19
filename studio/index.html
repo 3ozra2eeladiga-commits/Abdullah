@@ -744,6 +744,12 @@ const kick=()=>{if(want&&au.paused)play();['pointerdown','keydown','scroll','tou
 ['pointerdown','keydown','scroll','touchstart'].forEach(e=>addEventListener(e,kick,{passive:true}));
 mb.addEventListener('click',e=>{e.stopPropagation();want=au.paused;try{localStorage.setItem('music',want?'on':'off')}catch(_){};want?play():stop()});
 au.addEventListener('error',()=>{mb.style.display='none'});
+// ушёл с сайта (другая вкладка, свернул браузер, закрыл) — музыка затихает; вернулся — играет снова, если была включена
+let awayPaused=false;
+function away(){if(!au.paused){awayPaused=true;au.pause()}}
+function back(){if(awayPaused&&want){awayPaused=false;au.volume=0;au.play().then(()=>fade(.55)).catch(()=>{})}}
+document.addEventListener('visibilitychange',()=>{document.hidden?away():back()});
+addEventListener('pagehide',away);addEventListener('blur',()=>{if(document.hidden)away()});
 </script>
 </body>
 </html>
