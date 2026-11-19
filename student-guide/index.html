@@ -108,7 +108,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .lplane{position:absolute;left:0;top:0;width:clamp(54px,7vw,96px);height:auto;margin:calc(clamp(54px,7vw,96px)*-.3) 0 0 calc(clamp(54px,7vw,96px)*-.5);filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));will-change:transform;transition:transform .35s linear}
 .ltext{position:absolute;left:max(24px,6vw);right:max(24px,6vw);bottom:max(40px,9vh);text-align:left}
 .ltext small{display:block;font-weight:600;font-size:14px;line-height:1;letter-spacing:.02em;color:rgba(255,255,255,.7);margin-bottom:10px}
-.ltext h1{font-weight:700;font-size:clamp(44px,9vw,120px);line-height:.98;letter-spacing:-.045em;margin:0}
+.ltext h1{font-weight:700;font-size:clamp(40px,7.4vw,104px);line-height:.98;letter-spacing:-.045em;margin:0}
 .ltext p{font-weight:500;font-size:clamp(18px,2.6vw,30px);line-height:1.2;letter-spacing:-.02em;margin:10px 0 26px;color:rgba(255,255,255,.88)}
 .lbar{height:3px;border-radius:3px;background:rgba(255,255,255,.22);max-width:420px;overflow:hidden}
 .lbar u{display:block;height:100%;width:0;background:#fff;transition:width .3s}
@@ -315,7 +315,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
   <div class="lsky"><i></i><i></i><i></i></div>
   <svg class="lpath" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true"><path d="M60 110 Q 560 110 900 300" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-dasharray="3 10" vector-effect="non-scaling-stroke"/><path d="M700 302 H 980" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
   <svg class="lplane" id="lplane" viewBox="-34 -20 68 40" aria-hidden="true"><path d="M31 1 Q24 -6 6 -6 L-16 -6 L-25 -18 L-31 -18 L-27 -2 Q-28 4 -18 5 L18 6 Q28 6 31 1Z" fill="#fff"/><path d="M8 2 L-12 19 L-19 19 L-8 2Z" fill="#dfe6f5"/></svg>
-  <div class="ltext"><small data-i="brandTop"></small><h1 data-i="cPyat"></h1><p id="ltxt" data-i="loadSub"></p><div class="lbar"><u id="bar"></u></div><b id="pct">0</b></div>
+  <div class="ltext"><h1 data-i="loadHi"></h1><p id="ltxt" data-i="loadSub"></p><div class="lbar"><u id="bar"></u></div><b id="pct">0</b></div>
 </div>
 <header class="bar">
   <div class="top">
@@ -563,7 +563,7 @@ const T = {
 brandTop:{en:'Student guide',fr:'Guide étudiant',ru:'Гид для студентов'},
 swipe:{en:'Swipe sideways →',fr:'Faites défiler →',ru:'Листайте вбок →'},
 cPyat:{en:'Pyatigorsk',fr:'Piatigorsk',ru:'Пятигорск'},cNal:{en:'Nalchik',fr:'Naltchik',ru:'Нальчик'},cKra:{en:'Krasnodar',fr:'Krasnodar',ru:'Краснодар'},cRos:{en:'Rostov-on-Don',fr:'Rostov-sur-le-Don',ru:'Ростов-на-Дону'},
-loadSub:{en:'for foreign students',fr:'pour les étudiants étrangers',ru:'для иностранных студентов'},loadHi:{en:'Welcome to Russia',fr:'Bienvenue en Russie',ru:'Добро пожаловать в Россию'},
+loadSub:{en:'A guide for foreign students',fr:'Le guide des étudiants étrangers',ru:'Гид для иностранных студентов'},loadHi:{en:'Welcome to Russia',fr:'Bienvenue en Russie',ru:'Добро пожаловать в Россию'},
 soon:{en:'soon',fr:'bientôt',ru:'скоро'},
 navFlats:{en:'Flats',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Sights',fr:'À voir',ru:'Места'},navHol:{en:'Holidays',fr:'Jours fériés',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
 h1:{en:'Your city, before you land.',fr:'Votre ville, avant d’atterrir.',ru:'Ваш город — ещё до приезда.'},
@@ -851,7 +851,7 @@ scene('life','blob');
   const stage = $('#stage'), canvas = $('#gl');
   let data;
   const pctEl = $('#pct'), barEl = $('#bar'), fail = m => { $('#ltxt').textContent = m; pctEl.textContent = '×'; };
-  const planeEl = $('#lplane'), setP = n => { pctEl.textContent = Math.round(n); barEl.style.width = n+'%'; const u = n/100, W2 = innerWidth, H2 = innerHeight, bx = (1-u)*(1-u)*60+2*(1-u)*u*560+u*u*900, by = (1-u)*(1-u)*110+2*(1-u)*u*110+u*u*300, dx = 2*(1-u)*500+2*u*340, dy = 2*u*190; planeEl.style.transform = `translate(${bx/1000*W2}px,${by/400*H2}px) rotate(${Math.atan2(dy/400*H2, dx/1000*W2)*(1-u*u*u)}rad)`; if(n>=100) $('#ltxt').textContent = tx('loadHi'); };
+  const planeEl = $('#lplane'), setP = n => { pctEl.textContent = Math.round(n); barEl.style.width = n+'%'; const u = n/100, W2 = innerWidth, H2 = innerHeight, bx = (1-u)*(1-u)*60+2*(1-u)*u*560+u*u*900, by = (1-u)*(1-u)*110+2*(1-u)*u*110+u*u*300, dx = 2*(1-u)*500+2*u*340, dy = 2*u*190; planeEl.style.transform = `translate(${bx/1000*W2}px,${by/400*H2}px) rotate(${Math.atan2(dy/400*H2, dx/1000*W2)*(1-u*u*u)}rad)`; };
   setP(0);
   const tick = n => { setP(n); return new Promise(r => requestAnimationFrame(() => setTimeout(r, 0))); };
   try { const res = await fetch(CITY.map), rd = res.body && res.body.getReader ? res.body.getReader() : null;
