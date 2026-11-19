@@ -310,9 +310,9 @@ const CITY = {
   campusStop: 'Универсам',
   cats: {
     campus:{c:'#ffb347', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
+    flat:{c:'#ff7a66', en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
     dorm:{c:'#ffd9a0', en:'Dorms', fr:'Résidences', ru:'Общежития'},
     tram:{c:'#b69cff', en:'Trams', fr:'Tramways', ru:'Трамваи'},
-    flat:{c:'#ff7a66', en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
     coffee:{c:'#5fd6b4', en:'Coffee', fr:'Cafés', ru:'Кофейни'},
     study:{c:'#6db7ff', en:'Study spots', fr:'Pour étudier', ru:'Где поработать'},
     food:{c:'#ffe066', en:'Food', fr:'Manger', ru:'Еда'},
@@ -330,19 +330,19 @@ const CITY = {
     {k:'dorm',id:'dorm2',hl:'dorm2',n:'Dorm No. 2',ru:'Общежитие № 2 ПМФИ · пр. Калинина, 11 к1',at:[43.06808,44.05271],d:{en:'5 floors.',fr:'5 étages.',ru:'5 этажей.'}},
     {k:'tram',id:'stop',n:'Tram stop “Universam”',ru:'Остановка «Универсам»',at:[43.06303,44.05304],d:{en:'Your stop. Trams 2, 4, 6, 7 and 8 stop here.',fr:'Votre arrêt. Les trams 2, 4, 6, 7 et 8 s’arrêtent ici.',ru:'Ваша остановка. Здесь останавливаются трамваи 2, 4, 6, 7 и 8.'}},
 
-    {k:'flat',id:'f1',demo:1,n:'1-room flat, Kalinina Ave',ru:'пр. Калинина',at:[43.06598, 44.05159],price:28000,rooms:1,f:['furn', 'wash', 'wifi'],ph:'img/flats/f1.jpg',cr:'Icade, CC BY-SA 4.0'},
-    {k:'flat',id:'f2',demo:1,n:'2-room flat, Kuchury St',ru:'ул. Кучуры',at:[43.06804, 44.05123],price:38000,rooms:2,f:['two', 'furn', 'balc'],ph:'img/flats/f2.jpg',cr:'Aaaatu, CC BY-SA 4.0'},
-    {k:'flat',id:'f3',demo:1,n:'Studio, 40 Let Oktyabrya Ave',ru:'пр. 40 лет Октября',at:[43.06373, 44.05131],price:24000,rooms:0,f:['tram', 'furn', 'wifi'],ph:'img/flats/f3.jpg',cr:'Gootroom, CC BY-SA 3.0'},
-    {k:'flat',id:'f4',demo:1,n:'1-room flat, Moskovskaya St',ru:'ул. Московская',at:[43.05864, 44.05124],price:30000,rooms:1,f:['quiet', 'newk', 'wash'],ph:'img/flats/f4.jpg',cr:'epSos.de, CC BY 2.0'},
-    {k:'flat',id:'f5',demo:1,n:'1-room flat, Panagyurishte St',ru:'ул. Панагюриште',at:[43.06387, 44.05475],price:29000,rooms:1,f:['lift', 'furn', 'balc'],ph:'img/flats/f5.jpg',cr:'Jkrona, CC BY-SA 4.0'},
-    {k:'flat',id:'f6',demo:1,n:'2-room flat, Pushkinskaya St',ru:'ул. Пушкинская',at:[43.06601, 44.05059],price:36000,rooms:2,f:['two', 'quiet', 'wash'],ph:'img/flats/f6.jpg',cr:'TEMAHOME President, CC BY-SA 4.0'},
-    {k:'flat',id:'f7',demo:1,n:'Studio, Ordzhonikidze St',ru:'ул. Орджоникидзе',at:[43.0622, 44.05402],price:23000,rooms:0,f:['tram', 'newk', 'wifi'],ph:'img/flats/f7.jpg',cr:'Architect Rahat Chowdhury, CC BY-SA 4.0'},
-    {k:'flat',id:'f8',demo:1,n:'1-room flat, 1st Bulvarnaya St',ru:'ул. 1-я Бульварная',at:[43.06198, 44.0533],price:27000,rooms:1,f:['furn', 'desk', 'wifi'],ph:'img/flats/f8.jpg',cr:'Ajay Suresh, CC BY 2.0'},
-    {k:'flat',id:'f9',demo:1,n:'2-room flat, Novorossiyskaya St',ru:'ул. Новороссийская',at:[43.0643, 44.04926],price:40000,rooms:2,f:['two', 'reno', 'balc'],ph:'img/flats/f9.jpg',cr:'IFERREIRO, CC BY-SA 3.0'},
-    {k:'flat',id:'f10',demo:1,n:'1-room flat, Sorge St',ru:'ул. Зорге',at:[43.0607, 44.05488],price:26000,rooms:1,f:['quiet', 'furn', 'wash'],ph:'img/flats/f10.jpg',cr:'IFERREIRO, CC BY-SA 3.0'},
-    {k:'flat',id:'f11',demo:1,n:'2-room flat, 295th Rifle Division St',ru:'ул. 295-й Стрелковой Дивизии',at:[43.06845, 44.05875],price:35000,rooms:2,f:['two', 'lift', 'desk'],ph:'img/flats/f11.jpg',cr:'HoffnungstraegerStift, CC BY-SA 4.0'},
-    {k:'flat',id:'f12',demo:1,n:'Studio, Fuchika St',ru:'ул. Юлиуса Фучика',at:[43.05958, 44.05689],price:22000,rooms:0,f:['cheap', 'furn', 'wifi'],ph:'img/flats/f12.jpg',cr:'Shadiac, CC BY-SA 3.0'},
-    {k:'flat',id:'f13',demo:1,n:'3-room flat, Kavkazskaya St',ru:'ул. Кавказская',at:[43.06283, 44.04703],price:45000,rooms:3,f:['three', 'reno', 'wash'],ph:'img/flats/f13.jpg',cr:'Jodistansfield, CC BY-SA 3.0'},
+    {k:'flat',id:'f1',demo:1,n:'1-room flat, Kalinina Ave',ru:'пр. Калинина',at:[43.06598, 44.05159],price:28000,rooms:1,f:['furn', 'wash', 'wifi'],ph:'img/flats/f1.jpg'},
+    {k:'flat',id:'f2',demo:1,n:'2-room flat, Kuchury St',ru:'ул. Кучуры',at:[43.06804, 44.05123],price:38000,rooms:2,f:['two', 'furn', 'balc'],ph:'img/flats/f2.jpg'},
+    {k:'flat',id:'f3',demo:1,n:'Studio, 40 Let Oktyabrya Ave',ru:'пр. 40 лет Октября',at:[43.06373, 44.05131],price:24000,rooms:0,f:['tram', 'furn', 'wifi'],ph:'img/flats/f3.jpg'},
+    {k:'flat',id:'f4',demo:1,n:'1-room flat, Moskovskaya St',ru:'ул. Московская',at:[43.05864, 44.05124],price:30000,rooms:1,f:['quiet', 'newk', 'wash'],ph:'img/flats/f4.jpg'},
+    {k:'flat',id:'f5',demo:1,n:'1-room flat, Panagyurishte St',ru:'ул. Панагюриште',at:[43.06387, 44.05475],price:29000,rooms:1,f:['lift', 'furn', 'balc'],ph:'img/flats/f5.jpg'},
+    {k:'flat',id:'f6',demo:1,n:'2-room flat, Pushkinskaya St',ru:'ул. Пушкинская',at:[43.06601, 44.05059],price:36000,rooms:2,f:['two', 'quiet', 'wash'],ph:'img/flats/f6.jpg'},
+    {k:'flat',id:'f7',demo:1,n:'Studio, Ordzhonikidze St',ru:'ул. Орджоникидзе',at:[43.0622, 44.05402],price:23000,rooms:0,f:['tram', 'newk', 'wifi'],ph:'img/flats/f7.jpg'},
+    {k:'flat',id:'f8',demo:1,n:'1-room flat, 1st Bulvarnaya St',ru:'ул. 1-я Бульварная',at:[43.06198, 44.0533],price:27000,rooms:1,f:['furn', 'desk', 'wifi'],ph:'img/flats/f8.jpg'},
+    {k:'flat',id:'f9',demo:1,n:'2-room flat, Novorossiyskaya St',ru:'ул. Новороссийская',at:[43.0643, 44.04926],price:40000,rooms:2,f:['two', 'reno', 'balc'],ph:'img/flats/f9.jpg'},
+    {k:'flat',id:'f10',demo:1,n:'1-room flat, Sorge St',ru:'ул. Зорге',at:[43.0607, 44.05488],price:26000,rooms:1,f:['quiet', 'furn', 'wash'],ph:'img/flats/f10.jpg'},
+    {k:'flat',id:'f11',demo:1,n:'2-room flat, 295th Rifle Division St',ru:'ул. 295-й Стрелковой Дивизии',at:[43.06845, 44.05875],price:35000,rooms:2,f:['two', 'lift', 'desk'],ph:'img/flats/f11.jpg'},
+    {k:'flat',id:'f12',demo:1,n:'Studio, Fuchika St',ru:'ул. Юлиуса Фучика',at:[43.05958, 44.05689],price:22000,rooms:0,f:['cheap', 'furn', 'wifi'],ph:'img/flats/f12.jpg'},
+    {k:'flat',id:'f13',demo:1,n:'3-room flat, Kavkazskaya St',ru:'ул. Кавказская',at:[43.06283, 44.04703],price:45000,rooms:3,f:['three', 'reno', 'wash'],ph:'img/flats/f13.jpg'},
 
     {k:'coffee',n:'Noir House',ru:'Нуар Хаус',at:[43.0630,44.0499]},
     {k:'coffee',n:'Lermontov Coffee',ru:'Лермонтов кофе',at:[43.0749,44.0375]},
@@ -504,7 +504,7 @@ function renderStatic(){
     Object.entries(CITY.cats).map(([k,c]) => `<button class="chip" style="--c:${c.c}" data-c="${k}" aria-pressed="${activeCat===k}">${c[L]}</button>`).join('');
   // flats
   $('#flatGrid').innerHTML = CITY.places.filter(p => p.k==='flat').map(p => `<article class="flat">
-    <figure class="ph"><img src="${p.ph}" alt="" loading="lazy"><figcaption>${tx('photo')} · ${esc(p.cr)}</figcaption></figure>
+    <figure class="ph"><img src="${p.ph}" alt="" loading="lazy"><figcaption>${tx('photo')}</figcaption></figure>
     <div><span class="tag" style="--c:var(--coral)">${tx('regOk')}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}</div>
     <h3>${esc(L==='ru'?T.rooms.ru[p.rooms]+', '+p.ru:p.n)}</h3>
     <div class="price">${p.price.toLocaleString('ru-RU')} ₽ <small>${tx('perMonth')}</small></div>
@@ -551,7 +551,7 @@ function renderCard(){
   if(!sel){ c.hidden = true; $('#stage').classList.toggle('busy', activeCat!=='all' || !MAP); return; }
   const p = sel, cat = CITY.cats[p.k];
   c.innerHTML = `<button class="x" aria-label="Close">×</button>
-    ${p.ph?`<figure class="ph"><img src="${p.ph}" alt=""><figcaption>${tx('photo')} · ${esc(p.cr)}</figcaption></figure>`:''}
+    ${p.ph?`<figure class="ph"><img src="${p.ph}" alt=""><figcaption>${tx('photo')}</figcaption></figure>`:''}
     <span class="tag" style="--c:${cat.c}">${cat[L]}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}
     <h2>${esc(L==='ru' ? (p.k==='flat' ? T.rooms.ru[p.rooms]+', '+p.ru : p.ru.split(' · ')[0]) : p.n)}</h2><div class="ru">${esc(p.ru)}</div>
     ${p.price?`<div class="facts"><div><b>${p.price.toLocaleString('ru-RU')} ₽</b>${tx('perMonth')}</div><div><b>${T.rooms[L][p.rooms]}</b>${tx('regOk')}</div></div>`:''}
