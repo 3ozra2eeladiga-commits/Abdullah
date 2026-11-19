@@ -434,7 +434,7 @@ const CITY = {
   home: [43.06638, 44.0533],           // PMPI main building: walking times are counted from here
   campusStop: 'Универсам',
   cats: {
-    campus:{c:'#ff3b30', en:'PMPI campus', fr:'Campus PMPI', ru:'Корпуса ПМФИ'},
+    campus:{c:'#ff3b30', en:'PMPI buildings', fr:'Bâtiments du PMPI', ru:'Корпуса ПМФИ'},
     flat:{c:'#007aff', en:'Flats with registration', fr:'Logements avec enregistrement', ru:'Квартиры с регистрацией'},
     dorm:{c:'#ff9500', en:'Dormitories', fr:'Résidences universitaires', ru:'Общежития'},
     tram:{c:'#af52de', en:'Trams', fr:'Tramways', ru:'Трамваи'},
@@ -459,8 +459,12 @@ const CITY = {
     need:{c:'#00c7be', cats:['med','police','bank','need'], en:'Essentials', fr:'Essentiels', ru:'Нужное'}
   },
   places: [
-    {k:'campus',id:'main',hl:'main',big:1,n:'PMPI Main Building',fr:'PMPI, bâtiment principal',ru:'ПМФИ, главный корпус · пр. Калинина, 11',at:[43.06638,44.0533],
+    {k:'campus',id:'main',hl:'main',big:1,n:'PMPI Building No. 1 (main)',fr:'PMPI, bâtiment n° 1 (principal)',ru:'ПМФИ, корпус № 1 (главный) · пр. Калинина, 11',at:[43.06638,44.0533],
       d:{en:'Main building of the Pyatigorsk Medical and Pharmaceutical Institute (branch of Volgograd State Medical University). Dean’s offices and most lectures.',fr:'Bâtiment principal de l’Institut médico-pharmaceutique de Piatigorsk (filiale de l’Université médicale de Volgograd). Décanats et la plupart des cours.',ru:'Главный корпус Пятигорского медико-фармацевтического института (филиал ВолгГМУ). Деканаты и большинство лекций.'}},
+    {k:'campus',id:'c2',n:'PMPI Building No. 2',fr:'PMPI, bâtiment n° 2',ru:'ПМФИ, корпус № 2 · пр. Кирова, 33',at:[43.0745,44.03599],d:{en:'Teaching building in the old centre, Kirov Avenue 33. Check your timetable: it shows the building number for every class.',fr:'Bâtiment d’enseignement dans le vieux centre, avenue Kirov, 33. Vérifiez votre emploi du temps : il indique le numéro du bâtiment pour chaque cours.',ru:'Учебный корпус в старом центре, проспект Кирова, 33. Смотрите расписание: в нём для каждой пары указан номер корпуса.'}},
+    {k:'campus',id:'c4',n:'PMPI Building No. 4',fr:'PMPI, bâtiment n° 4',ru:'ПМФИ, корпус № 4 · пл. Ленина, 3',at:[43.07184,44.04057],d:{en:'Teaching building on Lenin Square, 3, next to the Singing Fountain.',fr:'Bâtiment d’enseignement place Lénine, 3, à côté de la Fontaine musicale.',ru:'Учебный корпус на площади Ленина, 3, рядом с Поющим фонтаном.'}},
+    {k:'campus',id:'c5',n:'PMPI Building No. 5',fr:'PMPI, bâtiment n° 5',ru:'ПМФИ, корпус № 5 · ул. Московская, 86',at:[43.05376,44.06038],d:{en:'Teaching building on Moskovskaya Street, 86, north-west of the main building.',fr:'Bâtiment d’enseignement rue Moskovskaïa, 86, au nord-ouest du bâtiment principal.',ru:'Учебный корпус на улице Московской, 86, к северо-западу от главного.'}},
+    {k:'campus',id:'c6',n:'PMPI training pharmacy',fr:'PMPI, pharmacie d’enseignement',ru:'ПМФИ, учебно-производственная аптека · ул. Кучуры, 1',at:[43.06718,44.05071],d:{en:'The institute’s training and production pharmacy, where pharmacy students have practical classes. Two minutes from the main building.',fr:'La pharmacie d’enseignement et de production de l’institut, où les étudiants en pharmacie ont leurs travaux pratiques. À deux minutes du bâtiment principal.',ru:'Учебно-производственная аптека института: здесь у фармацевтов практические занятия. Две минуты от главного корпуса.'}},
     {k:'dorm',id:'dorm4',hl:'dorm4',n:'Dorm No. 4',fr:'Résidence universitaire n° 4',ru:'Общежитие № 4 ПМФИ · пр. Калинина, 11',at:[43.06803,44.05202],d:{en:'9 floors. Most international students live here.',fr:'9 étages. La plupart des étudiants étrangers y vivent.',ru:'9 этажей. Здесь живёт большинство иностранных студентов.'}},
     {k:'dorm',id:'dorm3',hl:'dorm3',n:'Dorm No. 3',fr:'Résidence universitaire n° 3',ru:'Общежитие № 3 ПМФИ · пр. Калинина, 11 к2',at:[43.06746,44.05235],d:{en:'8 floors, next to the main building.',fr:'8 étages, à côté du bâtiment principal.',ru:'8 этажей, рядом с главным корпусом.'}},
     {k:'dorm',id:'dorm2',hl:'dorm2',n:'Dorm No. 2',fr:'Résidence universitaire n° 2',ru:'Общежитие № 2 ПМФИ · пр. Калинина, 11 к1',at:[43.06808,44.05271],d:{en:'5 floors.',fr:'5 étages.',ru:'5 этажей.'}},
