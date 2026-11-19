@@ -82,6 +82,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .card{position:absolute;z-index:6;left:var(--gl);bottom:22px;width:min(380px,calc(100% - 32px));max-height:62%;overflow:auto;background:var(--glass);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 20px 60px rgba(20,30,50,.22)}
 .card h2{font:600 17px/1.25 var(--display);margin:0 30px 2px 0}
 .card .ru{font:500 12px/1.3 var(--mono);color:var(--muted);margin-bottom:10px}
+.card .tels{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.card .tels .btn{user-select:all;-webkit-user-select:all}
 .card .addr{font:600 13.5px/1.35 var(--body);color:#1d1d1f;margin:-4px 0 10px}
 .card .addr small{display:block;font-weight:500;font-size:12px;color:#6e6e73;margin-left:22px}
 .card p{margin:0 0 10px;color:#2c3340}
@@ -542,6 +544,7 @@ const CITY = {
     meet:{c:'#00b3a1', en:'Where students meet', fr:'Où les étudiants se retrouvent', ru:'Где собираются студенты'},
     cinema:{c:'#8e44ad', en:'Cinema', fr:'Cinéma', ru:'Кино'},
     sport:{c:'#e67e22', en:'Gyms & fight clubs', fr:'Sport et arts martiaux', ru:'Спортзалы и единоборства'},
+    fun:{c:'#ff9f0a', en:'Balloon & horses', fr:'Montgolfière et chevaux', ru:'Шар и лошади'},
     walk:{c:'#7cb518', en:'Nice walks', fr:'Belles promenades', ru:'Где погулять'},
     hike:{c:'#1f7a36', en:'Hikes', fr:'Randonnées', ru:'Походы'},
     spring:{c:'#5ac8fa', en:'Springs', fr:'Sources', ru:'Источники'}
@@ -550,7 +553,7 @@ const CITY = {
     pmfi:{c:'#ff3b30', cats:['campus','dorm'], en:'PMFI', fr:'PMFI', ru:'ПМФИ'},
     flat:{c:'#007aff', cats:['flat'], en:'Apartments with registration', fr:'Logements avec enregistrement', ru:'Квартиры с регистрацией'},
     tram:{c:'#af52de', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
-    go:{c:'#34c759', cats:['meet','walk','see','hike','spring','coffee','food','study','cinema','sport'], en:'Places to go', fr:'Sorties', ru:'Куда сходить'},
+    go:{c:'#34c759', cats:['meet','walk','see','hike','spring','coffee','food','study','cinema','sport','fun'], en:'Places to go', fr:'Sorties', ru:'Куда сходить'},
     st:{c:'#1d1d1f', cats:['go'], en:'Stations', fr:'Gares', ru:'Вокзалы'},
     need:{c:'#00c7be', cats:['med','pharm','police','bank','faith','need'], en:'Help & services', fr:'Aide et services', ru:'Помощь и услуги'}
   },
@@ -654,6 +657,10 @@ const CITY = {
     {k:'sport',id:'sp4',n:'Berkut Fight Club (boxing, grappling, MMA)',fr:'Berkut Fight Club (boxe, grappling, MMA)',ru:'Berkut Fight Club (бокс, грэпплинг, ММА) · пр. Кирова, 50',at:[43.07229,44.03668],d:{en:'A fight club in the Novy Arbat centre, 3rd floor: boxing, grappling, judo and MMA. Call or visit first to ask about times and prices.',fr:'Un club de combat dans le centre Novy Arbat, 3e étage : boxe, grappling, judo et MMA. Appelle ou passe d’abord pour les horaires et les prix.',ru:'Клуб единоборств в ТРЦ «Новый Арбат», 3 этаж: бокс, грэпплинг, дзюдо и ММА. Сначала позвони или зайди — узнай расписание и цены.'}},
     {k:'sport',id:'sp5',n:'Coliseum club (boxing, judo, MMA, wrestling)',fr:'Club Coliseum (boxe, judo, MMA, lutte)',ru:'Клуб «Колизей» (бокс, дзюдо, ММА, борьба) · ул. Теплосерная, 62а',at:[43.08582,44.03431],d:{en:'A sports club with boxing, judo, MMA and wrestling. Phone: 8 (928) 303-30-05.',fr:'Un club de sport avec boxe, judo, MMA et lutte. Téléphone : 8 (928) 303-30-05.',ru:'Спортивный клуб: бокс, дзюдо, ММА и борьба. Телефон: 8 (928) 303-30-05.'}},
     {k:'sport',id:'sp6',n:'Taekwondo club Kerugi',fr:'Club de taekwondo Kerugi',ru:'Клуб тхэквондо «Керуги»',at:[43.05772,44.05108],d:{en:'Taekwondo, 10 minutes on foot from the main building.',fr:'Taekwondo, à 10 minutes à pied du bâtiment principal.',ru:'Тхэквондо, 10 минут пешком от главного корпуса.'}},
+    {k:'fun',id:'bal',big:1,far:1,sky:1,n:'Hot-air balloon flight',fr:'Vol en montgolfière',ru:'Полёт на воздушном шаре',at:[43.0560,44.0440],tel:['+7 918 316-95-85','+7 962 402-95-97'],d:{en:'You can fly over the mountains in a hot-air balloon. Flights are early in the morning and only in good weather, usually near Pyatigorsk, Yessentuki or Zheleznovodsk. It is expensive, so ask the price first. Call to book: “Aerostat” club or “Aeronavt” club.',fr:'Tu peux voler au-dessus des montagnes en montgolfière. Les vols ont lieu tôt le matin et seulement par beau temps, près de Piatigorsk, Iessentouki ou Jeleznovodsk. C’est cher : demande le prix d’abord. Appelle pour réserver : club « Aerostat » ou club « Aeronavt ».',ru:'Можно полетать над горами на воздушном шаре. Летают рано утром и только в хорошую погоду, обычно около Пятигорска, Ессентуков или Железноводска. Это дорого — сначала спроси цену. Звони и записывайся: клуб «Аэростат» или клуб «Аэронавт».'}},
+    {k:'fun',id:'hr1',far:1,n:'Horse riding: Beshtau club',fr:'Balades à cheval : club Bechtaou',ru:'Конные прогулки: клуб «Бештау» · Бештаугорское шоссе, 1',at:[42.98835,44.08106],tel:['+7 906 465-65-65'],d:{en:'A horse club at the foot of Mount Beshtau. You can ride a horse with a teacher, even if it is your first time. Go by taxi. Call first.',fr:'Un club équestre au pied du mont Bechtaou. Tu peux monter à cheval avec un moniteur, même pour la première fois. Vas-y en taxi. Appelle d’abord.',ru:'Конный клуб у подножия Бештау. Можно покататься на лошади с инструктором, даже если это первый раз. Ехать на такси. Сначала позвони.'}},
+    {k:'fun',id:'hr2',far:1,n:'Horse riding: Nasib club',fr:'Balades à cheval : club Nasib',ru:'Конные прогулки: клуб «Насиб» · ул. Ермолова, 219',at:[42.9902,44.0510],d:{en:'A horse club near the hippodrome (the tram stop is “Skachki”). The riding season is May to September.',fr:'Un club équestre près de l’hippodrome (arrêt de tram « Skatchki »). La saison va de mai à septembre.',ru:'Конный клуб у ипподрома (остановка трамвая «Скачки»). Сезон — с мая по сентябрь.'}},
+    {k:'fun',id:'hr3',far:1,n:'Horse riding: KoniPark',fr:'Balades à cheval : KoniPark',ru:'Конные прогулки: KoniPark',at:[43.1050,44.0200],tel:['+7 923 693-31-40'],d:{en:'Horse rides on paths outside the city, also for two people. Every day 10:00–18:00. The place on our map is not exact: call and ask where to come.',fr:'Balades à cheval sur des sentiers hors de la ville, aussi à deux. Tous les jours de 10 h à 18 h. Le point sur notre carte n’est pas exact : appelle pour savoir où venir.',ru:'Прогулки на лошадях по тропам за городом, можно вдвоём. Каждый день 10:00–18:00. Точка на нашей карте неточная — позвони и спроси, куда приезжать.'}},
     {k:'walk',id:'wk1',n:'Kirov Avenue, the “Broadway”',fr:'Avenue Kirov, le « Broadway »',ru:'Проспект Кирова, «Бродвей»',at:[43.0772,44.0368],ad:'рядом: ул. Соборная, 1А',d:{en:'The main walking street of the city. People call it Broadway. Cafés, benches, music and many people every evening. It leads to Tsvetnik Park.',fr:'La grande rue piétonne de la ville. On l’appelle Broadway. Cafés, bancs, musique et beaucoup de monde chaque soir. Elle mène au parc Tsvetnik.',ru:'Главная прогулочная улица города. Её называют Бродвей. Кафе, скамейки, музыка и много людей каждый вечер. Ведёт к парку «Цветник».'}},
     {k:'walk',id:'wk2',n:'Komsomolsky Park',fr:'Parc Komsomolski',ru:'Комсомольский парк',at:[43.06196,44.05747],ad:'рядом: ул. Орджоникидзе, 7Б',d:{en:'A big green park close to the main building. Good for a walk, a run or to sit with friends after class.',fr:'Un grand parc vert près du bâtiment principal. Bien pour marcher, courir ou s’asseoir avec des amis après les cours.',ru:'Большой зелёный парк рядом с главным корпусом. Хорошо гулять, бегать или сидеть с друзьями после пар.'}},
     {k:'see',id:'s1',n:'Proval',fr:'Le Proval',ru:'Провал',at:[43.0987,44.0467],ad:'бул. Гагарина',d:{en:'The symbol of the city: a 40 m deep cave in Mashuk with a turquoise sulphur lake at the bottom. You walk in through a tunnel. Free.',fr:'Le symbole de la ville : une grotte de 40 m dans le Machouk avec un lac sulfureux turquoise au fond. On y entre par un tunnel. Gratuit.',ru:'Символ города: пещера глубиной 40 м в Машуке с бирюзовым сероводородным озером. Вход через тоннель, бесплатно.'}},
@@ -931,7 +938,8 @@ function renderCard(){
     ${p.price?`<div class="facts"><div><b>${p.price.toLocaleString('ru-RU')} ₽</b>${tx('perMonth')}</div><div><b>${T.rooms[L][p.rooms]}</b>${tx('regOk')}</div></div>`:''}
     ${p.h24?`<span class="tag" style="--c:#1d1d1f">${tx('h24')}</span>`:''}
     ${dsc(p)?`<p>${esc(dsc(p))}</p>`:''}
-    ${p.id!=='main' && walkMin(p.at)<=75?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
+    ${p.id!=='main' && !p.far && walkMin(p.at)<=75?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
+    ${p.tel?`<div class="tels">${p.tel.map(t => `<a class="btn main" href="tel:${t.replace(/[^+\d]/g,'')}">📞 ${t}</a>`).join('')}</div>`:''}
     <div class="acts">${p.k==='flat'?`<a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the apartment: '+p.n)}">${tx('askFlat')}</a>`:''}
     <a class="btn" target="_blank" rel="noopener" href="${yLink(p.at)}">${tx('openMap')}</a></div>`;
   c.hidden = false; $('#stage').classList.add('busy');
@@ -1334,6 +1342,15 @@ scene('life','blob');
   for(const t of Object.values(data.tram)) for(const l of t.l){ const key = l.slice(0,6).join(); if(!seen.has(key)){ seen.add(key); allTram.push(dec(l,1)); } }
   const tramBase = ribbon(single(allTram), 4, 2.2, flat(S.tram), true); scene.add(tramBase);
   scene.add(ribbon((data.trails||[]).map(a => dec(a,1)), 5, 2.5, flat(S.trail)));
+  // a hot-air balloon that always floats over the city; its pin opens the contacts
+  const balloon = new THREE.Group();
+  { const cols = [0xff3b30,0xffffff,0xff9f0a,0xffffff,0x0a84ff,0xffffff,0x34c759,0xffffff], n = cols.length;
+    for(let i=0;i<n;i++){ const g = new THREE.SphereGeometry(60, 6, 18, i/n*Math.PI*2, Math.PI*2/n, 0, Math.PI*.82); const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({color:cols[i], fog:false, side:THREE.DoubleSide})); m.scale.set(1,1.18,1); balloon.add(m); }
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(32,14,26,12,1,true), new THREE.MeshLambertMaterial({color:0xff9f0a, fog:false, side:THREE.DoubleSide})); neck.position.y = -72; balloon.add(neck);
+    const basket = new THREE.Mesh(new THREE.BoxGeometry(22,16,22), new THREE.MeshLambertMaterial({color:0x8a5a2b, fog:false})); basket.position.y = -112; balloon.add(basket);
+    for(const [dx,dz] of [[-10,-10],[10,-10],[-10,10],[10,10]]){ const r = new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,26,4), new THREE.MeshBasicMaterial({color:0x3a3a3c, fog:false})); r.position.set(dx,-94,dz); balloon.add(r); }
+    scene.add(balloon); }
+  const BAL = toXY([43.0560,44.0440]), balY = hAt(BAL[0],BAL[1]) + 620;
   const cabins = [];
   for(const c of (data.cable||[])){ const q = dec(c,1), a = q[0], b = q[q.length-1];
     const A0 = new THREE.Vector3(a[0],hAt(a[0],a[1])+48,-a[1]), B0 = new THREE.Vector3(b[0],hAt(b[0],b[1])+48,-b[1]);
@@ -1438,7 +1455,7 @@ scene('life','blob');
   let anim = null;
   function tween(toT, toP, ms, dive){ if(reduce){ ctl.target.copy(toT); cam.position.copy(toP); return; } anim = {t0:performance.now(), ms, dive, fT:ctl.target.clone(), fP:cam.position.clone(), toT, toP}; }
   function fly(x, y, dist){ const t = new THREE.Vector3(x, hAt(x,y), -y), dir = cam.position.clone().sub(ctl.target).normalize(); if(dir.y<.45){ dir.y=.45; dir.normalize(); } tween(t, t.clone().add(dir.multiplyScalar(dist)), 1300); }
-  window.flyTo = p => { const a = toXY(p.at); fly(a[0], a[1], 1300); };
+  window.flyTo = p => { if(p.sky) return; const a = toXY(p.at); fly(a[0], a[1], 1300); };
   window.fitCat = k => { if(k==='tram') return; const ps = CITY.places.filter(inAct).map(p => toXY(p.at)); if(!ps.length) return;
     const xs = ps.map(p=>p[0]), ys = ps.map(p=>p[1]), x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys);
     fly((x0+x1)/2, (y0+y1)/2, Math.max(x1-x0, y1-y0)*1.5+1500); };
@@ -1500,6 +1517,8 @@ scene('life','blob');
       q.bm.scale.set(w, hgt, w); q.disc.scale.set(dw*(1+.5*pu), dw*(1+.5*pu), 1); q.disc.position.y = .012; q.disc.material.opacity = .45-.3*pu; q.halo.material.opacity = (isSel ? .4 : .22)+.12*pu; }
     for(const id in hlMesh){ const m = hlMesh[id], pl = CITY.places.find(x => x.hl===id), act = pl && (pl===sel || (activeCat!=='all' && inAct(pl)) || (activeCat==='all' && !sel && id==='main'));
       if(m.material.emissive) m.material.emissiveIntensity = act ? .45+.35*pu : 0; }
+    { const tb = now/1000; balloon.position.set(BAL[0]+Math.sin(tb*.11)*260, balY+Math.sin(tb*.35)*28, -BAL[1]+Math.cos(tb*.09)*200); balloon.rotation.y = tb*.08; const bs = Math.min(7, Math.max(1, cam.position.distanceTo(balloon.position)/1050)); balloon.scale.setScalar(bs);
+      for(const q of pins) if(q.p.sky){ q.v.copy(balloon.position); q.v.y -= 135*bs; } }
     for(const t of trams){ const per = t.len/9, u0 = ((now/1000)/per*.5 + t.ph)%1, fwd = u0 < .5, u = fwd ? u0*2 : 2-u0*2, dist2 = u*t.len;
       let lo = 0, hi = t.cum.length-1; while(hi-lo > 1){ const mid = (lo+hi)>>1; if(t.cum[mid] <= dist2) lo = mid; else hi = mid; }
       const a = t.path[lo], b2 = t.path[hi], f = (dist2-t.cum[lo])/Math.max(1e-6, t.cum[hi]-t.cum[lo]), x = a[0]+(b2[0]-a[0])*f, y = a[1]+(b2[1]-a[1])*f;
