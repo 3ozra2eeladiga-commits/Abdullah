@@ -1220,10 +1220,33 @@ scene('life','blob');
   scene.add(ribbon(allTram, 5, 2.2, flat(S.tram)));
   scene.add(ribbon((data.trails||[]).map(a => dec(a,1)), 5, 2.5, flat(S.trail)));
   const cabins = [];
-  for(const c of (data.cable||[])){ const q = dec(c,1), a = q[0], b = q[q.length-1], g = new THREE.BufferGeometry();
-    const A3 = new THREE.Vector3(a[0],hAt(a[0],a[1])+25,-a[1]), B3 = new THREE.Vector3(b[0],hAt(b[0],b[1])+25,-b[1]);
-    for(const ph of [0,.5]){ const cb = new THREE.Mesh(new THREE.BoxGeometry(16,13,11), new THREE.MeshLambertMaterial({color:ph ? 0xffcc00 : 0xff3b30, fog:false})); scene.add(cb); cabins.push({cb, A3, B3, ph}); }
-    g.setAttribute('position', new THREE.Float32BufferAttribute([a[0],hAt(a[0],a[1])+25,-a[1], b[0],hAt(b[0],b[1])+25,-b[1]],3)); scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:0xe0559a, fog:false}))); }
+  for(const c of (data.cable||[])){ const q = dec(c,1), a = q[0], b = q[q.length-1];
+    const A0 = new THREE.Vector3(a[0],hAt(a[0],a[1])+48,-a[1]), B0 = new THREE.Vector3(b[0],hAt(b[0],b[1])+48,-b[1]);
+    const dir = B0.clone().sub(A0), side = new THREE.Vector3(-dir.z,0,dir.x).normalize(), yaw = Math.atan2(-dir.z, dir.x);
+    const L2 = m => new THREE.MeshLambertMaterial({color:m, fog:false});
+    // stations at both ends
+    for(const [P0, big] of [[A0,1],[B0,.8]]){ const st = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.BoxGeometry(40*big,44,30*big), L2(0xe9e4da)); base.position.set(-26*big,-28,0); st.add(base);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(70*big,3,36*big), L2(0x8e2f2a)); roof.position.set(-12*big,-4.5,0); st.add(roof);
+      st.position.copy(P0); st.rotation.y = yaw + (P0===B0 ? Math.PI : 0); scene.add(st); }
+    [-1,1].forEach((sgn, i) => { const off = side.clone().multiplyScalar(sgn*7), A3 = A0.clone().add(off), B3 = B0.clone().add(off);
+      // the cable, with a little sag
+      const pts = []; for(let k=0;k<=24;k++){ const u = k/24, pt = A3.clone().lerp(B3,u); pt.y -= Math.sin(u*Math.PI)*14; pts.push(pt); }
+      scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({color:0x3a3a3c, fog:false})));
+      // the cabin: carriage on the cable, hanger arm, body with a window band and a roof
+      const col = i ? 0xffc400 : 0xe5352b, cab = new THREE.Group();
+      const car = new THREE.Mesh(new THREE.BoxGeometry(9,1.6,2.2), L2(0x2c2c2e)); cab.add(car);
+      for(const wx of [-3,3]){ const wh = new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,1.2,10), L2(0x1d1d1f)); wh.rotation.x = Math.PI/2; wh.position.set(wx,.9,0); cab.add(wh); }
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(1.1,9,1.1), L2(0x2c2c2e)); arm.position.y = -5; cab.add(arm);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(15,1.4,9.4), L2(0xf5f5f7)); roof.position.y = -10; cab.add(roof);
+      const top = new THREE.Mesh(new THREE.BoxGeometry(14,2.2,8.6), L2(col)); top.position.y = -11.6; cab.add(top);
+      const win = new THREE.Mesh(new THREE.BoxGeometry(14.2,4.6,8.8), L2(0x16324f)); win.position.y = -15; cab.add(win);
+      for(const px of [-7,-2.4,2.4,7]){ const post = new THREE.Mesh(new THREE.BoxGeometry(.9,4.8,9), L2(col)); post.position.set(px,-15,0); cab.add(post); }
+      const low = new THREE.Mesh(new THREE.BoxGeometry(14,5,8.6), L2(col)); low.position.y = -19.8; cab.add(low);
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(14.2,1,8.8), L2(0xffffff)); stripe.position.y = -18.6; cab.add(stripe);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(12.5,1.2,7.6), L2(0x2c2c2e)); floor.position.y = -22.8; cab.add(floor);
+      cab.rotation.y = yaw; scene.add(cab); cabins.push({cb:cab, A3, B3, ph:i*.5}); });
+  }
   await tick(93);
   // parks and water
   function areas(list, color, lift){ const pos = [];
@@ -1259,8 +1282,7 @@ scene('life','blob');
   window.showRoute = r => { if(routeMesh){ scene.remove(routeMesh); routeMesh.geometry.dispose(); routeMesh = null; }
     if(!r) return; const lines = data.tram[r].l.map(a => dec(a,1));
     routeMesh = ribbon(lines, 42, 6, new THREE.MeshBasicMaterial({color:CITY.tramColors[r], side:THREE.DoubleSide, fog:false, polygonOffset:true, polygonOffsetFactor:-4, polygonOffsetUnits:-4})); scene.add(routeMesh);
-    let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; for(const l of lines) for(const p of l){ x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]); }
-    fly((x0+x1)/2, (y0+y1)/2, Math.max(x1-x0, y1-y0)*.95+2200); };
+    let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; for(const l of lines) for(const p of l){ x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]); } };
 
   // camera and controls
   const ctl = new THREE.OrbitControls(cam, canvas);
@@ -1330,7 +1352,7 @@ scene('life','blob');
       q.bm.scale.set(w, hgt, w); q.disc.scale.set(dw*(1+.5*pu), dw*(1+.5*pu), 1); q.disc.position.y = .012; q.disc.material.opacity = .45-.3*pu; q.halo.material.opacity = (isSel ? .4 : .22)+.12*pu; }
     for(const id in hlMesh){ const m = hlMesh[id], pl = CITY.places.find(x => x.hl===id), act = pl && (pl===sel || (activeCat!=='all' && inAct(pl)) || (activeCat==='all' && !sel && id==='main'));
       if(m.material.emissive) m.material.emissiveIntensity = act ? .45+.35*pu : 0; }
-    for(const c of cabins){ const u0 = (now/45000 + c.ph)%1, u = u0<.5 ? u0*2 : 2-u0*2, e = u*u*(3-2*u), sc = Math.max(1, cam.position.distanceTo(c.cb.position)/900); c.cb.position.lerpVectors(c.A3, c.B3, e); c.cb.position.y -= 9; c.cb.scale.setScalar(sc); }
+    for(const c of cabins){ const u0 = (now/45000 + c.ph)%1, u = u0<.5 ? u0*2 : 2-u0*2, e = u*u*(3-2*u), sc = Math.max(1, cam.position.distanceTo(c.cb.position)/700); c.cb.position.lerpVectors(c.A3, c.B3, e); c.cb.position.y -= Math.sin(e*Math.PI)*14; c.cb.scale.setScalar(Math.min(sc, 5)); }
     renderer.render(scene, cam);
     pinsEl.classList.toggle('near', cam.position.distanceTo(ctl.target) < 2600);
     for(const q of pins){ v.copy(q.v).project(cam); const out = q.hide || v.z>1 || v.x<-1.05 || v.x>1.05 || v.y<-1.05 || v.y>1.05;
