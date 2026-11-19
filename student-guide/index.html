@@ -84,7 +84,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .card .ru{font:500 12px/1.3 var(--mono);color:var(--muted);margin-bottom:10px}
 .card p{margin:0 0 10px;color:#2c3340}
 .card .x{position:absolute;right:10px;top:10px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(20,24,31,.07);font-size:16px}
-.card .tag:not(.ghost),.flat .tag:not(.ghost){color:#fff}
+.card .tag:not(.ghost),.flat .tag:not(.ghost){color:#fff;text-shadow:0 0 2px rgba(0,0,0,.35)}
 .tag{display:inline-block;font:700 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:6px;background:var(--c,var(--amber));color:#0a101a;margin:0 6px 10px 0}
 .tag.ghost{background:none;border:1px solid var(--line);color:var(--muted)}
 .facts{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 12px;font:500 12px/1.3 var(--mono);color:var(--muted)}
@@ -209,7 +209,7 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 [data-v=r] .city[aria-current]{color:#0071e3;border-color:rgba(0,113,227,.5)}
 [data-v=r] .lang button{font:600 12px/1 var(--body);color:#6e6e73}
 [data-v=r] .chip[aria-pressed="true"],[data-v=r] .lang button[aria-pressed="true"]{background:#1d1d1f;color:#fff;border-color:transparent}
-[data-v=r] .subs button[aria-pressed="true"]{background:var(--c);color:#fff}
+[data-v=r] .subs button[aria-pressed="true"]{background:var(--c);color:#fff;text-shadow:0 0 2px rgba(0,0,0,.4)}
 [data-v=r] .nav a{color:#1d1d1f;font-weight:500;font-size:13px;opacity:.8}
 [data-v=r] .hint{font:500 11px/1 var(--body);text-transform:none;letter-spacing:0;color:#6e6e73}
 [data-v=r] .card{background:rgba(255,255,255,.8);backdrop-filter:saturate(1.8) blur(28px);-webkit-backdrop-filter:saturate(1.8) blur(28px);border:1px solid rgba(255,255,255,.7);border-radius:24px;box-shadow:0 18px 50px rgba(0,0,0,.2)}
@@ -393,25 +393,25 @@ const CITY = {
   home: [43.06638, 44.0533],           // PMFI main building: walking times are counted from here
   campusStop: 'Универсам',
   cats: {
-    campus:{c:'#ff2d1f', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
-    flat:{c:'#ff3d7f', en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
-    dorm:{c:'#ff7a1a', en:'Dorms', fr:'Résidences', ru:'Общежития'},
-    tram:{c:'#7a4dff', en:'Trams', fr:'Tramways', ru:'Трамваи'},
-    coffee:{c:'#00c2a0', en:'Coffee', fr:'Cafés', ru:'Кофейни'},
-    study:{c:'#2f8cff', en:'Study spots', fr:'Pour étudier', ru:'Где поработать'},
-    food:{c:'#ffb800', en:'Food', fr:'Manger', ru:'Еда'},
-    need:{c:'#1fa2ff', en:'Essentials', fr:'Essentiels', ru:'Нужное'},
-    go:{c:'#5b6b85', en:'Stations', fr:'Gares', ru:'Вокзалы'},
-    see:{c:'#ff4fb0', en:'Sights', fr:'À voir', ru:'Что посмотреть'},
-    hike:{c:'#3fc41f', en:'Hikes', fr:'Randonnées', ru:'Походы'},
-    spring:{c:'#00b7ff', en:'Springs', fr:'Sources', ru:'Источники'}
+    campus:{c:'#ff3b30', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
+    flat:{c:'#007aff', en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
+    dorm:{c:'#ff9500', en:'Dorms', fr:'Résidences', ru:'Общежития'},
+    tram:{c:'#af52de', en:'Trams', fr:'Tramways', ru:'Трамваи'},
+    coffee:{c:'#a2845e', en:'Coffee', fr:'Cafés', ru:'Кофейни'},
+    study:{c:'#8e8e93', en:'Study spots', fr:'Pour étudier', ru:'Где поработать'},
+    food:{c:'#ffcc00', en:'Food', fr:'Manger', ru:'Еда'},
+    need:{c:'#00c7be', en:'Essentials', fr:'Essentiels', ru:'Нужное'},
+    go:{c:'#1d1d1f', en:'Stations', fr:'Gares', ru:'Вокзалы'},
+    see:{c:'#34c759', en:'Sights', fr:'À voir', ru:'Что посмотреть'},
+    hike:{c:'#1f7a36', en:'Hikes', fr:'Randonnées', ru:'Походы'},
+    spring:{c:'#5ac8fa', en:'Springs', fr:'Sources', ru:'Источники'}
   },
   groups: {
-    pmfi:{c:'#ff2d1f', cats:['campus','dorm'], en:'PMFI', fr:'PMFI', ru:'ПМФИ'},
-    flat:{c:'#ff3d7f', cats:['flat'], en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
-    tram:{c:'#7a4dff', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
-    go:{c:'#ff4fb0', cats:['see','hike','spring','coffee','food','study'], en:'Where to go', fr:'Où aller', ru:'Куда сходить'},
-    need:{c:'#1fa2ff', cats:['need','go'], en:'Essentials', fr:'Essentiels', ru:'Нужное'}
+    pmfi:{c:'#ff3b30', cats:['campus','dorm'], en:'PMFI', fr:'PMFI', ru:'ПМФИ'},
+    flat:{c:'#007aff', cats:['flat'], en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
+    tram:{c:'#af52de', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
+    go:{c:'#34c759', cats:['see','hike','spring','coffee','food','study'], en:'Where to go', fr:'Où aller', ru:'Куда сходить'},
+    need:{c:'#00c7be', cats:['need','go'], en:'Essentials', fr:'Essentiels', ru:'Нужное'}
   },
   places: [
     {k:'campus',id:'main',hl:'main',big:1,n:'PMFI Main Building',ru:'ПМФИ, главный корпус · пр. Калинина, 11',at:[43.06638,44.0533],
@@ -703,7 +703,7 @@ renderStatic();
    r:{fog:0xe9e2d2, lo:[.93,.905,.85], mid:[.50,.55,.30], hi:[.90,.88,.82], cont:0x6e5238, ca:.17, grid:.09, wall:[232,196,96], roofLo:[240,208,112], roofHi:[244,216,128], edge:null, lit:true, hemi:.5, sun:1.0, shadows:true,
       roadA:0x8a342c, roadB:0x5a4a40, roadC:0xa39883, rail:0x2a2420, tram:0x2f4f86, trail:0x6b7a2c, park:0x8f9c4c, water:0x9cbcc6, camp:[[178,44,36],[150,34,30]], dorm:[[204,84,40],[170,64,30]]},
    q:{fog:0xe6e3da, lo:[.93,.925,.895], mid:[.37,.43,.21], hi:[.88,.87,.83], cont:0x5c4a3a, ca:.13, grid:.15, wall:[236,212,112], roofLo:[246,226,138], roofHi:[246,226,138], edge:null, lit:true, hemi:.42, sun:1.18, shadows:true,
-      roadA:0x7a2e28, roadB:0x463f39, roadC:0xb3ab9c, rail:0x1e1a17, tram:0x2f4f86, trail:0x6b7a2c, park:0x9aa65a, water:0xa9c6cf, camp:[[186,40,34],[160,32,28]], dorm:[[198,70,38],[170,56,30]]},
+      roadA:0x7a2e28, roadB:0x463f39, roadC:0xb3ab9c, rail:0x1e1a17, tram:0x8a3fc4, trail:0x6b7a2c, park:0x9aa65a, water:0xa9c6cf, camp:[[186,40,34],[160,32,28]], dorm:[[198,70,38],[170,56,30]]},
    p:{fog:0xefe5cf, lo:[.95,.91,.80], mid:[.62,.74,.48], hi:[.84,.85,.66], cont:0x6b4a2e, ca:.34, grid:0, wall:[232,212,178], roofLo:[190,108,76], roofHi:[240,230,208], edge:0x3f2a1c, lit:true, hemi:.86, sun:.42, shadows:true,
       roadA:0xfffaf0, roadB:0xfbf3e2, roadC:0xbfa98a, rail:0x3f2a1c, tram:0xa3301f, trail:0x4f7a2a, park:0x9cc07a, water:0x86aebd, camp:[[168,52,40],[120,36,30]], dorm:[[214,120,40],[150,80,30]]},
    d:{fog:0xdccfb8, lo:[.50,.62,.34], mid:[.30,.48,.22], hi:[.58,.60,.42], cont:null, ca:0, grid:0, wall:[236,220,194], roofLo:[176,96,64], roofHi:[226,214,196], edge:null, lit:true, hemi:.72, sun:.7, shadows:true,
@@ -927,9 +927,9 @@ renderStatic();
     ctl.update(); sun.position.set(ctl.target.x-5600, ctl.target.y+2700, ctl.target.z-3400); sun.target.position.copy(ctl.target);
     const floor = hAt(cam.position.x, -cam.position.z) + 60; if(cam.position.y < floor) cam.position.y = floor;
     const pu = .5+.5*Math.sin(now/420), dist = cam.position.distanceTo(ctl.target), bh = Math.min(900, Math.max(150, dist*.3));
-    for(const q of pins){ if(!q.bm) continue; const isSel = q.p===sel, on = !q.hide && (isSel || q.p.k==='campus' || (activeCat!=='all' && inAct(q.p)));
-      q.bm.visible = on; if(!on) continue; const hgt = bh*(isSel ? 1.7 : q.p.k==='campus' ? 1.25 : 1), w = Math.max(.55, dist/2600)*(isSel ? 1.35 : 1);
-      q.bm.scale.set(w, hgt, w); q.disc.scale.set(1+.5*pu, 1+.5*pu, 1); q.disc.position.y = .012; q.disc.material.opacity = .45-.3*pu; q.halo.material.opacity = (isSel ? .4 : .22)+.12*pu; }
+    for(const q of pins){ if(!q.bm) continue; const isSel = q.p===sel, isMain = q.p.id==='main', on = !q.hide && (isSel || isMain || (activeCat!=='all' && inAct(q.p)));
+      q.bm.visible = on; if(!on) continue; q.core.visible = q.halo.visible = isMain; const hgt = bh*(isSel ? 1.7 : q.p.k==='campus' ? 1.25 : 1), w = Math.max(.55, dist/2600)*(isSel ? 1.35 : 1), dw = Math.max(1, dist/1400)*(isSel ? 1.7 : 1)/w;
+      q.bm.scale.set(w, hgt, w); q.disc.scale.set(dw*(1+.5*pu), dw*(1+.5*pu), 1); q.disc.position.y = .012; q.disc.material.opacity = .45-.3*pu; q.halo.material.opacity = (isSel ? .4 : .22)+.12*pu; }
     for(const id in hlMesh){ const m = hlMesh[id], pl = CITY.places.find(x => x.hl===id), act = pl && (pl===sel || (activeCat!=='all' && inAct(pl)) || (activeCat==='all' && !sel && id==='main'));
       if(m.material.emissive) m.material.emissiveIntensity = act ? .45+.35*pu : 0; }
     renderer.render(scene, cam);
