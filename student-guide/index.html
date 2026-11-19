@@ -171,12 +171,22 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .city,.chip,.lang,.tools button{box-shadow:0 4px 14px rgba(60,40,20,.12)}
 .flat,.day{box-shadow:0 8px 28px rgba(120,80,30,.08)}
 .pin i{width:13px;height:13px}
+figure.ph{margin:0 0 4px;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/2;background:#e9e2d6}
+figure.ph img{width:100%;height:100%;object-fit:cover;display:block}
+figure.ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 5px;font:500 9.5px/1.2 var(--mono);color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card figure.ph{aspect-ratio:16/9;margin:0 0 12px}
+.card:has(figure.ph) .x{background:rgba(255,255,255,.9);z-index:1}
 details.stopsBox summary{cursor:pointer;font:600 12.5px/1 var(--body);color:var(--muted);padding:8px 0 2px;list-style:none}
 details.stopsBox summary::after{content:" ▾"}
 details.stopsBox[open] summary::after{content:" ▴"}
 @media (max-width:760px){
   .card{padding:12px 14px;max-height:46%;border-radius:16px}
   .card h2{font-size:13px;margin-bottom:0}
+  .card:has(figure.ph){max-height:60%}
+  .card figure.ph{aspect-ratio:auto;height:96px;margin-bottom:8px}
+  .card .acts .btn{padding:9px 12px;font-size:12.5px}
+  .card .facts{margin-bottom:8px;gap:12px}
+  .card p{margin-bottom:6px;font-size:13px}
   .card.tram h2{display:none}
   .card.tram .x{top:6px;right:6px;width:28px;height:28px}
   .card.tram .routes{margin:0 34px 8px 0;gap:4px}
@@ -296,7 +306,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
 const TG = 'khwajev';
 const CITY = {
   map: 'data/pyatigorsk.map.json',
-  home: [43.0678, 44.0522],            // PMFI dorms: walking times are counted from here
+  home: [43.06638, 44.0533],           // PMFI main building: walking times are counted from here
   campusStop: 'Универсам',
   cats: {
     campus:{c:'#ffb347', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
@@ -318,12 +328,21 @@ const CITY = {
     {k:'dorm',id:'dorm4',hl:'dorm4',n:'Dorm No. 4',ru:'Общежитие № 4 ПМФИ · пр. Калинина, 11',at:[43.06803,44.05202],d:{en:'9 floors. Most international students live here.',fr:'9 étages. La plupart des étudiants étrangers y vivent.',ru:'9 этажей. Здесь живёт большинство иностранных студентов.'}},
     {k:'dorm',id:'dorm3',hl:'dorm3',n:'Dorm No. 3',ru:'Общежитие № 3 ПМФИ · пр. Калинина, 11 к2',at:[43.06746,44.05235],d:{en:'8 floors, next to the main building.',fr:'8 étages, à côté du bâtiment principal.',ru:'8 этажей, рядом с главным корпусом.'}},
     {k:'dorm',id:'dorm2',hl:'dorm2',n:'Dorm No. 2',ru:'Общежитие № 2 ПМФИ · пр. Калинина, 11 к1',at:[43.06808,44.05271],d:{en:'5 floors.',fr:'5 étages.',ru:'5 этажей.'}},
-    {k:'tram',id:'stop',n:'Tram stop “Universam”',ru:'Остановка «Универсам»',at:[43.06303,44.05304],d:{en:'Your stop. Trams 2, 4, 6, 7 and 8 stop here, about 6 minutes on foot from the dorms.',fr:'Votre arrêt. Les trams 2, 4, 6, 7 et 8 s’arrêtent ici, à environ 6 minutes à pied des résidences.',ru:'Ваша остановка. Здесь останавливаются трамваи 2, 4, 6, 7 и 8, около 6 минут пешком от общежитий.'}},
+    {k:'tram',id:'stop',n:'Tram stop “Universam”',ru:'Остановка «Универсам»',at:[43.06303,44.05304],d:{en:'Your stop. Trams 2, 4, 6, 7 and 8 stop here.',fr:'Votre arrêt. Les trams 2, 4, 6, 7 et 8 s’arrêtent ici.',ru:'Ваша остановка. Здесь останавливаются трамваи 2, 4, 6, 7 и 8.'}},
 
-    {k:'flat',id:'f1',demo:1,n:'1-room flat, Kalinina Ave',ru:'пр. Калинина',at:[43.0642,44.0512],price:28000,rooms:1,d:{en:'Furnished, washing machine, Wi-Fi. Owner agrees to register tenants.',fr:'Meublé, lave-linge, Wi-Fi. Le propriétaire accepte l’enregistrement.',ru:'С мебелью, стиральная машина, Wi-Fi. Хозяин согласен на регистрацию.'}},
-    {k:'flat',id:'f2',demo:1,n:'2-room flat, Kuchury St',ru:'ул. Кучуры',at:[43.0700,44.0500],price:38000,rooms:2,d:{en:'Good for two students sharing. Registration for both.',fr:'Idéal en colocation à deux. Enregistrement pour les deux.',ru:'Удобно на двоих. Регистрация обоим.'}},
-    {k:'flat',id:'f3',demo:1,n:'Studio, 40 Let Oktyabrya Ave',ru:'пр. 40 лет Октября',at:[43.0612,44.0560],price:24000,rooms:0,d:{en:'Small studio near the Universam tram stop.',fr:'Petit studio près de l’arrêt Universam.',ru:'Небольшая студия рядом с остановкой «Универсам».'}},
-    {k:'flat',id:'f4',demo:1,n:'1-room flat, Moskovskaya St',ru:'ул. Московская',at:[43.0655,44.0450],price:30000,rooms:1,d:{en:'Quiet yard, renovated kitchen.',fr:'Cour calme, cuisine rénovée.',ru:'Тихий двор, кухня после ремонта.'}},
+    {k:'flat',id:'f1',demo:1,n:'1-room flat, Kalinina Ave',ru:'пр. Калинина',at:[43.06598, 44.05159],price:28000,rooms:1,f:['furn', 'wash', 'wifi'],ph:'img/flats/f1.jpg',cr:'Icade, CC BY-SA 4.0'},
+    {k:'flat',id:'f2',demo:1,n:'2-room flat, Kuchury St',ru:'ул. Кучуры',at:[43.06804, 44.05123],price:38000,rooms:2,f:['two', 'furn', 'balc'],ph:'img/flats/f2.jpg',cr:'Aaaatu, CC BY-SA 4.0'},
+    {k:'flat',id:'f3',demo:1,n:'Studio, 40 Let Oktyabrya Ave',ru:'пр. 40 лет Октября',at:[43.06373, 44.05131],price:24000,rooms:0,f:['tram', 'furn', 'wifi'],ph:'img/flats/f3.jpg',cr:'Gootroom, CC BY-SA 3.0'},
+    {k:'flat',id:'f4',demo:1,n:'1-room flat, Moskovskaya St',ru:'ул. Московская',at:[43.05864, 44.05124],price:30000,rooms:1,f:['quiet', 'newk', 'wash'],ph:'img/flats/f4.jpg',cr:'epSos.de, CC BY 2.0'},
+    {k:'flat',id:'f5',demo:1,n:'1-room flat, Panagyurishte St',ru:'ул. Панагюриште',at:[43.06387, 44.05475],price:29000,rooms:1,f:['lift', 'furn', 'balc'],ph:'img/flats/f5.jpg',cr:'Jkrona, CC BY-SA 4.0'},
+    {k:'flat',id:'f6',demo:1,n:'2-room flat, Pushkinskaya St',ru:'ул. Пушкинская',at:[43.06601, 44.05059],price:36000,rooms:2,f:['two', 'quiet', 'wash'],ph:'img/flats/f6.jpg',cr:'TEMAHOME President, CC BY-SA 4.0'},
+    {k:'flat',id:'f7',demo:1,n:'Studio, Ordzhonikidze St',ru:'ул. Орджоникидзе',at:[43.0622, 44.05402],price:23000,rooms:0,f:['tram', 'newk', 'wifi'],ph:'img/flats/f7.jpg',cr:'Architect Rahat Chowdhury, CC BY-SA 4.0'},
+    {k:'flat',id:'f8',demo:1,n:'1-room flat, 1st Bulvarnaya St',ru:'ул. 1-я Бульварная',at:[43.06198, 44.0533],price:27000,rooms:1,f:['furn', 'desk', 'wifi'],ph:'img/flats/f8.jpg',cr:'Ajay Suresh, CC BY 2.0'},
+    {k:'flat',id:'f9',demo:1,n:'2-room flat, Novorossiyskaya St',ru:'ул. Новороссийская',at:[43.0643, 44.04926],price:40000,rooms:2,f:['two', 'reno', 'balc'],ph:'img/flats/f9.jpg',cr:'IFERREIRO, CC BY-SA 3.0'},
+    {k:'flat',id:'f10',demo:1,n:'1-room flat, Sorge St',ru:'ул. Зорге',at:[43.0607, 44.05488],price:26000,rooms:1,f:['quiet', 'furn', 'wash'],ph:'img/flats/f10.jpg',cr:'IFERREIRO, CC BY-SA 3.0'},
+    {k:'flat',id:'f11',demo:1,n:'2-room flat, 295th Rifle Division St',ru:'ул. 295-й Стрелковой Дивизии',at:[43.06845, 44.05875],price:35000,rooms:2,f:['two', 'lift', 'desk'],ph:'img/flats/f11.jpg',cr:'HoffnungstraegerStift, CC BY-SA 4.0'},
+    {k:'flat',id:'f12',demo:1,n:'Studio, Fuchika St',ru:'ул. Юлиуса Фучика',at:[43.05958, 44.05689],price:22000,rooms:0,f:['cheap', 'furn', 'wifi'],ph:'img/flats/f12.jpg',cr:'Shadiac, CC BY-SA 3.0'},
+    {k:'flat',id:'f13',demo:1,n:'3-room flat, Kavkazskaya St',ru:'ул. Кавказская',at:[43.06283, 44.04703],price:45000,rooms:3,f:['three', 'reno', 'wash'],ph:'img/flats/f13.jpg',cr:'Jodistansfield, CC BY-SA 3.0'},
 
     {k:'coffee',n:'Noir House',ru:'Нуар Хаус',at:[43.0630,44.0499]},
     {k:'coffee',n:'Lermontov Coffee',ru:'Лермонтов кофе',at:[43.0749,44.0375]},
@@ -377,6 +396,12 @@ const CITY = {
     {k:'spring',id:'w6',n:'Pirogov Baths',ru:'Пироговские ванны',at:[43.0921,44.0407],d:{en:'Sulphur baths on the slope of Mashuk.',fr:'Bains sulfureux sur la pente du Machouk.',ru:'Сероводородные ванны на склоне Машука.'}}
   ],
   peaks: [{n:'Mashuk',at:[43.0889,44.0500]},{n:'Beshtau',at:[43.0290,44.1010]}],
+  feat: {
+    furn:{en:'Furnished',fr:'Meublé',ru:'С мебелью'}, wash:{en:'Washing machine',fr:'Lave-linge',ru:'Стиральная машина'}, wifi:{en:'Wi-Fi',fr:'Wi-Fi',ru:'Wi-Fi'},
+    two:{en:'Good for two students',fr:'Idéal à deux',ru:'Удобно на двоих'}, three:{en:'For three students',fr:'Pour trois étudiants',ru:'На троих'}, balc:{en:'Balcony',fr:'Balcon',ru:'Балкон'},
+    tram:{en:'Next to the tram stop',fr:'À côté du tram',ru:'Рядом с трамваем'}, quiet:{en:'Quiet yard',fr:'Cour calme',ru:'Тихий двор'}, newk:{en:'New kitchen',fr:'Cuisine neuve',ru:'Новая кухня'},
+    lift:{en:'Lift',fr:'Ascenseur',ru:'Лифт'}, desk:{en:'Desk for study',fr:'Bureau pour étudier',ru:'Рабочий стол'}, reno:{en:'Fresh renovation',fr:'Rénové',ru:'Свежий ремонт'}, cheap:{en:'Lowest price nearby',fr:'Le moins cher du quartier',ru:'Самая низкая цена рядом'}
+  },
   tramColors: {1:'#ff7a66',2:'#5fd6b4',3:'#6db7ff',4:'#ffe066',5:'#ff9ed1',6:'#9be36a',7:'#ffb347',8:'#b69cff'}
 };
 
@@ -389,17 +414,18 @@ h1:{en:'Your city, before you land.',fr:'Votre ville, avant d’atterrir.',ru:'�
 h1p:{en:'Campus, dorms, trams, flats where registration is allowed, coffee and everything a new student needs in Pyatigorsk.',fr:'Campus, résidences, tramways, appartements avec enregistrement, cafés et tout ce qu’il faut à un nouvel étudiant à Piatigorsk.',ru:'Корпуса, общежития, трамваи, квартиры с регистрацией, кофейни и всё, что нужно новому студенту в Пятигорске.'},
 hint:{en:'Drag to move · right-drag or two fingers to rotate',fr:'Glisser pour déplacer · clic droit ou deux doigts pour tourner',ru:'Тяните, чтобы двигать · правая кнопка или два пальца — поворот'},
 all:{en:'Everything',fr:'Tout',ru:'Всё'},
-walk:{en:'on foot from the dorms',fr:'à pied des résidences',ru:'пешком от общежитий'},min:{en:'min',fr:'min',ru:'мин'},
+walk:{en:'on foot from the main building',fr:'à pied du bâtiment principal',ru:'пешком от главного корпуса'},min:{en:'min',fr:'min',ru:'мин'},
 openMap:{en:'Open in Yandex Maps',fr:'Ouvrir dans Yandex Maps',ru:'Открыть в Яндекс Картах'},
 askFlat:{en:'Ask about this flat',fr:'Demander cet appartement',ru:'Спросить про квартиру'},
 showMap:{en:'Show on map',fr:'Voir sur la carte',ru:'На карте'},
 demo:{en:'Example listing',fr:'Annonce d’exemple',ru:'Пример объявления'},
 regOk:{en:'Registration OK',fr:'Enregistrement OK',ru:'Регистрация есть'},
 perMonth:{en:'/ month',fr:'/ mois',ru:'/ мес'},
-rooms:{en:['Studio','1 room','2 rooms'],fr:['Studio','1 pièce','2 pièces'],ru:['Студия','1 комната','2 комнаты']},
+rooms:{en:['Studio','1 room','2 rooms','3 rooms'],fr:['Studio','1 pièce','2 pièces','3 pièces'],ru:['Студия','1 комната','2 комнаты','3 комнаты']},
+photo:{en:'Example photo',fr:'Photo d’exemple',ru:'Фото-пример'},
 tramPick:{en:'Pick a tram number to see where it goes.',fr:'Choisissez un numéro pour voir où va le tram.',ru:'Выберите номер трамвая — покажем, куда он едет.'},
 tramTitle:{en:'Trams of Pyatigorsk',fr:'Tramways de Piatigorsk',ru:'Трамваи Пятигорска'},
-passes:{en:'Stops at Universam, 6 min on foot from the PMFI dorms.',fr:'S’arrête à Universam, à 6 min à pied des résidences PMFI.',ru:'Останавливается на «Универсаме» — 6 минут пешком до общежитий ПМФИ.'},
+passes:{en:'Stops at Universam, 5 min on foot from the PMFI main building.',fr:'S’arrête à Universam, à 5 min à pied du bâtiment principal du PMFI.',ru:'Останавливается на «Универсаме» — 5 минут пешком до главного корпуса ПМФИ.'},
 notPasses:{en:'Does not pass the campus. Change at the centre to tram 2, 4, 6, 7 or 8.',fr:'Ne passe pas par le campus. Changez au centre pour le tram 2, 4, 6, 7 ou 8.',ru:'Мимо корпуса не идёт. Пересядьте в центре на 2, 4, 6, 7 или 8.'},
 stopsN:{en:'stops',fr:'arrêts',ru:'остановок'},
 flEyebrow:{en:'Housing',fr:'Logement',ru:'Жильё'},
@@ -408,7 +434,7 @@ flLead:{en:'In Russia a foreign student cannot simply live anywhere: the owner o
 st1b:{en:'Choose a flat',fr:'Choisissez un appartement',ru:'Выберите квартиру'},st1:{en:'On the map or in the list. Write to us on Telegram in English, French or Russian.',fr:'Sur la carte ou dans la liste. Écrivez-nous sur Telegram en français, anglais ou russe.',ru:'На карте или в списке. Напишите нам в Telegram на английском, французском или русском.'},
 st2b:{en:'We show it to you',fr:'Nous vous le montrons',ru:'Мы показываем квартиру'},st2:{en:'We meet the owner together and check the contract and the registration terms.',fr:'Nous rencontrons le propriétaire ensemble et vérifions le contrat et les conditions d’enregistrement.',ru:'Вместе встречаемся с хозяином, проверяем договор и условия регистрации.'},
 st3b:{en:'Move in, get registered',fr:'Emménagez, soyez enregistré',ru:'Заезд и регистрация'},st3:{en:'Our fee is one month of rent, paid once, only after you sign the contract.',fr:'Notre commission est d’un mois de loyer, payée une seule fois, seulement après la signature du contrat.',ru:'Наша комиссия — один месяц аренды, один раз, только после подписания договора.'},
-flNote:{en:'The flats shown now are examples to show how the page works. Real listings will replace them.',fr:'Les appartements affichés sont des exemples pour montrer le fonctionnement de la page. De vraies annonces les remplaceront.',ru:'Сейчас показаны примеры, чтобы было видно, как работает страница. Их заменят настоящие объявления.'},
+flNote:{en:'The flats and photos shown now are examples to show how the page works. Real listings will replace them.',fr:'Les appartements et photos affichés sont des exemples pour montrer le fonctionnement de la page. De vraies annonces les remplaceront.',ru:'Квартиры и фото сейчас — примеры, чтобы было видно, как работает страница. Их заменят настоящие объявления.'},
 rgEyebrow:{en:'The rule everyone asks about',fr:'La règle que tout le monde demande',ru:'Правило, о котором все спрашивают'},
 rgTitle:{en:'Registration, in plain words',fr:'L’enregistrement, simplement',ru:'Регистрация простыми словами'},
 rgLead:{en:'Rules change. Always confirm the current deadline with the PMFI international office before you move.',fr:'Les règles changent. Confirmez toujours le délai actuel auprès du bureau international du PMFI avant de déménager.',ru:'Правила меняются. Перед переездом уточняйте актуальные сроки в международном отделе ПМФИ.'},
@@ -462,6 +488,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 let MAP = null, O = [43.06,44.04,80000,110574];
 const toXY = ll => [(ll[0]-O[0])*O[2], (ll[1]-O[1])*O[3]];
 const walkMin = at => { const a = toXY(at), b = toXY(CITY.home); return Math.max(1, Math.round(Math.hypot(a[0]-b[0], a[1]-b[1])*1.3/78)); };
+const dsc = p => p.d ? p.d[L] : p.f ? p.f.map(k => CITY.feat[k][L]).join(' · ') : '';
 const tgLink = msg => 'https://t.me/'+TG+'?text='+encodeURIComponent(msg);
 const yLink = at => 'https://yandex.com/maps/?pt='+at[0]+','+at[1]+'&z=17&l=map';
 
@@ -477,10 +504,11 @@ function renderStatic(){
     Object.entries(CITY.cats).map(([k,c]) => `<button class="chip" style="--c:${c.c}" data-c="${k}" aria-pressed="${activeCat===k}">${c[L]}</button>`).join('');
   // flats
   $('#flatGrid').innerHTML = CITY.places.filter(p => p.k==='flat').map(p => `<article class="flat">
+    <figure class="ph"><img src="${p.ph}" alt="" loading="lazy"><figcaption>${tx('photo')} · ${esc(p.cr)}</figcaption></figure>
     <div><span class="tag" style="--c:var(--coral)">${tx('regOk')}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}</div>
     <h3>${esc(L==='ru'?T.rooms.ru[p.rooms]+', '+p.ru:p.n)}</h3>
     <div class="price">${p.price.toLocaleString('ru-RU')} ₽ <small>${tx('perMonth')}</small></div>
-    <ul><li>${T.rooms[L][p.rooms]} · ${walkMin(p.at)} ${tx('min')} ${tx('walk')}</li><li>${esc(p.d[L])}</li></ul>
+    <ul><li>${T.rooms[L][p.rooms]} · ${walkMin(p.at)} ${tx('min')} ${tx('walk')}</li><li>${esc(dsc(p))}</li></ul>
     <div class="acts"><a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the flat: '+p.n)}">${tx('askFlat')}</a><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div>
   </article>`).join('');
   $('#seeGrid').innerHTML = CITY.places.filter(p => ['see','hike','spring'].includes(p.k)).map(p => `<article class="flat">
@@ -523,11 +551,12 @@ function renderCard(){
   if(!sel){ c.hidden = true; $('#stage').classList.toggle('busy', activeCat!=='all' || !MAP); return; }
   const p = sel, cat = CITY.cats[p.k];
   c.innerHTML = `<button class="x" aria-label="Close">×</button>
+    ${p.ph?`<figure class="ph"><img src="${p.ph}" alt=""><figcaption>${tx('photo')} · ${esc(p.cr)}</figcaption></figure>`:''}
     <span class="tag" style="--c:${cat.c}">${cat[L]}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}
-    <h2>${esc(L==='ru' && p.k!=='flat' ? p.ru.split(' · ')[0] : p.n)}</h2><div class="ru">${esc(p.ru)}</div>
+    <h2>${esc(L==='ru' ? (p.k==='flat' ? T.rooms.ru[p.rooms]+', '+p.ru : p.ru.split(' · ')[0]) : p.n)}</h2><div class="ru">${esc(p.ru)}</div>
     ${p.price?`<div class="facts"><div><b>${p.price.toLocaleString('ru-RU')} ₽</b>${tx('perMonth')}</div><div><b>${T.rooms[L][p.rooms]}</b>${tx('regOk')}</div></div>`:''}
-    ${p.d?`<p>${esc(p.d[L])}</p>`:''}
-    ${p.k!=='dorm' && walkMin(p.at)<=75?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
+    ${dsc(p)?`<p>${esc(dsc(p))}</p>`:''}
+    ${p.id!=='main' && walkMin(p.at)<=75?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
     <div class="acts">${p.k==='flat'?`<a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the flat: '+p.n)}">${tx('askFlat')}</a>`:''}
     <a class="btn" target="_blank" rel="noopener" href="${yLink(p.at)}">${tx('openMap')}</a></div>`;
   c.hidden = false; $('#stage').classList.add('busy');
@@ -760,7 +789,7 @@ renderStatic();
     pins.push({p, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1]) + (p.hl ? data.hl[p.hl].h*1.35+20 : 30), -a[1])}); }
   for(const p of CITY.peaks){ const a = toXY(p.at), el = document.createElement('div'); el.className = 'pin peak'; el.innerHTML = '<i></i><span>'+p.n+'</span>'; pinsEl.appendChild(el);
     pins.push({p:{k:'peak'}, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+230, -a[1])}); }
-  window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = (L==='ru' && q.p.k!=='flat') ? q.p.ru.split(' · ')[0] : q.p.n; };
+  window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = q.p.k==='flat' ? Math.round(q.p.price/1000)+'k ₽ · '+T.rooms[L][q.p.rooms] : L==='ru' ? q.p.ru.split(' · ')[0] : q.p.n; };
   window.pinsFilter = () => { for(const q of pins){ const on = q.p.k==='peak' || activeCat==='all' || q.p.k===activeCat || (activeCat==='tram' && q.p.k==='dorm') || q.p===sel;
       q.hide = !on; q.el.classList.toggle('on', q.p===sel); q.el.classList.toggle('show', activeCat!=='all' && q.p.k===activeCat); } };
   pinsRelabel(); pinsFilter();
