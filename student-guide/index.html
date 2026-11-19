@@ -1285,8 +1285,9 @@ scene('life','blob');
   await tick(86);
   // ribbons and lines draped on the terrain
   function densify(p, step){ const o = [p[0]]; for(let i=1;i<p.length;i++){ const a=p[i-1], b=p[i], l=Math.hypot(b[0]-a[0],b[1]-a[1]), n=Math.max(1,Math.ceil(l/step)); for(let k=1;k<=n;k++) o.push([a[0]+(b[0]-a[0])*k/n, a[1]+(b[1]-a[1])*k/n]); } return o; }
-  function ribbon(lines, w, lift, mat){ const pos = [];
-    for(const raw of lines){ const p = densify(raw, 60); if(p.length<2) continue; let L0, R0;
+  function ribbon(lines, w, lift, mat, caps){ const pos = [];
+    const cap = q => { const y = hAt(q[0],q[1])+lift, r = w/2, n = 14; for(let k=0;k<n;k++){ const a = k/n*Math.PI*2, b = (k+1)/n*Math.PI*2; pos.push(q[0],y,-q[1], q[0]+Math.cos(a)*r,y,-(q[1]+Math.sin(a)*r), q[0]+Math.cos(b)*r,y,-(q[1]+Math.sin(b)*r)); } };
+    for(const raw of lines){ const p = densify(raw, 60); if(p.length<2) continue; let L0, R0; if(caps){ cap(p[0]); cap(p[p.length-1]); }
       for(let i=0;i<p.length;i++){ const a=p[Math.max(0,i-1)], b=p[Math.min(p.length-1,i+1)]; let dx=b[0]-a[0], dy=b[1]-a[1]; const l=Math.hypot(dx,dy)||1; dx/=l; dy/=l;
         const y = hAt(p[i][0],p[i][1])+lift, Lp=[p[i][0]-dy*w/2, y, -(p[i][1]+dx*w/2)], Rp=[p[i][0]+dy*w/2, y, -(p[i][1]-dx*w/2)];
         if(i) pos.push(...L0,...R0,...Rp, ...L0,...Rp,...Lp); L0=Lp; R0=Rp; } }
@@ -1318,7 +1319,7 @@ scene('life','blob');
     return path; };
   const allTram = []; const seen = new Set();
   for(const t of Object.values(data.tram)) for(const l of t.l){ const key = l.slice(0,6).join(); if(!seen.has(key)){ seen.add(key); allTram.push(dec(l,1)); } }
-  scene.add(ribbon(single(allTram), 4, 2.2, flat(S.tram)));
+  const tramBase = ribbon(single(allTram), 4, 2.2, flat(S.tram), true); scene.add(tramBase);
   scene.add(ribbon((data.trails||[]).map(a => dec(a,1)), 5, 2.5, flat(S.trail)));
   const cabins = [];
   for(const c of (data.cable||[])){ const q = dec(c,1), a = q[0], b = q[q.length-1];
@@ -1391,8 +1392,9 @@ scene('life','blob');
     return g; }
   window.showRoute = r => { if(routeMesh){ scene.remove(routeMesh); routeMesh.geometry.dispose(); routeMesh = null; }
     for(const t of trams.splice(0)) scene.remove(t.g);
+    tramBase.visible = !r;   // while one route is shown, the grey-purple network under it is hidden, so nothing peeks out
     if(!r) return; const lines = single(data.tram[r].l.map(a => dec(a,1)));
-    routeMesh = ribbon(lines, 9, 5, new THREE.MeshBasicMaterial({color:CITY.tramColors[r], side:THREE.DoubleSide, fog:false, polygonOffset:true, polygonOffsetFactor:-4, polygonOffsetUnits:-4})); scene.add(routeMesh);
+    routeMesh = ribbon(lines, 7, 5, new THREE.MeshBasicMaterial({color:CITY.tramColors[r], side:THREE.DoubleSide, fog:false, polygonOffset:true, polygonOffsetFactor:-4, polygonOffsetUnits:-4}), true); scene.add(routeMesh);
     const path = densify(chain(lines), 20); if(path.length < 3) return;
     const cum = [0]; for(let i=1;i<path.length;i++) cum.push(cum[i-1] + Math.hypot(path[i][0]-path[i-1][0], path[i][1]-path[i-1][1]));
     for(const ph of [0,.5]){ const g = tramModel(CITY.tramColors[r]); scene.add(g); trams.push({g, path, cum, len:cum[cum.length-1], ph}); } };
