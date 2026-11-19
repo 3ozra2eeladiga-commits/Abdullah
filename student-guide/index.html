@@ -278,6 +278,12 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .stage{height:min(80vh,1200px)}
 [data-v=r] .stage::before{display:none}
 @media (max-width:760px){.stage{height:min(72vh,680px)}.tools{top:14px}.bar .chips{padding-top:6px}}
+.life{background:#fff;border-bottom:1px solid rgba(0,0,0,.06);overflow-x:auto;scrollbar-width:none}
+.life::-webkit-scrollbar{display:none}
+.life canvas{display:block;width:100%;min-width:860px;max-width:1500px;height:auto;margin:0 auto}
+.wx{display:inline-flex;align-items:center;gap:6px;font:600 13px/1 var(--body);color:#1d1d1f;background:#f0f0f3;border-radius:999px;padding:7px 11px;white-space:nowrap}
+.wx small{font:500 12px/1 var(--body);color:#6e6e73}
+@media (max-width:760px){.wx small{display:none}.wx{padding:6px 9px}}
 figure.ph{margin:0 0 4px;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/2;background:#e9e2d6}
 figure.ph img{width:100%;height:100%;object-fit:cover;display:block}
 figure.ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 5px;font:500 9.5px/1.2 var(--mono);color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -324,6 +330,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
     <nav class="nav">
       <a href="#flats" data-i="navFlats"></a><a href="#sights" data-i="navSee"></a><a href="#holidays" data-i="navHol"></a><a href="#first" data-i="navFirst"></a>
     </nav>
+    <span class="wx" id="wx" hidden></span>
     <div class="lang" role="group" aria-label="Language">
       <button data-l="en">EN</button><button data-l="fr">FR</button><button data-l="ru">RU</button>
     </div>
@@ -354,6 +361,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
   <div class="card" id="card" hidden></div>
 </div>
 
+<div class="life"><canvas id="life" width="1200" height="420" aria-label="Student life"></canvas></div>
 <main id="top">
 <section id="flats"><div class="wrap">
   <div class="eyebrow" data-i="flEyebrow"></div>
@@ -677,7 +685,7 @@ function renderStatic(){
   const fmt = new Intl.DateTimeFormat(L==='en'?'en-GB':L, {day:'numeric', month:'long', year:'numeric'});
   $('#days').innerHTML = up.map(u => `<div class="day"><div class="in">${u.n===0?tx('today'):u.n+`<small>${tx('inDays')}</small>`}</div>
     <div class="when">${fmt.format(u.d)}${u.h.off?' · '+tx('dayOff'):''}</div><b>${u.h.n[L]}</b><p>${u.h.t[L]}</p></div>`).join('');
-  renderTramTable(); renderCard(); if(window.pinsRelabel) pinsRelabel();
+  renderTramTable(); renderCard(); if(window.pinsRelabel) pinsRelabel(); if(window.wxRender) wxRender();
 }
 function renderTramTable(){
   if(!MAP){ $('#tramTable').innerHTML = ''; return; }
@@ -730,6 +738,113 @@ renderStatic();
   ['gesturestart','gesturechange','gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {passive:false}));
   document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.preventDefault(); }, {passive:false});
   let lastTap = 0; document.addEventListener('touchend', e => { const n = Date.now(); if(n - lastTap < 320 && !e.target.closest('#gl')) e.preventDefault(); lastTap = n; }, {passive:false}); }
+
+/* ================= student life strip ================= */
+(function(){
+const lang = () => ({en:1,fr:1,ru:1})[document.documentElement.lang] ? document.documentElement.lang : 'en';
+const LB = {fly:{en:'flying home',fr:'retour au pays',ru:'улетает домой'},cafe:{en:'café',fr:'café',ru:'кофейня'},meet:{en:'making friends',fr:'on fait connaissance',ru:'знакомятся'},surg:{en:'surgeons',fr:'chirurgiens',ru:'хирурги'},dent:{en:'dentist',fr:'dentiste',ru:'стоматолог'}};
+
+const SAY = [['Hello!','#0071e3'],['Bonjour !','#af52de'],['你好！','#ff3b30'],['مرحبا!','#34c759'],['Привет!','#ff9500'],['How are you?','#0071e3'],['Ça va ?','#af52de'],['你是哪国人？','#ff3b30'],['أنا من الأردن','#34c759'],['Пойдём в кафе?','#ff9500']];
+const COL = ['#0071e3','#af52de','#ff3b30','#34c759','#ff9500','#00c7be','#5856d6'];
+function scene(id, style){
+  const cv = document.getElementById(id), g = cv.getContext('2d'), W = 1200, H = 420;
+  const dpr = Math.min(devicePixelRatio||1, 2); cv.width = W*dpr; cv.height = H*dpr;
+  const ink = style==='glow' ? '#f2f4f8' : '#1d1d1f', soft = style==='glow' ? 'rgba(242,244,248,.35)' : 'rgba(29,29,31,.28)';
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function L(x1,y1,x2,y2){ g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); }
+  // one person. o: x, y (hip), s, sit, face, a1, a2 (arm angles), col, cap, mask, lie
+  function person(o){ const s = o.s||1, f = o.face||1, col = style==='blob' ? (o.col||'#0071e3') : ink;
+    g.save(); g.translate(o.x, o.y); if(o.lie){ g.rotate(-Math.PI/2*f); }
+    g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = col; g.fillStyle = col; g.lineWidth = (style==='blob' ? 7 : 3)*s;
+    if(style==='glow'){ g.shadowColor = o.col||'#6db7ff'; g.shadowBlur = 12; }
+    const neck = -30*s, sh = -25*s;
+    if(o.sit){ L(0,0, f*15*s,0); L(f*15*s,0, f*15*s,18*s); L(0,0, f*11*s,3*s); L(f*11*s,3*s, f*11*s,18*s); }
+    else if(!o.lie){ const w = o.walk||0; L(0,0, -6*s+w*6*s,30*s); L(0,0, 6*s-w*6*s,30*s); }
+    else { L(0,0,-3*s,28*s); L(0,0,4*s,28*s); }
+    if(style==='blob'){ g.beginPath(); g.moveTo(-8*s,sh); g.lineTo(8*s,sh); g.lineTo(7*s,2*s); g.lineTo(-7*s,2*s); g.closePath(); g.fill(); g.lineWidth = 5*s; g.stroke(); g.lineWidth = 5*s; }
+    else L(0,0,0,neck);
+    for(const a of [o.a1, o.a2]) if(a!=null){ const ex = Math.cos(a)*18*s*f, ey = Math.sin(a)*18*s; L(0,sh, ex, sh+ey); if(o.tool && a===o.a1){ g.save(); g.lineWidth = 2*s; g.strokeStyle = style==='glow' ? '#fff' : '#8e8e93'; L(ex, sh+ey, ex+f*9*s, sh+ey+5*s); g.restore(); } }
+    g.beginPath(); g.arc(0, neck-10*s, 9.5*s, 0, 7);
+    if(style==='blob'){ g.fillStyle = '#f2c9a5'; g.fill(); g.lineWidth = 2.2*s; g.strokeStyle = '#1d1d1f'; g.stroke(); } else { g.fillStyle = style==='glow' ? '#111418' : '#fff'; g.fill(); g.stroke(); }
+    if(o.cap){ g.fillStyle = style==='blob' ? '#34c759' : ink; g.beginPath(); g.arc(0, neck-12*s, 10*s, Math.PI, 0); g.closePath(); g.fill(); }
+    if(o.mask){ g.fillStyle = style==='blob' ? '#bfeccb' : (style==='glow' ? '#9fd0ff' : '#c7c7cc'); g.fillRect(-7*s, neck-9*s, 14*s, 7*s); }
+    g.restore(); }
+  function bubble(x, y, txt, color, a){ if(a<=0) return; g.save(); g.globalAlpha = Math.min(1,a); g.font = '600 17px -apple-system,"Segoe UI","Noto Sans Arabic","Noto Sans SC",Arial,sans-serif';
+    const w = g.measureText(txt).width + 22, h = 32, bx = Math.max(6, Math.min(W-w-6, x-w/2)), by = y-h;
+    g.fillStyle = color; g.beginPath(); if(g.roundRect) g.roundRect(bx, by, w, h, 12); else g.rect(bx, by, w, h); g.fill();
+    g.beginPath(); g.moveTo(x-6, by+h-1); g.lineTo(x+6, by+h-1); g.lineTo(x, by+h+8); g.fill();
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, bx+w/2, by+h/2+1); g.restore(); }
+  function label(x, t){ g.save(); g.font = '600 12px -apple-system,Arial,sans-serif'; g.fillStyle = soft; g.textAlign = 'center'; g.fillText(t, x, 392); g.restore(); }
+  function furn(){ g.strokeStyle = ink; g.lineWidth = 3; g.lineCap = 'round'; if(style==='glow'){ g.shadowColor = '#6db7ff'; g.shadowBlur = 8; } }
+  function frame(ms){ const t = reduce ? 3.2 : ms/1000; g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); g.shadowBlur = 0;
+    g.strokeStyle = soft; g.lineWidth = 2; L(20,350,W-20,350);
+    // ---- flags of the students' home countries, in the order given
+    { const n = 8, fw = 66, fh = 44, gap = 34, x0 = (W-(n*fw+(n-1)*gap))/2, y0 = 14;
+      g.save(); g.strokeStyle = soft; g.lineWidth = 2; g.beginPath(); g.moveTo(x0-30,y0-4); for(let i=0;i<=n;i++) g.quadraticCurveTo(x0+i*(fw+gap)-gap/2-fw/2, y0+10, x0+i*(fw+gap)-gap/2, y0-2); g.stroke();
+      const star = (cx,cy,r,col,fill) => { g.beginPath(); for(let k=0;k<5;k++){ const a = -Math.PI/2+k*4*Math.PI/5; g[k?'lineTo':'moveTo'](cx+Math.cos(a)*r, cy+Math.sin(a)*r); } g.closePath(); if(fill){ g.fillStyle = col; g.fill(); } else { g.strokeStyle = col; g.lineWidth = 2; g.stroke(); } };
+      const F = [
+        (x,y) => { g.fillStyle = '#c1272d'; g.fillRect(x,y,fw,fh); star(x+fw/2,y+fh/2+1,11,'#006233',false); },
+        (x,y) => { g.fillStyle = '#e70013'; g.fillRect(x,y,fw,fh); g.fillStyle = '#fff'; g.beginPath(); g.arc(x+fw/2,y+fh/2,12,0,7); g.fill(); g.fillStyle = '#e70013'; g.beginPath(); g.arc(x+fw/2,y+fh/2,8,0,7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x+fw/2+3,y+fh/2,6.5,0,7); g.fill(); star(x+fw/2+3,y+fh/2,4,'#e70013',true); },
+        (x,y) => { g.fillStyle = '#ce1126'; g.fillRect(x,y,fw,fh/3); g.fillStyle = '#fff'; g.fillRect(x,y+fh/3,fw,fh/3); g.fillStyle = '#000'; g.fillRect(x,y+2*fh/3,fw,fh/3+.5); g.fillStyle = '#c09300'; g.fillRect(x+fw/2-4,y+fh/2-5,8,10); },
+        (x,y) => { g.fillStyle = '#000'; g.fillRect(x,y,fw,fh/3); g.fillStyle = '#fff'; g.fillRect(x,y+fh/3,fw,fh/3); g.fillStyle = '#007a3d'; g.fillRect(x,y+2*fh/3,fw,fh/3+.5); g.fillStyle = '#ce1126'; g.beginPath(); g.moveTo(x,y); g.lineTo(x+fw*.45,y+fh/2); g.lineTo(x,y+fh); g.fill(); star(x+fw*.14,y+fh/2,3.5,'#fff',true); },
+        (x,y) => { g.fillStyle = '#0099b5'; g.fillRect(x,y,fw,fh/3); g.fillStyle = '#fff'; g.fillRect(x,y+fh/3,fw,fh/3); g.fillStyle = '#1eb53a'; g.fillRect(x,y+2*fh/3,fw,fh/3+.5); g.fillStyle = '#ce1126'; g.fillRect(x,y+fh/3-1,fw,2); g.fillRect(x,y+2*fh/3-1,fw,2); g.fillStyle = '#fff'; g.beginPath(); g.arc(x+11,y+fh/6,5,0,7); g.fill(); g.fillStyle = '#0099b5'; g.beginPath(); g.arc(x+13.5,y+fh/6,4.4,0,7); g.fill(); },
+        (x,y) => { for(let k=0;k<9;k++){ g.fillStyle = k%2 ? '#fff' : '#0d5eaf'; g.fillRect(x,y+k*fh/9,fw,fh/9+.5); } g.fillStyle = '#0d5eaf'; g.fillRect(x,y,fh*5/9,fh*5/9); g.fillStyle = '#fff'; g.fillRect(x+fh*2/9,y,fh/9,fh*5/9); g.fillRect(x,y+fh*2/9,fh*5/9,fh/9); },
+        (x,y) => { g.fillStyle = '#da251d'; g.fillRect(x,y,fw,fh); star(x+fw/2,y+fh/2+1,11,'#ffff00',true); },
+        (x,y) => { g.fillStyle = '#ff9933'; g.fillRect(x,y,fw,fh/3); g.fillStyle = '#fff'; g.fillRect(x,y+fh/3,fw,fh/3); g.fillStyle = '#138808'; g.fillRect(x,y+2*fh/3,fw,fh/3+.5); g.strokeStyle = '#000080'; g.lineWidth = 1.4; g.beginPath(); g.arc(x+fw/2,y+fh/2,5.5,0,7); g.stroke(); for(let k=0;k<8;k++){ const a = k*Math.PI/8; g.beginPath(); g.moveTo(x+fw/2-Math.cos(a)*5.5,y+fh/2-Math.sin(a)*5.5); g.lineTo(x+fw/2+Math.cos(a)*5.5,y+fh/2+Math.sin(a)*5.5); g.stroke(); } }];
+      F.forEach((f,i) => { const x = x0+i*(fw+gap), y = y0+6+Math.sin(t*1.6+i*.9)*2.5; g.save(); g.translate(x+fw/2,y); g.rotate(Math.sin(t*1.3+i)*.035); g.translate(-(x+fw/2),-y);
+        g.shadowColor = 'rgba(0,0,0,.25)'; g.shadowBlur = 6; g.shadowOffsetY = 2; g.save(); g.beginPath(); if(g.roundRect) g.roundRect(x,y,fw,fh,5); else g.rect(x,y,fw,fh); g.clip(); g.shadowColor = 'transparent'; f(x,y); g.restore();
+        g.shadowColor = 'transparent'; g.strokeStyle = style==='glow' ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.18)'; g.lineWidth = 1; g.beginPath(); if(g.roundRect) g.roundRect(x,y,fw,fh,5); else g.rect(x,y,fw,fh); g.stroke(); g.restore(); });
+      g.restore(); }
+    // ---- plane: takes off on the left, lands on the right
+    { const u = (t/14)%1, px = -60 + u*1320, py = u<.16 ? 338-(u/.16)**2*228 : u>.84 ? 110+((u-.84)/.16)**2*228 : 110 + Math.sin(u*9)*5, d = .004,
+        u2 = u+d, px2 = -60+u2*1320, py2 = u2<.16 ? 338-(u2/.16)**2*228 : u2>.84 ? 110+((u2-.84)/.16)**2*228 : 110+Math.sin(u2*9)*5, ang = Math.atan2(py2-py, px2-px);
+      g.save(); g.setLineDash([3,9]); g.strokeStyle = soft; g.lineWidth = 2; g.beginPath(); for(let k=0;k<26;k++){ const v = u-k*.006; if(v<0) break; const qx = -60+v*1320, qy = v<.16 ? 338-(v/.16)**2*228 : v>.84 ? 110+((v-.84)/.16)**2*228 : 110+Math.sin(v*9)*5; k ? g.lineTo(qx,qy) : g.moveTo(qx,qy); } g.stroke(); g.restore();
+      g.save(); g.translate(px,py); g.rotate(ang); g.fillStyle = style==='blob' ? '#0071e3' : ink; if(style==='glow'){ g.shadowColor = '#6db7ff'; g.shadowBlur = 14; }
+      g.beginPath(); g.moveTo(26,0); g.quadraticCurveTo(18,-6,-18,-5); g.lineTo(-27,-16); g.lineTo(-31,-16); g.lineTo(-25,0); g.lineTo(-18,4); g.quadraticCurveTo(18,5,26,0); g.fill();
+      g.beginPath(); g.moveTo(4,0); g.lineTo(-10,17); g.lineTo(-15,17); g.lineTo(-8,0); g.fill(); g.restore(); g.shadowBlur = 0; }
+    // ---- leaving: student with a suitcase waves
+    person({x:70,y:320,s:1,face:1,a1:-1.9+Math.sin(t*6)*.35,a2:1.2,col:COL[5]}); furn(); g.strokeRect(84,330,16,20); L(92,330,92,322); g.shadowBlur = 0; label(78,LB.fly[lang()]);
+    // ---- cafe: two students talk over coffee
+    { const x = 250; furn(); L(x-22,322,x+22,322); L(x,322,x,350); L(x-12,350,x+12,350);
+      for(const sx of [-8,9]){ g.strokeRect(x+sx-4,313,8,9); g.save(); g.strokeStyle = soft; g.lineWidth = 2; g.beginPath(); for(let k=0;k<12;k++){ const yy = 310-k*2.2, xx = x+sx+Math.sin(t*3+k*.7+sx)*3; k ? g.lineTo(xx,yy) : g.moveTo(xx,yy); } g.stroke(); g.restore(); }
+      g.shadowBlur = 0; person({x:x-46,y:332,sit:1,face:1,a1:.2+Math.sin(t*2.2)*.5,a2:.9,col:COL[1]}); person({x:x+46,y:332,sit:1,face:-1,a1:.3+Math.sin(t*2.2+2)*.5,a2:.9,col:COL[4]});
+      const k = Math.floor(t/2.4)%2; bubble(k ? x+46 : x-46, 262, k ? 'Ça va ?' : 'Coffee?', k ? '#af52de' : '#0071e3', Math.sin((t/2.4%1)*Math.PI)*2.4); label(x,LB.cafe[lang()]); }
+    // ---- circle of international students
+    { const cx = 520, n = 5, who = Math.floor(t/1.9)%SAY.length, ph = (t/1.9)%1;
+      furn(); g.beginPath(); g.ellipse(cx,336,54,10,0,0,7); g.stroke(); g.shadowBlur = 0;
+      for(let i=0;i<n;i++){ const px = cx-112+i*56, f = i<2 ? 1 : i>2 ? -1 : (i%2?1:-1), talk = who%n===i;
+        person({x:px,y:330-(i===2?10:0),sit:1,face:f,a1:talk ? -.4+Math.sin(t*7)*.5 : .7,a2:.95,col:COL[i]});
+        if(talk) bubble(px, 248-(i===2?10:0), SAY[who][0], SAY[who][1], Math.sin(ph*Math.PI)*2.6); }
+      label(cx,LB.meet[lang()]); }
+    // ---- surgery
+    { const x = 810; furn(); L(x-58,318,x+58,318); L(x-44,318,x-44,350); L(x+44,318,x+44,350);
+      L(x,206,x,226); g.beginPath(); g.arc(x,240,22,Math.PI,0); g.stroke();
+      g.strokeRect(x+78,250,54,36); g.save(); g.strokeStyle = style==='blob' ? '#34c759' : (style==='glow' ? '#5dff9d' : ink); g.lineWidth = 2.2; g.beginPath(); for(let k=0;k<=46;k++){ const q = (k/46+t*.6)%1, yy = 268-(q>.42&&q<.5 ? Math.sin((q-.42)/.08*Math.PI)*13 : q>.5&&q<.56 ? -Math.sin((q-.5)/.06*Math.PI)*6 : 0); k ? g.lineTo(x+82+k,yy) : g.moveTo(x+82+k,yy); } g.stroke(); g.restore(); g.shadowBlur = 0;
+      person({x:x+34,y:310,s:.9,lie:1,face:1,col:'#8e8e93'});
+      person({x:x-12,y:320,face:1,a1:.75+Math.sin(t*3)*.18,a2:.5+Math.cos(t*3)*.18,col:'#34c759',cap:1,mask:1,tool:1});
+      person({x:x+70,y:320,face:-1,a1:.9,a2:.6+Math.sin(t*1.5)*.2,col:'#30b0c7',cap:1,mask:1}); label(x,LB.surg[lang()]); }
+    // ---- dentist
+    { const x = 1070; furn(); L(x-6,330,x+40,318); L(x+40,318,x+62,296); L(x+16,326,x+16,350); L(x+2,350,x+30,350);
+      L(x-8,236,x+12,262); g.beginPath(); g.arc(x+16,266,6,0,7); g.stroke(); g.shadowBlur = 0;
+      g.save(); g.translate(x+30,316); g.rotate(-.55); person({x:0,y:0,s:.9,lie:1,face:1,col:'#8e8e93'}); g.restore();
+      person({x:x-34,y:332,sit:1,face:1,a1:-.25+Math.sin(t*5)*.12,a2:.4,col:'#00c7be',cap:1,mask:1,tool:1});
+      bubble(x+70, 262, '🦷', style==='glow' ? '#2a3038' : '#e8e8ed', 1.2+Math.sin(t*2)); label(x+14,LB.dent[lang()]); }
+    if(!reduce) requestAnimationFrame(frame); }
+  requestAnimationFrame(frame); }
+scene('life','blob');
+
+})();
+
+/* ================= weather today (Open-Meteo, no key) ================= */
+(function(){
+  const W = {0:['☀️','Clear','Ciel dégagé','Ясно'],1:['🌤','Mostly clear','Peu nuageux','Малооблачно'],2:['⛅','Partly cloudy','Partiellement nuageux','Переменная облачность'],3:['☁️','Cloudy','Couvert','Пасмурно'],45:['🌫','Fog','Brouillard','Туман'],48:['🌫','Fog','Brouillard','Туман'],51:['🌦','Drizzle','Bruine','Морось'],53:['🌦','Drizzle','Bruine','Морось'],55:['🌦','Drizzle','Bruine','Морось'],61:['🌧','Rain','Pluie','Дождь'],63:['🌧','Rain','Pluie','Дождь'],65:['🌧','Heavy rain','Forte pluie','Сильный дождь'],66:['🌧','Freezing rain','Pluie verglaçante','Ледяной дождь'],67:['🌧','Freezing rain','Pluie verglaçante','Ледяной дождь'],71:['🌨','Snow','Neige','Снег'],73:['🌨','Snow','Neige','Снег'],75:['❄️','Heavy snow','Forte neige','Сильный снег'],77:['🌨','Snow','Neige','Снег'],80:['🌦','Showers','Averses','Ливни'],81:['🌦','Showers','Averses','Ливни'],82:['⛈','Heavy showers','Fortes averses','Сильные ливни'],85:['🌨','Snow showers','Averses de neige','Снегопад'],86:['🌨','Snow showers','Averses de neige','Снегопад'],95:['⛈','Thunderstorm','Orage','Гроза'],96:['⛈','Thunderstorm','Orage','Гроза'],99:['⛈','Thunderstorm','Orage','Гроза']};
+  let data = null; const el = $('#wx'), sg = n => (n>0?'+':'')+Math.round(n)+'°';
+  window.wxRender = () => { if(!data) return; const w = W[data.code] || W[3], i = {en:1,fr:2,ru:3}[L] || 1;
+    el.innerHTML = `${w[0]} ${sg(data.t)} <small>${esc(w[i])} · ${sg(data.lo)}…${sg(data.hi)}</small>`; el.hidden = false; };
+  fetch('https://api.open-meteo.com/v1/forecast?latitude='+CITY.home[1]+'&longitude='+CITY.home[0]+'&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FMoscow&forecast_days=1')
+    .then(r => r.json()).then(j => { data = {t:j.current.temperature_2m, code:j.current.weather_code, hi:j.daily.temperature_2m_max[0], lo:j.daily.temperature_2m_min[0]}; wxRender(); })
+    .catch(() => {});   // blocked or offline: the pill simply stays hidden
+})();
 
 /* ================= 3D city ================= */
 (async function(){
