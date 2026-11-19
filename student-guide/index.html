@@ -1391,7 +1391,7 @@ scene('life','blob');
       q.bm.scale.set(w, hgt, w); q.disc.scale.set(dw*(1+.5*pu), dw*(1+.5*pu), 1); q.disc.position.y = .012; q.disc.material.opacity = .45-.3*pu; q.halo.material.opacity = (isSel ? .4 : .22)+.12*pu; }
     for(const id in hlMesh){ const m = hlMesh[id], pl = CITY.places.find(x => x.hl===id), act = pl && (pl===sel || (activeCat!=='all' && inAct(pl)) || (activeCat==='all' && !sel && id==='main'));
       if(m.material.emissive) m.material.emissiveIntensity = act ? .45+.35*pu : 0; }
-    for(const c of cabins){ const u0 = (now/45000 + c.ph)%1, u = u0<.5 ? u0*2 : 2-u0*2, e = u*u*(3-2*u), sc = Math.max(1, cam.position.distanceTo(c.cb.position)/700); c.cb.position.lerpVectors(c.A3, c.B3, e); c.cb.position.y -= Math.sin(e*Math.PI)*14; c.cb.scale.setScalar(Math.min(sc, 5)); }
+    for(const c of cabins){ const u0 = (now/45000 + c.ph)%1, u = u0<.5 ? u0*2 : 2-u0*2, e = u*u*(3-2*u), sc = Math.max(1, cam.position.distanceTo(c.cb.position)/700); c.cb.position.lerpVectors(c.A3, c.B3, e); c.cb.position.y -= Math.sin(e*Math.PI)*14; c.cb.scale.setScalar(Math.min(sc, 5)*.5); }
     renderer.render(scene, cam);
     pinsEl.classList.toggle('near', cam.position.distanceTo(ctl.target) < 2600);
     for(const q of pins){ v.copy(q.v).project(cam); const out = q.hide || v.z>1 || v.x<-1.05 || v.x>1.05 || v.y<-1.05 || v.y>1.05;
