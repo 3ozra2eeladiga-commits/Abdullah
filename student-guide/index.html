@@ -35,7 +35,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pin i{width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px #fff,0 2px 8px rgba(10,16,26,.4);flex:none;transition:transform .15s}
 .pin span{font:600 11.5px/1 var(--body);background:rgba(255,255,255,.95);border:1px solid var(--line);padding:5px 8px;border-radius:999px;display:none}
 .pin.big i{width:15px;height:15px}
-.pin.big span,.pin.show span,.pin:hover span,.pin.on span,.near .pin span{display:block}
+.pin.big span,.pin.show span,.pin:hover span,.pin.on span{display:block}
 .pin:hover i,.pin.on i{transform:scale(1.45)}
 .pin.on span{background:var(--c);color:#0a101a;border-color:transparent}
 .pin.left{flex-direction:row-reverse;margin-left:0}
@@ -190,9 +190,9 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 [data-v=r]{--night:#f5f5f7;--deep:#f5f5f7;--panel:#ffffff;--glass:rgba(255,255,255,.72);--line:rgba(0,0,0,.1);--fg:#1d1d1f;--muted:#6e6e73;--amber:#0071e3;--amber-t:#0066cc;
   --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Helvetica Neue",Arial,sans-serif;--body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;--mono:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif}
 [data-v=r] body{-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
-[data-v=r] #sky{background:#e6e3da}
+[data-v=r] #sky{background:linear-gradient(#cfe4f7 0%,#e9e7e1 55%)}
 [data-v=r] .stage::before{background:linear-gradient(rgba(245,245,247,.75),transparent)}
-[data-v=r] #pins::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(50,40,25,.22) 100%)}
+[data-v=r] #pins::after{display:none}
 [data-v=r] .headline h1{font:700 clamp(34px,6.4vw,64px)/1.05 var(--display);letter-spacing:-.035em;color:#1d1d1f;text-shadow:0 0 22px #fff,0 0 10px #fff}
 [data-v=r] .headline h1::after{display:none}
 [data-v=r] .headline p{color:#1d1d1f;text-shadow:0 0 10px #fff,0 0 4px #fff;font-weight:500;font-size:17px;line-height:1.4}
@@ -263,6 +263,18 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
   .steps{max-width:1200px}
   section{padding-block:84px 8px}
 }
+/* controls live in their own bar above the map, nothing overlaps the map */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:rgba(255,255,255,.82);backdrop-filter:saturate(1.8) blur(20px);-webkit-backdrop-filter:saturate(1.8) blur(20px);border-bottom:1px solid rgba(0,0,0,.08);padding-bottom:8px}
+.bar .top{position:static;padding-top:10px}
+.bar .chips,.bar .subs{position:static;padding-top:8px;padding-bottom:0}
+.bar .subs{padding-top:6px}
+[data-v=r] .bar .city,[data-v=r] .bar .chip,[data-v=r] .bar .lang,[data-v=r] .bar .subs button{background:#f0f0f3;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+[data-v=r] .bar .chip[aria-pressed="true"],[data-v=r] .bar .lang button[aria-pressed="true"]{background:#1d1d1f;color:#fff}
+[data-v=r] .bar .subs button[aria-pressed="true"]{background:var(--c);color:#fff}
+[data-v=r] .bar .city[aria-current]{background:#e8f1fd;color:#0071e3}
+.stage{height:min(80vh,1200px)}
+[data-v=r] .stage::before{display:none}
+@media (max-width:760px){.stage{height:min(72vh,680px)}.tools{top:14px}.bar .chips{padding-top:6px}}
 figure.ph{margin:0 0 4px;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/2;background:#e9e2d6}
 figure.ph img{width:100%;height:100%;object-fit:cover;display:block}
 figure.ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 5px;font:500 9.5px/1.2 var(--mono);color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -290,13 +302,8 @@ details.stopsBox[open] summary::after{content:" ▴"}
 </style>
 
 
-<div class="stage busy intro" id="stage">
-  <div id="sky"></div>
-  <canvas id="gl" aria-label="3D map of Pyatigorsk"></canvas>
-  <div id="pins"></div>
-  <div class="loader" id="loading"><div><b id="pct">0</b><i><u id="bar"></u></i><span id="ltxt">Pyatigorsk · PMFI</span></div></div>
-
-  <header class="top">
+<header class="bar">
+  <div class="top">
     <a class="brand" href="#top"><small data-i="brandTop"></small><span>Pyatigorsk</span></a>
     <div class="cities">
       <span class="city" aria-current="true">Pyatigorsk</span>
@@ -311,10 +318,17 @@ details.stopsBox[open] summary::after{content:" ▴"}
     <div class="lang" role="group" aria-label="Language">
       <button data-l="en">EN</button><button data-l="fr">FR</button><button data-l="ru">RU</button>
     </div>
-  </header>
+  </div>
 
   <div class="chips" id="chips"></div>
   <div class="subs" id="subs" hidden></div>
+
+</header>
+<div class="stage busy intro" id="stage">
+  <div id="sky"></div>
+  <canvas id="gl" aria-label="3D map of Pyatigorsk"></canvas>
+  <div id="pins"></div>
+  <div class="loader" id="loading"><div><b id="pct">0</b><i><u id="bar"></u></i><span id="ltxt">Pyatigorsk · PMFI</span></div></div>
 
   <div class="headline">
     <h1 data-i="h1"></h1>
@@ -713,8 +727,8 @@ renderStatic();
       roadA:0xffffff, roadB:0xfff4e0, roadC:0xd6cba6, rail:0x8a7a66, tram:0x7b5cff, trail:0xffc93c, park:0x56b84c, water:0x2f9bff, camp:[[255,92,72],[196,58,48]], dorm:[[255,168,40],[214,120,24]]},
    r:{fog:0xe9e2d2, lo:[.93,.905,.85], mid:[.50,.55,.30], hi:[.90,.88,.82], cont:0x6e5238, ca:.17, grid:.09, wall:[232,196,96], roofLo:[240,208,112], roofHi:[244,216,128], edge:null, lit:true, hemi:.5, sun:1.0, shadows:true,
       roadA:0x8a342c, roadB:0x5a4a40, roadC:0xa39883, rail:0x2a2420, tram:0x2f4f86, trail:0x6b7a2c, park:0x8f9c4c, water:0x9cbcc6, camp:[[178,44,36],[150,34,30]], dorm:[[204,84,40],[170,64,30]]},
-   q:{fog:0xe6e3da, lo:[.93,.925,.895], mid:[.37,.43,.21], hi:[.88,.87,.83], cont:0x5c4a3a, ca:.13, grid:.15, wall:[236,212,112], roofLo:[246,226,138], roofHi:[246,226,138], edge:null, lit:true, hemi:.42, sun:1.18, shadows:true,
-      roadA:0x7a2e28, roadB:0x463f39, roadC:0xb3ab9c, rail:0x1e1a17, tram:0x8a3fc4, trail:0x6b7a2c, park:0x9aa65a, water:0xa9c6cf, camp:[[186,40,34],[160,32,28]], dorm:[[198,70,38],[170,56,30]]},
+   q:{fog:0xe9e7e1, lo:[.945,.935,.905], mid:[.37,.43,.21], hi:[.88,.87,.83], cont:0x8a7a66, ca:.07, grid:0, wall:[226,222,214], roofLo:[246,244,240], roofHi:[246,244,240], edge:null, lit:true, hemi:.62, sun:.9, shadows:true,
+      roadA:0xffffff, roadB:0xffffff, roadC:0xdcd7cc, rail:0x9a958c, tram:0xaf52de, trail:0x5f8f3a, park:0xbfe3a8, water:0x8fcaf2, camp:[[255,69,58],[214,48,40]], dorm:[[255,159,10],[224,130,0]]},
    p:{fog:0xefe5cf, lo:[.95,.91,.80], mid:[.62,.74,.48], hi:[.84,.85,.66], cont:0x6b4a2e, ca:.34, grid:0, wall:[232,212,178], roofLo:[190,108,76], roofHi:[240,230,208], edge:0x3f2a1c, lit:true, hemi:.86, sun:.42, shadows:true,
       roadA:0xfffaf0, roadB:0xfbf3e2, roadC:0xbfa98a, rail:0x3f2a1c, tram:0xa3301f, trail:0x4f7a2a, park:0x9cc07a, water:0x86aebd, camp:[[168,52,40],[120,36,30]], dorm:[[214,120,40],[150,80,30]]},
    d:{fog:0xdccfb8, lo:[.50,.62,.34], mid:[.30,.48,.22], hi:[.58,.60,.42], cont:null, ca:0, grid:0, wall:[236,220,194], roofLo:[176,96,64], roofHi:[226,214,196], edge:null, lit:true, hemi:.72, sun:.7, shadows:true,
@@ -722,7 +736,7 @@ renderStatic();
   }[V];
   const FOG = S.fog, VE = V==='q' ? 2.3 : 1.5, BASE = 500;
   renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2)); renderer.shadowMap.enabled = S.shadows; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  const scene = new THREE.Scene(), skyEl = $('#sky'); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:9000, V==='d'?2e7:30000);
+  const scene = new THREE.Scene(), skyEl = $('#sky'); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:11000, V==='d'?2e7:34000);
   const cam = new THREE.PerspectiveCamera(38, 1, 20, 60000);
   const hemi = new THREE.HemisphereLight(0xffffff, S.lit?0xb0a898:0xffffff, S.hemi); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff1dc, S.sun); sun.position.set(-6000, 3500, 2500); scene.add(sun); scene.add(sun.target); sun.castShadow = S.shadows; sun.shadow.mapSize.set(4096,4096); { const c = sun.shadow.camera; c.left=-7000; c.right=7000; c.top=7000; c.bottom=-7000; c.near=200; c.far=16000; c.updateProjectionMatrix(); } sun.shadow.bias = -0.0004; sun.shadow.normalBias = 3;
@@ -766,7 +780,7 @@ renderStatic();
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uCont, min(1., max(l*uCA, l5*uCA*2.)));
         vec2 gq = vW.xz/1000.; vec2 gl2 = 1.-smoothstep(vec2(0.), fwidth(gq)*1.2, abs(fract(gq-.5)-.5));
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uCont, max(gl2.x,gl2.y)*uGrid);
-        float gn = fract(sin(dot(floor(vW.xz/5.), vec2(12.9898,78.233)))*43758.5453); gl_FragColor.rgb *= .955+.07*gn;`); };
+        float gn = fract(sin(dot(floor(vW.xz/5.), vec2(12.9898,78.233)))*43758.5453); gl_FragColor.rgb *= .985+.025*gn;`); };
     tmat.extensions = {derivatives:true};
     const tm = new THREE.Mesh(g, tmat); tm.castShadow = true;
     if(V==='d'){ // earth sides of the cut-out block
@@ -785,7 +799,7 @@ renderStatic();
     for(const b of list){ const p = b.p, n = p.length; let a2 = 0, cx = 0, cy = 0, base = 1e9;
       for(let i=0;i<n;i++){ const q=p[(i+1)%n]; a2 += p[i][0]*q[1]-q[0]*p[i][1]; cx+=p[i][0]; cy+=p[i][1]; base=Math.min(base,hAt(p[i][0],p[i][1])); }
       if(a2<0) p.reverse(); cx/=n; cy/=n;
-      const top = hAt(cx,cy) + b.h*.6, [cw, cr] = colorFn(b); base -= 2;
+      const top = hAt(cx,cy) + b.h*1.0, [cw, cr] = colorFn(b); base -= 2;
       for(let i=0;i<n;i++){ const a=p[i], q=p[(i+1)%n], dx=q[0]-a[0], dy=q[1]-a[1], l=Math.hypot(dx,dy)||1, nx=dy/l, nz=dx/l;
         if(S.edge!==null) ed.push(a[0],top+.3,-a[1], q[0],top+.3,-q[1], a[0],top,-a[1], a[0],base+2,-a[1]);
         put(a[0],base,-a[1],nx,0,nz,cw); put(q[0],base,-q[1],nx,0,nz,cw); put(q[0],top,-q[1],nx,0,nz,cw);
@@ -830,8 +844,8 @@ renderStatic();
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); if(!mat){ mat = new THREE.LineBasicMaterial({color}); unlit.push({m:mat, base:new THREE.Color(color)}); } return new THREE.LineSegments(g, mat); }
   const flat = c => { const m = new THREE.MeshBasicMaterial({color:c, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2}); unlit.push({m, base:new THREE.Color(c)}); return m; };
   scene.add(thin(data.roads.c.map(a => dec(a,1)), 1.2, S.roadC));
-  scene.add(ribbon(data.roads.b.map(a => dec(a,1)), 3.5, 1.4, flat(S.roadB)));
-  scene.add(ribbon(data.roads.a.map(a => dec(a,1)), 6, 1.6, flat(S.roadA)));
+  scene.add(ribbon(data.roads.b.map(a => dec(a,1)), 8, 1.4, flat(S.roadB)));
+  scene.add(ribbon(data.roads.a.map(a => dec(a,1)), 13, 1.6, flat(S.roadA)));
   scene.add(thin(data.rail.map(a => dec(a,1)), 2, S.rail));
   const allTram = []; const seen = new Set();
   for(const t of Object.values(data.tram)) for(const l of t.l){ const key = l.slice(0,6).join(); if(!seen.has(key)){ seen.add(key); allTram.push(dec(l,1)); } }
@@ -885,7 +899,7 @@ renderStatic();
   canvas.addEventListener('pointerdown', () => { ctl.enableZoom = true; anim = null; });
   canvas.addEventListener('pointerleave', e => { if(e.pointerType==='mouse') ctl.enableZoom = false; });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
-  const MB = toXY(CITY.places[0].at), HOME_T = new THREE.Vector3(MB[0], hAt(MB[0],MB[1])+10, -MB[1]), HOME_P = HOME_T.clone().add(new THREE.Vector3(-420, 400, 610));
+  const MB = toXY(CITY.places[0].at), HOME_T = new THREE.Vector3(MB[0], hAt(MB[0],MB[1])+10, -MB[1]), HOME_P = HOME_T.clone().add(new THREE.Vector3(-640, 250, 250));
   ctl.target.copy(HOME_T);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let anim = null;
@@ -913,7 +927,7 @@ renderStatic();
     const disc = new THREE.Mesh(new THREE.CircleGeometry(26, 28), new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:.4, depthWrite:false, fog:false}));
     core.position.y = halo.position.y = .5; disc.rotation.x = -Math.PI/2; disc.position.y = .012;
     bm.add(core, halo, disc); bm.position.set(a[0], gy + (p.hl ? 0 : 3), -a[1]); bm.visible = false; scene.add(bm);
-    pins.push({p, el, bm, core, halo, disc, v:new THREE.Vector3(a[0], gy + (p.hl ? data.hl[p.hl].h*.6+14 : 22), -a[1])}); }
+    pins.push({p, el, bm, core, halo, disc, v:new THREE.Vector3(a[0], gy + (p.hl ? data.hl[p.hl].h*1.0+14 : 22), -a[1])}); }
   for(const p of CITY.peaks){ const a = toXY(p.at), el = document.createElement('div'); el.className = 'pin peak'; el.innerHTML = '<i></i><span>'+p.n+'</span>'; pinsEl.appendChild(el);
     pins.push({p:{k:'peak'}, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+230, -a[1])}); }
   window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = q.p.k==='flat' ? Math.round(q.p.price/1000)+'k ₽ · '+T.rooms[L][q.p.rooms] : L==='ru' ? q.p.ru.split(' · ')[0] : q.p.n; };
