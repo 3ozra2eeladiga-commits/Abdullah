@@ -1059,13 +1059,13 @@ scene('life','blob');
   (function frame(now){ const ld = document.getElementById('loading'); if(!ld || ld.hidden) return; requestAnimationFrame(frame);
     const dt = Math.min(.05,(now-last)/1000); last = now; const t = now/1000;
     const target = Math.min(1, (parseFloat(document.getElementById('pct').textContent)||0)/100); shown += (target-shown)*Math.min(1, dt*6);
-    const fade = out ? Math.max(0, 1-(now-out)/900) : 1, bw = Math.max(5, Math.min(W,H)*.011);
+    const fo = out ? Math.min(1,(now-out)/1000) : 0, u0 = shown*fo*fo*(3-2*fo), fade = 1, bw = Math.max(5, Math.min(W,H)*.011);
     g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); g.lineCap = 'round'; g.lineJoin = 'round';
-    if(shown > .004){ const n = 60;
+    if(shown-u0 > .004){ const n = 60;
       for(let k=0;k<3;k++){ for(let pass=0;pass<2;pass++){ g.beginPath();
-          for(let i=0;i<=n;i++){ const u = i/n*shown, [x,y] = pos(u), [x2,y2] = pos(Math.min(1,u+.004)); let nx = -(y2-y), ny = x2-x; const l = Math.hypot(nx,ny)||1; nx/=l; ny/=l;
+          for(let i=0;i<=n;i++){ const u = u0+(shown-u0)*i/n, [x,y] = pos(u), [x2,y2] = pos(Math.min(1,u+.004)); let nx = -(y2-y), ny = x2-x; const l = Math.hypot(nx,ny)||1; nx/=l; ny/=l;
             const wob = reduce ? 0 : Math.sin(u*26 - t*3 + k)*bw*.22*(1-u/Math.max(shown,.01)*.6), off = (k-1)*bw + wob; i ? g.lineTo(x+nx*off, y+ny*off) : g.moveTo(x+nx*off, y+ny*off); }
-          const gr = g.createLinearGradient(pos(0)[0],0,pos(shown)[0]+1,0); gr.addColorStop(0,'rgba(255,255,255,0)'); gr.addColorStop(.18,COL[k]); gr.addColorStop(1,COL[k]);
+          const gr = g.createLinearGradient(pos(u0)[0],0,pos(shown)[0]+1,0); gr.addColorStop(0,'rgba(255,255,255,0)'); gr.addColorStop(.18,COL[k]); gr.addColorStop(1,COL[k]);
           g.strokeStyle = gr; g.globalAlpha = (pass ? .95 : .35)*fade; g.lineWidth = pass ? bw : bw*2.6; g.shadowColor = COL[k]; g.shadowBlur = pass ? 0 : 22; g.stroke(); } }
       g.shadowBlur = 0;
       if(!reduce && fade > 0 && shown < .995 && P.length < 260){ const [hx,hy] = pos(shown); for(let q=0;q<2;q++) P.push({x:hx-10-Math.random()*26, y:hy+(Math.random()-.5)*bw*4, vx:-20-Math.random()*40, vy:(Math.random()-.5)*26, life:.6+Math.random()*.8, age:0, c:COL[(Math.random()*3)|0], s:1.5+Math.random()*3}); } }
