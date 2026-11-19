@@ -900,13 +900,13 @@ renderStatic();
 
   // camera and controls
   const ctl = new THREE.OrbitControls(cam, canvas);
-  ctl.enableDamping = true; ctl.dampingFactor = .09; ctl.screenSpacePanning = false; ctl.minDistance = 350; ctl.maxDistance = 19000; ctl.maxPolarAngle = Math.PI*.455; ctl.zoomSpeed = .8; ctl.enableZoom = false;
+  ctl.enableDamping = true; ctl.dampingFactor = .09; ctl.screenSpacePanning = false; ctl.minDistance = 350; ctl.maxDistance = 19000; ctl.maxPolarAngle = Math.PI*.455; ctl.zoomSpeed = .8; ctl.enableZoom = true;
   ctl.mouseButtons = {LEFT:THREE.MOUSE.PAN, MIDDLE:THREE.MOUSE.DOLLY, RIGHT:THREE.MOUSE.ROTATE};
   ctl.touches = {ONE:THREE.TOUCH.PAN, TWO:THREE.TOUCH.DOLLY_ROTATE};
-  canvas.addEventListener('pointerdown', () => { ctl.enableZoom = true; anim = null; });
-  canvas.addEventListener('pointerleave', e => { if(e.pointerType==='mouse') ctl.enableZoom = false; });
+  canvas.addEventListener('pointerdown', () => { anim = null; });
+  canvas.addEventListener('wheel', () => { anim = null; }, {passive:true});
   canvas.addEventListener('contextmenu', e => e.preventDefault());
-  const MB = toXY(CITY.places[0].at), HOME_T = new THREE.Vector3(MB[0], hAt(MB[0],MB[1])+10, -MB[1]), HOME_P = HOME_T.clone().add(new THREE.Vector3(-640, 250, 250));
+  const MB = toXY(CITY.places[0].at), HOME_T = new THREE.Vector3(MB[0], hAt(MB[0],MB[1])+10, -MB[1]), orbP = (az, r, h) => HOME_T.clone().add(new THREE.Vector3(Math.sin(az)*r, h, -Math.cos(az)*r)), ORB0 = {az:2.36, r:7800, h:1500}, ORB1 = {az:4.92, r:1150, h:470}, HOME_P = orbP(ORB1.az, ORB1.r, ORB1.h);
   ctl.target.copy(HOME_T);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let anim = null;
@@ -917,7 +917,7 @@ renderStatic();
     const xs = ps.map(p=>p[0]), ys = ps.map(p=>p[1]), x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys);
     fly((x0+x1)/2, (y0+y1)/2, Math.max(x1-x0, y1-y0)*1.5+1500); };
   let intro = null;
-  if(reduce){ cam.position.copy(HOME_P); stage.classList.remove('intro'); } else { cam.position.set(-9000, 9500, 16000); tween(HOME_T.clone(), HOME_P.clone(), 2300, true); for(const g of glow) scene.add(g); setDay(0); intro = -1; }
+  if(reduce){ cam.position.copy(HOME_P); stage.classList.remove('intro'); } else { cam.position.copy(orbP(ORB0.az, ORB0.r, ORB0.h)); anim = {orb:1, t0:performance.now(), ms:10500}; for(const g of glow) scene.add(g); setDay(0); intro = -1; }
   const zoomBy = f => { anim = null; cam.position.sub(ctl.target).multiplyScalar(f).add(ctl.target); };
   const spin = a => { anim = null; const o = cam.position.clone().sub(ctl.target); o.applyAxisAngle(new THREE.Vector3(0,1,0), a); cam.position.copy(ctl.target).add(o); };
   $('#zin').onclick = () => zoomBy(.7); $('#zout').onclick = () => zoomBy(1.4); $('#rl').onclick = () => spin(-.5); $('#rr').onclick = () => spin(.5);
@@ -950,11 +950,13 @@ renderStatic();
   await tick(100); await new Promise(r => setTimeout(r, 380));
   $('#loading').classList.add('done'); setTimeout(() => { $('#loading').hidden = true; }, 650); if(anim) anim.t0 = performance.now(); renderCard();
   (function frame(now){ requestAnimationFrame(frame); if(!visible) return;
-    if(anim){ let k = Math.min(1,(now-anim.t0)/anim.ms); k = anim.dive ? 1-Math.pow(1-k,5) : k<.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2; ctl.target.lerpVectors(anim.fT, anim.toT, k); cam.position.lerpVectors(anim.fP, anim.toP, k); if(k>=1) anim = null; }
-    if(intro !== null){ if(intro < 0) intro = now; const t = (now-intro)/1000, e = Math.min(1,t/1.5);
-      glowMat.uniforms.uR.value = 12500*(1-Math.pow(1-e,2.2)); glowMat.uniforms.uA.value = 1-sstep(1.9,3.2,t); setDay(sstep(1.3,2.9,t));
-      if(t > 1.8) stage.classList.remove('intro');
-      if(t > 3.3){ for(const g of glow){ scene.remove(g); g.geometry.dispose(); } setDay(1); intro = null; } }
+    if(anim && anim.orb){ let k = Math.min(1,(now-anim.t0)/anim.ms); const e = k*k*(3-2*k), ez = 1-Math.pow(1-k,2.4);
+      ctl.target.copy(HOME_T); cam.position.copy(orbP(ORB0.az+(ORB1.az-ORB0.az)*e, ORB0.r*Math.pow(ORB1.r/ORB0.r, ez), ORB0.h+(ORB1.h-ORB0.h)*ez)); if(k>=1) anim = null; }
+    else if(anim){ let k = Math.min(1,(now-anim.t0)/anim.ms); k = anim.dive ? 1-Math.pow(1-k,5) : k<.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2; ctl.target.lerpVectors(anim.fT, anim.toT, k); cam.position.lerpVectors(anim.fP, anim.toP, k); if(k>=1) anim = null; }
+    if(intro !== null){ if(intro < 0) intro = now; const t = (now-intro)/1000, e = Math.min(1,t/4.5);
+      glowMat.uniforms.uR.value = 12500*(1-Math.pow(1-e,2.2)); glowMat.uniforms.uA.value = 1-sstep(5.5,8.5,t); setDay(sstep(1.2,6.5,t));
+      if(t > 4) stage.classList.remove('intro');
+      if(t > 8.8){ for(const g of glow){ scene.remove(g); g.geometry.dispose(); } setDay(1); intro = null; } }
     ctl.target.x = Math.min(8000, Math.max(-8000, ctl.target.x)); ctl.target.z = Math.min(6500, Math.max(-9000, ctl.target.z));
     ctl.update(); sun.position.set(ctl.target.x-5600, ctl.target.y+2700, ctl.target.z-3400); sun.target.position.copy(ctl.target);
     const floor = hAt(cam.position.x, -cam.position.z) + 60; if(cam.position.y < floor) cam.position.y = floor;
