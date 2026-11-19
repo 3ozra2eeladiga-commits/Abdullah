@@ -508,6 +508,7 @@ const CITY = {
     need:{c:'#00c7be', en:'Shops & services', fr:'Magasins et services', ru:'Магазины и услуги'},
     go:{c:'#1d1d1f', en:'Stations', fr:'Gares', ru:'Вокзалы'},
     see:{c:'#34c759', en:'Sights', fr:'À voir', ru:'Что посмотреть'},
+    meet:{c:'#ff2d55', en:'Where students meet', fr:'Où les étudiants se retrouvent', ru:'Где собираются студенты'},
     walk:{c:'#ff6b9d', en:'Nice walks', fr:'Belles promenades', ru:'Где погулять'},
     hike:{c:'#1f7a36', en:'Hikes', fr:'Randonnées', ru:'Походы'},
     spring:{c:'#5ac8fa', en:'Springs', fr:'Sources', ru:'Источники'}
@@ -516,7 +517,7 @@ const CITY = {
     pmfi:{c:'#ff3b30', cats:['campus','dorm'], en:'PMFI', fr:'PMFI', ru:'ПМФИ'},
     flat:{c:'#007aff', cats:['flat'], en:'Apartments with registration', fr:'Logements avec enregistrement', ru:'Квартиры с регистрацией'},
     tram:{c:'#af52de', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
-    go:{c:'#34c759', cats:['walk','see','hike','spring','coffee','food','study'], en:'Places to go', fr:'Sorties', ru:'Куда сходить'},
+    go:{c:'#34c759', cats:['meet','walk','see','hike','spring','coffee','food','study'], en:'Places to go', fr:'Sorties', ru:'Куда сходить'},
     st:{c:'#1d1d1f', cats:['go'], en:'Stations', fr:'Gares', ru:'Вокзалы'},
     need:{c:'#00c7be', cats:['med','pharm','police','bank','ship','need'], en:'Help & services', fr:'Aide et services', ru:'Помощь и услуги'}
   },
@@ -549,7 +550,6 @@ const CITY = {
     {k:'coffee',n:'Noir House',fr:'Noir House',ru:'Нуар Хаус',at:[43.0630,44.0499]},
     {k:'coffee',n:'Lermontov Coffee',fr:'Lermontov Coffee',ru:'Лермонтов кофе',at:[43.0749,44.0375]},
     {k:'coffee',n:'Roboost',fr:'Roboost',ru:'Кофейня Roboost',at:[43.0623,44.0370]},
-    {k:'coffee',n:'Paper',fr:'Paper',ru:'Paper',at:[43.0648,44.0371]},
     {k:'coffee',n:'Cafeteria',fr:'Cafeteria',ru:'Cafeteria',at:[43.0711,44.0405]},
     {k:'study',n:'Gorky City Library',fr:'Bibliothèque municipale Gorki',ru:'Библиотека им. М. Горького · ул. Козлова, 1',at:[43.0703,44.03888],d:{en:'Free reading rooms and quiet desks.',fr:'Salles de lecture gratuites et tables calmes.',ru:'Бесплатные читальные залы, тихие столы.'}},
     {k:'food',n:'Brosco Halal',fr:'Brosco Halal',ru:'Brosco Halal',at:[43.0720,44.0374],d:{en:'Halal food in the centre.',fr:'Cuisine halal au centre-ville.',ru:'Халяль в центре.'}},
@@ -600,6 +600,13 @@ const CITY = {
     {k:'go',id:'g1',big:1,n:'Central railway station',fr:'Gare centrale de Piatigorsk',ru:'Центральный ж/д вокзал',at:[43.0550,44.0378],d:{en:'Suburban trains to Mineralnye Vody (airport city), Yessentuki and Kislovodsk.',fr:'Trains de banlieue vers Mineralnye Vody (aéroport), Iessentouki et Kislovodsk.',ru:'Электрички в Минеральные Воды, Ессентуки и Кисловодск.'}},
     {k:'go',n:'Lermontovskaya train stop',fr:'Halte ferroviaire Lermontovskaïa',ru:'Платформа Лермонтовская',at:[43.0650,44.0630],d:{en:'Nearest suburban train stop to the campus.',fr:'Arrêt de train de banlieue le plus proche du campus.',ru:'Ближайшая к корпусу платформа электричек.'}},
     {k:'go',n:'Bus station “Upper Market”',fr:'Gare routière « Verkhni rynok »',ru:'Автостанция «Верхний рынок»',at:[43.0679,44.0414]},
+    {k:'meet',id:'pc1',n:'Paper Cup near PMFI Building 2',fr:'Paper Cup près du bâtiment 2 du PMFI',ru:'Paper Cup у корпуса № 2 · пр. Кирова, 37',at:[43.07389,44.03603],d:{en:'The favourite café of foreign students. You will find them here in the day and in the evening. Good place to meet people. Right next to PMFI Building 2.',fr:'Le café préféré des étudiants étrangers. Ils sont là le jour et le soir. Un bon endroit pour rencontrer du monde. Juste à côté du bâtiment 2 du PMFI.',ru:'Любимая кофейня иностранных студентов. Они здесь и днём, и вечером. Хорошее место, чтобы познакомиться. Прямо у корпуса № 2 ПМФИ.'}},
+    {k:'meet',id:'pc2',n:'Paper Cup near PMFI Building 4',fr:'Paper Cup près du bâtiment 4 du PMFI',ru:'Paper Cup у корпуса № 4 · пр. Кирова, 52',at:[43.07175,44.03653],d:{en:'Another Paper Cup where students like to sit, close to PMFI Building 4 and the main post office.',fr:'Un autre Paper Cup où les étudiants aiment s’asseoir, près du bâtiment 4 du PMFI et de la poste centrale.',ru:'Ещё один Paper Cup, где любят сидеть студенты. Рядом с корпусом № 4 ПМФИ и главной почтой.'}},
+    {k:'meet',id:'pc3',n:'Paper Cup by Komsomolsky Park',fr:'Paper Cup près du parc Komsomolski',ru:'Paper Cup у Комсомольского парка',at:[43.0622,44.0572],d:{en:'Coffee next to the park, not far from the main building. Students often come here.',fr:'Un café à côté du parc, pas loin du bâtiment principal. Les étudiants y viennent souvent.',ru:'Кофейня у парка, недалеко от главного корпуса. Студенты часто сюда ходят.'}},
+    {k:'meet',id:'pc4',n:'Paper Cup in Vershina Plaza',fr:'Paper Cup au centre Vershina Plaza',ru:'Paper Cup в «Вершина Плаза»',at:[43.03429,44.05106],d:{en:'In the big shopping centre. Students like to sit and study here.',fr:'Dans le grand centre commercial. Les étudiants aiment s’y asseoir pour étudier.',ru:'В большом торговом центре. Студенты любят здесь сидеть и учиться.'}},
+    {k:'meet',id:'pc5',n:'Paper Cup, Kirov Ave 67a',fr:'Paper Cup, av. Kirov 67a',ru:'Paper Cup · пр. Кирова, 67а',at:[43.06484,44.03705]},
+    {k:'meet',id:'hb',n:'Habibi café (halal)',fr:'Café Habibi (halal)',ru:'Кофейня «Хабиби» (халяль) · пр. 40 лет Октября, 95А',at:[43.06447,44.03654],d:{en:'A halal café. Many foreign students come here.',fr:'Un café halal. Beaucoup d’étudiants étrangers y viennent.',ru:'Халяльная кофейня. Сюда ходит много иностранных студентов.'}},
+    {k:'study',id:'coco',n:'Coco coworking',fr:'Coworking Coco',ru:'Коворкинг «Коко» · ул. Дзержинского, 49а',at:[43.07557,44.03593],d:{en:'A new coworking space: good internet, places to sit and work, an English Club and other events. A good place to study and make friends.',fr:'Un nouvel espace de coworking : bon internet, des places pour travailler, un English Club et d’autres événements. Un bon endroit pour étudier et se faire des amis.',ru:'Новый коворкинг: хороший интернет, места для работы, English Club и разные мероприятия. Хорошее место, чтобы учиться и знакомиться.'}},
     {k:'walk',id:'wk1',n:'Kirov Avenue, the “Broadway”',fr:'Avenue Kirov, le « Broadway »',ru:'Проспект Кирова, «Бродвей»',at:[43.0772,44.0368],d:{en:'The main walking street of the city. People call it Broadway. Cafés, benches, music and many people every evening. It leads to Tsvetnik Park.',fr:'La grande rue piétonne de la ville. On l’appelle Broadway. Cafés, bancs, musique et beaucoup de monde chaque soir. Elle mène au parc Tsvetnik.',ru:'Главная прогулочная улица города. Её называют Бродвей. Кафе, скамейки, музыка и много людей каждый вечер. Ведёт к парку «Цветник».'}},
     {k:'walk',id:'wk2',n:'Komsomolsky Park',fr:'Parc Komsomolski',ru:'Комсомольский парк',at:[43.06196,44.05747],d:{en:'A big green park close to the main building. Good for a walk, a run or to sit with friends after class.',fr:'Un grand parc vert près du bâtiment principal. Bien pour marcher, courir ou s’asseoir avec des amis après les cours.',ru:'Большой зелёный парк рядом с главным корпусом. Хорошо гулять, бегать или сидеть с друзьями после пар.'}},
     {k:'see',id:'s1',n:'Proval',fr:'Le Proval',ru:'Провал',at:[43.0987,44.0467],d:{en:'The symbol of the city: a 40 m deep cave in Mashuk with a turquoise sulphur lake at the bottom. You walk in through a tunnel. Free.',fr:'Le symbole de la ville : une grotte de 40 m dans le Machouk avec un lac sulfureux turquoise au fond. On y entre par un tunnel. Gratuit.',ru:'Символ города: пещера глубиной 40 м в Машуке с бирюзовым сероводородным озером. Вход через тоннель, бесплатно.'}},
@@ -814,7 +821,7 @@ function renderStatic(){
     <ul><li>${T.rooms[L][p.rooms]} · ${walkMin(p.at)} ${tx('min')} ${tx('walk')}</li><li>${esc(dsc(p))}</li></ul>
     <div class="acts"><a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the apartment: '+p.n)}">${tx('askFlat')}</a><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div>
   </article>`).join('');
-  $('#seeGrid').innerHTML = CITY.places.filter(p => ['walk','see','hike','spring'].includes(p.k)).map(p => `<article class="flat">
+  $('#seeGrid').innerHTML = CITY.places.filter(p => ['meet','walk','see','hike','spring'].includes(p.k) && p.d).map(p => `<article class="flat">
     <div><span class="tag" style="--c:${CITY.cats[p.k].c}">${CITY.cats[p.k][L]}</span></div>
     <h3>${esc(nm(p))}</h3><ul><li>${esc(p.d[L])}</li></ul>
     <div class="acts"><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div></article>`).join('');
