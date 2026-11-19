@@ -745,6 +745,7 @@ document.addEventListener('click', e => {
 renderStatic();
 // the page itself must never pinch-zoom (only the map zooms): iOS ignores the viewport flag in some apps
 { const vp = document.querySelectorAll('meta[name=viewport]'); vp.forEach(m => { if(!/maximum-scale/.test(m.content)) m.content += ',maximum-scale=1,user-scalable=no'; });
+  document.addEventListener('contextmenu', e => e.preventDefault());   // no browser right-click menu anywhere on the page
   ['gesturestart','gesturechange','gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {passive:false}));
   document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.preventDefault(); }, {passive:false});
   let lastTap = 0; document.addEventListener('touchend', e => { const n = Date.now(); if(n - lastTap < 320 && !e.target.closest('#gl')) e.preventDefault(); lastTap = n; }, {passive:false}); }
