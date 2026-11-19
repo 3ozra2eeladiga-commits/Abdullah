@@ -4,7 +4,7 @@
 <title>Pyatigorsk Student Guide</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: a live 3D tactical map of the city (contour lines, km grid, outlined buildings) is the first screen; controls float on it; the guide reads below it. Single bright sunny theme by choice. */
+/* Layout: a live 3D tactical map of the city (contour lines, km grid, outlined buildings) is the first screen; controls float on it; the guide reads below it. Single light theme (white plan, red accents) by choice. */
 :root{
   color-scheme:light;
   --night:#eef0f2; --deep:#eef0f2; --panel:#ffffff; --glass:rgba(255,255,255,.84); --line:rgba(20,24,31,.13);
@@ -161,16 +161,29 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
-/* ---- sunny city look (overrides the base above) ---- */
-:root{color-scheme:light;--night:#fff8ec;--deep:#fff8ec;--panel:#ffffff;--glass:rgba(255,255,255,.86);--line:rgba(60,40,20,.13);--fg:#1f2430;--muted:#667085;--amber:#ff8a1f;--amber-t:#c2410c}
+/* ---- white plan with red accents (overrides the base above) ---- */
+:root{color-scheme:light;--night:#f6f6f4;--deep:#f6f6f4;--panel:#ffffff;--glass:rgba(255,255,255,.9);--line:rgba(20,22,28,.13);--fg:#14161c;--muted:#666b76;--amber:#e5262b;--amber-t:#c81e23}
 .stage{background:#0a1020}
-#sky{position:absolute;inset:0;background:linear-gradient(#3f9bff 0%,#9fd0ff 24%,#ffe9cf 48%,#fde6c8 100%)}
-.stage::before{height:120px;background:linear-gradient(rgba(255,255,255,.6),transparent)}
-.headline h1{color:#1f2430;text-shadow:0 1px 0 #fff,0 0 26px #fff,0 0 12px #fff}
-.headline p{color:#2f3644;text-shadow:0 0 10px #fff,0 0 4px #fff;font-weight:600}
-.city,.chip,.lang,.tools button{box-shadow:0 4px 14px rgba(60,40,20,.12)}
-.flat,.day{box-shadow:0 8px 28px rgba(120,80,30,.08)}
+#sky{position:absolute;inset:0;background:linear-gradient(#e4e7ea 0%,#f3f4f5 40%,#f3f4f5 100%)}
+.stage::before{height:120px;background:linear-gradient(rgba(246,246,244,.8),transparent)}
+.headline h1{color:#14161c;text-shadow:0 1px 0 #fff,0 0 26px #fff,0 0 12px #fff}
+.headline h1::after{content:"";display:block;width:54px;height:6px;background:var(--amber);margin-top:14px}
+.headline p{color:#2c3038;text-shadow:0 0 10px #fff,0 0 4px #fff;font-weight:600}
+.city,.chip,.lang,.tools button{box-shadow:0 3px 12px rgba(20,22,28,.1)}
+.flat,.day{box-shadow:0 6px 22px rgba(20,22,28,.06)}
+.btn.main{color:#fff}
+.day:first-child{background:linear-gradient(140deg,rgba(229,38,43,.12),#fff 70%);border-color:rgba(229,38,43,.4)}
+.verdict{background:rgba(229,38,43,.08);border-color:rgba(229,38,43,.35)}
 .pin i{width:13px;height:13px}
+.subs{position:absolute;z-index:5;left:0;right:0;top:112px;display:flex;gap:6px;overflow-x:auto;padding:2px var(--gr) 6px var(--gl);scrollbar-width:none;touch-action:pan-x}
+.subs::-webkit-scrollbar{display:none}
+.subs button{flex:none;display:flex;align-items:center;gap:6px;font:600 11.5px/1 var(--body);padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:var(--glass);color:var(--fg)}
+.subs button::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+.subs button[aria-pressed="true"]{background:var(--c);border-color:transparent}
+.grid.row{display:flex;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:14px;margin-right:calc(-1*var(--gr));padding-right:var(--gr)}
+.grid.row>.flat{flex:0 0 min(270px,78vw);scroll-snap-align:start}
+.swipe{font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:-14px 0 14px}
+@media (max-width:760px){.subs{top:104px}}
 figure.ph{margin:0 0 4px;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/2;background:#e9e2d6}
 figure.ph img{width:100%;height:100%;object-fit:cover;display:block}
 figure.ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 5px;font:500 9.5px/1.2 var(--mono);color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -222,6 +235,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
   </header>
 
   <div class="chips" id="chips"></div>
+  <div class="subs" id="subs" hidden></div>
 
   <div class="headline">
     <h1 data-i="h1"></h1>
@@ -244,7 +258,8 @@ details.stopsBox[open] summary::after{content:" ▴"}
   <div class="eyebrow" data-i="flEyebrow"></div>
   <h2 class="t" data-i="flTitle"></h2>
   <p class="lead" data-i="flLead"></p>
-  <div class="grid" id="flatGrid"></div>
+  <div class="swipe" data-i="swipe"></div>
+  <div class="grid row" id="flatGrid"></div>
   <ol class="steps">
     <li><b data-i="st1b"></b><span data-i="st1"></span></li>
     <li><b data-i="st2b"></b><span data-i="st2"></span></li>
@@ -273,7 +288,8 @@ details.stopsBox[open] summary::after{content:" ▴"}
   <div class="eyebrow" data-i="seEyebrow"></div>
   <h2 class="t" data-i="seTitle"></h2>
   <p class="lead" data-i="seLead"></p>
-  <div class="grid" id="seeGrid"></div>
+  <div class="swipe" data-i="swipe"></div>
+  <div class="grid row" id="seeGrid"></div>
 </div></section>
 
 <section id="holidays"><div class="wrap">
@@ -309,9 +325,9 @@ const CITY = {
   home: [43.06638, 44.0533],           // PMFI main building: walking times are counted from here
   campusStop: 'Универсам',
   cats: {
-    campus:{c:'#ffb347', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
+    campus:{c:'#e5262b', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
     flat:{c:'#ff7a66', en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
-    dorm:{c:'#ffd9a0', en:'Dorms', fr:'Résidences', ru:'Общежития'},
+    dorm:{c:'#f26058', en:'Dorms', fr:'Résidences', ru:'Общежития'},
     tram:{c:'#b69cff', en:'Trams', fr:'Tramways', ru:'Трамваи'},
     coffee:{c:'#5fd6b4', en:'Coffee', fr:'Cafés', ru:'Кофейни'},
     study:{c:'#6db7ff', en:'Study spots', fr:'Pour étudier', ru:'Где поработать'},
@@ -321,6 +337,13 @@ const CITY = {
     see:{c:'#ff9ed1', en:'Sights', fr:'À voir', ru:'Что посмотреть'},
     hike:{c:'#9be36a', en:'Hikes', fr:'Randonnées', ru:'Походы'},
     spring:{c:'#57d3ff', en:'Springs', fr:'Sources', ru:'Источники'}
+  },
+  groups: {
+    pmfi:{c:'#e5262b', cats:['campus','dorm'], en:'PMFI', fr:'PMFI', ru:'ПМФИ'},
+    flat:{c:'#ff7a66', cats:['flat'], en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
+    tram:{c:'#1f2430', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
+    go:{c:'#ff9ed1', cats:['see','hike','spring','coffee','food','study'], en:'Where to go', fr:'Où aller', ru:'Куда сходить'},
+    need:{c:'#6db7ff', cats:['need','go'], en:'Essentials', fr:'Essentiels', ru:'Нужное'}
   },
   places: [
     {k:'campus',id:'main',hl:'main',big:1,n:'PMFI Main Building',ru:'ПМФИ, главный корпус · пр. Калинина, 11',at:[43.06638,44.0533],
@@ -408,6 +431,7 @@ const CITY = {
 /* ================= TEXTS ================= */
 const T = {
 brandTop:{en:'Student guide',fr:'Guide étudiant',ru:'Гид для студентов'},
+swipe:{en:'Swipe sideways →',fr:'Faites défiler →',ru:'Листайте вбок →'},
 soon:{en:'soon',fr:'bientôt',ru:'скоро'},
 navFlats:{en:'Flats',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Sights',fr:'À voir',ru:'Места'},navHol:{en:'Holidays',fr:'Fêtes',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
 h1:{en:'Your city, before you land.',fr:'Votre ville, avant d’atterrir.',ru:'Ваш город — ещё до приезда.'},
@@ -493,7 +517,8 @@ const tgLink = msg => 'https://t.me/'+TG+'?text='+encodeURIComponent(msg);
 const yLink = at => 'https://yandex.com/maps/?pt='+at[0]+','+at[1]+'&z=17&l=map';
 
 /* ================= static sections ================= */
-let activeCat = 'all', sel = null, selRoute = null;
+let activeCat = 'all', subCat = null, sel = null, selRoute = null;
+const inAct = p => activeCat==='all' || (CITY.groups[activeCat].cats.includes(p.k) && (!subCat || p.k===subCat));
 function renderStatic(){
   document.documentElement.lang = L;
   document.querySelectorAll('[data-i]').forEach(e => e.textContent = tx(e.dataset.i));
@@ -501,7 +526,8 @@ function renderStatic(){
   $('#tgMain').href = tgLink('Hello! I am a student in Pyatigorsk and I have a question.');
   // chips
   $('#chips').innerHTML = `<button class="chip" data-c="all" aria-pressed="${activeCat==='all'}">${tx('all')}</button>` +
-    Object.entries(CITY.cats).map(([k,c]) => `<button class="chip" style="--c:${c.c}" data-c="${k}" aria-pressed="${activeCat===k}">${c[L]}</button>`).join('');
+    Object.entries(CITY.groups).map(([k,c]) => `<button class="chip" style="--c:${c.c}" data-c="${k}" aria-pressed="${activeCat===k}">${c[L]}</button>`).join('');
+  { const g = CITY.groups[activeCat], sb = $('#subs'); sb.hidden = !g || g.cats.length<2; if(!sb.hidden) sb.innerHTML = g.cats.map(k => `<button style="--c:${CITY.cats[k].c}" data-s="${k}" aria-pressed="${subCat===k}">${CITY.cats[k][L]}</button>`).join(''); }
   // flats
   $('#flatGrid').innerHTML = CITY.places.filter(p => p.k==='flat').map(p => `<article class="flat">
     <figure class="ph"><img src="${p.ph}" alt="" loading="lazy"><figcaption>${tx('photo')}</figcaption></figure>
@@ -561,13 +587,14 @@ function renderCard(){
     <a class="btn" target="_blank" rel="noopener" href="${yLink(p.at)}">${tx('openMap')}</a></div>`;
   c.hidden = false; $('#stage').classList.add('busy');
 }
-function setCat(k){ activeCat = k; sel = null; if(k!=='tram') setRoute(null, true); renderStatic(); if(window.pinsFilter) pinsFilter(); if(k!=='all' && window.fitCat) fitCat(k); }
+function setCat(k){ activeCat = k; subCat = null; sel = null; if(k!=='tram') setRoute(null, true); renderStatic(); if(window.pinsFilter) pinsFilter(); if(k!=='all' && window.fitCat) fitCat(k); }
 function setRoute(r, quiet){ selRoute = r; if(window.showRoute) showRoute(r); if(!quiet){ activeCat = 'tram'; sel = null; renderStatic(); if(window.pinsFilter) pinsFilter(); } }
-function select(p){ sel = p; if(p && activeCat!=='all' && activeCat!==p.k){ activeCat = 'all'; } renderStatic(); if(window.pinsFilter) pinsFilter(); if(p && window.flyTo) flyTo(p); }
+function select(p){ sel = p; if(p && !inAct(p)){ activeCat = 'all'; subCat = null; } renderStatic(); if(window.pinsFilter) pinsFilter(); if(p && window.flyTo) flyTo(p); }
 document.addEventListener('click', e => {
   const t = e.target.closest('button,a'); if(!t) return;
   if(t.dataset.l){ L = t.dataset.l; try{ localStorage.setItem('sg-lang', L); }catch(e){} renderStatic(); }
   else if(t.dataset.c) setCat(t.dataset.c);
+  else if(t.dataset.s){ subCat = subCat===t.dataset.s ? null : t.dataset.s; sel = null; renderStatic(); if(window.pinsFilter) pinsFilter(); if(window.fitCat) fitCat(activeCat); }
   else if(t.dataset.route){ setRoute(selRoute===t.dataset.route && t.closest('.routes') ? null : t.dataset.route); $('#stage').scrollIntoView({block:'start'}); }
   else if(t.dataset.go){ select(CITY.places.find(p => p.id===t.dataset.go)); $('#stage').scrollIntoView({block:'start'}); }
   else if(t.classList.contains('x')){ if(sel) { sel = null; renderStatic(); pinsFilter && pinsFilter(); } else setCat('all'); }
@@ -597,10 +624,12 @@ renderStatic();
   let renderer;
   try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, powerPreference:'high-performance'}); renderer.setClearColor(0x000000, 0); }
   catch(e){ fail('3D is not available in this browser'); return; }
-  const V = 'g';
+  const V = 'w';
   const S = {
    t:{fog:0x171c13, lo:[.115,.14,.095], mid:[.17,.23,.12], hi:[.30,.32,.19], cont:0xd9c98a, ca:.30, grid:.13, wall:[40,48,34], roofLo:[52,62,44], roofHi:[52,62,44], edge:0xd9c98a, lit:false, hemi:1, sun:0, shadows:false,
       roadA:0xe8a13a, roadB:0x9a8850, roadC:0x4a4f38, rail:0xd8d2b0, tram:0xff6a3d, trail:0x9bd05a, park:0x263d22, water:0x1f3f4a, camp:[[255,96,40],[255,150,80]], dorm:[[255,176,60],[255,210,120]]},
+   w:{fog:0xf3f4f5, lo:[.955,.957,.96], mid:[.80,.89,.80], hi:[.93,.95,.93], cont:null, ca:0, grid:0, wall:[176,180,188], roofLo:[226,228,232], roofHi:[150,155,165], edge:null, lit:true, hemi:.78, sun:.6, shadows:true,
+      roadA:0xc3c7ce, roadB:0xd6d9de, roadC:0xcfd3d9, rail:0x7c828c, tram:0x1f2430, trail:0x4fa35a, park:0xcfe6cf, water:0x2b3440, camp:[[229,38,43],[186,28,32]], dorm:[[242,96,88],[205,66,60]]},
    g:{fog:0xfde6c8, lo:[.80,.81,.68], mid:[.30,.62,.28], hi:[.70,.78,.48], cont:null, ca:0, grid:0, wall:[255,245,228], roofLo:[232,112,70], roofHi:[250,240,224], edge:null, lit:true, hemi:.8, sun:.72, shadows:true,
       roadA:0xffffff, roadB:0xfff4e0, roadC:0xd6cba6, rail:0x8a7a66, tram:0x7b5cff, trail:0xffc93c, park:0x56b84c, water:0x2f9bff, camp:[[255,92,72],[196,58,48]], dorm:[[255,168,40],[214,120,24]]},
    p:{fog:0xefe5cf, lo:[.95,.91,.80], mid:[.62,.74,.48], hi:[.84,.85,.66], cont:0x6b4a2e, ca:.34, grid:0, wall:[232,212,178], roofLo:[190,108,76], roofHi:[240,230,208], edge:0x3f2a1c, lit:true, hemi:.86, sun:.42, shadows:true,
@@ -682,7 +711,7 @@ renderStatic();
   { const list = data.b.map(b => ({h:b[0], p:dec(b,2,1)})).filter(b => b.p.length>=3);
     let s = 7;
     scene.add(prisms(list, b => { s = (s*16807)%2147483647; const v = .82 + (s%100)/100*.3, t = Math.min(1,b.h/40);
-      const u = Math.min(1.06,v), r = b.h < 9 ? S.roofLo : S.roofHi; return [S.wall.map(c => Math.min(255,c*u*.97)), r.map(c => Math.min(255,c*u))]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
+      const u = Math.min(1.06,v), tt = Math.min(1,b.h/30), r = V==='w' ? S.roofLo.map((c,i) => c+(S.roofHi[i]-c)*tt) : b.h < 9 ? S.roofLo : S.roofHi; return [S.wall.map(c => Math.min(255,c*u*.97)), r.map(c => Math.min(255,c*u))]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
   // campus buildings glow
   const beams = [];
   for(const [id, b] of Object.entries(data.hl)){
@@ -690,7 +719,7 @@ renderStatic();
     const m = prisms([{h:b.h, p}], () => isMain ? S.camp : S.dorm, S.lit ? new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide, fog:false}) : new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.DoubleSide, fog:false}));
     scene.add(m);
     let cx=0, cy=0; for(const v of p){ cx+=v[0]; cy+=v[1]; } cx/=p.length; cy/=p.length;
-    const beam = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 700, 8, 1, true), new THREE.MeshBasicMaterial({color:0xf08a24, transparent:true, opacity:.22, depthWrite:false, side:THREE.DoubleSide, fog:false}));
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 700, 8, 1, true), new THREE.MeshBasicMaterial({color:V==='w'?0xe5262b:0xf08a24, transparent:true, opacity:.22, depthWrite:false, side:THREE.DoubleSide, fog:false}));
     beam.position.set(cx, hAt(cx,cy)+350, -cy); scene.add(beam); beams.push(beam);
   }
 
@@ -771,7 +800,7 @@ renderStatic();
   function tween(toT, toP, ms, dive){ if(reduce){ ctl.target.copy(toT); cam.position.copy(toP); return; } anim = {t0:performance.now(), ms, dive, fT:ctl.target.clone(), fP:cam.position.clone(), toT, toP}; }
   function fly(x, y, dist){ const t = new THREE.Vector3(x, hAt(x,y), -y), dir = cam.position.clone().sub(ctl.target).normalize(); if(dir.y<.45){ dir.y=.45; dir.normalize(); } tween(t, t.clone().add(dir.multiplyScalar(dist)), 1300); }
   window.flyTo = p => { const a = toXY(p.at); fly(a[0], a[1], 1300); };
-  window.fitCat = k => { if(k==='tram') return; const ps = CITY.places.filter(p => p.k===k).map(p => toXY(p.at)); if(!ps.length) return;
+  window.fitCat = k => { if(k==='tram') return; const ps = CITY.places.filter(inAct).map(p => toXY(p.at)); if(!ps.length) return;
     const xs = ps.map(p=>p[0]), ys = ps.map(p=>p[1]), x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys);
     fly((x0+x1)/2, (y0+y1)/2, Math.max(x1-x0, y1-y0)*1.5+1500); };
   let intro = null;
@@ -790,8 +819,8 @@ renderStatic();
   for(const p of CITY.peaks){ const a = toXY(p.at), el = document.createElement('div'); el.className = 'pin peak'; el.innerHTML = '<i></i><span>'+p.n+'</span>'; pinsEl.appendChild(el);
     pins.push({p:{k:'peak'}, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+230, -a[1])}); }
   window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = q.p.k==='flat' ? Math.round(q.p.price/1000)+'k ₽ · '+T.rooms[L][q.p.rooms] : L==='ru' ? q.p.ru.split(' · ')[0] : q.p.n; };
-  window.pinsFilter = () => { for(const q of pins){ const on = q.p.k==='peak' || activeCat==='all' || q.p.k===activeCat || (activeCat==='tram' && q.p.k==='dorm') || q.p===sel;
-      q.hide = !on; q.el.classList.toggle('on', q.p===sel); q.el.classList.toggle('show', activeCat!=='all' && q.p.k===activeCat); } };
+  window.pinsFilter = () => { for(const q of pins){ const on = q.p.k==='peak' || inAct(q.p) || (activeCat==='tram' && q.p.k==='campus') || q.p===sel;
+      q.hide = !on; q.el.classList.toggle('on', q.p===sel); q.el.classList.toggle('show', activeCat!=='all' && inAct(q.p)); } };
   pinsRelabel(); pinsFilter();
 
   let W = 0, H = 0;
