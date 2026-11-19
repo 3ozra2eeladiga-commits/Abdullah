@@ -27,8 +27,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .stage{position:relative;height:min(88vh,860px);min-height:540px;overflow:hidden;background:var(--night)}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #gl:active{cursor:grabbing}
-.stage::before{content:"";position:absolute;inset:0 0 auto;height:150px;background:linear-gradient(var(--deep),transparent);pointer-events:none;z-index:2;opacity:.85}
-.stage::after{content:"";position:absolute;inset:auto 0 0;height:90px;background:linear-gradient(transparent,var(--night));pointer-events:none;z-index:2}
+.stage::before{content:"";position:absolute;inset:0 0 auto;height:150px;background:linear-gradient(var(--deep),transparent);pointer-events:none;z-index:2;opacity:.7}
+.stage::after{content:"";position:absolute;inset:auto 0 0;height:230px;background:linear-gradient(transparent,var(--night));pointer-events:none;z-index:2}
 #pins{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
 .pin{position:absolute;left:0;top:0;pointer-events:auto;display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;white-space:nowrap;will-change:transform}
 .pin i{width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px rgba(10,16,26,.75),0 0 14px var(--c);flex:none;transition:transform .15s}
@@ -40,7 +40,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pin.left{flex-direction:row-reverse;margin-left:0}
 .pin.peak{pointer-events:none}
 .pin.peak i{display:none}
-.pin.peak span{display:block;background:none;border:0;font:500 10.5px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-shadow:0 1px 6px #000}
+.pin.peak span{display:block;background:none;border:0;font:700 10.5px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#fff;text-shadow:0 1px 6px #000}
 
 .top{position:absolute;inset:0 0 auto;z-index:5;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px var(--gr) 0 var(--gl)}
 .brand{font:600 13px/1.1 var(--display);letter-spacing:.02em;text-decoration:none;display:flex;flex-direction:column;gap:3px}
@@ -66,7 +66,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 .headline{position:absolute;z-index:4;left:var(--gl);bottom:58px;max-width:min(520px,calc(100% - 32px));pointer-events:none;transition:opacity .4s}
 .headline h1{font:600 clamp(26px,4.6vw,46px)/1.08 var(--display);margin:0 0 10px;text-wrap:balance;text-shadow:0 2px 24px rgba(0,0,0,.6)}
-.headline p{margin:0;color:var(--muted);max-width:44ch;text-shadow:0 1px 10px #000}
+.headline p{margin:0;color:#dbe4f2;max-width:44ch;text-shadow:0 1px 10px #000}
 .stage.busy .headline{opacity:0}
 
 .tools{position:absolute;z-index:5;right:var(--gr);bottom:64px;display:flex;flex-direction:column;gap:6px}
@@ -521,12 +521,12 @@ renderStatic();
   let renderer;
   try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'}); }
   catch(e){ $('#loading').textContent = '3D is not available in this browser'; return; }
-  const FOG = 0x0e1622, VE = 1.5, BASE = 500;
+  const FOG = 0x40609a, VE = 1.5, BASE = 500;
   renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(FOG); scene.fog = new THREE.Fog(FOG, 7000, 26000);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(FOG); scene.fog = new THREE.Fog(FOG, 9000, 30000);
   const cam = new THREE.PerspectiveCamera(38, 1, 20, 60000);
-  scene.add(new THREE.HemisphereLight(0xc6d8ff, 0x0a0f18, .95));
-  const sun = new THREE.DirectionalLight(0xffdcae, .95); sun.position.set(-6000, 3500, 2500); scene.add(sun);
+  scene.add(new THREE.HemisphereLight(0xdfeaff, 0x33415c, 1.15));
+  const sun = new THREE.DirectionalLight(0xffe6c2, 1.1); sun.position.set(-6000, 3500, 2500); scene.add(sun);
 
   const D = data.dem;
   function hAt(x, y){
@@ -537,11 +537,11 @@ renderStatic();
   }
   const dec = (a, s, o=0) => { const p = []; let x = 0, y = 0; for(let i=o;i<a.length;i+=2){ x += a[i]; y += a[i+1]; p.push([x/s, y/s]); } return p; };
   const mix = (a,b,t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
-  const fogC = [0x0e/255,0x16/255,0x22/255];
+  const fogC = [0x40/255,0x60/255,0x9a/255];
 
   // terrain
   { const pos = new Float32Array(D.w*D.h*3), col = new Float32Array(D.w*D.h*3), idx = [];
-    const lo=[.085,.125,.185], mid=[.11,.26,.22], hi=[.36,.46,.38];
+    const lo=[.17,.25,.40], mid=[.14,.36,.27], hi=[.46,.57,.48];
     for(let j=0;j<D.h;j++) for(let i=0;i<D.w;i++){ const k=j*D.w+i, e=D.d[k];
       pos[k*3]=D.x0+i*D.st; pos[k*3+1]=(e-BASE)*VE; pos[k*3+2]=-(D.y0+j*D.st);
       let c = e<560 ? lo : e<900 ? mix(lo,mid,Math.min(1,(e-560)/160)) : mix(mid,hi,Math.min(1,(e-900)/450));
@@ -573,7 +573,7 @@ renderStatic();
   { const list = data.b.map(b => ({h:b[0], p:dec(b,2,1)})).filter(b => b.p.length>=3);
     let s = 7;
     scene.add(prisms(list, b => { s = (s*16807)%2147483647; const v = .82 + (s%100)/100*.3, t = Math.min(1,b.h/40);
-      return [[58*v+30*t, 74*v+34*t, 100*v+40*t], [78*v+40*t, 98*v+44*t, 128*v+50*t]]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
+      return [[Math.min(255,128*v+40*t), Math.min(255,150*v+40*t), Math.min(255,196*v+40*t)], [Math.min(255,178*v+40*t), Math.min(255,198*v+40*t), Math.min(255,236*v+19*t)]]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
   // campus buildings glow
   const beams = [];
   for(const [id, b] of Object.entries(data.hl)){
@@ -597,14 +597,14 @@ renderStatic();
     for(const raw of lines){ const p = densify(raw, 80); for(let i=1;i<p.length;i++) pos.push(p[i-1][0],hAt(p[i-1][0],p[i-1][1])+lift,-p[i-1][1], p[i][0],hAt(p[i][0],p[i][1])+lift,-p[i][1]); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); return new THREE.LineSegments(g, new THREE.LineBasicMaterial({color})); }
   const flat = c => new THREE.MeshBasicMaterial({color:c, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2});
-  scene.add(thin(data.roads.c.map(a => dec(a,1)), 1.2, 0x33435a));
-  scene.add(ribbon(data.roads.b.map(a => dec(a,1)), 9, 1.4, flat(0x4b5d78)));
-  scene.add(ribbon(data.roads.a.map(a => dec(a,1)), 14, 1.6, flat(0x7186a6)));
-  scene.add(thin(data.rail.map(a => dec(a,1)), 2, 0x8d98aa));
+  scene.add(thin(data.roads.c.map(a => dec(a,1)), 1.2, 0x6f86ad));
+  scene.add(ribbon(data.roads.b.map(a => dec(a,1)), 9, 1.4, flat(0x8ea4c8)));
+  scene.add(ribbon(data.roads.a.map(a => dec(a,1)), 14, 1.6, flat(0xc3d2ea)));
+  scene.add(thin(data.rail.map(a => dec(a,1)), 2, 0xd5dcea));
   const allTram = []; const seen = new Set();
   for(const t of Object.values(data.tram)) for(const l of t.l){ const key = l.slice(0,6).join(); if(!seen.has(key)){ seen.add(key); allTram.push(dec(l,1)); } }
-  scene.add(ribbon(allTram, 5, 2.2, flat(0x8f7fd6)));
-  scene.add(ribbon((data.trails||[]).map(a => dec(a,1)), 5, 2.5, flat(0x8fd062)));
+  scene.add(ribbon(allTram, 5, 2.2, flat(0xc0aaff)));
+  scene.add(ribbon((data.trails||[]).map(a => dec(a,1)), 5, 2.5, flat(0xb6f07a)));
   for(const c of (data.cable||[])){ const q = dec(c,1), a = q[0], b = q[q.length-1], g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute([a[0],hAt(a[0],a[1])+25,-a[1], b[0],hAt(b[0],b[1])+25,-b[1]],3)); scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:0xff9ed1, fog:false}))); }
   // parks and water
@@ -613,7 +613,7 @@ renderStatic();
       if(Math.abs(ar)/2 > 160000) continue; if(ar<0) p.reverse();
       for(const t of THREE.ShapeUtils.triangulateShape(p.map(v => new THREE.Vector2(v[0],v[1])), [])) for(const k of t) pos.push(p[k][0], hAt(p[k][0],p[k][1])+lift, -p[k][1]); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); scene.add(new THREE.Mesh(g, flat(color))); }
-  areas(data.parks, 0x1d4a3a, .6); areas(data.water, 0x2a78b8, .8);
+  areas(data.parks, 0x2f8a63, .6); areas(data.water, 0x4fb4f2, .8);
 
   // selected tram route
   let routeMesh = null;
