@@ -157,12 +157,13 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
     <a class="brand" href="#top"><small data-i="brandTop"></small><span>Pyatigorsk</span></a>
     <div class="cities">
       <span class="city" aria-current="true">Pyatigorsk</span>
-      <span class="city soon">Tbilisi<em data-i="soon"></em></span>
-      <span class="city soon">Amman<em data-i="soon"></em></span>
+      <span class="city soon">Nalchik<em data-i="soon"></em></span>
+      <span class="city soon">Krasnodar<em data-i="soon"></em></span>
+      <span class="city soon">Rostov<em data-i="soon"></em></span>
     </div>
     <span class="grow"></span>
     <nav class="nav">
-      <a href="#flats" data-i="navFlats"></a><a href="#trams" data-i="navTrams"></a><a href="#holidays" data-i="navHol"></a><a href="#first" data-i="navFirst"></a>
+      <a href="#flats" data-i="navFlats"></a><a href="#trams" data-i="navTrams"></a><a href="#sights" data-i="navSee"></a><a href="#holidays" data-i="navHol"></a><a href="#first" data-i="navFirst"></a>
     </nav>
     <div class="lang" role="group" aria-label="Language">
       <button data-l="en">EN</button><button data-l="fr">FR</button><button data-l="ru">RU</button>
@@ -217,6 +218,13 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
   <div class="scroll"><table id="tramTable"></table></div>
 </div></section>
 
+<section id="sights"><div class="wrap">
+  <div class="eyebrow" data-i="seEyebrow"></div>
+  <h2 class="t" data-i="seTitle"></h2>
+  <p class="lead" data-i="seLead"></p>
+  <div class="grid" id="seeGrid"></div>
+</div></section>
+
 <section id="holidays"><div class="wrap">
   <div class="eyebrow" data-i="hoEyebrow"></div>
   <h2 class="t" data-i="hoTitle"></h2>
@@ -259,7 +267,9 @@ const CITY = {
     food:{c:'#ffe066', en:'Food', fr:'Manger', ru:'Еда'},
     need:{c:'#9fd0ff', en:'Essentials', fr:'Essentiels', ru:'Нужное'},
     go:{c:'#d0d7e2', en:'Stations', fr:'Gares', ru:'Вокзалы'},
-    see:{c:'#ff9ed1', en:'Sights', fr:'À voir', ru:'Что посмотреть'}
+    see:{c:'#ff9ed1', en:'Sights', fr:'À voir', ru:'Что посмотреть'},
+    hike:{c:'#9be36a', en:'Hikes', fr:'Randonnées', ru:'Походы'},
+    spring:{c:'#57d3ff', en:'Springs', fr:'Sources', ru:'Источники'}
   },
   places: [
     {k:'campus',id:'main',hl:'main',big:1,n:'PMFI Main Building',ru:'ПМФИ, главный корпус · пр. Калинина, 11',at:[43.06638,44.0533],
@@ -297,13 +307,35 @@ const CITY = {
     {k:'go',n:'Pyatigorsk railway station',ru:'Ж/д вокзал Пятигорск',at:[43.0550,44.0378],d:{en:'Suburban trains to Mineralnye Vody (airport city), Yessentuki and Kislovodsk.',fr:'Trains de banlieue vers Mineralnye Vody (aéroport), Iessentouki et Kislovodsk.',ru:'Электрички в Минеральные Воды, Ессентуки и Кисловодск.'}},
     {k:'go',n:'Lermontovskaya train stop',ru:'Платформа Лермонтовская',at:[43.0650,44.0630],d:{en:'Nearest suburban train stop to the campus.',fr:'Arrêt de train de banlieue le plus proche du campus.',ru:'Ближайшая к корпусу платформа электричек.'}},
     {k:'go',n:'Bus station “Upper Market”',ru:'Автостанция «Верхний рынок»',at:[43.0679,44.0414]},
-    {k:'see',n:'Mashuk cable car',ru:'Канатная дорога на Машук',at:[43.08135,44.04368],d:{en:'Cable car to the top of Mount Mashuk, 993 m. On a clear day you see Elbrus.',fr:'Téléphérique vers le sommet du mont Machouk, 993 m. Par temps clair on voit l’Elbrouz.',ru:'Канатка на вершину Машука, 993 м. В ясную погоду виден Эльбрус.'}},
-    {k:'see',n:'Tsvetnik Park',ru:'Парк «Цветник»',at:[43.08191,44.03679],d:{en:'The old resort centre: galleries, fountains, evening walks.',fr:'Le vieux centre thermal : galeries, fontaines, promenades du soir.',ru:'Старый курортный центр: галереи, фонтаны, вечерние прогулки.'}},
-    {k:'see',n:'Proval lake cave',ru:'Провал',at:[43.0997,44.0464],d:{en:'Underground turquoise lake inside Mashuk. Free entry.',fr:'Lac souterrain turquoise dans le Machouk. Entrée gratuite.',ru:'Подземное бирюзовое озеро в Машуке. Вход свободный.'}},
-    {k:'see',n:'Lermontov House Museum',ru:'Домик Лермонтова',at:[43.0778,44.0399]},
-    {k:'see',n:'Kirov Park',ru:'Парк им. Кирова',at:[43.06182,44.03275],d:{en:'Lake with boats, rides, a stadium.',fr:'Lac avec barques, manèges, stade.',ru:'Озеро с лодками, аттракционы, стадион.'}}
+    {k:'see',id:'s1',n:'Proval',ru:'Провал',at:[43.0987,44.0467],d:{en:'The symbol of the city: a 40 m deep cave in Mashuk with a turquoise sulphur lake at the bottom. You walk in through a tunnel. Free.',fr:'Le symbole de la ville : une grotte de 40 m dans le Machouk avec un lac sulfureux turquoise au fond. On y entre par un tunnel. Gratuit.',ru:'Символ города: пещера глубиной 40 м в Машуке с бирюзовым сероводородным озером. Вход через тоннель, бесплатно.'}},
+    {k:'see',id:'s2',n:'Mashuk summit, 993 m',ru:'Вершина Машука, 993 м',at:[43.0889,44.0500],d:{en:'View over the whole city, Beshtau and, on a clear day, Elbrus. TV tower and a viewing deck. Go up by cable car or on foot.',fr:'Vue sur toute la ville, le Bechtaou et, par temps clair, l’Elbrouz. Tour de télévision et plateforme panoramique. Montée en téléphérique ou à pied.',ru:'Вид на весь город, Бештау и в ясную погоду на Эльбрус. Телевышка и смотровая площадка. Подняться можно на канатке или пешком.'}},
+    {k:'see',id:'s3',n:'Mashuk cable car',ru:'Канатная дорога на Машук',at:[43.08135,44.04368],d:{en:'Lower station on Gagarin Boulevard. The ride to the top takes about 3 minutes.',fr:'Station basse sur le boulevard Gagarine. La montée dure environ 3 minutes.',ru:'Нижняя станция на бульваре Гагарина. Подъём занимает около 3 минут.'}},
+    {k:'see',id:'s4',n:'Aeolian Harp',ru:'Эолова арфа',at:[43.0883,44.0408],d:{en:'A stone pavilion from 1831 on the edge of a cliff. The best sunset view in the city.',fr:'Un pavillon de pierre de 1831 au bord d’une falaise. Le plus beau coucher de soleil de la ville.',ru:'Каменная беседка 1831 года на краю скалы. Лучший закат в городе.'}},
+    {k:'see',id:'s5',n:'Academic Gallery',ru:'Академическая галерея',at:[43.0880,44.0398],d:{en:'White gallery above the old town with a wide staircase and a view over the centre.',fr:'Galerie blanche au-dessus de la vieille ville avec un grand escalier et une vue sur le centre.',ru:'Белая галерея над старым городом, широкая лестница и вид на центр.'}},
+    {k:'see',id:'s6',n:'Tsvetnik Park',ru:'Парк «Цветник»',at:[43.08191,44.03679],d:{en:'The old resort centre: the Lermontov Gallery, Diana’s Grotto, fountains, evening walks.',fr:'Le vieux centre thermal : galerie Lermontov, grotte de Diane, fontaines, promenades du soir.',ru:'Старый курортный центр: Лермонтовская галерея, грот Дианы, фонтаны, вечерние прогулки.'}},
+    {k:'see',id:'s7',n:'Eagle sculpture',ru:'Скульптура «Орёл»',at:[43.0834,44.0373],d:{en:'A bronze eagle fighting a snake, the emblem of the Caucasus spa towns. Everyone takes a photo here.',fr:'Un aigle de bronze luttant contre un serpent, emblème des villes thermales du Caucase. Tout le monde s’y prend en photo.',ru:'Бронзовый орёл со змеёй — эмблема Кавказских Минеральных Вод. Здесь фотографируются все.'}},
+    {k:'see',id:'s8',n:'Chinese Pavilion',ru:'Китайская беседка',at:[43.0830,44.0355],d:{en:'Colourful pavilion on Goryachaya hill with a view of the city and the mountains.',fr:'Pavillon coloré sur la colline Goriatchaïa avec vue sur la ville et les montagnes.',ru:'Яркая беседка на горе Горячей с видом на город и горы.'}},
+    {k:'see',id:'s9',n:'Lermontov’s Grotto',ru:'Грот Лермонтова',at:[43.0871,44.0399],d:{en:'A small cave in the rock where the poet Lermontov liked to sit.',fr:'Une petite grotte dans la roche où le poète Lermontov aimait s’asseoir.',ru:'Небольшой грот в скале, где любил бывать Лермонтов.'}},
+    {k:'see',id:'s10',n:'Lermontov duel site',ru:'Место дуэли Лермонтова',at:[43.0772,44.0590],d:{en:'Monument in the forest on the slope of Mashuk where the poet was killed in a duel in 1841.',fr:'Monument dans la forêt, sur la pente du Machouk, où le poète fut tué en duel en 1841.',ru:'Памятник в лесу на склоне Машука, где поэт погиб на дуэли в 1841 году.'}},
+    {k:'see',id:'s11',n:'Lermontov House Museum',ru:'Домик Лермонтова',at:[43.0778,44.0399],d:{en:'The small house where Lermontov spent his last months.',fr:'La petite maison où Lermontov passa ses derniers mois.',ru:'Домик, где Лермонтов прожил последние месяцы.'}},
+    {k:'see',id:'s12',n:'Gates of Love',ru:'Ворота любви',at:[43.0775,44.0500],d:{en:'Stone arch on the slope of Mashuk. Couples walk through it holding hands.',fr:'Arche de pierre sur la pente du Machouk. Les couples la traversent main dans la main.',ru:'Каменная арка на склоне Машука. Пары проходят через неё, держась за руки.'}},
+    {k:'see',id:'s13',n:'Singing Fountain',ru:'Поющий фонтан',at:[43.0719,44.0400],d:{en:'Light and music fountain on Lenin Square in the warm season, in the evening.',fr:'Fontaine musicale et lumineuse place Lénine, le soir à la belle saison.',ru:'Светомузыкальный фонтан на площади Ленина, вечером в тёплый сезон.'}},
+    {k:'see',id:'s14',n:'Kirov Park',ru:'Парк им. Кирова',at:[43.06182,44.03275],d:{en:'Lake with boats, rides, a stadium.',fr:'Lac avec barques, manèges, stade.',ru:'Озеро с лодками, аттракционы, стадион.'}},
+
+    {k:'hike',id:'h1',n:'Mashuk ring trail',ru:'Терренкур вокруг Машука',at:[43.0965,44.0574],d:{en:'An easy flat walk around the whole mountain through the forest: about 10 km, 2.5 to 3 hours. Passes Proval, the duel site and the Gates of Love. Good for a first weekend.',fr:'Une promenade facile et plate autour de toute la montagne, en forêt : environ 10 km, 2 h 30 à 3 h. Passe par le Proval, le lieu du duel et les Portes de l’amour. Idéal pour un premier week-end.',ru:'Лёгкая ровная прогулка вокруг всей горы по лесу: около 10 км, 2,5–3 часа. Проходит мимо Провала, места дуэли и Ворот любви. Хорошо для первых выходных.'}},
+    {k:'hike',id:'h2',n:'Walk up to Mashuk summit',ru:'Пеший подъём на Машук',at:[43.0883,44.0462],d:{en:'A forest trail from the ring path to the top, 993 m. About 1.5 hours up. Take water and normal shoes; ride the cable car down if you are tired.',fr:'Un sentier forestier du chemin circulaire jusqu’au sommet, 993 m. Environ 1 h 30 de montée. Prenez de l’eau et de bonnes chaussures ; redescendez en téléphérique si vous êtes fatigué.',ru:'Лесная тропа от терренкура до вершины, 993 м. Подъём около 1,5 часа. Возьмите воду и нормальную обувь; вниз можно на канатке.'}},
+    {k:'hike',id:'h3',n:'Mount Kazachka viewpoint',ru:'Гора Казачка',at:[43.0774,44.0460],d:{en:'A short climb close to the centre with a view over the city.',fr:'Une courte montée près du centre avec vue sur la ville.',ru:'Короткий подъём рядом с центром, вид на город.'}},
+    {k:'hike',id:'h4',n:'Mount Beshtau, 1400 m',ru:'Гора Бештау, 1400 м',at:[43.0221,44.0981],d:{en:'The five-peaked mountain you see from the dorms. A full-day hike for a group; in May the slopes are covered with wild poppies. Do not go alone or in bad weather.',fr:'La montagne à cinq sommets que l’on voit depuis les résidences. Une randonnée d’une journée, en groupe ; en mai, les pentes sont couvertes de coquelicots. N’y allez pas seul ni par mauvais temps.',ru:'Пятиглавая гора, которую видно из общежитий. Поход на целый день для компании; в мае склоны в маках. Не ходите в одиночку и в плохую погоду.'}},
+    {k:'hike',id:'h5',n:'Monastery Lake on Beshtau',ru:'Монастырское озеро',at:[43.0102,44.0849],d:{en:'A quiet forest lake near the monastery on the slope of Beshtau.',fr:'Un lac forestier paisible près du monastère, sur la pente du Bechtaou.',ru:'Тихое лесное озеро у монастыря на склоне Бештау.'}},
+
+    {k:'spring',id:'w1',n:'“Shameless” hot pools',ru:'Бесстыжие ванны',at:[43.0929,44.0402],d:{en:'Free open-air pools with warm sulphur water on the slope of Mashuk. Locals bathe here all year. Bring a towel; the smell of sulphur is normal.',fr:'Bassins gratuits en plein air d’eau sulfureuse chaude sur la pente du Machouk. Les habitants s’y baignent toute l’année. Prenez une serviette ; l’odeur de soufre est normale.',ru:'Бесплатные открытые ванны с тёплой сероводородной водой на склоне Машука. Местные купаются круглый год. Возьмите полотенце; запах серы — это нормально.'}},
+    {k:'spring',id:'w2',n:'Pump room No. 7, warm narzan',ru:'Бювет источника № 7 (тёплый нарзан)',at:[43.0816,44.0429],d:{en:'Drink warm mineral water straight from the spring. Bring your own cup.',fr:'Buvez l’eau minérale chaude directement à la source. Apportez votre gobelet.',ru:'Тёплая минеральная вода прямо из источника. Возьмите свой стакан.'}},
+    {k:'spring',id:'w3',n:'Pump rooms No. 2 and No. 17',ru:'Бюветы источников № 2 и № 17',at:[43.0821,44.0375],d:{en:'Drinking springs in Tsvetnik Park, in the old resort centre.',fr:'Sources d’eau potable dans le parc Tsvetnik, au vieux centre thermal.',ru:'Питьевые источники в парке «Цветник», в старом курортном центре.'}},
+    {k:'spring',id:'w4',n:'Mikhailovsky spring',ru:'Михайловский источник',at:[43.0888,44.0406],d:{en:'A historic spring by the Mikhailovskaya Gallery, next to the Aeolian Harp.',fr:'Une source historique près de la galerie Mikhaïlovskaïa, à côté de la Harpe éolienne.',ru:'Исторический источник у Михайловской галереи, рядом с Эоловой арфой.'}},
+    {k:'spring',id:'w5',n:'Lermontov Baths',ru:'Лермонтовские ванны',at:[43.0824,44.0366],d:{en:'The oldest bathhouse in the city, 1831. Mineral baths are still given here.',fr:'Le plus ancien établissement de bains de la ville, 1831. On y prend encore des bains minéraux.',ru:'Старейшее здание ванн в городе, 1831 год. Минеральные ванны принимают до сих пор.'}},
+    {k:'spring',id:'w6',n:'Pirogov Baths',ru:'Пироговские ванны',at:[43.0921,44.0407],d:{en:'Sulphur baths on the slope of Mashuk.',fr:'Bains sulfureux sur la pente du Machouk.',ru:'Сероводородные ванны на склоне Машука.'}}
   ],
-  peaks: [{n:'Mashuk · 993 m',at:[43.0889,44.0500]},{n:'Beshtau · 1400 m',at:[43.0221,44.0981]}],
+  peaks: [{n:'Mashuk',at:[43.0889,44.0500]},{n:'Beshtau',at:[43.0290,44.1010]}],
   tramColors: {1:'#ff7a66',2:'#5fd6b4',3:'#6db7ff',4:'#ffe066',5:'#ff9ed1',6:'#9be36a',7:'#ffb347',8:'#b69cff'}
 };
 
@@ -311,7 +343,7 @@ const CITY = {
 const T = {
 brandTop:{en:'Student guide',fr:'Guide étudiant',ru:'Гид для студентов'},
 soon:{en:'soon',fr:'bientôt',ru:'скоро'},
-navFlats:{en:'Flats',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navHol:{en:'Holidays',fr:'Fêtes',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
+navFlats:{en:'Flats',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Sights',fr:'À voir',ru:'Места'},navHol:{en:'Holidays',fr:'Fêtes',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
 h1:{en:'Your city, before you land.',fr:'Votre ville, avant d’atterrir.',ru:'Ваш город — ещё до приезда.'},
 h1p:{en:'Campus, dorms, trams, flats where registration is allowed, coffee and everything a new student needs in Pyatigorsk.',fr:'Campus, résidences, tramways, appartements avec enregistrement, cafés et tout ce qu’il faut à un nouvel étudiant à Piatigorsk.',ru:'Корпуса, общежития, трамваи, квартиры с регистрацией, кофейни и всё, что нужно новому студенту в Пятигорске.'},
 hint:{en:'Drag to move · right-drag or two fingers to rotate',fr:'Glisser pour déplacer · clic droit ou deux doigts pour tourner',ru:'Тяните, чтобы двигать · правая кнопка или два пальца — поворот'},
@@ -347,6 +379,9 @@ trTitle:{en:'Eight trams. Five of them stop at your campus.',fr:'Huit trams. Cin
 trLead:{en:'The tram is the cheapest way to cross the city: about 35 ₽ a ride, pay by card to the conductor. Your stop is Universam (Универсам).',fr:'Le tram est le moyen le moins cher de traverser la ville : environ 35 ₽ le trajet, paiement par carte au contrôleur. Votre arrêt est Universam (Универсам).',ru:'Трамвай — самый дешёвый способ ездить по городу: около 35 ₽ за поездку, оплата картой кондуктору. Ваша остановка — «Универсам».'},
 thNo:{en:'No.',fr:'N°',ru:'№'},thRoute:{en:'Route',fr:'Trajet',ru:'Маршрут'},thCampus:{en:'To the campus?',fr:'Vers le campus ?',ru:'К корпусу?'},
 yes:{en:'Yes, stop Universam',fr:'Oui, arrêt Universam',ru:'Да, ост. «Универсам»'},no:{en:'No',fr:'Non',ru:'Нет'},
+seEyebrow:{en:'Weekends',fr:'Week-ends',ru:'Выходные'},
+seTitle:{en:'A resort town at your door',fr:'Une ville thermale à votre porte',ru:'Курорт прямо за дверью'},
+seLead:{en:'Pyatigorsk is a 200-year-old spa town built around Mount Mashuk. Almost everything here is free and within an hour on foot or a short tram ride from the dorms.',fr:'Piatigorsk est une ville thermale de 200 ans construite autour du mont Machouk. Presque tout y est gratuit et à moins d’une heure à pied ou à quelques arrêts de tram des résidences.',ru:'Пятигорск — курорт с двухсотлетней историей вокруг горы Машук. Почти всё здесь бесплатно и в часе пешком или в нескольких остановках на трамвае от общежитий.'},
 hoEyebrow:{en:'Calendar',fr:'Calendrier',ru:'Календарь'},
 hoTitle:{en:'What Russia celebrates next',fr:'Ce que la Russie fête bientôt',ru:'Какие праздники скоро'},
 hoLead:{en:'On public holidays the institute, banks and offices are closed. Shops and trams work.',fr:'Les jours fériés, l’institut, les banques et les administrations sont fermés. Les magasins et les trams fonctionnent.',ru:'В праздничные дни институт, банки и учреждения закрыты. Магазины и трамваи работают.'},
@@ -407,6 +442,10 @@ function renderStatic(){
     <ul><li>${T.rooms[L][p.rooms]} · ${walkMin(p.at)} ${tx('min')} ${tx('walk')}</li><li>${esc(p.d[L])}</li></ul>
     <div class="acts"><a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the flat: '+p.n)}">${tx('askFlat')}</a><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div>
   </article>`).join('');
+  $('#seeGrid').innerHTML = CITY.places.filter(p => ['see','hike','spring'].includes(p.k)).map(p => `<article class="flat">
+    <div><span class="tag" style="--c:${CITY.cats[p.k].c}">${CITY.cats[p.k][L]}</span></div>
+    <h3>${esc(L==='ru'?p.ru:p.n)}</h3><ul><li>${esc(p.d[L])}</li></ul>
+    <div class="acts"><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div></article>`).join('');
   $('#rgQa').innerHTML = T.rg[L].map(q => `<div><dt>${q[0]}</dt><dd>${q[1]}</dd></div>`).join('');
   $('#check').innerHTML = T.fi[L].map(q => `<li><b>${q[0]}</b> ${q[1]}</li>`).join('');
   // holidays
@@ -446,7 +485,7 @@ function renderCard(){
     <h2>${esc(L==='ru' && p.k!=='flat' ? p.ru.split(' · ')[0] : p.n)}</h2><div class="ru">${esc(p.ru)}</div>
     ${p.price?`<div class="facts"><div><b>${p.price.toLocaleString('ru-RU')} ₽</b>${tx('perMonth')}</div><div><b>${T.rooms[L][p.rooms]}</b>${tx('regOk')}</div></div>`:''}
     ${p.d?`<p>${esc(p.d[L])}</p>`:''}
-    ${p.k!=='dorm'?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
+    ${p.k!=='dorm' && walkMin(p.at)<=75?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
     <div class="acts">${p.k==='flat'?`<a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the flat: '+p.n)}">${tx('askFlat')}</a>`:''}
     <a class="btn" target="_blank" rel="noopener" href="${yLink(p.at)}">${tx('openMap')}</a></div>`;
   c.hidden = false; $('#stage').classList.add('busy');
@@ -557,6 +596,9 @@ renderStatic();
   const allTram = []; const seen = new Set();
   for(const t of Object.values(data.tram)) for(const l of t.l){ const key = l.slice(0,6).join(); if(!seen.has(key)){ seen.add(key); allTram.push(dec(l,1)); } }
   scene.add(ribbon(allTram, 5, 2.2, flat(0x8f7fd6)));
+  scene.add(ribbon((data.trails||[]).map(a => dec(a,1)), 5, 2.5, flat(0x8fd062)));
+  for(const c of (data.cable||[])){ const q = dec(c,1), a = q[0], b = q[q.length-1], g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([a[0],hAt(a[0],a[1])+25,-a[1], b[0],hAt(b[0],b[1])+25,-b[1]],3)); scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:0xff9ed1, fog:false}))); }
   // parks and water
   function areas(list, color, lift){ const pos = [];
     for(const a of list){ const p = dec(a,1); if(p.length<3) continue; let ar=0; for(let i=0;i<p.length;i++){ const q=p[(i+1)%p.length]; ar+=p[i][0]*q[1]-q[0]*p[i][1]; }
@@ -604,7 +646,7 @@ renderStatic();
     el.onclick = () => select(p); pinsEl.appendChild(el);
     pins.push({p, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1]) + (p.hl ? data.hl[p.hl].h*1.35+20 : 30), -a[1])}); }
   for(const p of CITY.peaks){ const a = toXY(p.at), el = document.createElement('div'); el.className = 'pin peak'; el.innerHTML = '<i></i><span>'+p.n+'</span>'; pinsEl.appendChild(el);
-    pins.push({p:{k:'peak'}, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+90, -a[1])}); }
+    pins.push({p:{k:'peak'}, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+230, -a[1])}); }
   window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = (L==='ru' && q.p.k!=='flat') ? q.p.ru.split(' · ')[0] : q.p.n; };
   window.pinsFilter = () => { for(const q of pins){ const on = q.p.k==='peak' || activeCat==='all' || q.p.k===activeCat || (activeCat==='tram' && q.p.k==='dorm') || q.p===sel;
       q.hide = !on; q.el.classList.toggle('on', q.p===sel); q.el.classList.toggle('show', activeCat!=='all' && q.p.k===activeCat); } };
