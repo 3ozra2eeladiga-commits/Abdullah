@@ -1,0 +1,633 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Pyatigorsk Student Guide</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a live 3D model of the city is the first screen; glass controls float on it; the guide reads below it. Single dusk theme by choice. */
+:root{
+  color-scheme:dark;
+  --night:#0e1622; --deep:#0a101a; --panel:#152133; --glass:rgba(18,28,44,.72); --line:rgba(160,190,230,.16);
+  --fg:#e9eef7; --muted:#9aa9c0; --amber:#ffb347; --coral:#ff7a66; --mint:#5fd6b4; --sky:#6db7ff; --violet:#b69cff;
+  --display:"Unbounded","Manrope",system-ui,sans-serif; --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --gl:max(16px, env(safe-area-inset-left, 0px)); --gr:max(16px, env(safe-area-inset-right, 0px));
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{background:var(--night);color:var(--fg);font:15px/1.55 var(--body);margin:0}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* ---------- map hero ---------- */
+.stage{position:relative;height:min(88vh,860px);min-height:540px;overflow:hidden;background:var(--night)}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#gl:active{cursor:grabbing}
+.stage::before{content:"";position:absolute;inset:0 0 auto;height:150px;background:linear-gradient(var(--deep),transparent);pointer-events:none;z-index:2;opacity:.85}
+.stage::after{content:"";position:absolute;inset:auto 0 0;height:90px;background:linear-gradient(transparent,var(--night));pointer-events:none;z-index:2}
+#pins{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+.pin{position:absolute;left:0;top:0;pointer-events:auto;display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;white-space:nowrap;will-change:transform}
+.pin i{width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px rgba(10,16,26,.75),0 0 14px var(--c);flex:none;transition:transform .15s}
+.pin span{font:600 11.5px/1 var(--body);background:rgba(10,16,26,.82);border:1px solid var(--line);padding:5px 8px;border-radius:999px;display:none}
+.pin.big i{width:15px;height:15px}
+.pin.big span,.pin.show span,.pin:hover span,.pin.on span,.near .pin span{display:block}
+.pin:hover i,.pin.on i{transform:scale(1.45)}
+.pin.on span{background:var(--c);color:#0a101a;border-color:transparent}
+.pin.left{flex-direction:row-reverse;margin-left:0}
+.pin.peak{pointer-events:none}
+.pin.peak i{display:none}
+.pin.peak span{display:block;background:none;border:0;font:500 10.5px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-shadow:0 1px 6px #000}
+
+.top{position:absolute;inset:0 0 auto;z-index:5;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px var(--gr) 0 var(--gl)}
+.brand{font:600 13px/1.1 var(--display);letter-spacing:.02em;text-decoration:none;display:flex;flex-direction:column;gap:3px}
+.brand small{font:500 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+.cities{display:flex;gap:6px;flex-wrap:wrap}
+.city{font:600 12px/1 var(--body);padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.city[aria-current]{border-color:var(--amber);color:var(--amber)}
+.city.soon{color:var(--muted)}
+.city.soon em{font:500 9px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;font-style:normal;margin-left:5px;opacity:.8}
+.grow{flex:1}
+.nav{display:flex;gap:16px;font-weight:600;font-size:13px}
+.nav a{text-decoration:none;color:var(--muted)}
+.nav a:hover{color:var(--fg)}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.lang button{border:0;background:none;padding:7px 11px;font:700 11px/1 var(--mono);color:var(--muted)}
+.lang button[aria-pressed="true"]{background:var(--fg);color:var(--deep)}
+
+.chips{position:absolute;z-index:5;left:0;right:0;top:66px;display:flex;gap:7px;overflow-x:auto;padding:4px var(--gr) 8px var(--gl);scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:7px;font:600 12.5px/1 var(--body);padding:9px 13px;border-radius:999px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--fg))}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--deep);border-color:transparent}
+
+.headline{position:absolute;z-index:4;left:var(--gl);bottom:58px;max-width:min(520px,calc(100% - 32px));pointer-events:none;transition:opacity .4s}
+.headline h1{font:600 clamp(26px,4.6vw,46px)/1.08 var(--display);margin:0 0 10px;text-wrap:balance;text-shadow:0 2px 24px rgba(0,0,0,.6)}
+.headline p{margin:0;color:var(--muted);max-width:44ch;text-shadow:0 1px 10px #000}
+.stage.busy .headline{opacity:0}
+
+.tools{position:absolute;z-index:5;right:var(--gr);bottom:64px;display:flex;flex-direction:column;gap:6px}
+.tools button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font:600 17px/1 var(--body)}
+.hint{position:absolute;z-index:4;right:var(--gr);bottom:22px;font:500 10.5px/1 var(--mono);letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+
+.card{position:absolute;z-index:6;left:var(--gl);bottom:22px;width:min(380px,calc(100% - 32px));max-height:62%;overflow:auto;background:var(--glass);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.card h2{font:600 17px/1.25 var(--display);margin:0 30px 2px 0}
+.card .ru{font:500 12px/1.3 var(--mono);color:var(--muted);margin-bottom:10px}
+.card p{margin:0 0 10px;color:#cfd8e6}
+.card .x{position:absolute;right:10px;top:10px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.08);font-size:16px}
+.tag{display:inline-block;font:700 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:6px;background:var(--c,var(--amber));color:#0a101a;margin:0 6px 10px 0}
+.tag.ghost{background:none;border:1px solid var(--line);color:var(--muted)}
+.facts{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 12px;font:500 12px/1.3 var(--mono);color:var(--muted)}
+.facts b{display:block;color:var(--fg);font-size:14px}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;font:700 13px/1 var(--body);padding:11px 15px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);text-decoration:none}
+.btn.main{background:var(--amber);border-color:transparent;color:#1a1204}
+.routes{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:10px 0 12px}
+.routes button{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);font:700 15px/1 var(--mono)}
+.routes button[aria-pressed="true"]{background:var(--c);color:#0a101a;border-color:transparent}
+.stops{list-style:none;margin:10px 0 0;padding:0 0 0 14px;border-left:2px solid var(--c,var(--line));font-size:13px;max-height:170px;overflow:auto}
+.stops li{padding:3px 0;color:var(--muted)}
+.stops li.me{color:var(--amber);font-weight:700}
+.verdict{padding:10px 12px;border-radius:12px;background:rgba(255,179,71,.12);border:1px solid rgba(255,179,71,.35);font-weight:600;font-size:13px}
+.verdict.no{background:rgba(255,255,255,.04);border-color:var(--line);color:var(--muted)}
+.loading{position:absolute;z-index:4;inset:0;display:grid;place-items:center;font:500 11px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);pointer-events:none}
+
+/* ---------- guide below ---------- */
+.wrap{max-width:1120px;margin:0 auto;padding-left:var(--gl);padding-right:var(--gr)}
+section{padding-block:64px 8px}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-bottom:12px}
+h2.t{font:600 clamp(22px,3.4vw,34px)/1.15 var(--display);margin:0 0 12px;text-wrap:balance}
+.lead{color:var(--muted);max-width:65ch;margin:0 0 28px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.flat{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.flat h3{font:600 15px/1.3 var(--body);margin:0}
+.flat .price{font:700 22px/1 var(--mono)}
+.flat .price small{font:500 12px/1 var(--body);color:var(--muted)}
+.flat ul{margin:0;padding:0;list-style:none;color:var(--muted);font-size:13px;display:grid;gap:4px}
+.flat .acts{margin-top:auto}
+.steps{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin:34px 0 0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;border-top:1px solid var(--line);padding-top:14px;color:var(--muted)}
+.steps li::before{content:"0" counter(s);font:700 12px/1 var(--mono);color:var(--amber);display:block;margin-bottom:8px}
+.steps b{display:block;color:var(--fg);margin-bottom:4px}
+.note{border-left:2px solid var(--amber);padding:2px 0 2px 14px;color:var(--muted);max-width:65ch;margin-top:26px;font-size:13.5px}
+.two{display:grid;gap:34px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));align-items:start}
+.qa{display:grid;gap:0;margin:0}
+.qa div{border-top:1px solid var(--line);padding:14px 0}
+.qa dt{font-weight:700;margin-bottom:4px}
+.qa dd{margin:0;color:var(--muted)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th{font:500 10.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px 10px 0}
+td{border-top:1px solid var(--line);padding:12px 12px 12px 0;vertical-align:middle}
+td .no{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;background:var(--c);color:#0a101a;font:700 15px/1 var(--mono)}
+td .yes{color:var(--amber);font-weight:700}
+td .dim{color:var(--muted)}
+td button{border:1px solid var(--line);background:none;border-radius:9px;padding:7px 10px;font-weight:600;font-size:12.5px}
+.days{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.day{border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.day .in{font:700 26px/1 var(--mono)}
+.day .in small{font:500 11px/1 var(--mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-left:6px}
+.day .when{font:500 11.5px/1.3 var(--mono);color:var(--muted);margin:8px 0 6px}
+.day b{display:block;margin-bottom:4px}
+.day p{margin:0;color:var(--muted);font-size:13px}
+.day:first-child{background:linear-gradient(140deg,rgba(255,179,71,.16),transparent 70%);border-color:rgba(255,179,71,.4)}
+.check{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.check li{border-top:1px solid var(--line);padding:13px 0;color:var(--muted)}
+.check b{color:var(--fg)}
+footer{margin-top:70px;border-top:1px solid var(--line);padding-block:26px 40px;color:var(--muted);font-size:12.5px}
+footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-between}
+@media (max-width:760px){
+  .nav,.cities{display:none}
+  .chips{top:58px}
+  .stage{height:min(86vh,720px)}
+  .headline{bottom:74px}
+  .tools{bottom:auto;top:118px}
+  .hint{display:none}
+  .card{left:8px;right:8px;width:auto;bottom:8px;max-height:56%}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+
+<div class="stage busy" id="stage">
+  <canvas id="gl" aria-label="3D map of Pyatigorsk"></canvas>
+  <div id="pins"></div>
+  <div class="loading" id="loading">Loading the city…</div>
+
+  <header class="top">
+    <a class="brand" href="#top"><small data-i="brandTop"></small><span>Pyatigorsk</span></a>
+    <div class="cities">
+      <span class="city" aria-current="true">Pyatigorsk</span>
+      <span class="city soon">Tbilisi<em data-i="soon"></em></span>
+      <span class="city soon">Amman<em data-i="soon"></em></span>
+    </div>
+    <span class="grow"></span>
+    <nav class="nav">
+      <a href="#flats" data-i="navFlats"></a><a href="#trams" data-i="navTrams"></a><a href="#holidays" data-i="navHol"></a><a href="#first" data-i="navFirst"></a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-l="en">EN</button><button data-l="fr">FR</button><button data-l="ru">RU</button>
+    </div>
+  </header>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="headline">
+    <h1 data-i="h1"></h1>
+    <p data-i="h1p"></p>
+  </div>
+
+  <div class="tools">
+    <button id="zin" aria-label="Zoom in">+</button>
+    <button id="zout" aria-label="Zoom out">−</button>
+    <button id="rl" aria-label="Rotate left">⟲</button>
+    <button id="rr" aria-label="Rotate right">⟳</button>
+    <button id="home" aria-label="Reset view">⌂</button>
+  </div>
+  <div class="hint" data-i="hint"></div>
+  <div class="card" id="card" hidden></div>
+</div>
+
+<main id="top">
+<section id="flats"><div class="wrap">
+  <div class="eyebrow" data-i="flEyebrow"></div>
+  <h2 class="t" data-i="flTitle"></h2>
+  <p class="lead" data-i="flLead"></p>
+  <div class="grid" id="flatGrid"></div>
+  <ol class="steps">
+    <li><b data-i="st1b"></b><span data-i="st1"></span></li>
+    <li><b data-i="st2b"></b><span data-i="st2"></span></li>
+    <li><b data-i="st3b"></b><span data-i="st3"></span></li>
+  </ol>
+  <p class="note" data-i="flNote"></p>
+</div></section>
+
+<section id="registration"><div class="wrap two">
+  <div>
+    <div class="eyebrow" data-i="rgEyebrow"></div>
+    <h2 class="t" data-i="rgTitle"></h2>
+    <p class="lead" data-i="rgLead"></p>
+  </div>
+  <dl class="qa" id="rgQa"></dl>
+</div></section>
+
+<section id="trams"><div class="wrap">
+  <div class="eyebrow" data-i="trEyebrow"></div>
+  <h2 class="t" data-i="trTitle"></h2>
+  <p class="lead" data-i="trLead"></p>
+  <div class="scroll"><table id="tramTable"></table></div>
+</div></section>
+
+<section id="holidays"><div class="wrap">
+  <div class="eyebrow" data-i="hoEyebrow"></div>
+  <h2 class="t" data-i="hoTitle"></h2>
+  <p class="lead" data-i="hoLead"></p>
+  <div class="days" id="days"></div>
+</div></section>
+
+<section id="first"><div class="wrap two">
+  <div>
+    <div class="eyebrow" data-i="fiEyebrow"></div>
+    <h2 class="t" data-i="fiTitle"></h2>
+    <p class="lead" data-i="fiLead"></p>
+    <a class="btn main" id="tgMain" target="_blank" rel="noopener" data-i="askTg"></a>
+  </div>
+  <ul class="check" id="check"></ul>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <span data-i="foot"></span>
+  <span>Map data © OpenStreetMap contributors · Terrain: Mapzen / AWS Terrain Tiles</span>
+</div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* ================= CITY CONTENT (edit here; another city = another block like this + its map file) ================= */
+const TG = 'khwajev';
+const CITY = {
+  map: 'data/pyatigorsk.map.json',
+  home: [43.0678, 44.0522],            // PMFI dorms: walking times are counted from here
+  campusStop: 'Универсам',
+  cats: {
+    campus:{c:'#ffb347', en:'PMFI campus', fr:'Campus PMFI', ru:'Корпуса ПМФИ'},
+    dorm:{c:'#ffd9a0', en:'Dorms', fr:'Résidences', ru:'Общежития'},
+    tram:{c:'#b69cff', en:'Trams', fr:'Tramways', ru:'Трамваи'},
+    flat:{c:'#ff7a66', en:'Flats with registration', fr:'Apparts avec enregistrement', ru:'Квартиры с регистрацией'},
+    coffee:{c:'#5fd6b4', en:'Coffee', fr:'Cafés', ru:'Кофейни'},
+    study:{c:'#6db7ff', en:'Study spots', fr:'Pour étudier', ru:'Где поработать'},
+    food:{c:'#ffe066', en:'Food', fr:'Manger', ru:'Еда'},
+    need:{c:'#9fd0ff', en:'Essentials', fr:'Essentiels', ru:'Нужное'},
+    go:{c:'#d0d7e2', en:'Stations', fr:'Gares', ru:'Вокзалы'},
+    see:{c:'#ff9ed1', en:'Sights', fr:'À voir', ru:'Что посмотреть'}
+  },
+  places: [
+    {k:'campus',id:'main',hl:'main',big:1,n:'PMFI Main Building',ru:'ПМФИ, главный корпус · пр. Калинина, 11',at:[43.06638,44.0533],
+      d:{en:'Main building of the Pyatigorsk Medical and Pharmaceutical Institute (branch of Volgograd State Medical University). Dean’s offices and most lectures.',fr:'Bâtiment principal de l’Institut médico-pharmaceutique de Piatigorsk (filiale de l’Université médicale de Volgograd). Décanats et la plupart des cours.',ru:'Главный корпус Пятигорского медико-фармацевтического института (филиал ВолгГМУ). Деканаты и большинство лекций.'}},
+    {k:'dorm',id:'dorm4',hl:'dorm4',n:'Dorm No. 4',ru:'Общежитие № 4 ПМФИ · пр. Калинина, 11',at:[43.06803,44.05202],d:{en:'9 floors. Most international students live here.',fr:'9 étages. La plupart des étudiants étrangers y vivent.',ru:'9 этажей. Здесь живёт большинство иностранных студентов.'}},
+    {k:'dorm',id:'dorm3',hl:'dorm3',n:'Dorm No. 3',ru:'Общежитие № 3 ПМФИ · пр. Калинина, 11 к2',at:[43.06746,44.05235],d:{en:'8 floors, next to the main building.',fr:'8 étages, à côté du bâtiment principal.',ru:'8 этажей, рядом с главным корпусом.'}},
+    {k:'dorm',id:'dorm2',hl:'dorm2',n:'Dorm No. 2',ru:'Общежитие № 2 ПМФИ · пр. Калинина, 11 к1',at:[43.06808,44.05271],d:{en:'5 floors.',fr:'5 étages.',ru:'5 этажей.'}},
+    {k:'tram',id:'stop',n:'Tram stop “Universam”',ru:'Остановка «Универсам»',at:[43.06303,44.05304],d:{en:'Your stop. Trams 2, 4, 6, 7 and 8 stop here, about 6 minutes on foot from the dorms.',fr:'Votre arrêt. Les trams 2, 4, 6, 7 et 8 s’arrêtent ici, à environ 6 minutes à pied des résidences.',ru:'Ваша остановка. Здесь останавливаются трамваи 2, 4, 6, 7 и 8, около 6 минут пешком от общежитий.'}},
+
+    {k:'flat',id:'f1',demo:1,n:'1-room flat, Kalinina Ave',ru:'пр. Калинина',at:[43.0642,44.0512],price:28000,rooms:1,d:{en:'Furnished, washing machine, Wi-Fi. Owner agrees to register tenants.',fr:'Meublé, lave-linge, Wi-Fi. Le propriétaire accepte l’enregistrement.',ru:'С мебелью, стиральная машина, Wi-Fi. Хозяин согласен на регистрацию.'}},
+    {k:'flat',id:'f2',demo:1,n:'2-room flat, Kuchury St',ru:'ул. Кучуры',at:[43.0700,44.0500],price:38000,rooms:2,d:{en:'Good for two students sharing. Registration for both.',fr:'Idéal en colocation à deux. Enregistrement pour les deux.',ru:'Удобно на двоих. Регистрация обоим.'}},
+    {k:'flat',id:'f3',demo:1,n:'Studio, 40 Let Oktyabrya Ave',ru:'пр. 40 лет Октября',at:[43.0612,44.0560],price:24000,rooms:0,d:{en:'Small studio near the Universam tram stop.',fr:'Petit studio près de l’arrêt Universam.',ru:'Небольшая студия рядом с остановкой «Универсам».'}},
+    {k:'flat',id:'f4',demo:1,n:'1-room flat, Moskovskaya St',ru:'ул. Московская',at:[43.0655,44.0450],price:30000,rooms:1,d:{en:'Quiet yard, renovated kitchen.',fr:'Cour calme, cuisine rénovée.',ru:'Тихий двор, кухня после ремонта.'}},
+
+    {k:'coffee',n:'Noir House',ru:'Нуар Хаус',at:[43.0630,44.0499]},
+    {k:'coffee',n:'Lermontov Coffee',ru:'Лермонтов кофе',at:[43.0749,44.0375]},
+    {k:'coffee',n:'Roboost',ru:'Кофейня Roboost',at:[43.0623,44.0370]},
+    {k:'coffee',n:'Paper',ru:'Paper',at:[43.0648,44.0371]},
+    {k:'coffee',n:'Cafeteria',ru:'Cafeteria',at:[43.0711,44.0405]},
+    {k:'study',n:'Gorky City Library',ru:'Библиотека им. М. Горького · ул. Козлова, 1',at:[43.0703,44.03888],d:{en:'Free reading rooms and quiet desks.',fr:'Salles de lecture gratuites et tables calmes.',ru:'Бесплатные читальные залы, тихие столы.'}},
+    {k:'food',n:'Brosco Halal',ru:'Brosco Halal',at:[43.0720,44.0374],d:{en:'Halal food in the centre.',fr:'Cuisine halal au centre-ville.',ru:'Халяль в центре.'}},
+    {k:'food',n:'Doner Home',ru:'Doner Home',at:[43.0636,44.0548]},
+    {k:'food',n:'Syty Slon canteen',ru:'Столовая «Сытый слон»',at:[43.0683,44.0489],d:{en:'Cheap canteen (stolovaya) close to the dorms.',fr:'Cantine bon marché (stolovaïa) près des résidences.',ru:'Недорогая столовая рядом с общежитиями.'}},
+    {k:'food',n:'Khychinok',ru:'Хычинок',at:[43.0705,44.0438],d:{en:'Khychiny: Caucasian flatbread with cheese or meat.',fr:'Khytchiny : galettes caucasiennes au fromage ou à la viande.',ru:'Хычины с сыром и мясом.'}},
+    {k:'food',n:'Roma Pizza',ru:'Рома Пицца',at:[43.0633,44.0526]},
+    {k:'need',n:'Magnit supermarket',ru:'Магнит',at:[43.0661,44.0511],d:{en:'Nearest supermarket to the dorms.',fr:'Supermarché le plus proche des résidences.',ru:'Ближайший к общежитиям супермаркет.'}},
+    {k:'need',n:'Pyaterochka supermarket',ru:'Пятёрочка',at:[43.0641,44.0496]},
+    {k:'need',n:'Universiti mall',ru:'ТЦ «Университи»',at:[43.0639,44.0541],d:{en:'Small mall by the tram stop. Pharmacy, Sberbank and a Beeline SIM shop are next door.',fr:'Petit centre commercial près du tram. Pharmacie, Sberbank et boutique Beeline à côté.',ru:'Небольшой ТЦ у остановки. Рядом аптека, Сбербанк и салон Билайн.'}},
+    {k:'need',n:'Pharmacy Vita-Plus',ru:'Аптека «Вита-Плюс»',at:[43.0636,44.0543]},
+    {k:'need',n:'Sberbank',ru:'Сбербанк',at:[43.0636,44.0546],d:{en:'Bank branch: open an account and get a Mir card.',fr:'Agence bancaire : ouvrir un compte et obtenir une carte Mir.',ru:'Отделение банка: счёт и карта «Мир».'}},
+    {k:'need',n:'City Polyclinic No. 1',ru:'Городская поликлиника № 1',at:[43.0598,44.0525]},
+    {k:'need',n:'Upper Market',ru:'Верхний рынок',at:[43.06855,44.04306],d:{en:'The big city market: fruit, vegetables, meat, spices, clothes.',fr:'Le grand marché : fruits, légumes, viande, épices, vêtements.',ru:'Главный рынок: фрукты, овощи, мясо, специи, одежда.'}},
+    {k:'need',n:'Galereya mall',ru:'ТРЦ «Галерея»',at:[43.0651,44.0355]},
+    {k:'need',n:'MFC public services',ru:'МФЦ',at:[43.0434,44.0319],d:{en:'State services centre. Landlords can file your registration here.',fr:'Centre de services publics. Le propriétaire peut y déposer votre enregistrement.',ru:'Центр госуслуг. Здесь хозяин может подать документы на регистрацию.'}},
+    {k:'go',n:'Pyatigorsk railway station',ru:'Ж/д вокзал Пятигорск',at:[43.0550,44.0378],d:{en:'Suburban trains to Mineralnye Vody (airport city), Yessentuki and Kislovodsk.',fr:'Trains de banlieue vers Mineralnye Vody (aéroport), Iessentouki et Kislovodsk.',ru:'Электрички в Минеральные Воды, Ессентуки и Кисловодск.'}},
+    {k:'go',n:'Lermontovskaya train stop',ru:'Платформа Лермонтовская',at:[43.0650,44.0630],d:{en:'Nearest suburban train stop to the campus.',fr:'Arrêt de train de banlieue le plus proche du campus.',ru:'Ближайшая к корпусу платформа электричек.'}},
+    {k:'go',n:'Bus station “Upper Market”',ru:'Автостанция «Верхний рынок»',at:[43.0679,44.0414]},
+    {k:'see',n:'Mashuk cable car',ru:'Канатная дорога на Машук',at:[43.08135,44.04368],d:{en:'Cable car to the top of Mount Mashuk, 993 m. On a clear day you see Elbrus.',fr:'Téléphérique vers le sommet du mont Machouk, 993 m. Par temps clair on voit l’Elbrouz.',ru:'Канатка на вершину Машука, 993 м. В ясную погоду виден Эльбрус.'}},
+    {k:'see',n:'Tsvetnik Park',ru:'Парк «Цветник»',at:[43.08191,44.03679],d:{en:'The old resort centre: galleries, fountains, evening walks.',fr:'Le vieux centre thermal : galeries, fontaines, promenades du soir.',ru:'Старый курортный центр: галереи, фонтаны, вечерние прогулки.'}},
+    {k:'see',n:'Proval lake cave',ru:'Провал',at:[43.0997,44.0464],d:{en:'Underground turquoise lake inside Mashuk. Free entry.',fr:'Lac souterrain turquoise dans le Machouk. Entrée gratuite.',ru:'Подземное бирюзовое озеро в Машуке. Вход свободный.'}},
+    {k:'see',n:'Lermontov House Museum',ru:'Домик Лермонтова',at:[43.0778,44.0399]},
+    {k:'see',n:'Kirov Park',ru:'Парк им. Кирова',at:[43.06182,44.03275],d:{en:'Lake with boats, rides, a stadium.',fr:'Lac avec barques, manèges, stade.',ru:'Озеро с лодками, аттракционы, стадион.'}}
+  ],
+  peaks: [{n:'Mashuk · 993 m',at:[43.0889,44.0500]},{n:'Beshtau · 1400 m',at:[43.0221,44.0981]}],
+  tramColors: {1:'#ff7a66',2:'#5fd6b4',3:'#6db7ff',4:'#ffe066',5:'#ff9ed1',6:'#9be36a',7:'#ffb347',8:'#b69cff'}
+};
+
+/* ================= TEXTS ================= */
+const T = {
+brandTop:{en:'Student guide',fr:'Guide étudiant',ru:'Гид для студентов'},
+soon:{en:'soon',fr:'bientôt',ru:'скоро'},
+navFlats:{en:'Flats',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navHol:{en:'Holidays',fr:'Fêtes',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
+h1:{en:'Your city, before you land.',fr:'Votre ville, avant d’atterrir.',ru:'Ваш город — ещё до приезда.'},
+h1p:{en:'Campus, dorms, trams, flats where registration is allowed, coffee and everything a new student needs in Pyatigorsk.',fr:'Campus, résidences, tramways, appartements avec enregistrement, cafés et tout ce qu’il faut à un nouvel étudiant à Piatigorsk.',ru:'Корпуса, общежития, трамваи, квартиры с регистрацией, кофейни и всё, что нужно новому студенту в Пятигорске.'},
+hint:{en:'Drag to move · right-drag or two fingers to rotate',fr:'Glisser pour déplacer · clic droit ou deux doigts pour tourner',ru:'Тяните, чтобы двигать · правая кнопка или два пальца — поворот'},
+all:{en:'Everything',fr:'Tout',ru:'Всё'},
+walk:{en:'on foot from the dorms',fr:'à pied des résidences',ru:'пешком от общежитий'},min:{en:'min',fr:'min',ru:'мин'},
+openMap:{en:'Open in Yandex Maps',fr:'Ouvrir dans Yandex Maps',ru:'Открыть в Яндекс Картах'},
+askFlat:{en:'Ask about this flat',fr:'Demander cet appartement',ru:'Спросить про квартиру'},
+showMap:{en:'Show on map',fr:'Voir sur la carte',ru:'На карте'},
+demo:{en:'Example listing',fr:'Annonce d’exemple',ru:'Пример объявления'},
+regOk:{en:'Registration OK',fr:'Enregistrement OK',ru:'Регистрация есть'},
+perMonth:{en:'/ month',fr:'/ mois',ru:'/ мес'},
+rooms:{en:['Studio','1 room','2 rooms'],fr:['Studio','1 pièce','2 pièces'],ru:['Студия','1 комната','2 комнаты']},
+tramPick:{en:'Pick a tram number to see where it goes.',fr:'Choisissez un numéro pour voir où va le tram.',ru:'Выберите номер трамвая — покажем, куда он едет.'},
+tramTitle:{en:'Trams of Pyatigorsk',fr:'Tramways de Piatigorsk',ru:'Трамваи Пятигорска'},
+passes:{en:'Stops at Universam, 6 min on foot from the PMFI dorms.',fr:'S’arrête à Universam, à 6 min à pied des résidences PMFI.',ru:'Останавливается на «Универсаме» — 6 минут пешком до общежитий ПМФИ.'},
+notPasses:{en:'Does not pass the campus. Change at the centre to tram 2, 4, 6, 7 or 8.',fr:'Ne passe pas par le campus. Changez au centre pour le tram 2, 4, 6, 7 ou 8.',ru:'Мимо корпуса не идёт. Пересядьте в центре на 2, 4, 6, 7 или 8.'},
+stopsN:{en:'stops',fr:'arrêts',ru:'остановок'},
+flEyebrow:{en:'Housing',fr:'Logement',ru:'Жильё'},
+flTitle:{en:'Flats where the owner registers you',fr:'Des appartements où le propriétaire vous enregistre',ru:'Квартиры, где хозяин делает регистрацию'},
+flLead:{en:'In Russia a foreign student cannot simply live anywhere: the owner of the flat has to register you at the address. Most owners refuse. We list only flats where the owner has already agreed.',fr:'En Russie, un étudiant étranger ne peut pas habiter n’importe où : le propriétaire doit vous enregistrer à l’adresse. La plupart refusent. Nous ne listons que les appartements où le propriétaire a déjà accepté.',ru:'В России иностранный студент не может жить где угодно: хозяин квартиры должен поставить его на учёт по адресу. Большинство хозяев отказывают. Здесь только квартиры, где хозяин уже согласился.'},
+st1b:{en:'Choose a flat',fr:'Choisissez un appartement',ru:'Выберите квартиру'},st1:{en:'On the map or in the list. Write to us on Telegram in English, French or Russian.',fr:'Sur la carte ou dans la liste. Écrivez-nous sur Telegram en français, anglais ou russe.',ru:'На карте или в списке. Напишите нам в Telegram на английском, французском или русском.'},
+st2b:{en:'We show it to you',fr:'Nous vous le montrons',ru:'Мы показываем квартиру'},st2:{en:'We meet the owner together and check the contract and the registration terms.',fr:'Nous rencontrons le propriétaire ensemble et vérifions le contrat et les conditions d’enregistrement.',ru:'Вместе встречаемся с хозяином, проверяем договор и условия регистрации.'},
+st3b:{en:'Move in, get registered',fr:'Emménagez, soyez enregistré',ru:'Заезд и регистрация'},st3:{en:'Our fee is one month of rent, paid once, only after you sign the contract.',fr:'Notre commission est d’un mois de loyer, payée une seule fois, seulement après la signature du contrat.',ru:'Наша комиссия — один месяц аренды, один раз, только после подписания договора.'},
+flNote:{en:'The flats shown now are examples to show how the page works. Real listings will replace them.',fr:'Les appartements affichés sont des exemples pour montrer le fonctionnement de la page. De vraies annonces les remplaceront.',ru:'Сейчас показаны примеры, чтобы было видно, как работает страница. Их заменят настоящие объявления.'},
+rgEyebrow:{en:'The rule everyone asks about',fr:'La règle que tout le monde demande',ru:'Правило, о котором все спрашивают'},
+rgTitle:{en:'Registration, in plain words',fr:'L’enregistrement, simplement',ru:'Регистрация простыми словами'},
+rgLead:{en:'Rules change. Always confirm the current deadline with the PMFI international office before you move.',fr:'Les règles changent. Confirmez toujours le délai actuel auprès du bureau international du PMFI avant de déménager.',ru:'Правила меняются. Перед переездом уточняйте актуальные сроки в международном отделе ПМФИ.'},
+rg:{en:[['What is it?','Migration registration is a paper that says at which address you stay in Russia. You need it together with your passport, visa and migration card.'],['Who does it?','Not you. The host does: the university if you live in a dorm, the owner if you rent a flat.'],['When?','Within 7 working days after you arrive or move to a new address.'],['Why is it hard to rent?','Many owners do not want to file papers for a foreign tenant. Without registration you risk a fine and problems with your visa.']],
+fr:[['Qu’est-ce que c’est ?','L’enregistrement migratoire est un document indiquant à quelle adresse vous séjournez en Russie. Il accompagne votre passeport, votre visa et votre carte migratoire.'],['Qui le fait ?','Pas vous. C’est l’hôte : l’université si vous êtes en résidence, le propriétaire si vous louez.'],['Quand ?','Dans les 7 jours ouvrables après votre arrivée ou votre déménagement.'],['Pourquoi est-ce difficile de louer ?','Beaucoup de propriétaires ne veulent pas faire les démarches pour un locataire étranger. Sans enregistrement, vous risquez une amende et des problèmes de visa.']],
+ru:[['Что это?','Миграционный учёт — документ о том, по какому адресу вы находитесь в России. Нужен вместе с паспортом, визой и миграционной картой.'],['Кто оформляет?','Не вы, а принимающая сторона: вуз, если вы в общежитии, или хозяин квартиры, если снимаете.'],['Когда?','В течение 7 рабочих дней после приезда или переезда на новый адрес.'],['Почему трудно снять?','Многие хозяева не хотят оформлять документы на иностранца. Без регистрации — штраф и проблемы с визой.']]},
+trEyebrow:{en:'Getting around',fr:'Se déplacer',ru:'Как ездить'},
+trTitle:{en:'Eight trams. Five of them stop at your campus.',fr:'Huit trams. Cinq s’arrêtent à votre campus.',ru:'Восемь трамваев. Пять идут к вашему корпусу.'},
+trLead:{en:'The tram is the cheapest way to cross the city: about 35 ₽ a ride, pay by card to the conductor. Your stop is Universam (Универсам).',fr:'Le tram est le moyen le moins cher de traverser la ville : environ 35 ₽ le trajet, paiement par carte au contrôleur. Votre arrêt est Universam (Универсам).',ru:'Трамвай — самый дешёвый способ ездить по городу: около 35 ₽ за поездку, оплата картой кондуктору. Ваша остановка — «Универсам».'},
+thNo:{en:'No.',fr:'N°',ru:'№'},thRoute:{en:'Route',fr:'Trajet',ru:'Маршрут'},thCampus:{en:'To the campus?',fr:'Vers le campus ?',ru:'К корпусу?'},
+yes:{en:'Yes, stop Universam',fr:'Oui, arrêt Universam',ru:'Да, ост. «Универсам»'},no:{en:'No',fr:'Non',ru:'Нет'},
+hoEyebrow:{en:'Calendar',fr:'Calendrier',ru:'Календарь'},
+hoTitle:{en:'What Russia celebrates next',fr:'Ce que la Russie fête bientôt',ru:'Какие праздники скоро'},
+hoLead:{en:'On public holidays the institute, banks and offices are closed. Shops and trams work.',fr:'Les jours fériés, l’institut, les banques et les administrations sont fermés. Les magasins et les trams fonctionnent.',ru:'В праздничные дни институт, банки и учреждения закрыты. Магазины и трамваи работают.'},
+inDays:{en:'days',fr:'jours',ru:'дн.'},today:{en:'today',fr:'aujourd’hui',ru:'сегодня'},dayOff:{en:'Day off',fr:'Jour férié',ru:'Выходной'},
+fiEyebrow:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
+fiTitle:{en:'Your first week, in order',fr:'Votre première semaine, dans l’ordre',ru:'Первая неделя по порядку'},
+fiLead:{en:'Stuck on something? Write to us. We answer in English, French, Arabic and Russian.',fr:'Un souci ? Écrivez-nous. Nous répondons en français, anglais, arabe et russe.',ru:'Что-то непонятно? Напишите нам. Отвечаем на английском, французском, арабском и русском.'},
+askTg:{en:'Write on Telegram',fr:'Écrire sur Telegram',ru:'Написать в Telegram'},
+fi:{en:[['Keep your migration card.','You get it at the border. Without it nobody can register you.'],['Get registered.','Give your passport and migration card to the dorm office or to your landlord in the first days.'],['Buy a SIM card.','Beeline, MTS or MegaFon, with your passport. There is a Beeline shop by the Universam tram stop.'],['Open a bank card.','Foreign Visa and Mastercard do not work in Russia. Open a Mir card at Sberbank next to the campus.'],['Install the apps.','Yandex Maps and 2GIS for routes, Yandex Go for taxis, Yandex Translate with the camera for signs.'],['Learn your stop.','Universam (Универсам). Trams 2, 4, 6, 7 and 8.']],
+fr:[['Gardez votre carte migratoire.','Vous la recevez à la frontière. Sans elle, personne ne peut vous enregistrer.'],['Faites-vous enregistrer.','Remettez passeport et carte migratoire à la résidence ou à votre propriétaire dès les premiers jours.'],['Achetez une carte SIM.','Beeline, MTS ou MegaFon, avec votre passeport. Une boutique Beeline se trouve près de l’arrêt Universam.'],['Ouvrez une carte bancaire.','Les cartes Visa et Mastercard étrangères ne fonctionnent pas en Russie. Ouvrez une carte Mir à la Sberbank près du campus.'],['Installez les applications.','Yandex Maps et 2GIS pour les trajets, Yandex Go pour le taxi, Yandex Translate avec la caméra pour les panneaux.'],['Retenez votre arrêt.','Universam (Универсам). Trams 2, 4, 6, 7 et 8.']],
+ru:[['Сохраните миграционную карту.','Её дают на границе. Без неё вас не зарегистрируют.'],['Оформите регистрацию.','В первые дни отдайте паспорт и миграционную карту в общежитие или хозяину квартиры.'],['Купите SIM-карту.','Билайн, МТС или МегаФон, по паспорту. Салон Билайн — у остановки «Универсам».'],['Оформите банковскую карту.','Иностранные Visa и Mastercard в России не работают. Карту «Мир» можно открыть в Сбербанке рядом с корпусом.'],['Установите приложения.','Яндекс Карты и 2ГИС — маршруты, Яндекс Go — такси, Яндекс Переводчик с камерой — вывески.'],['Запомните остановку.','«Универсам». Трамваи 2, 4, 6, 7 и 8.']]},
+foot:{en:'Independent student guide. Not an official page of the institute.',fr:'Guide étudiant indépendant. Page non officielle de l’institut.',ru:'Независимый гид для студентов. Не официальная страница института.'}
+};
+const HOL = [
+ {m:1,d:1,off:1,n:{en:'New Year',fr:'Nouvel An',ru:'Новый год'},t:{en:'The biggest holiday of the year. Days off from 1 to 8 January, fireworks at midnight, a tree on Lenin Square.',fr:'La plus grande fête de l’année. Congés du 1er au 8 janvier, feux d’artifice à minuit, sapin place Lénine.',ru:'Главный праздник года. Выходные с 1 по 8 января, салют в полночь, ёлка на площади Ленина.'}},
+ {m:1,d:7,off:1,n:{en:'Orthodox Christmas',fr:'Noël orthodoxe',ru:'Рождество'},t:{en:'Celebrated on 7 January by the Orthodox calendar.',fr:'Célébré le 7 janvier selon le calendrier orthodoxe.',ru:'Отмечают 7 января по православному календарю.'}},
+ {m:1,d:25,n:{en:'Students’ Day',fr:'Journée des étudiants',ru:'День студента'},t:{en:'Tatiana’s Day. The end of winter exams, parties and student discounts.',fr:'La Sainte-Tatiana. Fin des examens d’hiver, fêtes et réductions étudiantes.',ru:'Татьянин день. Конец зимней сессии, вечеринки и скидки студентам.'}},
+ {m:2,d:23,off:1,n:{en:'Defender of the Fatherland Day',fr:'Jour du défenseur de la patrie',ru:'День защитника Отечества'},t:{en:'People congratulate men. Day off.',fr:'On félicite les hommes. Jour férié.',ru:'Поздравляют мужчин. Выходной.'}},
+ {m:3,d:8,off:1,n:{en:'International Women’s Day',fr:'Journée internationale des femmes',ru:'8 Марта'},t:{en:'Flowers for every woman you know: classmates, teachers, the dorm warden. Buy early.',fr:'Des fleurs pour toutes les femmes : camarades, professeures, gardienne. Achetez-les tôt.',ru:'Цветы всем знакомым женщинам: одногруппницам, преподавателям, коменданту. Покупайте заранее.'}},
+ {date:'2027-03-08',end:'2027-03-14',n:{en:'Maslenitsa',fr:'Maslenitsa',ru:'Масленица'},t:{en:'Pancake week before Lent. On Sunday a straw doll is burned in the park.',fr:'La semaine des crêpes avant le carême. Le dimanche, on brûle une poupée de paille au parc.',ru:'Блинная неделя перед постом. В воскресенье в парке сжигают чучело.'}},
+ {m:5,d:1,off:1,n:{en:'Spring and Labour Day',fr:'Fête du printemps et du travail',ru:'Праздник Весны и Труда'},t:{en:'Long May weekend. The city goes out to Mashuk for barbecue.',fr:'Long week-end de mai. Toute la ville part faire des grillades au Machouk.',ru:'Майские выходные. Весь город едет на шашлыки к Машуку.'}},
+ {m:5,d:9,off:1,n:{en:'Victory Day',fr:'Jour de la Victoire',ru:'День Победы'},t:{en:'Parade, the Eternal Flame, fireworks in the evening. Be respectful: this day is very important here.',fr:'Défilé, Flamme éternelle, feux d’artifice le soir. Soyez respectueux : ce jour est très important ici.',ru:'Парад, Вечный огонь, вечером салют. Очень важный день — относитесь с уважением.'}},
+ {m:6,d:12,off:1,n:{en:'Russia Day',fr:'Jour de la Russie',ru:'День России'},t:{en:'National day. Concerts in the centre.',fr:'Fête nationale. Concerts au centre-ville.',ru:'Государственный праздник. Концерты в центре.'}},
+ {m:9,d:1,n:{en:'Knowledge Day',fr:'Jour du savoir',ru:'День знаний'},t:{en:'The academic year starts. Flowers and a ceremony at the institute.',fr:'Début de l’année universitaire. Fleurs et cérémonie à l’institut.',ru:'Начало учебного года. Цветы и линейка в институте.'}},
+ {m:11,d:4,off:1,n:{en:'Unity Day',fr:'Jour de l’unité nationale',ru:'День народного единства'},t:{en:'Day off in early November.',fr:'Jour férié début novembre.',ru:'Выходной в начале ноября.'}}
+];
+
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+let L = 'en';
+try { L = localStorage.getItem('sg-lang') || ''; } catch(e){}
+if(!T.h1[L]) L = (navigator.language||'en').slice(0,2), L = T.h1[L] ? L : 'en';
+const tx = k => T[k] ? T[k][L] : k;
+const TR = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
+const lat = s => L==='ru' ? s : s.replace(/[а-яё]/gi, ch => { const lo = ch.toLowerCase(), r = TR[lo] ?? ch; return ch===lo ? r : r.charAt(0).toUpperCase()+r.slice(1); });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let MAP = null, O = [43.06,44.04,80000,110574];
+const toXY = ll => [(ll[0]-O[0])*O[2], (ll[1]-O[1])*O[3]];
+const walkMin = at => { const a = toXY(at), b = toXY(CITY.home); return Math.max(1, Math.round(Math.hypot(a[0]-b[0], a[1]-b[1])*1.3/78)); };
+const tgLink = msg => 'https://t.me/'+TG+'?text='+encodeURIComponent(msg);
+const yLink = at => 'https://yandex.com/maps/?pt='+at[0]+','+at[1]+'&z=17&l=map';
+
+/* ================= static sections ================= */
+let activeCat = 'all', sel = null, selRoute = null;
+function renderStatic(){
+  document.documentElement.lang = L;
+  document.querySelectorAll('[data-i]').forEach(e => e.textContent = tx(e.dataset.i));
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l===L));
+  $('#tgMain').href = tgLink('Hello! I am a student in Pyatigorsk and I have a question.');
+  // chips
+  $('#chips').innerHTML = `<button class="chip" data-c="all" aria-pressed="${activeCat==='all'}">${tx('all')}</button>` +
+    Object.entries(CITY.cats).map(([k,c]) => `<button class="chip" style="--c:${c.c}" data-c="${k}" aria-pressed="${activeCat===k}">${c[L]}</button>`).join('');
+  // flats
+  $('#flatGrid').innerHTML = CITY.places.filter(p => p.k==='flat').map(p => `<article class="flat">
+    <div><span class="tag" style="--c:var(--coral)">${tx('regOk')}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}</div>
+    <h3>${esc(L==='ru'?T.rooms.ru[p.rooms]+', '+p.ru:p.n)}</h3>
+    <div class="price">${p.price.toLocaleString('ru-RU')} ₽ <small>${tx('perMonth')}</small></div>
+    <ul><li>${T.rooms[L][p.rooms]} · ${walkMin(p.at)} ${tx('min')} ${tx('walk')}</li><li>${esc(p.d[L])}</li></ul>
+    <div class="acts"><a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the flat: '+p.n)}">${tx('askFlat')}</a><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div>
+  </article>`).join('');
+  $('#rgQa').innerHTML = T.rg[L].map(q => `<div><dt>${q[0]}</dt><dd>${q[1]}</dd></div>`).join('');
+  $('#check').innerHTML = T.fi[L].map(q => `<li><b>${q[0]}</b> ${q[1]}</li>`).join('');
+  // holidays
+  const now = new Date(); now.setHours(0,0,0,0);
+  const up = HOL.map(h => { let d;
+      if(h.date){ d = new Date(h.date+'T00:00'); if(new Date((h.end||h.date)+'T00:00') < now) return null; }
+      else { d = new Date(now.getFullYear(), h.m-1, h.d); if(d < now) d = new Date(now.getFullYear()+1, h.m-1, h.d); }
+      return {h, d, n: Math.max(0, Math.round((d-now)/864e5))}; }).filter(Boolean).sort((a,b) => a.d-b.d).slice(0,6);
+  const fmt = new Intl.DateTimeFormat(L==='en'?'en-GB':L, {day:'numeric', month:'long', year:'numeric'});
+  $('#days').innerHTML = up.map(u => `<div class="day"><div class="in">${u.n===0?tx('today'):u.n+`<small>${tx('inDays')}</small>`}</div>
+    <div class="when">${fmt.format(u.d)}${u.h.off?' · '+tx('dayOff'):''}</div><b>${u.h.n[L]}</b><p>${u.h.t[L]}</p></div>`).join('');
+  renderTramTable(); renderCard(); if(window.pinsRelabel) pinsRelabel();
+}
+function renderTramTable(){
+  if(!MAP){ $('#tramTable').innerHTML = ''; return; }
+  $('#tramTable').innerHTML = `<tr><th>${tx('thNo')}</th><th>${tx('thRoute')}</th><th>${tx('thCampus')}</th><th></th></tr>` +
+    Object.entries(MAP.tram).map(([r,t]) => { const ok = t.stops.includes(CITY.campusStop);
+      return `<tr><td><span class="no" style="--c:${CITY.tramColors[r]}">${r}</span></td><td>${esc(lat(cap(t.from)))} → ${esc(lat(cap(t.to)))}<div class="dim">${t.stops.length} ${tx('stopsN')}</div></td>
+      <td>${ok?`<span class="yes">${tx('yes')}</span>`:`<span class="dim">${tx('no')}</span>`}</td><td><button data-route="${r}">${tx('showMap')}</button></td></tr>`; }).join('');
+}
+const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+function renderCard(){
+  const c = $('#card');
+  if(activeCat==='tram' && !sel){
+    let h = `<button class="x" aria-label="Close">×</button><h2>${tx('tramTitle')}</h2><div class="routes">` +
+      (MAP ? Object.keys(MAP.tram).map(r => `<button style="--c:${CITY.tramColors[r]}" data-route="${r}" aria-pressed="${selRoute===r}">${r}</button>`).join('') : '') + `</div>`;
+    if(selRoute && MAP){ const t = MAP.tram[selRoute], ok = t.stops.includes(CITY.campusStop);
+      h += `<p><b>${esc(lat(cap(t.from)))} → ${esc(lat(cap(t.to)))}</b></p><div class="verdict ${ok?'':'no'}">${tx(ok?'passes':'notPasses')}</div>
+      <ul class="stops" style="--c:${CITY.tramColors[selRoute]}">${t.stops.map(s => `<li class="${s===CITY.campusStop?'me':''}">${esc(lat(s))}${L!=='ru'?' · '+esc(s):''}</li>`).join('')}</ul>`;
+    } else h += `<p>${tx('tramPick')}</p>`;
+    c.innerHTML = h; c.hidden = false; $('#stage').classList.add('busy'); return;
+  }
+  if(!sel){ c.hidden = true; $('#stage').classList.toggle('busy', activeCat!=='all' || !MAP); return; }
+  const p = sel, cat = CITY.cats[p.k];
+  c.innerHTML = `<button class="x" aria-label="Close">×</button>
+    <span class="tag" style="--c:${cat.c}">${cat[L]}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}
+    <h2>${esc(L==='ru' && p.k!=='flat' ? p.ru.split(' · ')[0] : p.n)}</h2><div class="ru">${esc(p.ru)}</div>
+    ${p.price?`<div class="facts"><div><b>${p.price.toLocaleString('ru-RU')} ₽</b>${tx('perMonth')}</div><div><b>${T.rooms[L][p.rooms]}</b>${tx('regOk')}</div></div>`:''}
+    ${p.d?`<p>${esc(p.d[L])}</p>`:''}
+    ${p.k!=='dorm'?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
+    <div class="acts">${p.k==='flat'?`<a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the flat: '+p.n)}">${tx('askFlat')}</a>`:''}
+    <a class="btn" target="_blank" rel="noopener" href="${yLink(p.at)}">${tx('openMap')}</a></div>`;
+  c.hidden = false; $('#stage').classList.add('busy');
+}
+function setCat(k){ activeCat = k; sel = null; if(k!=='tram') setRoute(null, true); renderStatic(); if(window.pinsFilter) pinsFilter(); if(k!=='all' && window.fitCat) fitCat(k); }
+function setRoute(r, quiet){ selRoute = r; if(window.showRoute) showRoute(r); if(!quiet){ activeCat = 'tram'; sel = null; renderStatic(); if(window.pinsFilter) pinsFilter(); } }
+function select(p){ sel = p; if(p && activeCat!=='all' && activeCat!==p.k){ activeCat = 'all'; } renderStatic(); if(window.pinsFilter) pinsFilter(); if(p && window.flyTo) flyTo(p); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,a'); if(!t) return;
+  if(t.dataset.l){ L = t.dataset.l; try{ localStorage.setItem('sg-lang', L); }catch(e){} renderStatic(); }
+  else if(t.dataset.c) setCat(t.dataset.c);
+  else if(t.dataset.route){ setRoute(selRoute===t.dataset.route && t.closest('.routes') ? null : t.dataset.route); $('#stage').scrollIntoView({block:'start'}); }
+  else if(t.dataset.go){ select(CITY.places.find(p => p.id===t.dataset.go)); $('#stage').scrollIntoView({block:'start'}); }
+  else if(t.classList.contains('x')){ if(sel) { sel = null; renderStatic(); pinsFilter && pinsFilter(); } else setCat('all'); }
+});
+renderStatic();
+
+/* ================= 3D city ================= */
+(async function(){
+  const stage = $('#stage'), canvas = $('#gl');
+  let data;
+  try { data = await (await fetch(CITY.map)).json(); } catch(e){ $('#loading').textContent = 'Map data did not load'; return; }
+  MAP = data; O = data.o; renderStatic();
+  if(!window.THREE){ $('#loading').textContent = '3D is not available in this browser'; return; }
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'}); }
+  catch(e){ $('#loading').textContent = '3D is not available in this browser'; return; }
+  const FOG = 0x0e1622, VE = 1.5, BASE = 500;
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(FOG); scene.fog = new THREE.Fog(FOG, 7000, 26000);
+  const cam = new THREE.PerspectiveCamera(38, 1, 20, 60000);
+  scene.add(new THREE.HemisphereLight(0xc6d8ff, 0x0a0f18, .95));
+  const sun = new THREE.DirectionalLight(0xffdcae, .95); sun.position.set(-6000, 3500, 2500); scene.add(sun);
+
+  const D = data.dem;
+  function hAt(x, y){
+    let gx = (x-D.x0)/D.st, gy = (y-D.y0)/D.st;
+    gx = Math.min(Math.max(gx,0), D.w-1.001); gy = Math.min(Math.max(gy,0), D.h-1.001);
+    const i = gx|0, j = gy|0, fx = gx-i, fy = gy-j, d = D.d, k = j*D.w+i;
+    return ((d[k]*(1-fx)+d[k+1]*fx)*(1-fy) + (d[k+D.w]*(1-fx)+d[k+D.w+1]*fx)*fy - BASE)*VE;
+  }
+  const dec = (a, s, o=0) => { const p = []; let x = 0, y = 0; for(let i=o;i<a.length;i+=2){ x += a[i]; y += a[i+1]; p.push([x/s, y/s]); } return p; };
+  const mix = (a,b,t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+  const fogC = [0x0e/255,0x16/255,0x22/255];
+
+  // terrain
+  { const pos = new Float32Array(D.w*D.h*3), col = new Float32Array(D.w*D.h*3), idx = [];
+    const lo=[.085,.125,.185], mid=[.11,.26,.22], hi=[.36,.46,.38];
+    for(let j=0;j<D.h;j++) for(let i=0;i<D.w;i++){ const k=j*D.w+i, e=D.d[k];
+      pos[k*3]=D.x0+i*D.st; pos[k*3+1]=(e-BASE)*VE; pos[k*3+2]=-(D.y0+j*D.st);
+      let c = e<560 ? lo : e<900 ? mix(lo,mid,Math.min(1,(e-560)/160)) : mix(mid,hi,Math.min(1,(e-900)/450));
+      const edge = Math.min(i,j,D.w-1-i,D.h-1-j)/14; if(edge<1) c = mix(fogC,c,Math.max(0,edge));
+      col.set(c,k*3); }
+    for(let j=0;j<D.h-1;j++) for(let i=0;i<D.w-1;i++){ const a=j*D.w+i; idx.push(a,a+1,a+D.w, a+1,a+D.w+1,a+D.w); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3)); g.setAttribute('color', new THREE.BufferAttribute(col,3)); g.setIndex(idx); g.computeVertexNormals();
+    scene.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({vertexColors:true}))); }
+
+  // extruded prisms (buildings)
+  function prisms(list, colorFn, mat){
+    let nv = 0; for(const b of list) { const n = b.p.length; nv += n*6 + (n-2)*3; }
+    const pos = new Float32Array(nv*3), nor = new Float32Array(nv*3), col = new Uint8Array(nv*3); let o = 0;
+    const put = (x,y,z,nx,ny,nz,c) => { pos[o]=x;pos[o+1]=y;pos[o+2]=z; nor[o]=nx;nor[o+1]=ny;nor[o+2]=nz; col[o]=c[0];col[o+1]=c[1];col[o+2]=c[2]; o+=3; };
+    for(const b of list){ const p = b.p, n = p.length; let a2 = 0, cx = 0, cy = 0, base = 1e9;
+      for(let i=0;i<n;i++){ const q=p[(i+1)%n]; a2 += p[i][0]*q[1]-q[0]*p[i][1]; cx+=p[i][0]; cy+=p[i][1]; base=Math.min(base,hAt(p[i][0],p[i][1])); }
+      if(a2<0) p.reverse(); cx/=n; cy/=n;
+      const top = hAt(cx,cy) + b.h*1.35, [cw, cr] = colorFn(b); base -= 2;
+      for(let i=0;i<n;i++){ const a=p[i], q=p[(i+1)%n], dx=q[0]-a[0], dy=q[1]-a[1], l=Math.hypot(dx,dy)||1, nx=dy/l, nz=dx/l;
+        put(a[0],base,-a[1],nx,0,nz,cw); put(q[0],base,-q[1],nx,0,nz,cw); put(q[0],top,-q[1],nx,0,nz,cw);
+        put(a[0],base,-a[1],nx,0,nz,cw); put(q[0],top,-q[1],nx,0,nz,cw); put(a[0],top,-a[1],nx,0,nz,cw); }
+      const tri = n===3 ? [[0,1,2]] : THREE.ShapeUtils.triangulateShape(p.map(v => new THREE.Vector2(v[0],v[1])), []);
+      for(const t of tri) for(const k of t) put(p[k][0],top,-p[k][1],0,1,0,cr);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos.subarray(0,o),3)); g.setAttribute('normal', new THREE.BufferAttribute(nor.subarray(0,o),3)); g.setAttribute('color', new THREE.BufferAttribute(col.subarray(0,o),3,true));
+    return new THREE.Mesh(g, mat);
+  }
+  { const list = data.b.map(b => ({h:b[0], p:dec(b,2,1)})).filter(b => b.p.length>=3);
+    let s = 7;
+    scene.add(prisms(list, b => { s = (s*16807)%2147483647; const v = .82 + (s%100)/100*.3, t = Math.min(1,b.h/40);
+      return [[58*v+30*t, 74*v+34*t, 100*v+40*t], [78*v+40*t, 98*v+44*t, 128*v+50*t]]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
+  // campus buildings glow
+  const beams = [];
+  for(const [id, b] of Object.entries(data.hl)){
+    const p = dec(b.p,2), isMain = id==='main';
+    const m = prisms([{h:b.h, p}], () => isMain ? [[255,170,60],[255,200,110]] : [[255,205,140],[255,226,180]], new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.DoubleSide, fog:false}));
+    scene.add(m);
+    let cx=0, cy=0; for(const v of p){ cx+=v[0]; cy+=v[1]; } cx/=p.length; cy/=p.length;
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 700, 8, 1, true), new THREE.MeshBasicMaterial({color:0xffb347, transparent:true, opacity:.22, depthWrite:false, side:THREE.DoubleSide, fog:false}));
+    beam.position.set(cx, hAt(cx,cy)+350, -cy); scene.add(beam); beams.push(beam);
+  }
+
+  // ribbons and lines draped on the terrain
+  function densify(p, step){ const o = [p[0]]; for(let i=1;i<p.length;i++){ const a=p[i-1], b=p[i], l=Math.hypot(b[0]-a[0],b[1]-a[1]), n=Math.max(1,Math.ceil(l/step)); for(let k=1;k<=n;k++) o.push([a[0]+(b[0]-a[0])*k/n, a[1]+(b[1]-a[1])*k/n]); } return o; }
+  function ribbon(lines, w, lift, mat){ const pos = [];
+    for(const raw of lines){ const p = densify(raw, 60); if(p.length<2) continue; let L0, R0;
+      for(let i=0;i<p.length;i++){ const a=p[Math.max(0,i-1)], b=p[Math.min(p.length-1,i+1)]; let dx=b[0]-a[0], dy=b[1]-a[1]; const l=Math.hypot(dx,dy)||1; dx/=l; dy/=l;
+        const y = hAt(p[i][0],p[i][1])+lift, Lp=[p[i][0]-dy*w/2, y, -(p[i][1]+dx*w/2)], Rp=[p[i][0]+dy*w/2, y, -(p[i][1]-dx*w/2)];
+        if(i) pos.push(...L0,...R0,...Rp, ...L0,...Rp,...Lp); L0=Lp; R0=Rp; } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); return new THREE.Mesh(g, mat); }
+  function thin(lines, lift, color){ const pos = [];
+    for(const raw of lines){ const p = densify(raw, 80); for(let i=1;i<p.length;i++) pos.push(p[i-1][0],hAt(p[i-1][0],p[i-1][1])+lift,-p[i-1][1], p[i][0],hAt(p[i][0],p[i][1])+lift,-p[i][1]); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); return new THREE.LineSegments(g, new THREE.LineBasicMaterial({color})); }
+  const flat = c => new THREE.MeshBasicMaterial({color:c, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2});
+  scene.add(thin(data.roads.c.map(a => dec(a,1)), 1.2, 0x33435a));
+  scene.add(ribbon(data.roads.b.map(a => dec(a,1)), 9, 1.4, flat(0x4b5d78)));
+  scene.add(ribbon(data.roads.a.map(a => dec(a,1)), 14, 1.6, flat(0x7186a6)));
+  scene.add(thin(data.rail.map(a => dec(a,1)), 2, 0x8d98aa));
+  const allTram = []; const seen = new Set();
+  for(const t of Object.values(data.tram)) for(const l of t.l){ const key = l.slice(0,6).join(); if(!seen.has(key)){ seen.add(key); allTram.push(dec(l,1)); } }
+  scene.add(ribbon(allTram, 5, 2.2, flat(0x8f7fd6)));
+  // parks and water
+  function areas(list, color, lift){ const pos = [];
+    for(const a of list){ const p = dec(a,1); if(p.length<3) continue; let ar=0; for(let i=0;i<p.length;i++){ const q=p[(i+1)%p.length]; ar+=p[i][0]*q[1]-q[0]*p[i][1]; }
+      if(Math.abs(ar)/2 > 160000) continue; if(ar<0) p.reverse();
+      for(const t of THREE.ShapeUtils.triangulateShape(p.map(v => new THREE.Vector2(v[0],v[1])), [])) for(const k of t) pos.push(p[k][0], hAt(p[k][0],p[k][1])+lift, -p[k][1]); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); scene.add(new THREE.Mesh(g, flat(color))); }
+  areas(data.parks, 0x1d4a3a, .6); areas(data.water, 0x2a78b8, .8);
+
+  // selected tram route
+  let routeMesh = null;
+  window.showRoute = r => { if(routeMesh){ scene.remove(routeMesh); routeMesh.geometry.dispose(); routeMesh = null; }
+    if(!r) return; const lines = data.tram[r].l.map(a => dec(a,1));
+    routeMesh = ribbon(lines, 42, 6, new THREE.MeshBasicMaterial({color:CITY.tramColors[r], side:THREE.DoubleSide, fog:false, polygonOffset:true, polygonOffsetFactor:-4, polygonOffsetUnits:-4})); scene.add(routeMesh);
+    let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; for(const l of lines) for(const p of l){ x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]); }
+    fly((x0+x1)/2, (y0+y1)/2, Math.max(x1-x0, y1-y0)*.95+2200); };
+
+  // camera and controls
+  const ctl = new THREE.OrbitControls(cam, canvas);
+  ctl.enableDamping = true; ctl.dampingFactor = .09; ctl.screenSpacePanning = false; ctl.minDistance = 350; ctl.maxDistance = 19000; ctl.maxPolarAngle = Math.PI*.455; ctl.zoomSpeed = .8; ctl.enableZoom = false;
+  ctl.mouseButtons = {LEFT:THREE.MOUSE.PAN, MIDDLE:THREE.MOUSE.DOLLY, RIGHT:THREE.MOUSE.ROTATE};
+  ctl.touches = {ONE:THREE.TOUCH.PAN, TWO:THREE.TOUCH.DOLLY_ROTATE};
+  canvas.addEventListener('pointerdown', () => { ctl.enableZoom = true; anim = null; });
+  canvas.addEventListener('pointerleave', e => { if(e.pointerType==='mouse') ctl.enableZoom = false; });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+  const HOME_T = new THREE.Vector3(500, hAt(500,900), -900), HOME_P = new THREE.Vector3(-2400, 3300, 5200);
+  ctl.target.copy(HOME_T);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let anim = null;
+  function tween(toT, toP, ms){ if(reduce){ ctl.target.copy(toT); cam.position.copy(toP); return; } anim = {t0:performance.now(), ms, fT:ctl.target.clone(), fP:cam.position.clone(), toT, toP}; }
+  function fly(x, y, dist){ const t = new THREE.Vector3(x, hAt(x,y), -y), dir = cam.position.clone().sub(ctl.target).normalize(); if(dir.y<.45){ dir.y=.45; dir.normalize(); } tween(t, t.clone().add(dir.multiplyScalar(dist)), 1300); }
+  window.flyTo = p => { const a = toXY(p.at); fly(a[0], a[1], 1300); };
+  window.fitCat = k => { if(k==='tram') return; const ps = CITY.places.filter(p => p.k===k).map(p => toXY(p.at)); if(!ps.length) return;
+    const xs = ps.map(p=>p[0]), ys = ps.map(p=>p[1]), x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys);
+    fly((x0+x1)/2, (y0+y1)/2, Math.max(x1-x0, y1-y0)*1.5+1500); };
+  if(reduce) cam.position.copy(HOME_P); else { cam.position.set(-9000, 9500, 16000); tween(HOME_T.clone(), HOME_P.clone(), 3200); }
+  const zoomBy = f => { anim = null; cam.position.sub(ctl.target).multiplyScalar(f).add(ctl.target); };
+  const spin = a => { anim = null; const o = cam.position.clone().sub(ctl.target); o.applyAxisAngle(new THREE.Vector3(0,1,0), a); cam.position.copy(ctl.target).add(o); };
+  $('#zin').onclick = () => zoomBy(.7); $('#zout').onclick = () => zoomBy(1.4); $('#rl').onclick = () => spin(-.5); $('#rr').onclick = () => spin(.5);
+  $('#home').onclick = () => tween(HOME_T.clone(), HOME_P.clone(), 1200);
+
+  // pins
+  const pinsEl = $('#pins'), pins = [];
+  for(const p of CITY.places){ const a = toXY(p.at), el = document.createElement('button');
+    el.className = 'pin' + (p.big?' big left':''); el.style.setProperty('--c', CITY.cats[p.k].c); el.innerHTML = '<i></i><span></span>';
+    el.onclick = () => select(p); pinsEl.appendChild(el);
+    pins.push({p, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1]) + (p.hl ? data.hl[p.hl].h*1.35+20 : 30), -a[1])}); }
+  for(const p of CITY.peaks){ const a = toXY(p.at), el = document.createElement('div'); el.className = 'pin peak'; el.innerHTML = '<i></i><span>'+p.n+'</span>'; pinsEl.appendChild(el);
+    pins.push({p:{k:'peak'}, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+90, -a[1])}); }
+  window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = (L==='ru' && q.p.k!=='flat') ? q.p.ru.split(' · ')[0] : q.p.n; };
+  window.pinsFilter = () => { for(const q of pins){ const on = q.p.k==='peak' || activeCat==='all' || q.p.k===activeCat || (activeCat==='tram' && q.p.k==='dorm') || q.p===sel;
+      q.hide = !on; q.el.classList.toggle('on', q.p===sel); q.el.classList.toggle('show', activeCat!=='all' && q.p.k===activeCat); } };
+  pinsRelabel(); pinsFilter();
+
+  let W = 0, H = 0;
+  function size(){ W = stage.clientWidth; H = stage.clientHeight; renderer.setSize(W, H, false); cam.aspect = W/H; cam.updateProjectionMatrix(); }
+  size(); addEventListener('resize', size);
+  let visible = true; new IntersectionObserver(e => visible = e[0].isIntersecting).observe(stage);
+  const v = new THREE.Vector3();
+  $('#loading').hidden = true; renderCard();
+  (function frame(now){ requestAnimationFrame(frame); if(!visible) return;
+    if(anim){ let k = Math.min(1,(now-anim.t0)/anim.ms); k = k<.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2; ctl.target.lerpVectors(anim.fT, anim.toT, k); cam.position.lerpVectors(anim.fP, anim.toP, k); if(k>=1) anim = null; }
+    ctl.target.x = Math.min(8000, Math.max(-8000, ctl.target.x)); ctl.target.z = Math.min(6500, Math.max(-9000, ctl.target.z));
+    ctl.update();
+    const floor = hAt(cam.position.x, -cam.position.z) + 60; if(cam.position.y < floor) cam.position.y = floor;
+    const pulse = .16 + .08*Math.sin(now/700); for(const b of beams) b.material.opacity = pulse;
+    renderer.render(scene, cam);
+    pinsEl.classList.toggle('near', cam.position.distanceTo(ctl.target) < 2600);
+    for(const q of pins){ v.copy(q.v).project(cam); const out = q.hide || v.z>1 || v.x<-1.05 || v.x>1.05 || v.y<-1.05 || v.y>1.05;
+      if(out){ if(!q.off){ q.el.style.display = 'none'; q.off = true; } continue; }
+      if(q.off){ q.el.style.display = ''; q.off = false; }
+      q.el.style.transform = `translate3d(${((v.x+1)/2*W-6).toFixed(1)}px,${((1-v.y)/2*H-6).toFixed(1)}px,0)` + (q.p.big ? ' translateX(calc(-100% + 15px))' : ''); q.el.style.zIndex = q.p===sel ? 9 : q.p.big ? 5 : 1; }
+  })(performance.now());
+})();
+</script>
