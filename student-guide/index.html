@@ -258,6 +258,8 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 [data-v=r] .pin i{width:14px;height:14px;box-shadow:0 0 0 2.5px #fff,0 1px 6px 3px rgba(0,0,0,.25),0 0 14px 3px var(--c)}
 [data-v=r] .pin.big i{width:17px;height:17px}
 [data-v=r] .pin span{background:rgba(255,255,255,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:0;border-radius:999px;padding:5px 9px;font:600 12px/1 var(--body);color:#1d1d1f;box-shadow:0 1px 6px rgba(0,0,0,.15)}
+.pin.h24 i{position:relative}
+.pin.h24 i::after{content:"24";position:absolute;left:8px;top:-11px;background:#1d1d1f;color:#fff;font:800 9px/1 -apple-system,"Inter",Arial,sans-serif;padding:2.5px 4px;border-radius:6px;box-shadow:0 0 0 1.5px #fff}
 [data-v=r] .pin.hot i{width:19px;height:19px;box-shadow:0 0 0 3px #fff,0 0 20px 7px var(--c)}
 [data-v=r] .pin.hot span{font-size:13.5px;font-weight:700;padding:6px 11px}
 [data-v=r] .pin.on i{box-shadow:0 0 0 3px #fff,0 0 22px 8px var(--c)}
@@ -494,6 +496,7 @@ const CITY = {
     food:{c:'#ffcc00', en:'Food', fr:'Manger', ru:'Еда'},
     med:{c:'#e6007e', en:'Hospitals', fr:'Hôpitaux', ru:'Больницы'},
     police:{c:'#5856d6', en:'Police', fr:'Police', ru:'Полиция'},
+    pharm:{c:'#30b94d', en:'Pharmacies', fr:'Pharmacies', ru:'Аптеки'},
     bank:{c:'#0a7d74', en:'Banks & ATMs', fr:'Banques et DAB', ru:'Банки и банкоматы'},
     need:{c:'#00c7be', en:'Shops & services', fr:'Magasins et services', ru:'Магазины и услуги'},
     go:{c:'#1d1d1f', en:'Stations', fr:'Gares', ru:'Вокзалы'},
@@ -507,7 +510,7 @@ const CITY = {
     tram:{c:'#af52de', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
     go:{c:'#34c759', cats:['see','hike','spring','coffee','food','study'], en:'Places to go', fr:'Sorties', ru:'Куда сходить'},
     st:{c:'#1d1d1f', cats:['go'], en:'Stations', fr:'Gares', ru:'Вокзалы'},
-    need:{c:'#00c7be', cats:['med','police','bank','need'], en:'Help & services', fr:'Aide et services', ru:'Помощь и услуги'}
+    need:{c:'#00c7be', cats:['med','pharm','police','bank','need'], en:'Help & services', fr:'Aide et services', ru:'Помощь и услуги'}
   },
   places: [
     {k:'campus',id:'main',hl:'main',big:1,n:'PMFI Building No. 1 (main)',fr:'PMFI, bâtiment n° 1 (principal)',ru:'ПМФИ, корпус № 1 (главный) · пр. Калинина, 11',at:[43.06638,44.0533],
@@ -549,8 +552,7 @@ const CITY = {
     {k:'need',n:'Magnit supermarket',fr:'Supermarché Magnit',ru:'Магнит',at:[43.0661,44.0511],d:{en:'Nearest supermarket to the dorms.',fr:'Supermarché le plus proche des résidences.',ru:'Ближайший к общежитиям супермаркет.'}},
     {k:'need',n:'Pyaterochka supermarket',fr:'Supermarché Piatiorotchka',ru:'Пятёрочка',at:[43.0641,44.0496]},
     {k:'need',n:'Universiti mall',fr:'Centre commercial Universiti',ru:'ТЦ «Университи»',at:[43.0639,44.0541],d:{en:'Small mall by the tram stop. Pharmacy, Sberbank and a Beeline SIM shop are next door.',fr:'Petit centre commercial près du tram. Pharmacie, Sberbank et boutique Beeline à côté.',ru:'Небольшой ТЦ у остановки. Рядом аптека, Сбербанк и салон Билайн.'}},
-    {k:'need',n:'Pharmacy Vita-Plus',fr:'Pharmacie Vita-Plus',ru:'Аптека «Вита-Плюс»',at:[43.0636,44.0543]},
-    {k:'bank',n:'Sberbank branch',fr:'Agence Sberbank',ru:'Сбербанк, отделение',at:[43.06361,44.05464],d:{en:'Bank branch next to the campus: open an account and get a Mir card. Bring your passport and registration.',fr:'Agence à côté du campus : ouvrir un compte et obtenir une carte Mir. Apportez passeport et enregistrement.',ru:'Отделение рядом с корпусом: открыть счёт и получить карту «Мир». Нужны паспорт и регистрация.'}},
+        {k:'bank',n:'Sberbank branch',fr:'Agence Sberbank',ru:'Сбербанк, отделение',at:[43.06361,44.05464],d:{en:'Bank branch next to the campus: open an account and get a Mir card. Bring your passport and registration.',fr:'Agence à côté du campus : ouvrir un compte et obtenir une carte Mir. Apportez passeport et enregistrement.',ru:'Отделение рядом с корпусом: открыть счёт и получить карту «Мир». Нужны паспорт и регистрация.'}},
         {k:'need',n:'Upper Market',fr:'Marché Verkhni',ru:'Верхний рынок',at:[43.06855,44.04306],d:{en:'The big city market: fruit, vegetables, meat, spices, clothes.',fr:'Le grand marché : fruits, légumes, viande, épices, vêtements.',ru:'Главный рынок: фрукты, овощи, мясо, специи, одежда.'}},
     {k:'need',n:'Galereya mall',fr:'Centre commercial Galereya',ru:'ТРЦ «Галерея»',at:[43.0651,44.0355]},
     {k:'need',n:'MFC public services',fr:'MFC, services publics',ru:'МФЦ',at:[43.0434,44.0319],d:{en:'State services centre. Landlords can file your registration here.',fr:'Centre de services publics. Le propriétaire peut y déposer votre enregistrement.',ru:'Центр госуслуг. Здесь хозяин может подать документы на регистрацию.'}},
@@ -567,10 +569,19 @@ const CITY = {
     {k:'food',id:'ff3',n:'Rostic’s (ex-KFC)',fr:'Rostic’s (ex-KFC)',ru:'Rostic’s (бывший KFC)',at:[43.06498,44.03541],d:{en:'KFC in Russia is now called Rostic’s: the same fried chicken. In the centre, next to Burger King.',fr:'En Russie, KFC s’appelle maintenant Rostic’s : le même poulet frit. Au centre, à côté de Burger King.',ru:'KFC в России теперь называется Rostic’s — та же курица. В центре, рядом с «Бургер Кингом».'}},
     {k:'food',id:'ff4',n:'Burger King',fr:'Burger King',ru:'Бургер Кинг',at:[43.06539,44.03551]},
     {k:'food',id:'ff5',n:'Dodo Pizza',fr:'Dodo Pizza',ru:'Додо Пицца',at:[43.06743,44.03579]},
+    {k:'pharm',id:'ph1',h24:1,n:'Vita-Plus pharmacy, Ordzhonikidze St',fr:'Pharmacie Vita-Plus, rue Ordjonikidzé',ru:'Аптека «Вита-Плюс» · ул. Орджоникидзе, 11А',at:[43.06228, 44.0601],d:{en:'Open 24 hours, every day.',fr:'Ouverte 24 h sur 24, tous les jours.',ru:'Работает круглосуточно, каждый день.'}},
+    {k:'pharm',id:'ph2',h24:1,n:'Budte Zdorovy pharmacy',fr:'Pharmacie Boudte Zdorovy',ru:'Аптека «Будьте Здоровы»',at:[43.06415, 44.04578],d:{en:'Open 24 hours, every day.',fr:'Ouverte 24 h sur 24, tous les jours.',ru:'Работает круглосуточно, каждый день.'}},
+    {k:'pharm',id:'ph3',h24:1,n:'Zdorovye pharmacy',fr:'Pharmacie Zdorovié',ru:'Аптека «Здоровье»',at:[43.06373, 44.04554],d:{en:'Open 24 hours, every day.',fr:'Ouverte 24 h sur 24, tous les jours.',ru:'Работает круглосуточно, каждый день.'}},
+    {k:'pharm',id:'ph4',h24:1,n:'Vita-Plus pharmacy (north)',fr:'Pharmacie Vita-Plus (nord)',ru:'Аптека «Вита-Плюс» (север)',at:[43.06469, 44.0614],d:{en:'Open 24 hours, every day.',fr:'Ouverte 24 h sur 24, tous les jours.',ru:'Работает круглосуточно, каждый день.'}},
+    {k:'pharm',id:'ph5',h24:1,n:'Vita-Plus pharmacy, Kirov Ave',fr:'Pharmacie Vita-Plus, av. Kirov',ru:'Аптека «Вита-Плюс» · пр. Кирова, 54',at:[43.07103, 44.03633],d:{en:'Open 24 hours, every day.',fr:'Ouverte 24 h sur 24, tous les jours.',ru:'Работает круглосуточно, каждый день.'}},
+    {k:'pharm',id:'ph6',h24:1,n:'Kurortnaya pharmacy',fr:'Pharmacie Kourortnaïa',ru:'Курортная аптека',at:[43.07834, 44.03622],d:{en:'Open 24 hours, every day.',fr:'Ouverte 24 h sur 24, tous les jours.',ru:'Работает круглосуточно, каждый день.'}},
+    {k:'pharm',id:'ph7',h24:1,n:'Vita-Plus pharmacy, Ukrainskaya St',fr:'Pharmacie Vita-Plus, rue Oukraïnskaïa',ru:'Аптека «Вита-Плюс» · ул. Украинская, 60',at:[43.04062, 44.05309],d:{en:'Open 24 hours, every day.',fr:'Ouverte 24 h sur 24, tous les jours.',ru:'Работает круглосуточно, каждый день.'}},
+    {k:'pharm',id:'ph0',n:'Vita-Plus pharmacy by the tram stop',fr:'Pharmacie Vita-Plus près du tram',ru:'Аптека «Вита-Плюс» у остановки',at:[43.06361, 44.05433],d:{en:'The closest pharmacy to the main building. Open 08:00–22:00.',fr:'La pharmacie la plus proche du bâtiment principal. Ouverte de 8 h à 22 h.',ru:'Ближайшая аптека к главному корпусу. Работает с 08:00 до 22:00.'}},
+    {k:'need',id:'mk2',n:'Lower Market',fr:'Marché Nijni',ru:'Нижний рынок · ул. Крайнего, 47',at:[43.07169,44.03783],d:{en:'The second big market, in the old centre: fruit, vegetables, meat, clothes.',fr:'Le deuxième grand marché, dans le vieux centre : fruits, légumes, viande, vêtements.',ru:'Второй большой рынок, в старом центре: фрукты, овощи, мясо, одежда.'}},
     {k:'bank',id:'b1',n:'Sberbank ATM by the campus',fr:'DAB Sberbank près du campus',ru:'Банкомат Сбербанка у корпуса',at:[43.06618,44.05111],d:{en:'The nearest cash machine to the main building.',fr:'Le distributeur le plus proche du bâtiment principal.',ru:'Ближайший банкомат к главному корпусу.'}},
-    {k:'bank',id:'b2',n:'Sberbank ATM, 24/7',fr:'DAB Sberbank, 24 h/24',ru:'Банкомат Сбербанка, круглосуточно',at:[43.06337,44.06053]},
-    {k:'bank',id:'b3',n:'Sberbank ATM, 24/7 (centre)',fr:'DAB Sberbank, 24 h/24 (centre)',ru:'Банкомат Сбербанка, круглосуточно (центр)',at:[43.07345,44.04061]},
-    {k:'bank',id:'b4',n:'Sberbank ATM, 24/7 (Kirov Ave)',fr:'DAB Sberbank, 24 h/24 (av. Kirov)',ru:'Банкомат Сбербанка, круглосуточно (пр. Кирова)',at:[43.0621,44.03417]},
+    {k:'bank',id:'b2',h24:1,n:'Sberbank ATM, 24/7',fr:'DAB Sberbank, 24 h/24',ru:'Банкомат Сбербанка, круглосуточно',at:[43.06337,44.06053]},
+    {k:'bank',id:'b3',h24:1,n:'Sberbank ATM, 24/7 (centre)',fr:'DAB Sberbank, 24 h/24 (centre)',ru:'Банкомат Сбербанка, круглосуточно (центр)',at:[43.07345,44.04061]},
+    {k:'bank',id:'b4',h24:1,n:'Sberbank ATM, 24/7 (Kirov Ave)',fr:'DAB Sberbank, 24 h/24 (av. Kirov)',ru:'Банкомат Сбербанка, круглосуточно (пр. Кирова)',at:[43.0621,44.03417]},
     {k:'bank',id:'b5',n:'T-Bank ATM (ex-Tinkoff)',fr:'DAB T-Bank (ex-Tinkoff)',ru:'Банкомат Т-Банка (Тинькофф)',at:[43.03843,44.05278],d:{en:'T-Bank has no branches: the card is delivered to you by courier. This ATM works 08:00 to 23:00.',fr:'T-Bank n’a pas d’agences : la carte est livrée par coursier. Ce distributeur fonctionne de 8 h à 23 h.',ru:'У Т-Банка нет отделений: карту привозит курьер. Этот банкомат работает с 08:00 до 23:00.'}},
     {k:'go',id:'g1',big:1,n:'Central railway station',fr:'Gare centrale de Piatigorsk',ru:'Центральный ж/д вокзал',at:[43.0550,44.0378],d:{en:'Suburban trains to Mineralnye Vody (airport city), Yessentuki and Kislovodsk.',fr:'Trains de banlieue vers Mineralnye Vody (aéroport), Iessentouki et Kislovodsk.',ru:'Электрички в Минеральные Воды, Ессентуки и Кисловодск.'}},
     {k:'go',n:'Lermontovskaya train stop',fr:'Halte ferroviaire Lermontovskaïa',ru:'Платформа Лермонтовская',at:[43.0650,44.0630],d:{en:'Nearest suburban train stop to the campus.',fr:'Arrêt de train de banlieue le plus proche du campus.',ru:'Ближайшая к корпусу платформа электричек.'}},
@@ -620,6 +631,7 @@ swipe:{en:'Swipe to see more →',fr:'Glisse pour voir plus →',ru:'Листа�
 cPyat:{en:'Pyatigorsk',fr:'Piatigorsk',ru:'Пятигорск'},cNal:{en:'Nalchik',fr:'Naltchik',ru:'Нальчик'},cKra:{en:'Krasnodar',fr:'Krasnodar',ru:'Краснодар'},cRos:{en:'Rostov-on-Don',fr:'Rostov-sur-le-Don',ru:'Ростов-на-Дону'},
 loadSub:{en:'A guide for foreign students',fr:'Le guide des étudiants étrangers',ru:'Гид для иностранных студентов'},loadHi:{en:'Welcome to Russia',fr:'Bienvenue en Russie',ru:'Добро пожаловать в Россию'},
 sosBtn:{en:'Emergency',fr:'Urgences',ru:'Экстренно'},
+h24:{en:'Open 24 hours',fr:'Ouvert 24 h/24',ru:'Круглосуточно'},
 soon:{en:'soon',fr:'bientôt',ru:'скоро'},
 navFlats:{en:'Apartments',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Places',fr:'Sorties',ru:'Куда сходить'},navHol:{en:'Holidays',fr:'Jours fériés',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
 h1:{en:'Your new city.',fr:'Ta nouvelle ville.',ru:'Твой новый город.'},
@@ -831,6 +843,7 @@ function renderCard(){
     <span class="tag" style="--c:${cat.c}">${cat[L]}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}
     <h2>${esc(nm(p))}</h2><div class="ru">${esc(p.ru)}</div>
     ${p.price?`<div class="facts"><div><b>${p.price.toLocaleString('ru-RU')} ₽</b>${tx('perMonth')}</div><div><b>${T.rooms[L][p.rooms]}</b>${tx('regOk')}</div></div>`:''}
+    ${p.h24?`<span class="tag" style="--c:#1d1d1f">${tx('h24')}</span>`:''}
     ${dsc(p)?`<p>${esc(dsc(p))}</p>`:''}
     ${p.id!=='main' && walkMin(p.at)<=75?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
     <div class="acts">${p.k==='flat'?`<a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the apartment: '+p.n)}">${tx('askFlat')}</a>`:''}
@@ -1258,7 +1271,7 @@ scene('life','blob');
   // pins
   const pinsEl = $('#pins'), pins = [];
   for(const p of CITY.places){ const a = toXY(p.at), el = document.createElement('button');
-    el.className = 'pin' + (p.big?' big left':''); el.style.setProperty('--c', CITY.cats[p.k].c); el.innerHTML = '<i></i><span></span>';
+    el.className = 'pin' + (p.big?' big left':'') + (p.h24?' h24':''); el.style.setProperty('--c', CITY.cats[p.k].c); el.innerHTML = '<i></i><span></span>';
     el.onclick = () => select(p); pinsEl.appendChild(el);
     const gy = hAt(a[0],a[1]), col = new THREE.Color(CITY.cats[p.k].c), bm = new THREE.Group();
     const core = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 1, 8, 1, true), new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:.95, depthWrite:false, side:THREE.DoubleSide, fog:false}));
