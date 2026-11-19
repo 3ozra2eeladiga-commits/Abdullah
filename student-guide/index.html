@@ -853,6 +853,9 @@ document.addEventListener('click', e => {
   else if(t.classList.contains('x')){ if(sel) { sel = null; renderStatic(); pinsFilter && pinsFilter(); } else setCat('all'); }
 });
 renderStatic();
+// always open at the top (the map), never where the last visit was scrolled to
+try{ history.scrollRestoration = 'manual'; }catch(e){}
+scrollTo(0,0); addEventListener('load', () => scrollTo(0,0)); addEventListener('pageshow', () => scrollTo(0,0));
 // the page itself must never pinch-zoom (only the map zooms): iOS ignores the viewport flag in some apps
 { const vp = document.querySelectorAll('meta[name=viewport]'); vp.forEach(m => { if(!/maximum-scale/.test(m.content)) m.content += ',maximum-scale=1,user-scalable=no'; });
   document.addEventListener('contextmenu', e => e.preventDefault());   // no browser right-click menu anywhere on the page
@@ -1277,7 +1280,7 @@ scene('life','blob');
   let visible = true; new IntersectionObserver(e => visible = e[0].isIntersecting).observe(stage);
   const v = new THREE.Vector3();
   await tick(100); await new Promise(r => setTimeout(r, 1100));
-  $('#loading').classList.add('done'); setTimeout(() => { $('#loading').hidden = true; }, 1000); if(anim) anim.t0 = performance.now(); renderCard();
+  scrollTo(0,0); $('#loading').classList.add('done'); setTimeout(() => { $('#loading').hidden = true; }, 1000); if(anim) anim.t0 = performance.now(); renderCard();
   (function frame(now){ requestAnimationFrame(frame); if(!visible) return;
     if(anim && anim.orb){ let k = Math.min(1,(now-anim.t0)/anim.ms); const e = k*k*(3-2*k), ez = 1-Math.pow(1-k,2.4);
       ctl.target.copy(HOME_T); cam.position.copy(orbP(ORB0.az+(ORB1.az-ORB0.az)*e, ORB0.r*Math.pow(ORB1.r/ORB0.r, ez), ORB0.h+(ORB1.h-ORB0.h)*ez)); if(k>=1) anim = null; }
