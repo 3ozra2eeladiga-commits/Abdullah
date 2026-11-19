@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Pyatigorsk Student Guide</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
@@ -15,12 +15,15 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{scroll-behavior:smooth}
-body{background:var(--night);color:var(--fg);font:15px/1.55 var(--body);margin:0}
+body{touch-action:pan-x pan-y;background:var(--night);color:var(--fg);font:15px/1.55 var(--body);margin:0}
 a{color:inherit}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 
 /* ---------- map hero ---------- */
+.stage,.stage .pin,.stage .tools,.stage .headline{touch-action:none}
+.stage .card{touch-action:pan-y}
+.stage .chips{touch-action:pan-x}
 .stage{position:relative;height:min(88vh,860px);min-height:540px;overflow:hidden;background:var(--night)}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #gl:active{cursor:grabbing}
@@ -502,6 +505,11 @@ document.addEventListener('click', e => {
   else if(t.classList.contains('x')){ if(sel) { sel = null; renderStatic(); pinsFilter && pinsFilter(); } else setCat('all'); }
 });
 renderStatic();
+// the page itself must never pinch-zoom (only the map zooms): iOS ignores the viewport flag in some apps
+{ const vp = document.querySelectorAll('meta[name=viewport]'); vp.forEach(m => { if(!/maximum-scale/.test(m.content)) m.content += ',maximum-scale=1,user-scalable=no'; });
+  ['gesturestart','gesturechange','gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {passive:false}));
+  document.addEventListener('touchmove', e => { if(e.touches.length > 1) e.preventDefault(); }, {passive:false});
+  let lastTap = 0; document.addEventListener('touchend', e => { const n = Date.now(); if(n - lastTap < 320 && !e.target.closest('#gl')) e.preventDefault(); lastTap = n; }, {passive:false}); }
 
 /* ================= 3D city ================= */
 (async function(){
