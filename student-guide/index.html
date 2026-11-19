@@ -4,7 +4,7 @@
 <title>Pyatigorsk Student Guide</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: a live 3D white architectural model of the city is the first screen; glass controls float on it; the guide reads below it. Single light theme by choice. */
+/* Layout: a live 3D tactical map of the city (contour lines, km grid, outlined buildings) is the first screen; controls float on it; the guide reads below it. Single dark olive theme by choice. */
 :root{
   color-scheme:light;
   --night:#eef0f2; --deep:#eef0f2; --panel:#ffffff; --glass:rgba(255,255,255,.84); --line:rgba(20,24,31,.13);
@@ -155,7 +155,40 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
   .card{left:8px;right:8px;width:auto;bottom:8px;max-height:56%}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* ---- tactical map look (overrides the base above) ---- */
+.card p{color:#d5d3b8}
+.card .x{background:rgba(236,235,216,.1)}
+.btn{background:rgba(236,235,216,.07);border-radius:4px}
+.btn.main{color:#171c13}
+.routes button{background:rgba(236,235,216,.06);border-radius:3px}
+.verdict.no{background:rgba(236,235,216,.05)}
+.flat,.day{border-radius:6px;box-shadow:none}
+.day:first-child{background:linear-gradient(140deg,rgba(232,161,58,.2),var(--panel) 70%)}
+.tag{border-radius:2px}
+td .no{border-radius:3px}
+h2.t{text-transform:uppercase;letter-spacing:.01em}
+.stage.intro .headline h1{color:#ecebd8}
+.pin.on span{color:#171c13}
+:root{color-scheme:dark;--night:#171c13;--deep:#171c13;--panel:#20271b;--glass:rgba(26,32,22,.82);--line:rgba(217,201,138,.28);--fg:#ecebd8;--muted:#a9a98a;--amber:#e8a13a;--amber-t:#e8a13a;--display:"JetBrains Mono",ui-monospace,monospace}
+.headline h1{color:#ecebd8;text-shadow:0 2px 20px #000;text-transform:uppercase;letter-spacing:.02em;font-weight:700}
+.headline p{color:#c9c7a8;text-shadow:0 1px 8px #000}
+.city,.chip,.lang,.tools button{border-radius:3px;background:rgba(26,32,22,.82);color:#ecebd8;font-family:var(--mono);text-transform:uppercase;font-size:11px;letter-spacing:.05em}
+.chip::before{border-radius:0;transform:rotate(45deg)}
+.chip[aria-pressed="true"],.lang button[aria-pressed="true"]{background:#d9c98a;color:#171c13}
+.pin i{border-radius:0;transform:rotate(45deg);box-shadow:0 0 0 2px #171c13,0 0 0 3px var(--c)}
+.pin span{background:rgba(23,28,19,.9);color:#ecebd8;border-radius:2px;font:500 10.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;border-color:var(--c)}
+.pin.peak span{color:#d9c98a;text-shadow:0 1px 4px #000;border:0;background:none}
+.card{border-radius:4px}.card p{color:#d5d3b8}
+.hud{position:absolute;inset:112px 14px 46px 14px;pointer-events:none;z-index:3}
+.hud b{position:absolute;width:26px;height:26px;border:2px solid #d9c98a;opacity:.8}
+.hud b:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}.hud b:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+.hud b:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}.hud b:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.hud span{position:absolute;left:50%;top:-4px;transform:translateX(-50%);font:500 10.5px/1 var(--mono);letter-spacing:.14em;color:#d9c98a;white-space:nowrap}
+.hint{color:#a9a98a;bottom:14px}
+@media (max-width:760px){.hud{inset:104px 10px 150px 10px}.hud span{display:none}}
 </style>
+
 
 <div class="stage busy intro" id="stage">
   <canvas id="gl" aria-label="3D map of Pyatigorsk"></canvas>
@@ -527,12 +560,21 @@ renderStatic();
   let renderer;
   try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'}); }
   catch(e){ $('#loading').textContent = '3D is not available in this browser'; return; }
-  const FOG = 0xeceef1, VE = 1.5, BASE = 500;
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(FOG); scene.fog = new THREE.Fog(FOG, 9000, 30000);
+  const V = 't';
+  const S = {
+   t:{fog:0x171c13, lo:[.115,.14,.095], mid:[.17,.23,.12], hi:[.30,.32,.19], cont:0xd9c98a, ca:.30, grid:.13, wall:[40,48,34], roofLo:[52,62,44], roofHi:[52,62,44], edge:0xd9c98a, lit:false, hemi:1, sun:0, shadows:false,
+      roadA:0xe8a13a, roadB:0x9a8850, roadC:0x4a4f38, rail:0xd8d2b0, tram:0xff6a3d, trail:0x9bd05a, park:0x263d22, water:0x1f3f4a, camp:[[255,96,40],[255,150,80]], dorm:[[255,176,60],[255,210,120]]},
+   p:{fog:0xefe5cf, lo:[.95,.91,.80], mid:[.62,.74,.48], hi:[.84,.85,.66], cont:0x6b4a2e, ca:.34, grid:0, wall:[232,212,178], roofLo:[190,108,76], roofHi:[240,230,208], edge:0x3f2a1c, lit:true, hemi:.86, sun:.42, shadows:true,
+      roadA:0xfffaf0, roadB:0xfbf3e2, roadC:0xbfa98a, rail:0x3f2a1c, tram:0xa3301f, trail:0x4f7a2a, park:0x9cc07a, water:0x86aebd, camp:[[168,52,40],[120,36,30]], dorm:[[214,120,40],[150,80,30]]},
+   d:{fog:0xdccfb8, lo:[.50,.62,.34], mid:[.30,.48,.22], hi:[.58,.60,.42], cont:null, ca:0, grid:0, wall:[236,220,194], roofLo:[176,96,64], roofHi:[226,214,196], edge:null, lit:true, hemi:.72, sun:.7, shadows:true,
+      roadA:0xeadfc6, roadB:0xdfd2b6, roadC:0xa9b07c, rail:0x6b5a48, tram:0x8a3d1e, trail:0xf2e6b0, park:0x4f8a3a, water:0x4f96b8, camp:[[196,60,44],[130,40,34]], dorm:[[236,140,44],[160,90,34]]}
+  }[V];
+  const FOG = S.fog, VE = 1.5, BASE = 500;
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2)); renderer.shadowMap.enabled = S.shadows; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(FOG); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:9000, V==='d'?2e7:30000);
   const cam = new THREE.PerspectiveCamera(38, 1, 20, 60000);
-  const hemi = new THREE.HemisphereLight(0xffffff, 0xb9bec8, .78); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xfff4e6, .55); sun.position.set(-6000, 3500, 2500); scene.add(sun);
+  const hemi = new THREE.HemisphereLight(0xffffff, S.lit?0xb0a898:0xffffff, S.hemi); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xfff1dc, S.sun); sun.position.set(-6000, 3500, 2500); scene.add(sun); scene.add(sun.target); sun.castShadow = S.shadows; sun.shadow.mapSize.set(4096,4096); { const c = sun.shadow.camera; c.left=-3400; c.right=3400; c.top=3400; c.bottom=-3400; c.near=200; c.far=16000; c.updateProjectionMatrix(); } sun.shadow.bias = -0.0004; sun.shadow.normalBias = 3;
 
   const D = data.dem;
   function hAt(x, y){
@@ -543,30 +585,48 @@ renderStatic();
   }
   const dec = (a, s, o=0) => { const p = []; let x = 0, y = 0; for(let i=o;i<a.length;i+=2){ x += a[i]; y += a[i+1]; p.push([x/s, y/s]); } return p; };
   const mix = (a,b,t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
-  const fogC = [0xec/255,0xee/255,0xf1/255];
+  const fogC = new THREE.Color(FOG).toArray();
 
   // terrain
   { const pos = new Float32Array(D.w*D.h*3), col = new Float32Array(D.w*D.h*3), idx = [];
-    const lo=[.885,.905,.89], mid=[.70,.83,.72], hi=[.90,.94,.90];
+    const lo=S.lo, mid=S.mid, hi=S.hi;
     for(let j=0;j<D.h;j++) for(let i=0;i<D.w;i++){ const k=j*D.w+i, e=D.d[k];
       pos[k*3]=D.x0+i*D.st; pos[k*3+1]=(e-BASE)*VE; pos[k*3+2]=-(D.y0+j*D.st);
       let c = e<560 ? lo : e<900 ? mix(lo,mid,Math.min(1,(e-560)/160)) : mix(mid,hi,Math.min(1,(e-900)/450));
-      const edge = Math.min(i,j,D.w-1-i,D.h-1-j)/14; if(edge<1) c = mix(fogC,c,Math.max(0,edge));
+      const edge = Math.min(i,j,D.w-1-i,D.h-1-j)/14; if(edge<1 && V!=='d') c = mix(fogC,c,Math.max(0,edge));
       col.set(c,k*3); }
     for(let j=0;j<D.h-1;j++) for(let i=0;i<D.w-1;i++){ const a=j*D.w+i; idx.push(a,a+1,a+D.w, a+1,a+D.w+1,a+D.w); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos,3)); g.setAttribute('color', new THREE.BufferAttribute(col,3)); g.setIndex(idx); g.computeVertexNormals();
-    scene.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({vertexColors:true}))); }
+    const tmat = new THREE.MeshLambertMaterial({vertexColors:true});
+    if(S.cont!==null) tmat.onBeforeCompile = sh => { sh.uniforms.uCont = {value:new THREE.Color(S.cont)}; sh.uniforms.uCA = {value:S.ca}; sh.uniforms.uGrid = {value:S.grid};
+      sh.vertexShader = 'varying vec3 vW;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vW = position;');
+      sh.fragmentShader = 'varying vec3 vW; uniform vec3 uCont; uniform float uCA; uniform float uGrid;\n'+sh.fragmentShader.replace('#include <dithering_fragment>',`#include <dithering_fragment>
+        float e = vW.y/30.; float l = 1.-smoothstep(0., fwidth(e)*1.3, abs(fract(e-.5)-.5));
+        float e5 = vW.y/150.; float l5 = 1.-smoothstep(0., fwidth(e5)*2.4, abs(fract(e5-.5)-.5));
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, uCont, min(1., max(l*uCA, l5*uCA*2.)));
+        vec2 gq = vW.xz/1000.; vec2 gl2 = 1.-smoothstep(vec2(0.), fwidth(gq)*1.2, abs(fract(gq-.5)-.5));
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, uCont, max(gl2.x,gl2.y)*uGrid);`); };
+    tmat.extensions = {derivatives:true};
+    const tm = new THREE.Mesh(g, tmat);
+    if(V==='d'){ // earth sides of the cut-out block
+      const sp=[], sc=[], yb=-520, ring=[]; for(let i=0;i<D.w;i++) ring.push([i,0]); for(let j=1;j<D.h;j++) ring.push([D.w-1,j]); for(let i=D.w-2;i>=0;i--) ring.push([i,D.h-1]); for(let j=D.h-2;j>=0;j--) ring.push([0,j]);
+      for(let k=0;k<ring.length;k++){ const a=ring[k], b=ring[(k+1)%ring.length], P2=q=>[D.x0+q[0]*D.st,(D.d[q[1]*D.w+q[0]]-BASE)*VE,-(D.y0+q[1]*D.st)], A=P2(a), B=P2(b);
+        sp.push(A[0],A[1],A[2], B[0],B[1],B[2], B[0],yb,B[2],  A[0],A[1],A[2], B[0],yb,B[2], A[0],yb,A[2]); const t1=[.36,.25,.16], t2=[.56,.42,.28]; sc.push(...t1,...t1,...t2,...t1,...t2,...t2); }
+      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp,3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(sc,3)); sg.computeVertexNormals();
+      scene.add(new THREE.Mesh(sg, S.lit ? new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}) : new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.DoubleSide}))); } tm.receiveShadow = true; scene.add(tm); }
 
   // extruded prisms (buildings)
   function prisms(list, colorFn, mat){
     let nv = 0; for(const b of list) { const n = b.p.length; nv += n*6 + (n-2)*3; }
     const pos = new Float32Array(nv*3), nor = new Float32Array(nv*3), col = new Uint8Array(nv*3); let o = 0;
     const put = (x,y,z,nx,ny,nz,c) => { pos[o]=x;pos[o+1]=y;pos[o+2]=z; nor[o]=nx;nor[o+1]=ny;nor[o+2]=nz; col[o]=c[0];col[o+1]=c[1];col[o+2]=c[2]; o+=3; };
+    const ed = [];
     for(const b of list){ const p = b.p, n = p.length; let a2 = 0, cx = 0, cy = 0, base = 1e9;
       for(let i=0;i<n;i++){ const q=p[(i+1)%n]; a2 += p[i][0]*q[1]-q[0]*p[i][1]; cx+=p[i][0]; cy+=p[i][1]; base=Math.min(base,hAt(p[i][0],p[i][1])); }
       if(a2<0) p.reverse(); cx/=n; cy/=n;
       const top = hAt(cx,cy) + b.h*1.35, [cw, cr] = colorFn(b); base -= 2;
       for(let i=0;i<n;i++){ const a=p[i], q=p[(i+1)%n], dx=q[0]-a[0], dy=q[1]-a[1], l=Math.hypot(dx,dy)||1, nx=dy/l, nz=dx/l;
+        if(S.edge!==null) ed.push(a[0],top+.3,-a[1], q[0],top+.3,-q[1], a[0],top,-a[1], a[0],base+2,-a[1]);
         put(a[0],base,-a[1],nx,0,nz,cw); put(q[0],base,-q[1],nx,0,nz,cw); put(q[0],top,-q[1],nx,0,nz,cw);
         put(a[0],base,-a[1],nx,0,nz,cw); put(q[0],top,-q[1],nx,0,nz,cw); put(a[0],top,-a[1],nx,0,nz,cw); }
       const tri = n===3 ? [[0,1,2]] : THREE.ShapeUtils.triangulateShape(p.map(v => new THREE.Vector2(v[0],v[1])), []);
@@ -574,17 +634,19 @@ renderStatic();
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos.subarray(0,o),3)); g.setAttribute('normal', new THREE.BufferAttribute(nor.subarray(0,o),3)); g.setAttribute('color', new THREE.BufferAttribute(col.subarray(0,o),3,true));
-    return new THREE.Mesh(g, mat);
+    const pm = new THREE.Mesh(g, mat); pm.castShadow = true; pm.receiveShadow = true;
+    if(ed.length){ const eg = new THREE.BufferGeometry(); eg.setAttribute('position', new THREE.Float32BufferAttribute(ed,3)); pm.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({color:S.edge, transparent:true, opacity:V==='t'?.75:.85}))); }
+    return pm;
   }
   { const list = data.b.map(b => ({h:b[0], p:dec(b,2,1)})).filter(b => b.p.length>=3);
     let s = 7;
     scene.add(prisms(list, b => { s = (s*16807)%2147483647; const v = .82 + (s%100)/100*.3, t = Math.min(1,b.h/40);
-      const w = 230+(v-.97)*44; return [[w,w,w+3],[250,250,252]]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
+      const u = Math.min(1.06,v), r = b.h < 9 ? S.roofLo : S.roofHi; return [S.wall.map(c => c*u), r.map(c => Math.min(255,c*u))]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
   // campus buildings glow
   const beams = [];
   for(const [id, b] of Object.entries(data.hl)){
     const p = dec(b.p,2), isMain = id==='main';
-    const m = prisms([{h:b.h, p}], () => isMain ? [[184,84,60],[64,58,60]] : [[240,138,36],[92,70,58]], new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide, fog:false}));
+    const m = prisms([{h:b.h, p}], () => isMain ? S.camp : S.dorm, S.lit ? new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide, fog:false}) : new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.DoubleSide, fog:false}));
     scene.add(m);
     let cx=0, cy=0; for(const v of p){ cx+=v[0]; cy+=v[1]; } cx/=p.length; cy/=p.length;
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 700, 8, 1, true), new THREE.MeshBasicMaterial({color:0xf08a24, transparent:true, opacity:.22, depthWrite:false, side:THREE.DoubleSide, fog:false}));
@@ -604,14 +666,14 @@ renderStatic();
     for(const raw of lines){ const p = densify(raw, 80); for(let i=1;i<p.length;i++) pos.push(p[i-1][0],hAt(p[i-1][0],p[i-1][1])+lift,-p[i-1][1], p[i][0],hAt(p[i][0],p[i][1])+lift,-p[i][1]); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); if(!mat){ mat = new THREE.LineBasicMaterial({color}); unlit.push({m:mat, base:new THREE.Color(color)}); } return new THREE.LineSegments(g, mat); }
   const flat = c => { const m = new THREE.MeshBasicMaterial({color:c, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2}); unlit.push({m, base:new THREE.Color(c)}); return m; };
-  scene.add(thin(data.roads.c.map(a => dec(a,1)), 1.2, 0xcdd2d9));
-  scene.add(ribbon(data.roads.b.map(a => dec(a,1)), 9, 1.4, flat(0xc0c6cf)));
-  scene.add(ribbon(data.roads.a.map(a => dec(a,1)), 14, 1.6, flat(0xa3abb8)));
-  scene.add(thin(data.rail.map(a => dec(a,1)), 2, 0x868e9c));
+  scene.add(thin(data.roads.c.map(a => dec(a,1)), 1.2, S.roadC));
+  scene.add(ribbon(data.roads.b.map(a => dec(a,1)), 9, 1.4, flat(S.roadB)));
+  scene.add(ribbon(data.roads.a.map(a => dec(a,1)), 14, 1.6, flat(S.roadA)));
+  scene.add(thin(data.rail.map(a => dec(a,1)), 2, S.rail));
   const allTram = []; const seen = new Set();
   for(const t of Object.values(data.tram)) for(const l of t.l){ const key = l.slice(0,6).join(); if(!seen.has(key)){ seen.add(key); allTram.push(dec(l,1)); } }
-  scene.add(ribbon(allTram, 5, 2.2, flat(0x8b6cf0)));
-  scene.add(ribbon((data.trails||[]).map(a => dec(a,1)), 5, 2.5, flat(0x6fb53c)));
+  scene.add(ribbon(allTram, 5, 2.2, flat(S.tram)));
+  scene.add(ribbon((data.trails||[]).map(a => dec(a,1)), 5, 2.5, flat(S.trail)));
   for(const c of (data.cable||[])){ const q = dec(c,1), a = q[0], b = q[q.length-1], g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute([a[0],hAt(a[0],a[1])+25,-a[1], b[0],hAt(b[0],b[1])+25,-b[1]],3)); scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:0xe0559a, fog:false}))); }
   // parks and water
@@ -620,7 +682,17 @@ renderStatic();
       if(Math.abs(ar)/2 > 160000) continue; if(ar<0) p.reverse();
       for(const t of THREE.ShapeUtils.triangulateShape(p.map(v => new THREE.Vector2(v[0],v[1])), [])) for(const k of t) pos.push(p[k][0], hAt(p[k][0],p[k][1])+lift, -p[k][1]); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); scene.add(new THREE.Mesh(g, flat(color))); }
-  areas(data.parks, 0xb9dcbd, .6); areas(data.water, 0x41607a, .8);
+  areas(data.parks, S.park, .6); areas(data.water, S.water, .8);
+  if(V==='d' || V==='p'){ // little trees: in parks and on forested slopes
+    const pts = []; let sd = 11; const rnd = () => (sd = (sd*16807)%2147483647)/2147483647;
+    for(const a of data.parks){ const p = dec(a,1); if(p.length<3) continue; let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; for(const q of p){ x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1]); }
+      const n = Math.min(260, Math.round((x1-x0)*(y1-y0)/2600)); for(let k=0;k<n;k++){ const x=x0+rnd()*(x1-x0), y=y0+rnd()*(y1-y0); let ins=false; for(let i=0,j=p.length-1;i<p.length;j=i++) if((p[i][1]>y)!==(p[j][1]>y) && x < (p[j][0]-p[i][0])*(y-p[i][1])/(p[j][1]-p[i][1])+p[i][0]) ins=!ins; if(ins) pts.push([x,y]); } }
+    for(let k=0;k<90000 && pts.length<9000;k++){ const x=D.x0+rnd()*(D.w-1)*D.st, y=D.y0+rnd()*(D.h-1)*D.st, e=hAt(x,y)/VE+BASE; if(e>590 && e<1250) pts.push([x,y]); }
+    const cone = new THREE.ConeGeometry(V==='d'?17:12, V==='d'?46:30, 6); cone.translate(0,(V==='d'?46:30)/2,0);
+    const im = new THREE.InstancedMesh(cone, new THREE.MeshLambertMaterial({color:0xffffff}), pts.length), m4 = new THREE.Matrix4(), col = new THREE.Color();
+    pts.forEach((q,i) => { const sc = .7+rnd()*.7; m4.makeScale(sc,sc,sc); m4.setPosition(q[0],hAt(q[0],q[1]),-q[1]); im.setMatrixAt(i,m4); col.setRGB(V==='d'?.16+rnd()*.1:.30+rnd()*.1, V==='d'?.40+rnd()*.14:.48+rnd()*.1, V==='d'?.16:.24); im.setColorAt(i,col); });
+    im.castShadow = true; scene.add(im); }
+  if(V==='t'){ const hud = document.createElement('div'); hud.className = 'hud'; hud.innerHTML = '<b></b><b></b><b></b><b></b><span>GRID 1 KM · CONTOURS 20 M · 44.0522°N 43.0678°E · ELEV 512 M</span>'; stage.appendChild(hud); }
 
   // opening: the city starts dark, yellow light runs along the streets from the campus, then daylight comes
   const glowMat = new THREE.ShaderMaterial({transparent:true, depthWrite:false, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-6, polygonOffsetUnits:-6,
@@ -628,8 +700,8 @@ renderStatic();
     vertexShader:'uniform vec2 uC; varying float vD; void main(){ vD = length(position.xz-uC); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }',
     fragmentShader:'uniform float uR; uniform float uA; varying float vD; void main(){ float lit = 1.-smoothstep(uR-250.,uR,vD); float head = exp(-pow((vD-uR)/420.,2.)); vec3 c = mix(vec3(1.,.68,.06), vec3(1.,.97,.72), head); gl_FragColor = vec4(c, clamp(lit*.9+head,0.,1.)*uA); }'});
   const glow = [ribbon(data.roads.a.concat(data.roads.b).map(a => dec(a,1)), 18, 4, glowMat), thin(data.roads.c.map(a => dec(a,1)), 3, 0, glowMat)];
-  const DAY = new THREE.Color(FOG), NIGHT = new THREE.Color(0x070c15);
-  function setDay(k){ hemi.intensity = .78*(.07+.93*k); sun.intensity = .55*k; scene.background.copy(NIGHT).lerp(DAY,k); scene.fog.color.copy(scene.background);
+  const DAY = new THREE.Color(FOG), NIGHT = new THREE.Color(0x050704);
+  function setDay(k){ hemi.intensity = S.hemi*(.05+.95*k); sun.intensity = S.sun*k; scene.background.copy(NIGHT).lerp(DAY,k); scene.fog.color.copy(scene.background);
     for(const u of unlit) u.m.color.copy(u.base).multiplyScalar(.1+.9*k); }
   const sstep = (a,b,x) => { x = Math.min(1,Math.max(0,(x-a)/(b-a))); return x*x*(3-2*x); };
 
@@ -692,7 +764,7 @@ renderStatic();
       if(t > 3.1) stage.classList.remove('intro');
       if(t > 5.4){ for(const g of glow){ scene.remove(g); g.geometry.dispose(); } setDay(1); intro = null; } }
     ctl.target.x = Math.min(8000, Math.max(-8000, ctl.target.x)); ctl.target.z = Math.min(6500, Math.max(-9000, ctl.target.z));
-    ctl.update();
+    ctl.update(); sun.position.set(ctl.target.x-3600, ctl.target.y+2900, ctl.target.z-3900); sun.target.position.copy(ctl.target);
     const floor = hAt(cam.position.x, -cam.position.z) + 60; if(cam.position.y < floor) cam.position.y = floor;
     const pulse = .2 + .1*Math.sin(now/700); for(const b of beams) b.material.opacity = pulse;
     renderer.render(scene, cam);
