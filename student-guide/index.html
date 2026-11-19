@@ -1354,7 +1354,7 @@ scene('life','blob');
     const basket = new THREE.Mesh(new THREE.BoxGeometry(22,16,22), new THREE.MeshLambertMaterial({color:0x8a5a2b, fog:false})); basket.position.y = -112; balloon.add(basket);
     for(const [dx,dz] of [[-10,-10],[10,-10],[-10,10],[10,10]]){ const r = new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,26,4), new THREE.MeshBasicMaterial({color:0x3a3a3c, fog:false})); r.position.set(dx,-94,dz); balloon.add(r); }
     scene.add(balloon); }
-  const BAL = toXY([43.0560,44.0440]), balY = hAt(BAL[0],BAL[1]) + 620;
+  const BAL = toXY([43.0330,44.0850]), balY = hAt(BAL[0],BAL[1]) + 520;
   const cabins = [];
   for(const c of (data.cable||[])){ const q = dec(c,1), a = q[0], b = q[q.length-1];
     const A0 = new THREE.Vector3(a[0],hAt(a[0],a[1])+48,-a[1]), B0 = new THREE.Vector3(b[0],hAt(b[0],b[1])+48,-b[1]);
@@ -1521,7 +1521,7 @@ scene('life','blob');
       q.bm.scale.set(w, hgt, w); q.disc.scale.set(dw*(1+.5*pu), dw*(1+.5*pu), 1); q.disc.position.y = .012; q.disc.material.opacity = .45-.3*pu; q.halo.material.opacity = (isSel ? .4 : .22)+.12*pu; }
     for(const id in hlMesh){ const m = hlMesh[id], pl = CITY.places.find(x => x.hl===id), act = pl && (pl===sel || (activeCat!=='all' && inAct(pl)) || (activeCat==='all' && !sel && id==='main'));
       if(m.material.emissive) m.material.emissiveIntensity = act ? .45+.35*pu : 0; }
-    { const tb = now/1000; balloon.position.set(BAL[0]+Math.sin(tb*.11)*260, balY+Math.sin(tb*.35)*28, -BAL[1]+Math.cos(tb*.09)*200); balloon.rotation.y = tb*.08; const bs = Math.min(2.4, Math.max(.55, cam.position.distanceTo(balloon.position)/2600)); balloon.scale.setScalar(bs); balloon.position.y = Math.max(balloon.position.y, hAt(balloon.position.x, -balloon.position.z) + 150*bs + 260);
+    { const tb = now/1000; balloon.position.set(BAL[0]+Math.sin(tb*.05)*700, balY+Math.sin(tb*.35)*30, -BAL[1]+Math.cos(tb*.05)*450); balloon.rotation.y = tb*.08; const bs = Math.min(1.9, Math.max(.55, cam.position.distanceTo(balloon.position)/4200)); balloon.scale.setScalar(bs); balloon.position.y = Math.max(balloon.position.y, hAt(balloon.position.x, -balloon.position.z) + 150*bs + 260);
       for(const q of pins) if(q.p.sky){ q.v.copy(balloon.position); q.v.y -= 135*bs; } }
     for(const t of trams){ const per = t.len/9, u0 = ((now/1000)/per*.5 + t.ph)%1, fwd = u0 < .5, u = fwd ? u0*2 : 2-u0*2, dist2 = u*t.len;
       let lo = 0, hi = t.cum.length-1; while(hi-lo > 1){ const mid = (lo+hi)>>1; if(t.cum[mid] <= dist2) lo = mid; else hi = mid; }
