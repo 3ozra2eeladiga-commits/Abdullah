@@ -468,6 +468,13 @@ details.stopsBox[open] summary::after{content:" ▴"}
   <div class="grid row" id="seeGrid"></div>
 </div></section>
 
+<section id="uni"><div class="wrap">
+  <div class="eyebrow" data-i="unEyebrow"></div>
+  <h2 class="t" data-i="unTitle"></h2>
+  <p class="lead" data-i="unLead"></p>
+  <div class="grid" id="uniGrid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"></div>
+</div></section>
+
 <section id="post"><div class="wrap">
   <div class="eyebrow" data-i="poEyebrow"></div>
   <h2 class="t" data-i="poTitle"></h2>
@@ -515,16 +522,16 @@ const CITY = {
     coffee:{c:'#a2845e', en:'Coffee', fr:'Cafés', ru:'Кофейни'},
     study:{c:'#8e8e93', en:'Study spots', fr:'Pour étudier', ru:'Где поработать'},
     food:{c:'#ffcc00', en:'Food', fr:'Manger', ru:'Еда'},
-    med:{c:'#e6007e', en:'Hospitals', fr:'Hôpitaux', ru:'Больницы'},
+    med:{c:'#0f4c81', en:'Hospitals', fr:'Hôpitaux', ru:'Больницы'},
     police:{c:'#5856d6', en:'Police', fr:'Police', ru:'Полиция'},
-    pharm:{c:'#30b94d', en:'Pharmacies', fr:'Pharmacies', ru:'Аптеки'},
+    pharm:{c:'#00897b', en:'Pharmacies', fr:'Pharmacies', ru:'Аптеки'},
     faith:{c:'#c9a227', en:'Mosque & churches', fr:'Mosquée et églises', ru:'Мечеть и церкви'},
     bank:{c:'#0a7d74', en:'Banks & ATMs', fr:'Banques et DAB', ru:'Банки и банкоматы'},
-    need:{c:'#00c7be', en:'Shops & services', fr:'Magasins et services', ru:'Магазины и услуги'},
+    need:{c:'#64748b', en:'Shops & services', fr:'Magasins et services', ru:'Магазины и услуги'},
     go:{c:'#1d1d1f', en:'Stations', fr:'Gares', ru:'Вокзалы'},
     see:{c:'#34c759', en:'Sights', fr:'À voir', ru:'Что посмотреть'},
-    meet:{c:'#ff2d55', en:'Where students meet', fr:'Où les étudiants se retrouvent', ru:'Где собираются студенты'},
-    walk:{c:'#ff6b9d', en:'Nice walks', fr:'Belles promenades', ru:'Где погулять'},
+    meet:{c:'#00b3a1', en:'Where students meet', fr:'Où les étudiants se retrouvent', ru:'Где собираются студенты'},
+    walk:{c:'#7cb518', en:'Nice walks', fr:'Belles promenades', ru:'Где погулять'},
     hike:{c:'#1f7a36', en:'Hikes', fr:'Randonnées', ru:'Походы'},
     spring:{c:'#5ac8fa', en:'Springs', fr:'Sources', ru:'Источники'}
   },
@@ -545,7 +552,7 @@ const CITY = {
     {k:'campus',id:'c6',n:'PMFI training pharmacy',fr:'PMFI, pharmacie d’enseignement',ru:'ПМФИ, учебно-производственная аптека · ул. Кучуры, 1',at:[43.06718,44.05071],d:{en:'The institute’s training and production pharmacy, where pharmacy students have practical classes. Two minutes from the main building.',fr:'La pharmacie d’enseignement et de production de l’institut, où les étudiants en pharmacie ont leurs travaux pratiques. À deux minutes du bâtiment principal.',ru:'Учебно-производственная аптека института: здесь у фармацевтов практические занятия. Две минуты от главного корпуса.'}},
     {k:'dorm',id:'dorm4',hl:'dorm4',n:'Dorm No. 4',fr:'Résidence universitaire n° 4',ru:'Общежитие № 4 ПМФИ · пр. Калинина, 11',at:[43.06803,44.05202],d:{en:'9 floors. Most international students live here.',fr:'9 étages. La plupart des étudiants étrangers y vivent.',ru:'9 этажей. Здесь живёт большинство иностранных студентов.'}},
     {k:'dorm',id:'dorm3',hl:'dorm3',n:'Dorm No. 3',fr:'Résidence universitaire n° 3',ru:'Общежитие № 3 ПМФИ · пр. Калинина, 11 к2',at:[43.06746,44.05235],d:{en:'8 floors, next to the main building.',fr:'8 étages, à côté du bâtiment principal.',ru:'8 этажей, рядом с главным корпусом.'}},
-    {k:'dorm',id:'dorm2',hl:'dorm2',n:'Dorm No. 2',fr:'Résidence universitaire n° 2',ru:'Общежитие № 2 ПМФИ · пр. Калинина, 11 к1',at:[43.06808,44.05271],d:{en:'5 floors.',fr:'5 étages.',ru:'5 этажей.'}},
+    {k:'dorm',id:'dorm2',hl:'dorm2',big:1,n:'Dorm No. 2 · Foreign students office',fr:'Résidence n° 2 · Bureau des étudiants étrangers',ru:'Общежитие № 2 · Деканат иностранных студентов',at:[43.06808,44.05271],d:{en:'Important building! On the 2nd floor: the office for foreign students (dean’s office). Go here on your first day. Open 8:30–17:00, break 13:00–13:30. Phone: +7 (8793) 32-04-46. On the 5th floor: the medical point, Mon–Fri 8:30–16:30.',fr:'Bâtiment important ! Au 2e étage : le bureau des étudiants étrangers (décanat). Vas-y le premier jour. Ouvert de 8 h 30 à 17 h, pause de 13 h à 13 h 30. Téléphone : +7 (8793) 32-04-46. Au 5e étage : le point médical, du lundi au vendredi, 8 h 30–16 h 30.',ru:'Важное здание! На 2 этаже — деканат для иностранных студентов. Иди сюда в первый день. Работает 8:30–17:00, перерыв 13:00–13:30. Телефон: +7 (8793) 32-04-46. На 5 этаже — медпункт, пн–пт 8:30–16:30.'}},
     {k:'tram',id:'stop',n:'Tram stop “Universam”',fr:'Arrêt de tram « Universam »',ru:'Остановка «Универсам»',at:[43.06303,44.05304],d:{en:'Your stop. Trams 2, 4, 6, 7 and 8 stop here.',fr:'Votre arrêt. Les trams 2, 4, 6, 7 et 8 s’arrêtent ici.',ru:'Ваша остановка. Здесь останавливаются трамваи 2, 4, 6, 7 и 8.'}},
 
     {k:'flat',id:'f1',demo:1,n:'1-bedroom apartment, Kalinina Ave',fr:'1 pièce, av. Kalinine',ru:'пр. Калинина',at:[43.06598, 44.05159],price:28000,rooms:1,f:['furn', 'wash', 'wifi'],ph:'img/flats/f1.jpg'},
@@ -658,7 +665,7 @@ const CITY = {
     tram:{en:'Next to the tram stop',fr:'À côté du tram',ru:'Рядом с трамваем'}, quiet:{en:'Quiet yard',fr:'Cour calme',ru:'Тихий двор'}, newk:{en:'New kitchen',fr:'Cuisine neuve',ru:'Новая кухня'},
     lift:{en:'Lift',fr:'Ascenseur',ru:'Лифт'}, desk:{en:'Desk for study',fr:'Bureau pour étudier',ru:'Рабочий стол'}, reno:{en:'Fresh renovation',fr:'Rénové',ru:'Свежий ремонт'}, cheap:{en:'Lowest price nearby',fr:'Le moins cher du quartier',ru:'Самая низкая цена рядом'}
   },
-  tramColors: {1:'#ff7a66',2:'#5fd6b4',3:'#6db7ff',4:'#ffe066',5:'#ff9ed1',6:'#9be36a',7:'#ffb347',8:'#b69cff'}
+  tramColors: {1:'#0ea5e9',2:'#5fd6b4',3:'#6db7ff',4:'#ffe066',5:'#14b8a6',6:'#9be36a',7:'#ffb347',8:'#b69cff'}
 };
 
 /* ================= TEXTS ================= */
@@ -710,6 +717,12 @@ yes:{en:'Yes, stop Universam',fr:'Oui, arrêt Universam',ru:'Да, ост. «У�
 seEyebrow:{en:'Weekends',fr:'Week-end',ru:'Выходные'},
 seTitle:{en:'Where to go in the city',fr:'Où aller en ville',ru:'Куда сходить в городе'},
 seLead:{en:'Mountains, parks, warm springs and old streets. Most places are free and close to you.',fr:'Montagnes, parcs, sources chaudes et vieilles rues. La plupart des endroits sont gratuits et près de toi.',ru:'Горы, парки, тёплые источники и старые улицы. Почти всё бесплатно и рядом.'},
+unEyebrow:{en:'For PMFI students',fr:'Pour les étudiants du PMFI',ru:'Студентам ПМФИ'},
+unTitle:{en:'Useful things from your university',fr:'Les choses utiles de ton université',ru:'Полезное от твоего вуза'},
+unLead:{en:'These links open the official PMFI website. It is in Russian: use the translate button in your browser.',fr:'Ces liens ouvrent le site officiel du PMFI. Il est en russe : utilise la traduction de ton navigateur.',ru:'Эти ссылки открывают официальный сайт ПМФИ.'},
+un:{en:[['🗓','Class timetable','Timetables for Pharmacy, Dentistry, General Medicine and Medical Biochemistry. Check it every week: it shows the building number for each class.','Open the timetable','https://pmedpharm.ru/students/studentu_ochniku/'],['🧑‍💼','Office for foreign students','The dean’s office of the Faculty for Foreign Citizens. Dorm No. 2, 2nd floor. Open 8:30–17:00, break 13:00–13:30. Phone +7 (8793) 32-04-46. E-mail: dekanatis2015@mail.ru','Open the page','https://pmedpharm.ru/departments/in_gr/'],['💻','Personal account and online classes','Your marks, your portfolio and online courses.','Open the account','https://lk.pmedpharm.ru/'],['📚','Library','The university library and free online textbooks for students.','Open the library','https://pmedpharm.ru/departments/nauchnaya_biblioteka_pyatigorskogo_filiala_volggmu/'],['🩺','Medical point','In Dorm No. 2, 5th floor. Mon–Fri 8:30–16:30. First medical help for students.','Open the page','https://pmedpharm.ru/info_inst/med_punkt/'],['💬','Psychological help','Feeling sad, stressed or alone? You can write to the university psychologist: ovz@pmedpharm.ru','Open the page','https://pmedpharm.ru/kabinet-psihologa/']],
+fr:[['🗓','Emploi du temps','Les emplois du temps de Pharmacie, Odontologie, Médecine générale et Biochimie médicale. Regarde-le chaque semaine : il indique le numéro du bâtiment pour chaque cours.','Ouvrir l’emploi du temps','https://pmedpharm.ru/students/studentu_ochniku/'],['🧑‍💼','Bureau des étudiants étrangers','Le décanat de la Faculté des étudiants étrangers. Résidence n° 2, 2e étage. Ouvert de 8 h 30 à 17 h, pause de 13 h à 13 h 30. Tél. +7 (8793) 32-04-46. E-mail : dekanatis2015@mail.ru','Ouvrir la page','https://pmedpharm.ru/departments/in_gr/'],['💻','Espace personnel et cours en ligne','Tes notes, ton portfolio et les cours en ligne.','Ouvrir l’espace','https://lk.pmedpharm.ru/'],['📚','Bibliothèque','La bibliothèque de l’université et des manuels en ligne gratuits pour les étudiants.','Ouvrir la bibliothèque','https://pmedpharm.ru/departments/nauchnaya_biblioteka_pyatigorskogo_filiala_volggmu/'],['🩺','Point médical','Dans la résidence n° 2, 5e étage. Du lundi au vendredi, 8 h 30–16 h 30. Premiers soins pour les étudiants.','Ouvrir la page','https://pmedpharm.ru/info_inst/med_punkt/'],['💬','Aide psychologique','Tu te sens triste, stressé ou seul ? Tu peux écrire au psychologue de l’université : ovz@pmedpharm.ru','Ouvrir la page','https://pmedpharm.ru/kabinet-psihologa/']],
+ru:[['🗓','Расписание занятий','Расписание для фармации, стоматологии, лечебного дела и медицинской биохимии. Смотри каждую неделю: там указан номер корпуса для каждой пары.','Открыть расписание','https://pmedpharm.ru/students/studentu_ochniku/'],['🧑‍💼','Деканат иностранных студентов','Деканат факультета по обучению иностранных граждан. Общежитие № 2, 2 этаж. Работает 8:30–17:00, перерыв 13:00–13:30. Тел. +7 (8793) 32-04-46. Почта: dekanatis2015@mail.ru','Открыть страницу','https://pmedpharm.ru/departments/in_gr/'],['💻','Личный кабинет и онлайн-занятия','Твои оценки, портфолио и онлайн-курсы.','Открыть кабинет','https://lk.pmedpharm.ru/'],['📚','Библиотека','Библиотека вуза и бесплатные электронные учебники для студентов.','Открыть библиотеку','https://pmedpharm.ru/departments/nauchnaya_biblioteka_pyatigorskogo_filiala_volggmu/'],['🩺','Медпункт','В общежитии № 2, 5 этаж. Пн–пт 8:30–16:30. Первая медицинская помощь студентам.','Открыть страницу','https://pmedpharm.ru/info_inst/med_punkt/'],['💬','Психологическая помощь','Грустно, тревожно или одиноко? Можно написать психологу вуза: ovz@pmedpharm.ru','Открыть страницу','https://pmedpharm.ru/kabinet-psihologa/']]},
 poEyebrow:{en:'Parcels and online shopping',fr:'Colis et achats en ligne',ru:'Посылки и покупки'},
 poTitle:{en:'Send and get things',fr:'Envoyer et recevoir',ru:'Отправить и получить'},
 poLead:{en:'There are very many pickup points in the city, so we do not show them on the map. Open Yandex Maps, type the name, and you will see the closest one.',fr:'Il y a énormément de points de retrait en ville, donc on ne les montre pas sur la carte. Ouvre Yandex Maps, tape le nom, et tu verras le plus proche.',ru:'Пунктов выдачи в городе очень много, поэтому на карте мы их не показываем. Открой Яндекс Карты, напиши название — и увидишь ближайший.'},
@@ -726,21 +739,21 @@ fiLead:{en:'Something is not clear? Write to us. We answer in English, French, A
 askTg:{en:'Write to us on Telegram',fr:'Écris-nous sur Telegram',ru:'Написать в Telegram'},
 fi:{en:[
  ['Keep your migration card safe.','When you land in Russia, at passport control you get a migration card. It is a small paper (or an electronic one). It shows when and why you came. Keep it until you leave Russia. Without it you cannot get registered. If you lose it, tell your university straight away.'],
- ['On day one, go to your university.','Go to the international students office (the migration office) of your university. They will explain registration and tell you exactly what to do and when. This is the most important step.'],
+ ['On day one, go to your university.','Go to the international students office (the migration office) of your university. At PMFI it is in Dorm No. 2, 2nd floor (Kalinina Ave 11), open 8:30–17:00, phone +7 (8793) 32-04-46. They will explain registration and tell you exactly what to do and when. This is the most important step.'],
  ['Get a SIM card and Gosuslugi.','Buy a SIM card (Beeline, MTS, MegaFon) with your passport. Then you must confirm your number on Gosuslugi, the state services website. If you don’t, your number can be blocked. Ask at the phone shop or at the university how to do it. Gosuslugi will also help you with many other things.'],
  ['Get a Russian bank card (Mir).','Visa and Mastercard from your country do not work in Russia. With a Mir card you can pay in shops, order a taxi, food and delivery, and buy online. You can open one at Sberbank near the main building. Take your passport.'],
  ['Install Russian apps.','Google Maps works badly here. Use Yandex Maps or 2GIS: they show buses and trams in real time. Yandex Go is for taxis and delivery, Yandex Eda and Samokat bring food, Yandex Translate reads signs with your camera.'],
  ['Remember your tram stop.','Universam (Универсам). Trams 2, 4, 6, 7 and 8.']],
 fr:[
  ['Garde bien ta carte migratoire.','Quand tu arrives en Russie, au contrôle des passeports, on te donne une carte migratoire. C’est un petit papier (ou une version électronique). Elle montre quand et pourquoi tu es venu. Garde-la jusqu’à ton départ de Russie. Sans elle, pas d’enregistrement. Si tu la perds, préviens ton université tout de suite.'],
- ['Le premier jour, va à ton université.','Va au bureau des étudiants étrangers (le service migration) de ton université. On t’expliquera l’enregistrement et on te dira exactement quoi faire et quand. C’est l’étape la plus importante.'],
+ ['Le premier jour, va à ton université.','Va au bureau des étudiants étrangers (le service migration) de ton université. Au PMFI, c’est dans la résidence n° 2, 2e étage (av. Kalinine, 11), ouvert de 8 h 30 à 17 h, tél. +7 (8793) 32-04-46. On t’expliquera l’enregistrement et on te dira exactement quoi faire et quand. C’est l’étape la plus importante.'],
  ['Prends une carte SIM et Gosuslugi.','Achète une carte SIM (Beeline, MTS, MegaFon) avec ton passeport. Ensuite, tu dois confirmer ton numéro sur Gosuslugi, le site des services de l’État. Sinon, ton numéro peut être bloqué. Demande comment faire à la boutique ou à l’université. Gosuslugi t’aidera aussi pour beaucoup d’autres choses.'],
  ['Prends une carte bancaire russe (Mir).','Les cartes Visa et Mastercard de ton pays ne marchent pas en Russie. Avec une carte Mir, tu peux payer dans les magasins, commander un taxi, des repas, des livraisons et acheter en ligne. Tu peux l’ouvrir à la Sberbank près du bâtiment principal. Prends ton passeport.'],
  ['Installe les applis russes.','Google Maps marche mal ici. Utilise Yandex Maps ou 2GIS : ils montrent les bus et les trams en direct. Yandex Go pour le taxi et la livraison, Yandex Eda et Samokat pour les repas, Yandex Translate pour lire les panneaux avec la caméra.'],
  ['Retiens ton arrêt de tram.','Universam (Универсам). Trams 2, 4, 6, 7 et 8.']],
 ru:[
  ['Береги миграционную карту.','Когда прилетаешь в Россию, на паспортном контроле дают миграционную карту — небольшой бланк (или электронную). В ней видно, когда и зачем ты приехал. Храни её до отъезда из России. Без неё не сделают регистрацию. Если потерял — сразу скажи в вузе.'],
- ['В первый же день иди в свой вуз.','Иди в отдел по работе с иностранными студентами (миграционный отдел) своего вуза. Там объяснят про регистрацию и скажут, что и когда делать. Это самый важный шаг.'],
+ ['В первый же день иди в свой вуз.','Иди в отдел по работе с иностранными студентами (миграционный отдел) своего вуза. В ПМФИ он в общежитии № 2, 2 этаж (пр. Калинина, 11), работает 8:30–17:00, тел. +7 (8793) 32-04-46. Там объяснят про регистрацию и скажут, что и когда делать. Это самый важный шаг.'],
  ['Купи SIM-карту и сделай Госуслуги.','Купи SIM-карту (Билайн, МТС, МегаФон) по паспорту. Потом номер обязательно нужно подтвердить на Госуслугах — это сайт государственных услуг. Иначе номер могут заблокировать. Как это сделать, спроси в салоне связи или в вузе. Госуслуги помогут и во многом другом.'],
  ['Сделай русскую банковскую карту «Мир».','Visa и Mastercard твоей страны в России не работают. С картой «Мир» можно платить в магазинах, заказывать такси, еду и доставку, покупать в интернете. Открыть её можно в Сбербанке у главного корпуса. Возьми паспорт.'],
  ['Поставь русские приложения.','Google Карты здесь работают плохо. Ставь Яндекс Карты или 2ГИС: там видно автобусы и трамваи в реальном времени. Яндекс Go — такси и доставка, Яндекс Еда и Самокат — еда, Яндекс Переводчик — читать вывески камерой.'],
@@ -757,7 +770,7 @@ const SOS = {
    ['📝','Registration',['By law you must be registered within 7 working days after you arrive. The university may ask for it sooner, so ask them.','New address means new registration.','Careful with hotels! If you stay in a hotel, even for one night, the hotel registers you at its address and your old registration changes. After a hotel, go to your university straight away. Better: tell the university before you go.','Watch the end dates of your visa and registration. Renew early, so you have no problems.']],
    ['🧾','Lost your passport or got robbed',['Tell the police (102) and keep the paper they give you.','Tell your university.','Contact the embassy or consulate of your country.']],
    ['🩺','Health',['Medical insurance is a must for every foreign student. Carry your policy with you.']]],
-  inst:'PMFI (the institute): 8 (8793) 32-44-74, Mon–Sat 8:30–17:00',note:'A short reminder, not legal advice. Rules change, so always check with the institute.'},
+  inst:'PMFI office for foreign students: +7 (8793) 32-04-46 (Dorm No. 2, 2nd floor, 8:30–17:00)',note:'A short reminder, not legal advice. Rules change, so always check with the institute.'},
  fr:{t:'Urgences et loi',lead:'Garde cette page. Si quelque chose de grave arrive, appelle le 112. C’est gratuit. Ça marche même sans carte SIM et sans crédit.',
   nums:[['112','Toutes les urgences'],['103','Ambulance'],['102','Police'],['101','Pompiers et secours (MTchS)'],['104','Fuite de gaz']],
   call:['📞','Que dire au téléphone',['Ce qui s’est passé.','L’adresse : rue, numéro, entrée, étage.','Votre nom et votre numéro de téléphone.','Ne raccrochez pas le premier.']],say:'Dites en russe :',tr:'Mne noujna pomochtch. Ia inostranny student. Adres : …',
@@ -767,7 +780,7 @@ const SOS = {
    ['📝','Enregistrement',['La loi dit : tu dois être enregistré dans les 7 jours ouvrables après ton arrivée. L’université peut le demander plus tôt : demande-lui.','Nouvelle adresse, nouvel enregistrement.','Attention aux hôtels ! Si tu dors à l’hôtel, même une nuit, l’hôtel t’enregistre à son adresse et ton ancien enregistrement change. Après l’hôtel, va tout de suite à ton université. Mieux : préviens l’université avant.','Surveille la date de fin de ton visa et de ton enregistrement. Renouvelle à l’avance, pour ne pas avoir de problèmes.']],
    ['🧾','Passeport perdu ou vol',['Préviens la police (102) et garde le papier qu’on te donne.','Préviens ton université.','Contacte l’ambassade ou le consulat de ton pays.']],
    ['🩺','Santé',['L’assurance maladie est obligatoire pour chaque étudiant étranger. Garde ton attestation sur toi.']]],
-  inst:'PMFI (l’institut) : 8 (8793) 32-44-74, du lundi au samedi, 8 h 30–17 h',note:'Un simple aide-mémoire, pas un conseil juridique. Les règles changent : vérifiez toujours auprès de l’institut.'},
+  inst:'PMFI, bureau des étudiants étrangers : +7 (8793) 32-04-46 (résidence n° 2, 2e étage, 8 h 30–17 h)',note:'Un simple aide-mémoire, pas un conseil juridique. Les règles changent : vérifiez toujours auprès de l’institut.'},
  ru:{t:'Экстренная помощь и закон',lead:'Сохрани эту страницу. Если случилось что-то плохое, звони 112. Это бесплатно. Работает даже без SIM-карты и без денег на телефоне.',
   nums:[['112','Единый номер, все службы'],['103','Скорая помощь'],['102','Полиция'],['101','Пожарные и МЧС'],['104','Утечка газа']],
   call:['📞','Что сказать по телефону',['Что случилось.','Адрес: улица, дом, подъезд, этаж.','Ваше имя и номер телефона.','Не кладите трубку первым.']],say:'Скажите:',tr:'',
@@ -777,7 +790,7 @@ const SOS = {
    ['📝','Регистрация',['По закону регистрацию нужно сделать за 7 рабочих дней после приезда. Вуз может просить раньше — спроси у них.','Новый адрес — новая регистрация.','Осторожно с отелями! Если ты ночуешь в отеле, даже одну ночь, отель регистрирует тебя по своему адресу, и твоя старая регистрация меняется. После отеля сразу иди в свой вуз. Лучше скажи в вузе заранее.','Следи за сроком визы и регистрации. Продлевай заранее, чтобы не было проблем.']],
    ['🧾','Потерял паспорт или обокрали',['Скажи в полицию (102) и сохрани справку, которую дадут.','Скажи в своём вузе.','Свяжись с посольством или консульством своей страны.']],
    ['🩺','Здоровье',['Медицинская страховка обязательна для каждого иностранного студента. Носи полис с собой.']]],
-  inst:'ПМФИ (институт): 8 (8793) 32-44-74, пн–сб 8:30–17:00',note:'Это короткая памятка, а не юридическая консультация. Правила меняются — уточняйте в институте.'}
+  inst:'ПМФИ, деканат иностранных студентов: +7 (8793) 32-04-46 (общежитие № 2, 2 этаж, 8:30–17:00)',note:'Это короткая памятка, а не юридическая консультация. Правила меняются — уточняйте в институте.'}
 };
 function renderSos(){ const d = SOS[L] || SOS.en, li = a => a.map(x => `<li>${esc(x)}</li>`).join('');
   $('#sosBody').innerHTML = `<h2 class="sos-h" id="sosT">${esc(d.t)}</h2><p class="sos-lead">${esc(d.lead)}</p>
@@ -835,7 +848,7 @@ function renderStatic(){
   // flats
   $('#flatGrid').innerHTML = CITY.places.filter(p => p.k==='flat').map(p => `<article class="flat">
     <figure class="ph"><img src="${p.ph}" alt="" loading="lazy"><figcaption>${tx('photo')}</figcaption></figure>
-    <div><span class="tag" style="--c:var(--coral)">${tx('regOk')}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}</div>
+    <div><span class="tag" style="--c:#0a84ff">${tx('regOk')}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}</div>
     <h3>${esc(nm(p))}</h3>
     <div class="price">${p.price.toLocaleString('ru-RU')} ₽ <small>${tx('perMonth')}</small></div>
     <ul><li>${T.rooms[L][p.rooms]} · ${walkMin(p.at)} ${tx('min')} ${tx('walk')}</li><li>${esc(dsc(p))}</li></ul>
@@ -845,6 +858,7 @@ function renderStatic(){
     <div><span class="tag" style="--c:${CITY.cats[p.k].c}">${CITY.cats[p.k][L]}</span></div>
     <h3>${esc(nm(p))}</h3><ul><li>${esc(p.d[L])}</li></ul>
     <div class="acts"><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div></article>`).join('');
+  $('#uniGrid').innerHTML = T.un[L].map(c => `<article class="flat"><h3><span style="font-size:22px;margin-right:8px">${c[0]}</span>${esc(c[1])}</h3><ul><li>${esc(c[2])}</li></ul><div class="acts"><a class="btn" target="_blank" rel="noopener" href="${c[4]}">${esc(c[3])}</a></div></article>`).join('');
   $('#postGrid').innerHTML = T.po[L].map(c => `<article class="flat"><h3><span style="font-size:22px;margin-right:8px">${c[0]}</span>${esc(c[1])}</h3><ul><li>${esc(c[2])}</li></ul></article>`).join('');
   $('#rgQa').innerHTML = T.rg[L].map(q => `<div><dt>${q[0]}</dt><dd>${q[1]}</dd></div>`).join('');
   $('#check').innerHTML = T.fi[L].map((q,i) => `<li><b>${i+1}. ${q[0]}</b><span>${q[1]}</span></li>`).join('');
