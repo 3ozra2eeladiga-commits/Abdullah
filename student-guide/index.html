@@ -895,7 +895,8 @@ function scene(id, style){
     g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, bx+w/2, by+h/2+1); g.restore(); }
   function label(x, t){ g.save(); g.font = '600 12px -apple-system,Arial,sans-serif'; g.fillStyle = soft; g.textAlign = 'center'; g.fillText(t, x, 392); g.restore(); }
   function furn(){ g.strokeStyle = ink; g.lineWidth = 3; g.lineCap = 'round'; if(style==='glow'){ g.shadowColor = '#6db7ff'; g.shadowBlur = 8; } }
-  function frame(ms){ const t = reduce ? 3.2 : ms/1000; g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); g.shadowBlur = 0;
+  let vis = true; new IntersectionObserver(e => vis = e[0].isIntersecting).observe(cv);
+  function frame(ms){ if(!vis && !reduce){ requestAnimationFrame(frame); return; } const t = reduce ? 3.2 : ms/1000; g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); g.shadowBlur = 0;
     g.strokeStyle = soft; g.lineWidth = 2; L(20,350,W-20,350);
     // ---- flags of the students' home countries, in the order given
     { const n = 8, fw = 66, fh = 44, gap = 44, x0 = (W-(n*fw+(n-1)*gap))/2, y0 = 14;
@@ -1038,7 +1039,8 @@ scene('life','blob');
   MAP = data; O = data.o; renderStatic();
   if(!window.THREE){ fail('3D is not available in this browser'); return; }
   let renderer;
-  try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, powerPreference:'high-performance'}); renderer.setClearColor(0x000000, 0); }
+  const LITE = matchMedia('(pointer: coarse)').matches || innerWidth < 900;   // phones and tablets get a lighter map
+  try { renderer = new THREE.WebGLRenderer({canvas, antialias:!LITE, alpha:true, powerPreference:'high-performance'}); renderer.setClearColor(0x000000, 0); }
   catch(e){ fail('3D is not available in this browser'); return; }
   const V = 'q'; document.documentElement.dataset.v = 'r'; document.documentElement.dataset.q = '1';
   const S = {
@@ -1058,13 +1060,16 @@ scene('life','blob');
       roadA:0xeadfc6, roadB:0xdfd2b6, roadC:0xa9b07c, rail:0x6b5a48, tram:0x8a3d1e, trail:0xf2e6b0, park:0x4f8a3a, water:0x4f96b8, camp:[[196,60,44],[130,40,34]], dorm:[[236,140,44],[160,90,34]]}
   }[V];
   const FOG = S.fog, VE = V==='q' ? 1.75 : 1.5, BASE = 500;
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2)); renderer.shadowMap.enabled = S.shadows; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1, LITE ? 1.25 : 2)); renderer.shadowMap.enabled = S.shadows && !LITE; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene(), skyEl = $('#sky'); scene.fog = new THREE.Fog(FOG, V==='d'?1e7:13000, V==='d'?2e7:40000);
   const cam = new THREE.PerspectiveCamera(38, 1, 20, 60000);
   const hemi = new THREE.HemisphereLight(0xffffff, S.lit?0xb0a898:0xffffff, S.hemi); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xfff1dc, S.sun); sun.position.set(-6000, 3500, 2500); scene.add(sun); scene.add(sun.target); sun.castShadow = S.shadows; sun.shadow.mapSize.set(4096,4096); { const c = sun.shadow.camera; c.left=-7000; c.right=7000; c.top=7000; c.bottom=-7000; c.near=200; c.far=16000; c.updateProjectionMatrix(); } sun.shadow.bias = -0.0004; sun.shadow.normalBias = 3;
+  const sun = new THREE.DirectionalLight(0xfff1dc, S.sun); sun.position.set(-6000, 3500, 2500); scene.add(sun); scene.add(sun.target); sun.castShadow = S.shadows && !LITE; sun.shadow.mapSize.set(4096,4096); { const c = sun.shadow.camera; c.left=-7000; c.right=7000; c.top=7000; c.bottom=-7000; c.near=200; c.far=16000; c.updateProjectionMatrix(); } sun.shadow.bias = -0.0004; sun.shadow.normalBias = 3;
 
-  const D = data.dem;
+  let D = data.dem;
+  if(LITE){ const w2 = Math.ceil(D.w/2), h2 = Math.ceil(D.h/2), d2 = new Array(w2*h2);   // half-resolution terrain on phones
+    for(let j=0;j<h2;j++) for(let i=0;i<w2;i++) d2[j*w2+i] = D.d[Math.min(D.h-1,j*2)*D.w + Math.min(D.w-1,i*2)];
+    D = {x0:D.x0, y0:D.y0, st:D.st*2, w:w2, h:h2, d:d2}; }
   function hAt(x, y){
     let gx = (x-D.x0)/D.st, gy = (y-D.y0)/D.st;
     gx = Math.min(Math.max(gx,0), D.w-1.001); gy = Math.min(Math.max(gy,0), D.h-1.001);
@@ -1094,7 +1099,7 @@ scene('life','blob');
       sh.fragmentShader = `varying vec3 vW; varying vec3 vN2; uniform vec3 uCont; uniform float uCA; uniform float uGrid;
         float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
         float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f); return mix(mix(h21(i),h21(i+vec2(1.,0.)),f.x), mix(h21(i+vec2(0.,1.)),h21(i+vec2(1.,1.)),f.x), f.y); }
-        float ridged(vec2 p){ float a = .5, s = 0.; for(int k=0;k<5;k++){ s += a*(1.-abs(2.*vn(p)-1.)); p = p*2.03+7.1; a *= .5; } return s; }
+        float ridged(vec2 p){ float a = .5, s = 0.; for(int k=0;k<${LITE?3:5};k++){ s += a*(1.-abs(2.*vn(p)-1.)); p = p*2.03+7.1; a *= .5; } return s; }
 `+sh.fragmentShader.replace('#include <dithering_fragment>',`#include <dithering_fragment>
         { float sl = clamp((1.-normalize(vN2).y)*3.2, 0., 1.); vec2 q2 = vW.xz/260.; float e0 = ridged(q2), ex = ridged(q2+vec2(.035,0.)), ez = ridged(q2+vec2(0.,.035));
           float lit = clamp(.5 + ((ex-e0)*1.0 + (ez-e0)*.75)*9., 0., 1.); gl_FragColor.rgb *= mix(1., .55+.75*lit, sl); }
@@ -1138,7 +1143,7 @@ scene('life','blob');
     return pm;
   }
   await tick(70);
-  { const list = data.b.map(b => ({h:b[0], p:dec(b,2,1)})).filter(b => b.p.length>=3);
+  { const MBx = toXY(CITY.home); const list = data.b.filter(b => !LITE || b[0] >= 15 || Math.hypot(b[1]/2-MBx[0], b[2]/2-MBx[1]) < 3800).map(b => ({h:b[0], p:dec(b,2,1)})).filter(b => b.p.length>=3);
     let s = 7;
     scene.add(prisms(list, b => { s = (s*16807)%2147483647; const v = .82 + (s%100)/100*.3, t = Math.min(1,b.h/40);
       const u = Math.min(1.06,v), tt = Math.min(1,b.h/30), r = V==='w' ? S.roofLo.map((c,i) => c+(S.roofHi[i]-c)*tt) : b.h < 9 ? S.roofLo : S.roofHi; return [S.wall.map(c => Math.min(255,c*u*.97)), r.map(c => Math.min(255,c*u))]; }, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}))); }
