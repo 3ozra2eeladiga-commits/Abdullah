@@ -289,7 +289,7 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 [data-v=r] .bar .city[aria-current]{background:#e8f1fd;color:#0071e3}
 .stage{height:min(80vh,1200px)}
 [data-v=r] .stage::before{display:none}
-@media (max-width:760px){.stage{height:min(72vh,680px)}.tools{top:14px}.bar .chips{padding-top:6px}}
+@media (max-width:760px){.stage{height:min(82vh,780px)}.tools{top:14px}.bar .chips{padding-top:6px}}
 .sosb{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;background:#fff0ef;color:#d70015;font:600 13px/1 var(--body);padding:6px 12px 6px 6px;white-space:nowrap}
 .sosb b{background:#ff3b30;color:#fff;font:800 10.5px/1 var(--body);letter-spacing:.04em;border-radius:999px;padding:5px 7px}
 .sosb:hover{background:#ffe2e0}
@@ -330,6 +330,18 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .wx{display:inline-flex;align-items:center;gap:6px;font:600 13px/1 var(--body);color:#1d1d1f;background:#f0f0f3;border-radius:999px;padding:7px 11px;white-space:nowrap}
 .wx small{font:500 12px/1 var(--body);color:#6e6e73}
 @media (max-width:760px){.wx small{display:none}.wx{padding:6px 9px}}
+.headline{transition:opacity 1.2s}
+.headline.gone{opacity:0!important}
+/* apartments with registration are the main thing on the site */
+[data-v=r] .bar .chip[data-c="flat"]{background:linear-gradient(135deg,#0a84ff,#0060df);color:#fff;font-weight:700;box-shadow:0 4px 16px rgba(0,122,255,.45);animation:flatPulse 2.6s ease-in-out infinite}
+[data-v=r] .bar .chip[data-c="flat"]::before{background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.35)}
+[data-v=r] .bar .chip[data-c="flat"][aria-pressed="true"]{background:linear-gradient(135deg,#0a84ff,#0060df);color:#fff;box-shadow:0 0 0 3px #fff,0 0 0 5px #0a84ff}
+@keyframes flatPulse{0%,100%{box-shadow:0 4px 16px rgba(0,122,255,.45)}50%{box-shadow:0 4px 22px rgba(0,122,255,.75),0 0 0 5px rgba(0,122,255,.16)}}
+[data-v=r] .pin.fl i{width:17px;height:17px;background:#0a84ff;box-shadow:0 0 0 3px #fff,0 0 16px 6px rgba(10,132,255,.7);animation:flatDot 2.2s ease-in-out infinite}
+@keyframes flatDot{0%,100%{box-shadow:0 0 0 3px #fff,0 0 12px 4px rgba(10,132,255,.55)}50%{box-shadow:0 0 0 3px #fff,0 0 22px 10px rgba(10,132,255,.8)}}
+.pin.fl span{display:block}
+[data-v=r] .pin.fl span{background:#0a84ff;color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(0,60,140,.35)}
+@media (prefers-reduced-motion:reduce){[data-v=r] .bar .chip[data-c="flat"],[data-v=r] .pin.fl i{animation:none}}
 figure.ph{margin:0 0 4px;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/2;background:#e9e2d6}
 figure.ph img{width:100%;height:100%;object-fit:cover;display:block}
 figure.ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 5px;font:500 9.5px/1.2 var(--mono);color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1328,7 +1340,8 @@ scene('life','blob');
   ctl.enableDamping = true; ctl.dampingFactor = .09; ctl.screenSpacePanning = false; ctl.minDistance = 350; ctl.maxDistance = 19000; ctl.maxPolarAngle = Math.PI*.455; ctl.zoomSpeed = .8; ctl.enableZoom = true;
   ctl.mouseButtons = {LEFT:THREE.MOUSE.PAN, MIDDLE:THREE.MOUSE.DOLLY, RIGHT:THREE.MOUSE.ROTATE};
   ctl.touches = {ONE:THREE.TOUCH.PAN, TWO:THREE.TOUCH.DOLLY_ROTATE};
-  canvas.addEventListener('pointerdown', () => { anim = null; });
+  const hideHead = () => document.querySelector('.headline').classList.add('gone');
+  canvas.addEventListener('pointerdown', () => { anim = null; hideHead(); });
   canvas.addEventListener('wheel', () => { anim = null; }, {passive:true});
   canvas.addEventListener('contextmenu', e => e.preventDefault());
   const MB = toXY(CITY.places[0].at), HOME_T = new THREE.Vector3(MB[0], hAt(MB[0],MB[1])+10, -MB[1]), orbP = (az, r, h) => HOME_T.clone().add(new THREE.Vector3(Math.sin(az)*r, h, -Math.cos(az)*r)), ORB0 = {az:2.36, r:7800, h:1500}, ORB1 = {az:4.92, r:1150, h:470}, HOME_P = orbP(ORB1.az, ORB1.r, ORB1.h);
@@ -1342,7 +1355,7 @@ scene('life','blob');
     const xs = ps.map(p=>p[0]), ys = ps.map(p=>p[1]), x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys);
     fly((x0+x1)/2, (y0+y1)/2, Math.max(x1-x0, y1-y0)*1.5+1500); };
   let intro = null;
-  if(reduce){ cam.position.copy(HOME_P); stage.classList.remove('intro'); } else { cam.position.copy(orbP(ORB0.az, ORB0.r, ORB0.h)); anim = {orb:1, t0:performance.now(), ms:10500}; for(const g of glow) scene.add(g); setDay(0); intro = -1; }
+  if(reduce){ cam.position.copy(HOME_P); stage.classList.remove('intro'); setTimeout(() => document.querySelector('.headline').classList.add('gone'), 5000); } else { cam.position.copy(orbP(ORB0.az, ORB0.r, ORB0.h)); anim = {orb:1, t0:performance.now(), ms:10500}; for(const g of glow) scene.add(g); setDay(0); intro = -1; }
   const zoomBy = f => { anim = null; cam.position.sub(ctl.target).multiplyScalar(f).add(ctl.target); };
   const spin = a => { anim = null; const o = cam.position.clone().sub(ctl.target); o.applyAxisAngle(new THREE.Vector3(0,1,0), a); cam.position.copy(ctl.target).add(o); };
   $('#zin').onclick = () => zoomBy(.7); $('#zout').onclick = () => zoomBy(1.4); $('#rl').onclick = () => spin(-.5); $('#rr').onclick = () => spin(.5);
@@ -1351,7 +1364,7 @@ scene('life','blob');
   // pins
   const pinsEl = $('#pins'), pins = [];
   for(const p of CITY.places){ const a = toXY(p.at), el = document.createElement('button');
-    el.className = 'pin' + (p.big?' big left':'') + (p.h24?' h24':''); el.style.setProperty('--c', CITY.cats[p.k].c); el.innerHTML = '<i></i><span></span>';
+    el.className = 'pin' + (p.big?' big left':'') + (p.h24?' h24':'') + (p.k==='flat'?' fl':''); el.style.setProperty('--c', CITY.cats[p.k].c); el.innerHTML = '<i></i><span></span>';
     el.onclick = () => select(p); pinsEl.appendChild(el);
     const gy = hAt(a[0],a[1]), col = new THREE.Color(CITY.cats[p.k].c), bm = new THREE.Group();
     const core = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 1, 8, 1, true), new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:.95, depthWrite:false, side:THREE.DoubleSide, fog:false}));
@@ -1362,7 +1375,7 @@ scene('life','blob');
     pins.push({p, el, bm, core, halo, disc, v:new THREE.Vector3(a[0], gy + (p.hl ? data.hl[p.hl].h*1.0+14 : 22), -a[1])}); }
   for(const p of CITY.peaks){ const a = toXY(p.at), el = document.createElement('div'); el.className = 'pin peak'; el.innerHTML = '<i></i><span>'+p.n+'</span>'; pinsEl.appendChild(el);
     pins.push({p:{k:'peak'}, pk:p, el, v:new THREE.Vector3(a[0], hAt(a[0],a[1])+230, -a[1])}); }
-  window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = q.p.k==='flat' ? Math.round(q.p.price/1000)+'k ₽ · '+T.rooms[L][q.p.rooms] : nm(q.p); else if(q.pk) q.el.lastChild.textContent = q.pk[L]; };
+  window.pinsRelabel = () => { for(const q of pins) if(q.p.n) q.el.lastChild.textContent = q.p.k==='flat' ? Math.round(q.p.price/1000)+'k ₽' + (activeCat==='flat' || q.p===sel ? ' · '+T.rooms[L][q.p.rooms] : '') : nm(q.p); else if(q.pk) q.el.lastChild.textContent = q.pk[L]; };
   window.pinsFilter = () => { for(const q of pins){ const on = q.p.k==='peak' || inAct(q.p) || (activeCat==='tram' && q.p.k==='campus') || q.p===sel;
       q.hide = !on; q.el.classList.toggle('on', q.p===sel); q.el.classList.toggle('show', activeCat!=='all' && inAct(q.p)); } };
   pinsRelabel(); pinsFilter();
@@ -1381,7 +1394,7 @@ scene('life','blob');
     if(intro !== null){ if(intro < 0) intro = now; const t = (now-intro)/1000, e = Math.min(1,t/4.5);
       glowMat.uniforms.uR.value = 12500*(1-Math.pow(1-e,2.2)); glowMat.uniforms.uA.value = 1-sstep(5.5,8.5,t); setDay(sstep(1.2,6.5,t));
       if(t > 4) stage.classList.remove('intro');
-      if(t > 8.8){ for(const g of glow){ scene.remove(g); g.geometry.dispose(); } setDay(1); intro = null; } }
+      if(t > 8.8){ setTimeout(hideHead, innerWidth < 760 ? 1500 : 9000); for(const g of glow){ scene.remove(g); g.geometry.dispose(); } setDay(1); intro = null; } }
     ctl.target.x = Math.min(8000, Math.max(-8000, ctl.target.x)); ctl.target.z = Math.min(6500, Math.max(-9000, ctl.target.z));
     ctl.update(); sun.position.set(ctl.target.x-5600, ctl.target.y+2700, ctl.target.z-3400); sun.target.position.copy(ctl.target);
     const floor = hAt(cam.position.x, -cam.position.z) + 60; if(cam.position.y < floor) cam.position.y = floor;
