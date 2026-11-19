@@ -1303,8 +1303,9 @@ scene('life','blob');
   // one line per street: where two tracks run side by side, keep only one of them
   const single = lines => { const kept = [], pts = [];
     for(const l of lines.slice().sort((a,b) => b.length-a.length)){ let near = 0; const sm = densify(l, 25);
-      for(const p of sm){ for(const q of pts){ if(Math.abs(p[0]-q[0]) < 16 && Math.abs(p[1]-q[1]) < 16){ near++; break; } } }
-      if(near > sm.length*.6) continue; kept.push(l); for(const p of sm) pts.push(p); }
+      const inner = sm.slice(2, -2);   // the ends always touch the neighbours, so only the middle says whether this is a second track
+      for(const p of inner){ for(const q of pts){ if(Math.abs(p[0]-q[0]) < 14 && Math.abs(p[1]-q[1]) < 14){ near++; break; } } }
+      if(inner.length >= 3 && near > inner.length*.8) continue; kept.push(l); for(const p of sm) pts.push(p); }
     return kept; };
   // join the pieces into one long path, end to end
   const chain = lines => { const left = lines.map(l => l.slice()); if(!left.length) return [];
