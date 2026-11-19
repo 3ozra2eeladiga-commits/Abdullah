@@ -476,8 +476,8 @@ const CITY = {
   home: [43.06638, 44.0533],           // PMPI main building: walking times are counted from here
   campusStop: 'Универсам',
   cats: {
-    campus:{c:'#ff3b30', en:'PMPI buildings', fr:'Bâtiments du PMPI', ru:'Корпуса ПМФИ'},
-    flat:{c:'#007aff', en:'Flats with registration', fr:'Logements avec enregistrement', ru:'Квартиры с регистрацией'},
+    campus:{c:'#ff3b30', en:'University buildings', fr:'Bâtiments de l’université', ru:'Корпуса ПМФИ'},
+    flat:{c:'#007aff', en:'Apartments with registration', fr:'Logements avec enregistrement', ru:'Квартиры с регистрацией'},
     dorm:{c:'#ff9500', en:'Dormitories', fr:'Résidences universitaires', ru:'Общежития'},
     tram:{c:'#af52de', en:'Trams', fr:'Tramways', ru:'Трамваи'},
     coffee:{c:'#a2845e', en:'Coffee', fr:'Cafés', ru:'Кофейни'},
@@ -494,11 +494,11 @@ const CITY = {
   },
   groups: {
     pmfi:{c:'#ff3b30', cats:['campus','dorm'], en:'PMPI', fr:'PMPI', ru:'ПМФИ'},
-    flat:{c:'#007aff', cats:['flat'], en:'Flats with registration', fr:'Logements avec enregistrement', ru:'Квартиры с регистрацией'},
+    flat:{c:'#007aff', cats:['flat'], en:'Apartments with registration', fr:'Logements avec enregistrement', ru:'Квартиры с регистрацией'},
     tram:{c:'#af52de', cats:['tram'], en:'Trams', fr:'Tramways', ru:'Трамваи'},
-    go:{c:'#34c759', cats:['see','hike','spring','coffee','food','study'], en:'Where to go', fr:'Où aller', ru:'Куда сходить'},
+    go:{c:'#34c759', cats:['see','hike','spring','coffee','food','study'], en:'Places to go', fr:'Sorties', ru:'Куда сходить'},
     st:{c:'#1d1d1f', cats:['go'], en:'Stations', fr:'Gares', ru:'Вокзалы'},
-    need:{c:'#00c7be', cats:['med','police','bank','need'], en:'Essentials', fr:'Essentiels', ru:'Нужное'}
+    need:{c:'#00c7be', cats:['med','police','bank','need'], en:'Help & services', fr:'Aide et services', ru:'Помощь и услуги'}
   },
   places: [
     {k:'campus',id:'main',hl:'main',big:1,n:'PMPI Building No. 1 (main)',fr:'PMPI, bâtiment n° 1 (principal)',ru:'ПМФИ, корпус № 1 (главный) · пр. Калинина, 11',at:[43.06638,44.0533],
@@ -512,19 +512,19 @@ const CITY = {
     {k:'dorm',id:'dorm2',hl:'dorm2',n:'Dorm No. 2',fr:'Résidence universitaire n° 2',ru:'Общежитие № 2 ПМФИ · пр. Калинина, 11 к1',at:[43.06808,44.05271],d:{en:'5 floors.',fr:'5 étages.',ru:'5 этажей.'}},
     {k:'tram',id:'stop',n:'Tram stop “Universam”',fr:'Arrêt de tram « Universam »',ru:'Остановка «Универсам»',at:[43.06303,44.05304],d:{en:'Your stop. Trams 2, 4, 6, 7 and 8 stop here.',fr:'Votre arrêt. Les trams 2, 4, 6, 7 et 8 s’arrêtent ici.',ru:'Ваша остановка. Здесь останавливаются трамваи 2, 4, 6, 7 и 8.'}},
 
-    {k:'flat',id:'f1',demo:1,n:'1-bedroom flat, Kalinina Ave',fr:'1 pièce, av. Kalinine',ru:'пр. Калинина',at:[43.06598, 44.05159],price:28000,rooms:1,f:['furn', 'wash', 'wifi'],ph:'img/flats/f1.jpg'},
-    {k:'flat',id:'f2',demo:1,n:'2-bedroom flat, Kuchury St',fr:'2 pièces, rue Koutchoury',ru:'ул. Кучуры',at:[43.06804, 44.05123],price:38000,rooms:2,f:['two', 'furn', 'balc'],ph:'img/flats/f2.jpg'},
+    {k:'flat',id:'f1',demo:1,n:'1-bedroom apartment, Kalinina Ave',fr:'1 pièce, av. Kalinine',ru:'пр. Калинина',at:[43.06598, 44.05159],price:28000,rooms:1,f:['furn', 'wash', 'wifi'],ph:'img/flats/f1.jpg'},
+    {k:'flat',id:'f2',demo:1,n:'2-bedroom apartment, Kuchury St',fr:'2 pièces, rue Koutchoury',ru:'ул. Кучуры',at:[43.06804, 44.05123],price:38000,rooms:2,f:['two', 'furn', 'balc'],ph:'img/flats/f2.jpg'},
     {k:'flat',id:'f3',demo:1,n:'Studio, 40 Let Oktyabrya Ave',fr:'Studio, av. des 40 ans d’Octobre',ru:'пр. 40 лет Октября',at:[43.06373, 44.05131],price:24000,rooms:0,f:['tram', 'furn', 'wifi'],ph:'img/flats/f3.jpg'},
-    {k:'flat',id:'f4',demo:1,n:'1-bedroom flat, Moskovskaya St',fr:'1 pièce, rue Moskovskaïa',ru:'ул. Московская',at:[43.05864, 44.05124],price:30000,rooms:1,f:['quiet', 'newk', 'wash'],ph:'img/flats/f4.jpg'},
-    {k:'flat',id:'f5',demo:1,n:'1-bedroom flat, Panagyurishte St',fr:'1 pièce, rue Panagurichté',ru:'ул. Панагюриште',at:[43.06387, 44.05475],price:29000,rooms:1,f:['lift', 'furn', 'balc'],ph:'img/flats/f5.jpg'},
-    {k:'flat',id:'f6',demo:1,n:'2-bedroom flat, Pushkinskaya St',fr:'2 pièces, rue Pouchkine',ru:'ул. Пушкинская',at:[43.06601, 44.05059],price:36000,rooms:2,f:['two', 'quiet', 'wash'],ph:'img/flats/f6.jpg'},
+    {k:'flat',id:'f4',demo:1,n:'1-bedroom apartment, Moskovskaya St',fr:'1 pièce, rue Moskovskaïa',ru:'ул. Московская',at:[43.05864, 44.05124],price:30000,rooms:1,f:['quiet', 'newk', 'wash'],ph:'img/flats/f4.jpg'},
+    {k:'flat',id:'f5',demo:1,n:'1-bedroom apartment, Panagyurishte St',fr:'1 pièce, rue Panagurichté',ru:'ул. Панагюриште',at:[43.06387, 44.05475],price:29000,rooms:1,f:['lift', 'furn', 'balc'],ph:'img/flats/f5.jpg'},
+    {k:'flat',id:'f6',demo:1,n:'2-bedroom apartment, Pushkinskaya St',fr:'2 pièces, rue Pouchkine',ru:'ул. Пушкинская',at:[43.06601, 44.05059],price:36000,rooms:2,f:['two', 'quiet', 'wash'],ph:'img/flats/f6.jpg'},
     {k:'flat',id:'f7',demo:1,n:'Studio, Ordzhonikidze St',fr:'Studio, rue Ordjonikidzé',ru:'ул. Орджоникидзе',at:[43.0622, 44.05402],price:23000,rooms:0,f:['tram', 'newk', 'wifi'],ph:'img/flats/f7.jpg'},
-    {k:'flat',id:'f8',demo:1,n:'1-bedroom flat, 1st Bulvarnaya St',fr:'1 pièce, 1re rue Boulvarnaïa',ru:'ул. 1-я Бульварная',at:[43.06198, 44.0533],price:27000,rooms:1,f:['furn', 'desk', 'wifi'],ph:'img/flats/f8.jpg'},
-    {k:'flat',id:'f9',demo:1,n:'2-bedroom flat, Novorossiyskaya St',fr:'2 pièces, rue Novorossiïskaïa',ru:'ул. Новороссийская',at:[43.0643, 44.04926],price:40000,rooms:2,f:['two', 'reno', 'balc'],ph:'img/flats/f9.jpg'},
-    {k:'flat',id:'f10',demo:1,n:'1-bedroom flat, Sorge St',fr:'1 pièce, rue Sorge',ru:'ул. Зорге',at:[43.0607, 44.05488],price:26000,rooms:1,f:['quiet', 'furn', 'wash'],ph:'img/flats/f10.jpg'},
-    {k:'flat',id:'f11',demo:1,n:'2-bedroom flat, 295th Rifle Division St',fr:'2 pièces, rue de la 295e Division',ru:'ул. 295-й Стрелковой Дивизии',at:[43.06845, 44.05875],price:35000,rooms:2,f:['two', 'lift', 'desk'],ph:'img/flats/f11.jpg'},
+    {k:'flat',id:'f8',demo:1,n:'1-bedroom apartment, 1st Bulvarnaya St',fr:'1 pièce, 1re rue Boulvarnaïa',ru:'ул. 1-я Бульварная',at:[43.06198, 44.0533],price:27000,rooms:1,f:['furn', 'desk', 'wifi'],ph:'img/flats/f8.jpg'},
+    {k:'flat',id:'f9',demo:1,n:'2-bedroom apartment, Novorossiyskaya St',fr:'2 pièces, rue Novorossiïskaïa',ru:'ул. Новороссийская',at:[43.0643, 44.04926],price:40000,rooms:2,f:['two', 'reno', 'balc'],ph:'img/flats/f9.jpg'},
+    {k:'flat',id:'f10',demo:1,n:'1-bedroom apartment, Sorge St',fr:'1 pièce, rue Sorge',ru:'ул. Зорге',at:[43.0607, 44.05488],price:26000,rooms:1,f:['quiet', 'furn', 'wash'],ph:'img/flats/f10.jpg'},
+    {k:'flat',id:'f11',demo:1,n:'2-bedroom apartment, 295th Rifle Division St',fr:'2 pièces, rue de la 295e Division',ru:'ул. 295-й Стрелковой Дивизии',at:[43.06845, 44.05875],price:35000,rooms:2,f:['two', 'lift', 'desk'],ph:'img/flats/f11.jpg'},
     {k:'flat',id:'f12',demo:1,n:'Studio, Fuchika St',fr:'Studio, rue Fučík',ru:'ул. Юлиуса Фучика',at:[43.05958, 44.05689],price:22000,rooms:0,f:['cheap', 'furn', 'wifi'],ph:'img/flats/f12.jpg'},
-    {k:'flat',id:'f13',demo:1,n:'3-bedroom flat, Kavkazskaya St',fr:'3 pièces, rue Kavkazskaïa',ru:'ул. Кавказская',at:[43.06283, 44.04703],price:45000,rooms:3,f:['three', 'reno', 'wash'],ph:'img/flats/f13.jpg'},
+    {k:'flat',id:'f13',demo:1,n:'3-bedroom apartment, Kavkazskaya St',fr:'3 pièces, rue Kavkazskaïa',ru:'ул. Кавказская',at:[43.06283, 44.04703],price:45000,rooms:3,f:['three', 'reno', 'wash'],ph:'img/flats/f13.jpg'},
 
     {k:'coffee',n:'Noir House',fr:'Noir House',ru:'Нуар Хаус',at:[43.0630,44.0499]},
     {k:'coffee',n:'Lermontov Coffee',fr:'Lermontov Coffee',ru:'Лермонтов кофе',at:[43.0749,44.0375]},
@@ -581,7 +581,7 @@ const CITY = {
     {k:'see',id:'s13',n:'Singing Fountain',fr:'Fontaine musicale',ru:'Поющий фонтан',at:[43.0719,44.0400],d:{en:'Light and music fountain on Lenin Square in the warm season, in the evening.',fr:'Fontaine musicale et lumineuse place Lénine, le soir à la belle saison.',ru:'Светомузыкальный фонтан на площади Ленина, вечером в тёплый сезон.'}},
     {k:'see',id:'s14',n:'Kirov Park',fr:'Parc Kirov',ru:'Парк им. Кирова',at:[43.06182,44.03275],d:{en:'Lake with boats, rides, a stadium.',fr:'Lac avec barques, manèges, stade.',ru:'Озеро с лодками, аттракционы, стадион.'}},
 
-    {k:'hike',id:'h1',n:'Mashuk ring trail',fr:'Sentier autour du Machouk',ru:'Терренкур вокруг Машука',at:[43.0965,44.0574],d:{en:'An easy flat walk around the whole mountain through the forest: about 10 km, 2.5 to 3 hours. Passes Proval, the duel site and the Gates of Love. Good for a first weekend.',fr:'Une promenade facile et plate autour de toute la montagne, en forêt : environ 10 km, 2 h 30 à 3 h. Passe par le Proval, le lieu du duel et les Portes de l’amour. Idéal pour un premier week-end.',ru:'Лёгкая ровная прогулка вокруг всей горы по лесу: около 10 км, 2,5–3 часа. Проходит мимо Провала, места дуэли и Ворот любви. Хорошо для первых выходных.'}},
+    {k:'hike',id:'h1',n:'Mashuk ring trail',fr:'Sentier autour du Machouk',ru:'Терренкур вокруг Машука',at:[43.0965,44.0574],d:{en:'An easy walk on a level path around the whole mountain, through the forest: about 10 km, 2.5 to 3 hours. Passes Proval, the duel site and the Gates of Love. Good for a first weekend.',fr:'Une promenade facile et plate autour de toute la montagne, en forêt : environ 10 km, 2 h 30 à 3 h. Passe par le Proval, le lieu du duel et les Portes de l’amour. Idéal pour un premier week-end.',ru:'Лёгкая ровная прогулка вокруг всей горы по лесу: около 10 км, 2,5–3 часа. Проходит мимо Провала, места дуэли и Ворот любви. Хорошо для первых выходных.'}},
     {k:'hike',id:'h2',n:'Walk up to Mashuk summit',fr:'Montée à pied au Machouk',ru:'Пеший подъём на Машук',at:[43.0883,44.0462],d:{en:'A forest trail from the ring path to the top, 993 m. About 1.5 hours up. Take water and normal shoes; ride the cable car down if you are tired.',fr:'Un sentier forestier du chemin circulaire jusqu’au sommet, 993 m. Environ 1 h 30 de montée. Prenez de l’eau et de bonnes chaussures ; redescendez en téléphérique si vous êtes fatigué.',ru:'Лесная тропа от терренкура до вершины, 993 м. Подъём около 1,5 часа. Возьмите воду и нормальную обувь; вниз можно на канатке.'}},
     {k:'hike',id:'h3',n:'Mount Kazachka viewpoint',fr:'Belvédère du mont Kazatchka',ru:'Гора Казачка',at:[43.0774,44.0460],d:{en:'A short climb close to the centre with a view over the city.',fr:'Une courte montée près du centre avec vue sur la ville.',ru:'Короткий подъём рядом с центром, вид на город.'}},
     {k:'hike',id:'h4',n:'Mount Beshtau, 1400 m',fr:'Mont Bechtaou, 1400 m',ru:'Гора Бештау, 1400 м',at:[43.0221,44.0981],d:{en:'The five-peaked mountain you see from the dorms. A full-day hike for a group; in May the slopes are covered with wild poppies. Do not go alone or in bad weather.',fr:'La montagne à cinq sommets que l’on voit depuis les résidences. Une randonnée d’une journée, en groupe ; en mai, les pentes sont couvertes de coquelicots. N’y allez pas seul ni par mauvais temps.',ru:'Пятиглавая гора, которую видно из общежитий. Поход на целый день для компании; в мае склоны в маках. Не ходите в одиночку и в плохую погоду.'}},
@@ -606,38 +606,38 @@ const CITY = {
 
 /* ================= TEXTS ================= */
 const T = {
-brandTop:{en:'Student guide',fr:'Guide étudiant',ru:'Гид для студентов'},
-swipe:{en:'Swipe sideways →',fr:'Faites défiler →',ru:'Листайте вбок →'},
+brandTop:{en:'City guide for students',fr:'Guide de la ville pour étudiants',ru:'Гид по городу для студентов'},
+swipe:{en:'Swipe to see more →',fr:'Glisse pour voir plus →',ru:'Листай вбок →'},
 cPyat:{en:'Pyatigorsk',fr:'Piatigorsk',ru:'Пятигорск'},cNal:{en:'Nalchik',fr:'Naltchik',ru:'Нальчик'},cKra:{en:'Krasnodar',fr:'Krasnodar',ru:'Краснодар'},cRos:{en:'Rostov-on-Don',fr:'Rostov-sur-le-Don',ru:'Ростов-на-Дону'},
 loadSub:{en:'A guide for foreign students',fr:'Le guide des étudiants étrangers',ru:'Гид для иностранных студентов'},loadHi:{en:'Welcome to Russia',fr:'Bienvenue en Russie',ru:'Добро пожаловать в Россию'},
 sosBtn:{en:'Emergency',fr:'Urgences',ru:'Экстренно'},
 soon:{en:'soon',fr:'bientôt',ru:'скоро'},
-navFlats:{en:'Flats',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Sights',fr:'À voir',ru:'Места'},navHol:{en:'Holidays',fr:'Jours fériés',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
-h1:{en:'Your city, before you land.',fr:'Votre ville, avant d’atterrir.',ru:'Ваш город — ещё до приезда.'},
-h1p:{en:'Campus, dorms, trams, flats where registration is allowed, coffee and everything a new student needs in Pyatigorsk.',fr:'Campus, résidences, tramways, appartements avec enregistrement, cafés et tout ce qu’il faut à un nouvel étudiant à Piatigorsk.',ru:'Корпуса, общежития, трамваи, квартиры с регистрацией, кофейни и всё, что нужно новому студенту в Пятигорске.'},
-hint:{en:'Drag to move · right-drag or two fingers to rotate',fr:'Glisser pour déplacer · clic droit ou deux doigts pour tourner',ru:'Тяните, чтобы двигать · правая кнопка или два пальца — поворот'},
+navFlats:{en:'Apartments',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Places',fr:'Sorties',ru:'Куда сходить'},navHol:{en:'Holidays',fr:'Jours fériés',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
+h1:{en:'Your new city.',fr:'Ta nouvelle ville.',ru:'Твой новый город.'},
+h1p:{en:'Find your university, a home, the tram, a café and help. All on one map.',fr:'Trouve ton université, un logement, le tram, un café et de l’aide. Tout sur une seule carte.',ru:'Найди свой корпус, жильё, трамвай, кафе и помощь. Всё на одной карте.'},
+hint:{en:'Drag to move · two fingers to turn',fr:'Glisse pour bouger · deux doigts pour tourner',ru:'Тяни, чтобы двигать · два пальца — повернуть'},
 all:{en:'Everything',fr:'Tout',ru:'Всё'},
-walk:{en:'on foot from the main building',fr:'à pied du bâtiment principal',ru:'пешком от главного корпуса'},min:{en:'min',fr:'min',ru:'мин'},
+walk:{en:'walk from the main building',fr:'à pied du bâtiment principal',ru:'пешком от главного корпуса'},min:{en:'min',fr:'min',ru:'мин'},
 openMap:{en:'Open in Yandex Maps',fr:'Ouvrir dans Yandex Maps',ru:'Открыть в Яндекс Картах'},
-askFlat:{en:'Ask about this flat',fr:'Demander cet appartement',ru:'Спросить про квартиру'},
+askFlat:{en:'Ask about this apartment',fr:'Demander pour ce logement',ru:'Спросить про квартиру'},
 showMap:{en:'Show on map',fr:'Voir sur la carte',ru:'На карте'},
-demo:{en:'Example listing',fr:'Annonce d’exemple',ru:'Пример объявления'},
-regOk:{en:'Registration OK',fr:'Enregistrement OK',ru:'Регистрация есть'},
+demo:{en:'Example',fr:'Exemple',ru:'Пример'},
+regOk:{en:'Registration: yes',fr:'Enregistrement : oui',ru:'Регистрация: да'},
 perMonth:{en:'/ month',fr:'/ mois',ru:'/ мес'},
 rooms:{en:['Studio','1 bedroom','2 bedrooms','3 bedrooms'],fr:['Studio','1 pièce','2 pièces','3 pièces'],ru:['Студия','1 комната','2 комнаты','3 комнаты']},
 photo:{en:'Example photo',fr:'Photo d’exemple',ru:'Фото-пример'},
-tramPick:{en:'Pick a tram number to see where it goes.',fr:'Choisissez un numéro pour voir où va le tram.',ru:'Выберите номер трамвая — покажем, куда он едет.'},
-tramTitle:{en:'Trams of Pyatigorsk',fr:'Tramways de Piatigorsk',ru:'Трамваи Пятигорска'},
-passes:{en:'Stops at Universam, 5 min on foot from the PMPI main building.',fr:'S’arrête à Universam, à 5 min à pied du bâtiment principal du PMPI.',ru:'Останавливается на «Универсаме» — 5 минут пешком до главного корпуса ПМФИ.'},
-notPasses:{en:'Does not pass the campus. Change at the centre to tram 2, 4, 6, 7 or 8.',fr:'Ne passe pas par le campus. Changez au centre pour le tram 2, 4, 6, 7 ou 8.',ru:'Мимо корпуса не идёт. Пересядьте в центре на 2, 4, 6, 7 или 8.'},
+tramPick:{en:'Tap a tram number. We show where it goes.',fr:'Touche un numéro. On te montre où va le tram.',ru:'Нажми номер трамвая — покажем, куда он едет.'},
+tramTitle:{en:'Trams',fr:'Tramways',ru:'Трамваи'},
+passes:{en:'Yes! It stops at Universam. From there it is 5 minutes on foot to the main building.',fr:'Oui ! Il s’arrête à Universam. De là, 5 minutes à pied jusqu’au bâtiment principal.',ru:'Да! Он останавливается на «Универсаме». Оттуда 5 минут пешком до главного корпуса.'},
+notPasses:{en:'No, it does not go to the main building. Change in the city centre to tram 2, 4, 6, 7 or 8.',fr:'Non, il ne va pas au bâtiment principal. Change au centre-ville pour le tram 2, 4, 6, 7 ou 8.',ru:'Нет, к главному корпусу он не едет. В центре пересядь на 2, 4, 6, 7 или 8.'},
 stopsN:{en:'stops',fr:'arrêts',ru:'остановок'},
 flEyebrow:{en:'Housing',fr:'Logement',ru:'Жильё'},
-flTitle:{en:'Flats where the owner registers you',fr:'Des appartements où le propriétaire vous enregistre',ru:'Квартиры, где хозяин делает регистрацию'},
-flLead:{en:'In Russia a foreign student cannot simply live anywhere: the owner of the flat has to register you at the address. Most owners refuse. We list only flats where the owner has already agreed.',fr:'En Russie, un étudiant étranger ne peut pas habiter n’importe où : le propriétaire doit vous enregistrer à l’adresse. La plupart refusent. Nous ne listons que les appartements où le propriétaire a déjà accepté.',ru:'В России иностранный студент не может жить где угодно: хозяин квартиры должен поставить его на учёт по адресу. Большинство хозяев отказывают. Здесь только квартиры, где хозяин уже согласился.'},
-st1b:{en:'Choose a flat',fr:'Choisissez un appartement',ru:'Выберите квартиру'},st1:{en:'On the map or in the list. Write to us on Telegram in English, French or Russian.',fr:'Sur la carte ou dans la liste. Écrivez-nous sur Telegram en français, anglais ou russe.',ru:'На карте или в списке. Напишите нам в Telegram на английском, французском или русском.'},
-st2b:{en:'We show it to you',fr:'Nous vous le montrons',ru:'Мы показываем квартиру'},st2:{en:'We meet the owner together and check the contract and the registration terms.',fr:'Nous rencontrons le propriétaire ensemble et vérifions le contrat et les conditions d’enregistrement.',ru:'Вместе встречаемся с хозяином, проверяем договор и условия регистрации.'},
-st3b:{en:'Move in, get registered',fr:'Emménagez, soyez enregistré',ru:'Заезд и регистрация'},st3:{en:'Our fee is one month of rent, paid once, only after you sign the contract.',fr:'Notre commission est d’un mois de loyer, payée une seule fois, seulement après la signature du contrat.',ru:'Наша комиссия — один месяц аренды, один раз, только после подписания договора.'},
-flNote:{en:'The flats and photos shown now are examples to show how the page works. Real listings will replace them.',fr:'Les appartements et photos affichés sont des exemples pour montrer le fonctionnement de la page. De vraies annonces les remplaceront.',ru:'Квартиры и фото сейчас — примеры, чтобы было видно, как работает страница. Их заменят настоящие объявления.'},
+flTitle:{en:'Apartments with registration',fr:'Logements avec enregistrement',ru:'Квартиры с регистрацией'},
+flLead:{en:'In Russia you must be registered at the place where you live. Many owners say no. Here the owner already said yes.',fr:'En Russie, tu dois être enregistré là où tu habites. Beaucoup de propriétaires disent non. Ici, le propriétaire a déjà dit oui.',ru:'В России нужно быть зарегистрированным там, где живёшь. Многие хозяева отказывают. Здесь хозяин уже согласен.'},
+st1b:{en:'1. Pick an apartment',fr:'1. Choisis un logement',ru:'1. Выбери квартиру'},st1:{en:'Write to us on Telegram. English, French or Russian.',fr:'Écris-nous sur Telegram. Français, anglais ou russe.',ru:'Напиши нам в Telegram. Английский, французский или русский.'},
+st2b:{en:'2. We go with you',fr:'2. On y va avec toi',ru:'2. Идём смотреть вместе'},st2:{en:'We meet the owner together and check the papers.',fr:'On rencontre le propriétaire ensemble et on vérifie les papiers.',ru:'Вместе встречаемся с хозяином и проверяем документы.'},
+st3b:{en:'3. Move in',fr:'3. Tu emménages',ru:'3. Заселяйся'},st3:{en:'You pay us one month of rent. Only once, and only after you sign.',fr:'Tu nous paies un mois de loyer. Une seule fois, et seulement après la signature.',ru:'Ты платишь нам один месяц аренды. Один раз и только после договора.'},
+flNote:{en:'These apartments and photos are only examples for now.',fr:'Ces logements et ces photos sont seulement des exemples pour le moment.',ru:'Пока это только примеры квартир и фото.'},
 rgEyebrow:{en:'The rule everyone asks about',fr:'La règle que tout le monde demande',ru:'Правило, о котором все спрашивают'},
 rgTitle:{en:'Registration, in plain words',fr:'L’enregistrement, simplement',ru:'Регистрация простыми словами'},
 rgLead:{en:'Rules change. Always confirm the current deadline with the PMPI international office before you move.',fr:'Les règles changent. Confirmez toujours le délai actuel auprès du bureau international du PMPI avant de déménager.',ru:'Правила меняются. Перед переездом уточняйте актуальные сроки в международном отделе ПМФИ.'},
@@ -649,34 +649,34 @@ trTitle:{en:'Eight trams. Five of them stop at your campus.',fr:'Huit trams. Cin
 trLead:{en:'The tram is the cheapest way to cross the city: about 35 ₽ a ride, pay by card to the conductor. Your stop is Universam (Универсам).',fr:'Le tram est le moyen le moins cher de traverser la ville : environ 35 ₽ le trajet, paiement par carte au contrôleur. Votre arrêt est Universam (Универсам).',ru:'Трамвай — самый дешёвый способ ездить по городу: около 35 ₽ за поездку, оплата картой кондуктору. Ваша остановка — «Универсам».'},
 thNo:{en:'No.',fr:'N°',ru:'№'},thRoute:{en:'Route',fr:'Trajet',ru:'Маршрут'},thCampus:{en:'To the campus?',fr:'Vers le campus ?',ru:'К корпусу?'},
 yes:{en:'Yes, stop Universam',fr:'Oui, arrêt Universam',ru:'Да, ост. «Универсам»'},no:{en:'No',fr:'Non',ru:'Нет'},
-seEyebrow:{en:'Weekends',fr:'Week-ends',ru:'Выходные'},
-seTitle:{en:'A resort town at your door',fr:'Une ville thermale à votre porte',ru:'Курорт прямо за дверью'},
-seLead:{en:'Pyatigorsk is a 200-year-old spa town built around Mount Mashuk. Almost everything here is free and within an hour on foot or a short tram ride from the dorms.',fr:'Piatigorsk est une ville thermale de 200 ans construite autour du mont Machouk. Presque tout y est gratuit et à moins d’une heure à pied ou à quelques arrêts de tram des résidences.',ru:'Пятигорск — курорт с двухсотлетней историей вокруг горы Машук. Почти всё здесь бесплатно и в часе пешком или в нескольких остановках на трамвае от общежитий.'},
+seEyebrow:{en:'Weekends',fr:'Week-end',ru:'Выходные'},
+seTitle:{en:'Where to go in the city',fr:'Où aller en ville',ru:'Куда сходить в городе'},
+seLead:{en:'Mountains, parks, warm springs and old streets. Most places are free and close to you.',fr:'Montagnes, parcs, sources chaudes et vieilles rues. La plupart des endroits sont gratuits et près de toi.',ru:'Горы, парки, тёплые источники и старые улицы. Почти всё бесплатно и рядом.'},
 hoEyebrow:{en:'Calendar',fr:'Calendrier',ru:'Календарь'},
-hoTitle:{en:'What Russia celebrates next',fr:'Ce que la Russie fête bientôt',ru:'Какие праздники скоро'},
-hoLead:{en:'On public holidays the institute, banks and offices are closed. Shops and trams work.',fr:'Les jours fériés, l’institut, les banques et les administrations sont fermés. Les magasins et les trams fonctionnent.',ru:'В праздничные дни институт, банки и учреждения закрыты. Магазины и трамваи работают.'},
-inDays:{en:'days',fr:'jours',ru:'дн.'},today:{en:'today',fr:'aujourd’hui',ru:'сегодня'},dayOff:{en:'Day off',fr:'Jour férié',ru:'Выходной'},
+hoTitle:{en:'Holidays soon',fr:'Bientôt les fêtes',ru:'Скоро праздники'},
+hoLead:{en:'On these days the university and banks are closed. Shops and trams work.',fr:'Ces jours-là, l’université et les banques sont fermées. Les magasins et les trams marchent.',ru:'В эти дни институт и банки закрыты. Магазины и трамваи работают.'},
+inDays:{en:'days',fr:'jours',ru:'дн.'},today:{en:'today',fr:'aujourd’hui',ru:'сегодня'},dayOff:{en:'Day off',fr:'Jour de repos',ru:'Выходной'},
 fiEyebrow:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
-fiTitle:{en:'Your first week, in order',fr:'Votre première semaine, dans l’ordre',ru:'Первая неделя по порядку'},
-fiLead:{en:'Stuck on something? Write to us. We answer in English, French, Arabic and Russian.',fr:'Un souci ? Écrivez-nous. Nous répondons en français, anglais, arabe et russe.',ru:'Что-то непонятно? Напишите нам. Отвечаем на английском, французском, арабском и русском.'},
-askTg:{en:'Write on Telegram',fr:'Écrire sur Telegram',ru:'Написать в Telegram'},
-fi:{en:[['Keep your migration card.','You get it at the border. Without it nobody can register you.'],['Get registered.','Give your passport and migration card to the dorm office or to your landlord in the first days.'],['Buy a SIM card.','Beeline, MTS or MegaFon, with your passport. There is a Beeline shop by the Universam tram stop.'],['Open a bank card.','Foreign Visa and Mastercard do not work in Russia. Open a Mir card at Sberbank next to the campus.'],['Install the apps.','Yandex Maps and 2GIS for routes, Yandex Go for taxis, Yandex Translate with the camera for signs.'],['Learn your stop.','Universam (Универсам). Trams 2, 4, 6, 7 and 8.']],
-fr:[['Gardez votre carte migratoire.','Vous la recevez à la frontière. Sans elle, personne ne peut vous enregistrer.'],['Faites-vous enregistrer.','Remettez passeport et carte migratoire à la résidence ou à votre propriétaire dès les premiers jours.'],['Achetez une carte SIM.','Beeline, MTS ou MegaFon, avec votre passeport. Une boutique Beeline se trouve près de l’arrêt Universam.'],['Ouvrez une carte bancaire.','Les cartes Visa et Mastercard étrangères ne fonctionnent pas en Russie. Ouvrez une carte Mir à la Sberbank près du campus.'],['Installez les applications.','Yandex Maps et 2GIS pour les trajets, Yandex Go pour le taxi, Yandex Translate avec la caméra pour les panneaux.'],['Retenez votre arrêt.','Universam (Универсам). Trams 2, 4, 6, 7 et 8.']],
-ru:[['Сохраните миграционную карту.','Её дают на границе. Без неё вас не зарегистрируют.'],['Оформите регистрацию.','В первые дни отдайте паспорт и миграционную карту в общежитие или хозяину квартиры.'],['Купите SIM-карту.','Билайн, МТС или МегаФон, по паспорту. Салон Билайн — у остановки «Универсам».'],['Оформите банковскую карту.','Иностранные Visa и Mastercard в России не работают. Карту «Мир» можно открыть в Сбербанке рядом с корпусом.'],['Установите приложения.','Яндекс Карты и 2ГИС — маршруты, Яндекс Go — такси, Яндекс Переводчик с камерой — вывески.'],['Запомните остановку.','«Универсам». Трамваи 2, 4, 6, 7 и 8.']]},
-foot:{en:'Independent student guide. Not an official page of the institute.',fr:'Guide étudiant indépendant. Page non officielle de l’institut.',ru:'Независимый гид для студентов. Не официальная страница института.'}
+fiTitle:{en:'Your first week',fr:'Ta première semaine',ru:'Твоя первая неделя'},
+fiLead:{en:'Something is not clear? Write to us. We answer in English, French, Arabic and Russian.',fr:'Quelque chose n’est pas clair ? Écris-nous. On répond en français, anglais, arabe et russe.',ru:'Что-то непонятно? Напиши нам. Отвечаем на английском, французском, арабском и русском.'},
+askTg:{en:'Write to us on Telegram',fr:'Écris-nous sur Telegram',ru:'Написать в Telegram'},
+fi:{en:[['Keep your migration card.','You get it at the border. Without it you cannot get registered.'],['Get registered.','In the first days, give your passport and migration card to the dorm or to the apartment owner.'],['Buy a SIM card.','Beeline, MTS or MegaFon. Take your passport. There is a Beeline shop by the Universam tram stop.'],['Get a Russian bank card.','Visa and Mastercard from your country do not work in Russia. Get a Mir card at Sberbank near the main building.'],['Install the apps.','Yandex Maps or 2GIS for the way, Yandex Go for a taxi, Yandex Translate to read signs with the camera.'],['Remember your tram stop.','Universam (Универсам). Trams 2, 4, 6, 7 and 8.']],
+fr:[['Garde ta carte migratoire.','On te la donne à la frontière. Sans elle, pas d’enregistrement.'],['Fais-toi enregistrer.','Les premiers jours, donne ton passeport et ta carte migratoire à la résidence ou au propriétaire.'],['Achète une carte SIM.','Beeline, MTS ou MegaFon. Prends ton passeport. Il y a une boutique Beeline à l’arrêt de tram Universam.'],['Prends une carte bancaire russe.','Les cartes Visa et Mastercard de ton pays ne marchent pas en Russie. Prends une carte Mir à la Sberbank près du bâtiment principal.'],['Installe les applis.','Yandex Maps ou 2GIS pour le chemin, Yandex Go pour le taxi, Yandex Translate pour lire les panneaux avec la caméra.'],['Retiens ton arrêt de tram.','Universam (Универсам). Trams 2, 4, 6, 7 et 8.']],
+ru:[['Сохрани миграционную карту.','Её дают на границе. Без неё не сделают регистрацию.'],['Сделай регистрацию.','В первые дни отдай паспорт и миграционную карту в общежитие или хозяину квартиры.'],['Купи SIM-карту.','Билайн, МТС или МегаФон. Возьми паспорт. Салон Билайн — у остановки «Универсам».'],['Сделай русскую банковскую карту.','Visa и Mastercard твоей страны в России не работают. Карту «Мир» дают в Сбербанке у главного корпуса.'],['Поставь приложения.','Яндекс Карты или 2ГИС — дорога, Яндекс Go — такси, Яндекс Переводчик — читать вывески камерой.'],['Запомни свою остановку.','«Универсам». Трамваи 2, 4, 6, 7 и 8.']]},
+foot:{en:'A student city guide. Not the official website of the university.',fr:'Un guide de la ville pour étudiants. Ce n’est pas le site officiel de l’université.',ru:'Гид по городу для студентов. Это не официальный сайт института.'}
 };
 const SOS = {
- en:{t:'Emergency & the law',lead:'Save this page. In an emergency call 112: it is free from any phone, even with no SIM card or zero balance.',
-  nums:[['112','All emergencies'],['103','Ambulance'],['102','Police'],['101','Fire & rescue (MChS)'],['104','Gas leak']],
+ en:{t:'Help and the law',lead:'Save this page. If something bad happens, call 112. It is free. It works even with no SIM card and no money on the phone.',
+  nums:[['112','All emergencies'],['103','Ambulance'],['102','Police'],['101','Fire and rescue (MChS)'],['104','Gas leak']],
   call:['📞','What to say on the phone',['What happened.','The address: street, building, entrance, floor.','Your name and phone number.','Don’t hang up first.']],say:'Say in Russian:',tr:'Mne nuzhna pomoshch. Ya inostrannyy student. Adres: …',
   cards:[['🪪','Always carry your documents',['Passport','Migration card','Registration slip (the tear-off part)'],'Keep photos and copies on your phone too. The police have the right to check a foreigner’s documents.'],
    ['👮','If the police stop you',['Stay calm and polite.','Show your documents.','You may ask for the officer’s name and rank.','Don’t sign anything you don’t understand: you have the right to an interpreter.','Tell the institute straight away.']],
-   ['⛔','Strictly forbidden',['Drugs of any kind: prison and deportation.','Drinking alcohol in the street, parks and public places: a fine.','Smoking at bus and tram stops, near playgrounds and in stairwells: a fine.','Working without a permit: a fine and expulsion from Russia. Ask the institute how to work legally.','Joining unauthorised rallies: a fine and expulsion.','Living without registration or away from your registered address: a fine and visa problems.','Photographing military and security sites.'],'',1],
+   ['⛔','Strictly forbidden',['Drugs. Any kind. You can go to prison and be sent home forever.','Drinking alcohol in the street or in parks: you pay a fine.','Smoking at bus and tram stops, near playgrounds and inside buildings: you pay a fine.','Working without a work permit: a fine, and you can be sent out of Russia. Ask the university how to work legally.','Going to protests that are not allowed: a fine, and you can be sent out of Russia.','Living without registration, or not at your registered address: a fine and visa problems.','Taking photos of army or police buildings.'],'',1],
    ['📝','Registration',['By law you must be registered within 7 working days of arrival. The institute may ask for it sooner, so check with them.','New address means new registration.','Watch the end dates of your visa and registration and renew early.']],
    ['🧾','Lost your passport or got robbed',['Report it to the police (102) and keep the certificate they give you.','Tell the institute.','Contact your country’s embassy or consulate.']],
    ['🩺','Health',['Medical insurance is compulsory for foreign students: carry your policy.','An ambulance in an emergency is free.']]],
   inst:'PMPI (the institute): 8 (8793) 32-44-74, Mon–Sat 8:30–17:00',note:'A short reminder, not legal advice. Rules change, so always check with the institute.'},
- fr:{t:'Urgences et loi',lead:'Enregistrez cette page. En cas d’urgence, appelez le 112 : c’est gratuit depuis n’importe quel téléphone, même sans carte SIM ni crédit.',
+ fr:{t:'Urgences et loi',lead:'Garde cette page. Si quelque chose de grave arrive, appelle le 112. C’est gratuit. Ça marche même sans carte SIM et sans crédit.',
   nums:[['112','Toutes les urgences'],['103','Ambulance'],['102','Police'],['101','Pompiers et secours (MTchS)'],['104','Fuite de gaz']],
   call:['📞','Que dire au téléphone',['Ce qui s’est passé.','L’adresse : rue, numéro, entrée, étage.','Votre nom et votre numéro de téléphone.','Ne raccrochez pas le premier.']],say:'Dites en russe :',tr:'Mne noujna pomochtch. Ia inostranny student. Adres : …',
   cards:[['🪪','Ayez toujours vos documents sur vous',['Passeport','Carte migratoire','Talon d’enregistrement (la partie détachable)'],'Gardez aussi des photos et des copies dans votre téléphone. La police a le droit de contrôler les documents d’un étranger.'],
@@ -686,7 +686,7 @@ const SOS = {
    ['🧾','Passeport perdu ou vol',['Signalez-le à la police (102) et gardez l’attestation qu’on vous remet.','Prévenez l’institut.','Contactez l’ambassade ou le consulat de votre pays.']],
    ['🩺','Santé',['L’assurance maladie est obligatoire pour les étudiants étrangers : gardez votre attestation sur vous.','L’ambulance est gratuite en cas d’urgence.']]],
   inst:'PMPI (l’institut) : 8 (8793) 32-44-74, du lundi au samedi, 8 h 30–17 h',note:'Un simple aide-mémoire, pas un conseil juridique. Les règles changent : vérifiez toujours auprès de l’institut.'},
- ru:{t:'Экстренная помощь и закон',lead:'Сохраните эту страницу. В экстренной ситуации звоните 112: это бесплатно с любого телефона, даже без SIM-карты и денег на счёте.',
+ ru:{t:'Экстренная помощь и закон',lead:'Сохрани эту страницу. Если случилось что-то плохое, звони 112. Это бесплатно. Работает даже без SIM-карты и без денег на телефоне.',
   nums:[['112','Единый номер, все службы'],['103','Скорая помощь'],['102','Полиция'],['101','Пожарные и МЧС'],['104','Утечка газа']],
   call:['📞','Что сказать по телефону',['Что случилось.','Адрес: улица, дом, подъезд, этаж.','Ваше имя и номер телефона.','Не кладите трубку первым.']],say:'Скажите:',tr:'',
   cards:[['🪪','Документы всегда с собой',['Паспорт','Миграционная карта','Отрывной талон о регистрации'],'Держите в телефоне их фото, а дома копии. Полиция имеет право проверить документы у иностранца.'],
@@ -757,7 +757,7 @@ function renderStatic(){
     <h3>${esc(nm(p))}</h3>
     <div class="price">${p.price.toLocaleString('ru-RU')} ₽ <small>${tx('perMonth')}</small></div>
     <ul><li>${T.rooms[L][p.rooms]} · ${walkMin(p.at)} ${tx('min')} ${tx('walk')}</li><li>${esc(dsc(p))}</li></ul>
-    <div class="acts"><a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the flat: '+p.n)}">${tx('askFlat')}</a><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div>
+    <div class="acts"><a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the apartment: '+p.n)}">${tx('askFlat')}</a><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div>
   </article>`).join('');
   $('#seeGrid').innerHTML = CITY.places.filter(p => ['see','hike','spring'].includes(p.k)).map(p => `<article class="flat">
     <div><span class="tag" style="--c:${CITY.cats[p.k].c}">${CITY.cats[p.k][L]}</span></div>
@@ -806,7 +806,7 @@ function renderCard(){
     ${p.price?`<div class="facts"><div><b>${p.price.toLocaleString('ru-RU')} ₽</b>${tx('perMonth')}</div><div><b>${T.rooms[L][p.rooms]}</b>${tx('regOk')}</div></div>`:''}
     ${dsc(p)?`<p>${esc(dsc(p))}</p>`:''}
     ${p.id!=='main' && walkMin(p.at)<=75?`<div class="facts"><div><b>${walkMin(p.at)} ${tx('min')}</b>${tx('walk')}</div></div>`:''}
-    <div class="acts">${p.k==='flat'?`<a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the flat: '+p.n)}">${tx('askFlat')}</a>`:''}
+    <div class="acts">${p.k==='flat'?`<a class="btn main" target="_blank" rel="noopener" href="${tgLink('Hello! I am interested in the apartment: '+p.n)}">${tx('askFlat')}</a>`:''}
     <a class="btn" target="_blank" rel="noopener" href="${yLink(p.at)}">${tx('openMap')}</a></div>`;
   c.hidden = false; $('#stage').classList.add('busy');
 }
@@ -934,10 +934,10 @@ scene('life','blob');
 /* ================= a student next to each section, saying what the section is for ================= */
 (function(){
   const B = {
-    flats:{pose:'sit', c:'#0071e3', say:{en:'Looking for a flat with registration? It’s right here!',fr:'Tu cherches un logement avec enregistrement ? C’est ici !',ru:'Ищешь квартиру с регистрацией? Тебе сюда!'}},
-    sights:{pose:'walk', c:'#34c759', say:{en:'Want to get to know the city? Here’s where to go',fr:'Envie de découvrir la ville ? Voici où aller',ru:'Хочешь узнать город? Вот куда сходить'}},
-    holidays:{pose:'balloon', c:'#ff9500', say:{en:'Holidays are coming! Here’s what Russia celebrates',fr:'Les fêtes arrivent ! Voici ce que fête la Russie',ru:'Скоро праздники! Смотри, какие'}},
-    first:{pose:'wave', c:'#af52de', say:{en:'Just arrived? Start here',fr:'Tout juste arrivé ? Commence ici',ru:'Только приехал? Начни отсюда'}}};
+    flats:{pose:'sit', c:'#0071e3', say:{en:'Need an apartment with registration? Look here!',fr:'Tu cherches un logement avec enregistrement ? Regarde ici !',ru:'Ищешь квартиру с регистрацией? Смотри тут!'}},
+    sights:{pose:'walk', c:'#34c759', say:{en:'Bored? Here are fun places to go!',fr:'Tu t’ennuies ? Voici où sortir !',ru:'Скучно? Вот куда сходить!'}},
+    holidays:{pose:'balloon', c:'#ff9500', say:{en:'Holidays are coming! Here they are',fr:'Les fêtes arrivent ! Les voici',ru:'Скоро праздники! Вот они'}},
+    first:{pose:'wave', c:'#af52de', say:{en:'New here? Do these things first',fr:'Tu viens d’arriver ? Fais ça d’abord',ru:'Только приехал? Сделай это сначала'}}};
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, list = [];
   for(const [id,b] of Object.entries(B)){
     const h2 = document.querySelector('#'+id+' h2.t'); if(!h2) continue;
