@@ -104,6 +104,11 @@ button{font:inherit;color:inherit;cursor:pointer}
 .loader.done{opacity:0;visibility:hidden;pointer-events:none}
 .lsky i{position:absolute;border-radius:50%;background:rgba(255,255,255,.07);filter:blur(30px)}
 .lsky i:nth-child(1){width:46vw;height:16vh;left:-8vw;top:22vh}.lsky i:nth-child(2){width:52vw;height:18vh;right:-10vw;top:40vh}.lsky i:nth-child(3){width:70vw;height:20vh;left:14vw;bottom:-6vh;background:rgba(255,200,160,.16)}
+.lflag{position:absolute;right:max(24px,7vw);top:max(70px,11vh);width:min(44vw,440px);height:auto;transform:rotate(-6deg);filter:drop-shadow(0 18px 40px rgba(0,0,0,.35));opacity:0;animation:lflagIn 1.1s .25s ease-out forwards;transition:opacity .9s,transform .9s}
+.lflag.out{animation:none;opacity:0;transform:rotate(-6deg) translateY(-30px) scale(1.06)}
+@keyframes lflagIn{from{opacity:0;transform:rotate(-6deg) translateY(26px) scale(.94)}to{opacity:1;transform:rotate(-6deg)}}
+@media (max-width:760px){.lflag{width:62vw;right:6vw;top:13vh}}
+@media (prefers-reduced-motion:reduce){.lflag{animation:none;opacity:.96}}
 .lpath{position:absolute;inset:0;width:100%;height:100%}
 .lplane{position:absolute;left:0;top:0;width:clamp(54px,7vw,96px);height:auto;margin:calc(clamp(54px,7vw,96px)*-.3) 0 0 calc(clamp(54px,7vw,96px)*-.5);filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));will-change:transform;transition:transform .35s linear}
 .ltext{position:absolute;left:max(24px,6vw);right:max(24px,6vw);bottom:max(40px,9vh);text-align:left}
@@ -358,7 +363,8 @@ details.stopsBox[open] summary::after{content:" ▴"}
 
 <div class="loader" id="loading" aria-live="polite">
   <div class="lsky"><i></i><i></i><i></i></div>
-  <svg class="lpath" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true"><path d="M60 110 Q 560 110 900 300" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-dasharray="3 10" vector-effect="non-scaling-stroke"/><path d="M700 302 H 980" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+  <svg class="lflag" id="lflag" viewBox="-6 -4 252 168" aria-hidden="true"><defs><linearGradient id="lfsh" x1="0" x2="1"><stop offset="0" stop-color="#000" stop-opacity=".0"/><stop offset=".3" stop-color="#000" stop-opacity=".07"/><stop offset=".55" stop-color="#fff" stop-opacity=".1"/><stop offset=".8" stop-color="#000" stop-opacity=".06"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient></defs><path fill="#ffffff" d="M0,20 C80,6 160,34 240,20 L240,60 C160,74 80,46 0,60 Z"><animate attributeName="d" dur="3.2s" repeatCount="indefinite" values="M0,20 C80,6 160,34 240,20 L240,60 C160,74 80,46 0,60 Z;M0,20 C80,34 160,6 240,20 L240,60 C160,46 80,74 0,60 Z;M0,20 C80,6 160,34 240,20 L240,60 C160,74 80,46 0,60 Z" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/></path><path fill="#0039a6" d="M0,59 C80,45 160,73 240,59 L240,100 C160,114 80,86 0,100 Z"><animate attributeName="d" dur="3.2s" repeatCount="indefinite" values="M0,59 C80,45 160,73 240,59 L240,100 C160,114 80,86 0,100 Z;M0,59 C80,73 160,45 240,59 L240,100 C160,86 80,114 0,100 Z;M0,59 C80,45 160,73 240,59 L240,100 C160,114 80,86 0,100 Z" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/></path><path fill="#d52b1e" d="M0,99 C80,85 160,113 240,99 L240,140 C160,154 80,126 0,140 Z"><animate attributeName="d" dur="3.2s" repeatCount="indefinite" values="M0,99 C80,85 160,113 240,99 L240,140 C160,154 80,126 0,140 Z;M0,99 C80,113 160,85 240,99 L240,140 C160,126 80,154 0,140 Z;M0,99 C80,85 160,113 240,99 L240,140 C160,154 80,126 0,140 Z" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1"/></path><rect x="0" y="6" width="240" height="148" fill="url(#lfsh)"/></svg>
+  <svg class="lpath" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true"><path d="M60 110 Q 560 110 900 265" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-dasharray="3 10" vector-effect="non-scaling-stroke"/><path d="M700 267 H 980" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
   <svg class="lplane" id="lplane" viewBox="-34 -20 68 40" aria-hidden="true"><path d="M31 1 Q24 -6 6 -6 L-16 -6 L-25 -18 L-31 -18 L-27 -2 Q-28 4 -18 5 L18 6 Q28 6 31 1Z" fill="#fff"/><path d="M8 2 L-12 19 L-19 19 L-8 2Z" fill="#dfe6f5"/></svg>
   <div class="ltext"><h1 data-i="loadHi"></h1><p id="ltxt" data-i="loadSub"></p><div class="lbar"><u id="bar"></u></div><b id="pct">0</b></div>
 </div>
@@ -1055,7 +1061,7 @@ scene('life','blob');
   const stage = $('#stage'), canvas = $('#gl');
   let data;
   const pctEl = $('#pct'), barEl = $('#bar'), fail = m => { $('#ltxt').textContent = m; pctEl.textContent = '×'; };
-  const planeEl = $('#lplane'), setP = n => { pctEl.textContent = Math.round(n); barEl.style.width = n+'%'; const u = n/100, W2 = innerWidth, H2 = innerHeight, bx = (1-u)*(1-u)*60+2*(1-u)*u*560+u*u*900, by = (1-u)*(1-u)*110+2*(1-u)*u*110+u*u*300, dx = 2*(1-u)*500+2*u*340, dy = 2*u*190; planeEl.style.transform = `translate(${bx/1000*W2}px,${by/400*H2}px) rotate(${Math.atan2(dy/400*H2, dx/1000*W2)*(1-u*u*u)}rad)`; };
+  const planeEl = $('#lplane'), setP = n => { pctEl.textContent = Math.round(n); barEl.style.width = n+'%'; const u = n/100, W2 = innerWidth, H2 = innerHeight, bx = (1-u)*(1-u)*60+2*(1-u)*u*560+u*u*900, by = (1-u)*(1-u)*110+2*(1-u)*u*110+u*u*265, dx = 2*(1-u)*500+2*u*340, dy = 2*u*155; planeEl.style.transform = `translate(${bx/1000*W2}px,${by/400*H2}px) rotate(${Math.atan2(dy/400*H2, dx/1000*W2)*(1-u*u*u)}rad)`; };
   setP(0);
   const tick = n => { setP(n); return new Promise(r => requestAnimationFrame(() => setTimeout(r, 0))); };
   try { const res = await fetch(CITY.map), rd = res.body && res.body.getReader ? res.body.getReader() : null;
@@ -1305,7 +1311,7 @@ scene('life','blob');
   size(); addEventListener('resize', size);
   let visible = true; new IntersectionObserver(e => visible = e[0].isIntersecting).observe(stage);
   const v = new THREE.Vector3();
-  await tick(100); await new Promise(r => setTimeout(r, 1100));
+  await tick(100); await new Promise(r => setTimeout(r, 900)); $('#lflag').style.opacity = getComputedStyle($('#lflag')).opacity; $('#lflag').classList.add('out'); await new Promise(r => setTimeout(r, 700));
   scrollTo(0,0); $('#loading').classList.add('done'); setTimeout(() => { $('#loading').hidden = true; }, 1000); if(anim) anim.t0 = performance.now(); renderCard();
   (function frame(now){ requestAnimationFrame(frame); if(!visible) return;
     if(anim && anim.orb){ let k = Math.min(1,(now-anim.t0)/anim.ms); const e = k*k*(3-2*k), ez = 1-Math.pow(1-k,2.4);
