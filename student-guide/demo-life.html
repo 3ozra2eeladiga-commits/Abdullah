@@ -73,10 +73,27 @@ function scene(id, style){
   function furn(){ g.strokeStyle = ink; g.lineWidth = 3; g.lineCap = 'round'; if(style==='glow'){ g.shadowColor = '#6db7ff'; g.shadowBlur = 8; } }
   function frame(ms){ const t = reduce ? 3.2 : ms/1000; g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); g.shadowBlur = 0;
     g.strokeStyle = soft; g.lineWidth = 2; L(20,350,W-20,350);
+    // ---- flags of the students' home countries, in the order given
+    { const n = 8, fw = 66, fh = 44, gap = 34, x0 = (W-(n*fw+(n-1)*gap))/2, y0 = 14;
+      g.save(); g.strokeStyle = soft; g.lineWidth = 2; g.beginPath(); g.moveTo(x0-30,y0-4); for(let i=0;i<=n;i++) g.quadraticCurveTo(x0+i*(fw+gap)-gap/2-fw/2, y0+10, x0+i*(fw+gap)-gap/2, y0-2); g.stroke();
+      const star = (cx,cy,r,col,fill) => { g.beginPath(); for(let k=0;k<5;k++){ const a = -Math.PI/2+k*4*Math.PI/5; g[k?'lineTo':'moveTo'](cx+Math.cos(a)*r, cy+Math.sin(a)*r); } g.closePath(); if(fill){ g.fillStyle = col; g.fill(); } else { g.strokeStyle = col; g.lineWidth = 2; g.stroke(); } };
+      const F = [
+        (x,y) => { g.fillStyle = '#c1272d'; g.fillRect(x,y,fw,fh); star(x+fw/2,y+fh/2+1,11,'#006233',false); },
+        (x,y) => { g.fillStyle = '#e70013'; g.fillRect(x,y,fw,fh); g.fillStyle = '#fff'; g.beginPath(); g.arc(x+fw/2,y+fh/2,12,0,7); g.fill(); g.fillStyle = '#e70013'; g.beginPath(); g.arc(x+fw/2,y+fh/2,8,0,7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x+fw/2+3,y+fh/2,6.5,0,7); g.fill(); star(x+fw/2+3,y+fh/2,4,'#e70013',true); },
+        (x,y) => { g.fillStyle = '#ce1126'; g.fillRect(x,y,fw,fh/3); g.fillStyle = '#fff'; g.fillRect(x,y+fh/3,fw,fh/3); g.fillStyle = '#000'; g.fillRect(x,y+2*fh/3,fw,fh/3+.5); g.fillStyle = '#c09300'; g.fillRect(x+fw/2-4,y+fh/2-5,8,10); },
+        (x,y) => { g.fillStyle = '#000'; g.fillRect(x,y,fw,fh/3); g.fillStyle = '#fff'; g.fillRect(x,y+fh/3,fw,fh/3); g.fillStyle = '#007a3d'; g.fillRect(x,y+2*fh/3,fw,fh/3+.5); g.fillStyle = '#ce1126'; g.beginPath(); g.moveTo(x,y); g.lineTo(x+fw*.45,y+fh/2); g.lineTo(x,y+fh); g.fill(); star(x+fw*.14,y+fh/2,3.5,'#fff',true); },
+        (x,y) => { g.fillStyle = '#0099b5'; g.fillRect(x,y,fw,fh/3); g.fillStyle = '#fff'; g.fillRect(x,y+fh/3,fw,fh/3); g.fillStyle = '#1eb53a'; g.fillRect(x,y+2*fh/3,fw,fh/3+.5); g.fillStyle = '#ce1126'; g.fillRect(x,y+fh/3-1,fw,2); g.fillRect(x,y+2*fh/3-1,fw,2); g.fillStyle = '#fff'; g.beginPath(); g.arc(x+11,y+fh/6,5,0,7); g.fill(); g.fillStyle = '#0099b5'; g.beginPath(); g.arc(x+13.5,y+fh/6,4.4,0,7); g.fill(); },
+        (x,y) => { for(let k=0;k<9;k++){ g.fillStyle = k%2 ? '#fff' : '#0d5eaf'; g.fillRect(x,y+k*fh/9,fw,fh/9+.5); } g.fillStyle = '#0d5eaf'; g.fillRect(x,y,fh*5/9,fh*5/9); g.fillStyle = '#fff'; g.fillRect(x+fh*2/9,y,fh/9,fh*5/9); g.fillRect(x,y+fh*2/9,fh*5/9,fh/9); },
+        (x,y) => { g.fillStyle = '#da251d'; g.fillRect(x,y,fw,fh); star(x+fw/2,y+fh/2+1,11,'#ffff00',true); },
+        (x,y) => { g.fillStyle = '#ff9933'; g.fillRect(x,y,fw,fh/3); g.fillStyle = '#fff'; g.fillRect(x,y+fh/3,fw,fh/3); g.fillStyle = '#138808'; g.fillRect(x,y+2*fh/3,fw,fh/3+.5); g.strokeStyle = '#000080'; g.lineWidth = 1.4; g.beginPath(); g.arc(x+fw/2,y+fh/2,5.5,0,7); g.stroke(); for(let k=0;k<8;k++){ const a = k*Math.PI/8; g.beginPath(); g.moveTo(x+fw/2-Math.cos(a)*5.5,y+fh/2-Math.sin(a)*5.5); g.lineTo(x+fw/2+Math.cos(a)*5.5,y+fh/2+Math.sin(a)*5.5); g.stroke(); } }];
+      F.forEach((f,i) => { const x = x0+i*(fw+gap), y = y0+6+Math.sin(t*1.6+i*.9)*2.5; g.save(); g.translate(x+fw/2,y); g.rotate(Math.sin(t*1.3+i)*.035); g.translate(-(x+fw/2),-y);
+        g.shadowColor = 'rgba(0,0,0,.25)'; g.shadowBlur = 6; g.shadowOffsetY = 2; g.save(); g.beginPath(); if(g.roundRect) g.roundRect(x,y,fw,fh,5); else g.rect(x,y,fw,fh); g.clip(); g.shadowColor = 'transparent'; f(x,y); g.restore();
+        g.shadowColor = 'transparent'; g.strokeStyle = style==='glow' ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.18)'; g.lineWidth = 1; g.beginPath(); if(g.roundRect) g.roundRect(x,y,fw,fh,5); else g.rect(x,y,fw,fh); g.stroke(); g.restore(); });
+      g.restore(); }
     // ---- plane: takes off on the left, lands on the right
-    { const u = (t/14)%1, px = -60 + u*1320, py = u<.16 ? 338-(u/.16)**2*278 : u>.84 ? 60+((u-.84)/.16)**2*278 : 60 + Math.sin(u*9)*5, d = .004,
-        u2 = u+d, px2 = -60+u2*1320, py2 = u2<.16 ? 338-(u2/.16)**2*278 : u2>.84 ? 60+((u2-.84)/.16)**2*278 : 60+Math.sin(u2*9)*5, ang = Math.atan2(py2-py, px2-px);
-      g.save(); g.setLineDash([3,9]); g.strokeStyle = soft; g.lineWidth = 2; g.beginPath(); for(let k=0;k<26;k++){ const v = u-k*.006; if(v<0) break; const qx = -60+v*1320, qy = v<.16 ? 338-(v/.16)**2*278 : v>.84 ? 60+((v-.84)/.16)**2*278 : 60+Math.sin(v*9)*5; k ? g.lineTo(qx,qy) : g.moveTo(qx,qy); } g.stroke(); g.restore();
+    { const u = (t/14)%1, px = -60 + u*1320, py = u<.16 ? 338-(u/.16)**2*228 : u>.84 ? 110+((u-.84)/.16)**2*228 : 110 + Math.sin(u*9)*5, d = .004,
+        u2 = u+d, px2 = -60+u2*1320, py2 = u2<.16 ? 338-(u2/.16)**2*228 : u2>.84 ? 110+((u2-.84)/.16)**2*228 : 110+Math.sin(u2*9)*5, ang = Math.atan2(py2-py, px2-px);
+      g.save(); g.setLineDash([3,9]); g.strokeStyle = soft; g.lineWidth = 2; g.beginPath(); for(let k=0;k<26;k++){ const v = u-k*.006; if(v<0) break; const qx = -60+v*1320, qy = v<.16 ? 338-(v/.16)**2*228 : v>.84 ? 110+((v-.84)/.16)**2*228 : 110+Math.sin(v*9)*5; k ? g.lineTo(qx,qy) : g.moveTo(qx,qy); } g.stroke(); g.restore();
       g.save(); g.translate(px,py); g.rotate(ang); g.fillStyle = style==='blob' ? '#0071e3' : ink; if(style==='glow'){ g.shadowColor = '#6db7ff'; g.shadowBlur = 14; }
       g.beginPath(); g.moveTo(26,0); g.quadraticCurveTo(18,-6,-18,-5); g.lineTo(-27,-16); g.lineTo(-31,-16); g.lineTo(-25,0); g.lineTo(-18,4); g.quadraticCurveTo(18,5,26,0); g.fill();
       g.beginPath(); g.moveTo(4,0); g.lineTo(-10,17); g.lineTo(-15,17); g.lineTo(-8,0); g.fill(); g.restore(); g.shadowBlur = 0; }
