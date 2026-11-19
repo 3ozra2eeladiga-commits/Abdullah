@@ -278,6 +278,7 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .stage{height:min(80vh,1200px)}
 [data-v=r] .stage::before{display:none}
 @media (max-width:760px){.stage{height:min(72vh,680px)}.tools{top:14px}.bar .chips{padding-top:6px}}
+#walk{position:fixed;left:0;right:0;bottom:env(safe-area-inset-bottom,0px);width:100%;height:58px;z-index:25;pointer-events:none}
 .life{background:#fff;border-bottom:1px solid rgba(0,0,0,.06);overflow-x:auto;scrollbar-width:none}
 .life::-webkit-scrollbar{display:none}
 .life canvas{display:block;width:100%;min-width:860px;max-width:1500px;height:auto;margin:0 auto}
@@ -362,6 +363,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
 </div>
 
 <div class="life"><canvas id="life" width="1200" height="420" aria-label="Student life"></canvas></div>
+<canvas id="walk" aria-hidden="true"></canvas>
 <main id="top">
 <section id="flats"><div class="wrap">
   <div class="eyebrow" data-i="flEyebrow"></div>
@@ -732,7 +734,7 @@ document.addEventListener('click', e => {
   if(t.dataset.l){ L = t.dataset.l; try{ localStorage.setItem('sg-lang', L); }catch(e){} renderStatic(); }
   else if(t.dataset.c) setCat(t.dataset.c);
   else if(t.dataset.s){ subCat = subCat===t.dataset.s ? null : t.dataset.s; sel = null; renderStatic(); if(window.pinsFilter) pinsFilter(); if(window.fitCat) fitCat(activeCat); }
-  else if(t.dataset.route){ setRoute(selRoute===t.dataset.route && t.closest('.routes') ? null : t.dataset.route); $('#stage').scrollIntoView({block:'start'}); }
+  else if(t.dataset.route){ setRoute(selRoute===t.dataset.route && t.closest('.routes') ? null : t.dataset.route); }
   else if(t.dataset.go){ select(CITY.places.find(p => p.id===t.dataset.go)); $('#stage').scrollIntoView({block:'start'}); }
   else if(t.classList.contains('x')){ if(sel) { sel = null; renderStatic(); pinsFilter && pinsFilter(); } else setCat('all'); }
 });
@@ -746,7 +748,7 @@ renderStatic();
 /* ================= student life strip ================= */
 (function(){
 const lang = () => ({en:1,fr:1,ru:1})[document.documentElement.lang] ? document.documentElement.lang : 'en';
-const LB = {fly:{en:'flying home',fr:'retour au pays',ru:'улетает домой'},cafe:{en:'café',fr:'café',ru:'кофейня'},meet:{en:'making friends',fr:'on fait connaissance',ru:'знакомятся'},surg:{en:'surgeons',fr:'chirurgiens',ru:'хирурги'},dent:{en:'dentist',fr:'dentiste',ru:'стоматолог'}};
+const LB = {fly:{en:'just arrived to study',fr:'vient d’arriver pour étudier',ru:'приехал учиться'},cafe:{en:'café',fr:'café',ru:'кофейня'},meet:{en:'making friends',fr:'on fait connaissance',ru:'знакомятся'},surg:{en:'surgeons',fr:'chirurgiens',ru:'хирурги'},dent:{en:'dentist',fr:'dentiste',ru:'стоматолог'}};
 
 const SAY = [['Hello!','#0071e3'],['Bonjour !','#af52de'],['你好！','#ff3b30'],['مرحبا!','#34c759'],['Привет!','#ff9500'],['How are you?','#0071e3'],['Ça va ?','#af52de'],['你是哪国人？','#ff3b30'],['أنا من الأردن','#34c759'],['Пойдём в кафе?','#ff9500']];
 const COL = ['#0071e3','#af52de','#ff3b30','#34c759','#ff9500','#00c7be','#5856d6'];
@@ -783,8 +785,8 @@ function scene(id, style){
   function frame(ms){ const t = reduce ? 3.2 : ms/1000; g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); g.shadowBlur = 0;
     g.strokeStyle = soft; g.lineWidth = 2; L(20,350,W-20,350);
     // ---- flags of the students' home countries, in the order given
-    { const n = 8, fw = 66, fh = 44, gap = 34, x0 = (W-(n*fw+(n-1)*gap))/2, y0 = 14;
-      g.save(); g.strokeStyle = soft; g.lineWidth = 2; g.beginPath(); g.moveTo(x0-30,y0-4); for(let i=0;i<=n;i++) g.quadraticCurveTo(x0+i*(fw+gap)-gap/2-fw/2, y0+10, x0+i*(fw+gap)-gap/2, y0-2); g.stroke();
+    { const n = 8, fw = 66, fh = 44, gap = 44, x0 = (W-(n*fw+(n-1)*gap))/2, y0 = 14;
+      g.save();
       const star = (cx,cy,r,col,fill) => { g.beginPath(); for(let k=0;k<5;k++){ const a = -Math.PI/2+k*4*Math.PI/5; g[k?'lineTo':'moveTo'](cx+Math.cos(a)*r, cy+Math.sin(a)*r); } g.closePath(); if(fill){ g.fillStyle = col; g.fill(); } else { g.strokeStyle = col; g.lineWidth = 2; g.stroke(); } };
       const F = [
         (x,y) => { g.fillStyle = '#c1272d'; g.fillRect(x,y,fw,fh); star(x+fw/2,y+fh/2+1,11,'#006233',false); },
@@ -795,9 +797,11 @@ function scene(id, style){
         (x,y) => { for(let k=0;k<9;k++){ g.fillStyle = k%2 ? '#fff' : '#0d5eaf'; g.fillRect(x,y+k*fh/9,fw,fh/9+.5); } g.fillStyle = '#0d5eaf'; g.fillRect(x,y,fh*5/9,fh*5/9); g.fillStyle = '#fff'; g.fillRect(x+fh*2/9,y,fh/9,fh*5/9); g.fillRect(x,y+fh*2/9,fh*5/9,fh/9); },
         (x,y) => { g.fillStyle = '#da251d'; g.fillRect(x,y,fw,fh); star(x+fw/2,y+fh/2+1,11,'#ffff00',true); },
         (x,y) => { g.fillStyle = '#ff9933'; g.fillRect(x,y,fw,fh/3); g.fillStyle = '#fff'; g.fillRect(x,y+fh/3,fw,fh/3); g.fillStyle = '#138808'; g.fillRect(x,y+2*fh/3,fw,fh/3+.5); g.strokeStyle = '#000080'; g.lineWidth = 1.4; g.beginPath(); g.arc(x+fw/2,y+fh/2,5.5,0,7); g.stroke(); for(let k=0;k<8;k++){ const a = k*Math.PI/8; g.beginPath(); g.moveTo(x+fw/2-Math.cos(a)*5.5,y+fh/2-Math.sin(a)*5.5); g.lineTo(x+fw/2+Math.cos(a)*5.5,y+fh/2+Math.sin(a)*5.5); g.stroke(); } }];
-      F.forEach((f,i) => { const x = x0+i*(fw+gap), y = y0+6+Math.sin(t*1.6+i*.9)*2.5; g.save(); g.translate(x+fw/2,y); g.rotate(Math.sin(t*1.3+i)*.035); g.translate(-(x+fw/2),-y);
-        g.shadowColor = 'rgba(0,0,0,.25)'; g.shadowBlur = 6; g.shadowOffsetY = 2; g.save(); g.beginPath(); if(g.roundRect) g.roundRect(x,y,fw,fh,5); else g.rect(x,y,fw,fh); g.clip(); g.shadowColor = 'transparent'; f(x,y); g.restore();
-        g.shadowColor = 'transparent'; g.strokeStyle = style==='glow' ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.18)'; g.lineWidth = 1; g.beginPath(); if(g.roundRect) g.roundRect(x,y,fw,fh,5); else g.rect(x,y,fw,fh); g.stroke(); g.restore(); });
+      const NM = [['Morocco','Maroc','Марокко'],['Tunisia','Tunisie','Тунис'],['Egypt','Égypte','Египет'],['Jordan','Jordanie','Иордания'],['Uzbekistan','Ouzbékistan','Узбекистан'],['Greece','Grèce','Греция'],['Vietnam','Viêt Nam','Вьетнам'],['India','Inde','Индия']], li = {en:0,fr:1,ru:2}[lang()];
+      F.forEach((f,i) => { const x = x0+i*(fw+gap), y = y0+4, cx = x+fw/2, cy = y+fh/2, r = 23+Math.sin(t*1.5+i*.8)*.8;
+        g.save(); g.shadowColor = 'rgba(0,0,0,.22)'; g.shadowBlur = 8; g.shadowOffsetY = 3; g.fillStyle = '#fff'; g.beginPath(); g.arc(cx,cy,r+3,0,7); g.fill(); g.restore();
+        g.save(); g.beginPath(); g.arc(cx,cy,r,0,7); g.clip(); f(x,y); g.restore();
+        g.save(); g.font = '600 12px -apple-system,"Inter",Arial,sans-serif'; g.fillStyle = style==='glow' ? '#c9d2e0' : '#6e6e73'; g.textAlign = 'center'; g.fillText(NM[i][li], cx, cy+r+19); g.restore(); });
       g.restore(); }
     // ---- plane: takes off on the left, lands on the right
     { const u = (t/14)%1, px = -60 + u*1320, py = u<.16 ? 338-(u/.16)**2*228 : u>.84 ? 110+((u-.84)/.16)**2*228 : 110 + Math.sin(u*9)*5, d = .004,
@@ -837,6 +841,29 @@ function scene(id, style){
   requestAnimationFrame(frame); }
 scene('life','blob');
 
+})();
+
+/* ================= students walking along the bottom of the screen ================= */
+(function(){
+  const cv = document.getElementById('walk'); if(!cv || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const g = cv.getContext('2d'), H = 58, COLS = ['#0071e3','#af52de','#ff3b30','#34c759','#ff9500','#00c7be','#5856d6','#ff2d55'];
+  let W = 0, dpr = 1; const size = () => { dpr = Math.min(devicePixelRatio||1, 2); W = innerWidth; cv.width = W*dpr; cv.height = H*dpr; }; size(); addEventListener('resize', size);
+  const N = innerWidth < 760 ? 3 : 6, P = [];
+  for(let i=0;i<N;i++){ const dir = i%2 ? -1 : 1; P.push({x:Math.random()*innerWidth, v:(26+Math.random()*22)*dir, c:COLS[i%COLS.length], ph:Math.random()*6, bag:i%3!==1, s:.62+Math.random()*.12, wait:0}); }
+  let last = performance.now();
+  (function frame(now){ requestAnimationFrame(frame); const dt = Math.min(.05,(now-last)/1000); last = now; if(document.hidden) return;
+    g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+    for(const p of P){ if(p.wait > 0){ p.wait -= dt; } else { p.x += p.v*dt; p.ph += dt*Math.abs(p.v)*.16; if(Math.random() < dt*.03) p.wait = 1.5+Math.random()*2.5; }
+      if(p.x > W+30) p.x = -30; if(p.x < -30) p.x = W+30;
+      const f = p.v > 0 ? 1 : -1, s = p.s, sw = p.wait > 0 ? 0 : Math.sin(p.ph), y = H-4-30*s;
+      g.save(); g.translate(p.x, y); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = p.c; g.fillStyle = p.c; g.lineWidth = 6*s;
+      g.beginPath(); g.moveTo(0,0); g.lineTo(sw*9*s, 30*s); g.moveTo(0,0); g.lineTo(-sw*9*s, 30*s); g.stroke();
+      if(p.bag){ g.fillStyle = '#1d1d1f'; g.beginPath(); if(g.roundRect) g.roundRect(-f*13*s-5*s, -24*s, 10*s, 17*s, 3*s); else g.rect(-f*13*s-5*s, -24*s, 10*s, 17*s); g.fill(); g.fillStyle = p.c; }
+      g.beginPath(); g.moveTo(-8*s,-26*s); g.lineTo(8*s,-26*s); g.lineTo(7*s,2*s); g.lineTo(-7*s,2*s); g.closePath(); g.fill();
+      g.lineWidth = 4.5*s; g.beginPath(); g.moveTo(0,-23*s); g.lineTo(-sw*8*s*f, -6*s); g.stroke();
+      g.beginPath(); g.arc(0,-40*s,9.5*s,0,7); g.fillStyle = '#f2c9a5'; g.fill(); g.lineWidth = 2*s; g.strokeStyle = '#1d1d1f'; g.stroke();
+      g.restore(); }
+  })(last);
 })();
 
 /* ================= weather today (Open-Meteo, no key) ================= */
