@@ -98,7 +98,12 @@ button{font:inherit;color:inherit;cursor:pointer}
 .stops li.me{color:var(--amber-t);font-weight:700}
 .verdict{padding:10px 12px;border-radius:12px;background:rgba(240,138,36,.14);border:1px solid rgba(240,138,36,.5);font-weight:600;font-size:13px}
 .verdict.no{background:rgba(20,24,31,.04);border-color:var(--line);color:var(--muted)}
-.loading{position:absolute;z-index:4;inset:0;display:grid;place-items:center;font:500 11px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);pointer-events:none}
+.loader{position:absolute;z-index:8;inset:0;display:grid;place-items:center;background:#0a1020;color:#fff;transition:opacity .5s;text-align:center}
+.loader.done{opacity:0;pointer-events:none}
+.loader b{display:block;font:600 clamp(72px,22vw,170px)/1 var(--display);letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#ffc93c}
+.loader i{display:block;width:min(260px,60vw);height:3px;margin:22px auto 16px;background:rgba(255,255,255,.14);border-radius:3px;overflow:hidden}
+.loader u{display:block;height:100%;width:0;background:#ffc93c;transition:width .25s}
+.loader span{font:500 11px/1 var(--mono);letter-spacing:.24em;text-transform:uppercase;color:#9fb0cc}
 
 /* ---------- guide below ---------- */
 .wrap{max-width:1120px;margin:0 auto;padding-left:var(--gl);padding-right:var(--gr)}
@@ -187,7 +192,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
   <div id="sky"></div>
   <canvas id="gl" aria-label="3D map of Pyatigorsk"></canvas>
   <div id="pins"></div>
-  <div class="loading" id="loading">Loading the city…</div>
+  <div class="loader" id="loading"><div><b id="pct">0</b><i><u id="bar"></u></i><span id="ltxt">Pyatigorsk · PMFI</span></div></div>
 
   <header class="top">
     <a class="brand" href="#top"><small data-i="brandTop"></small><span>Pyatigorsk</span></a>
@@ -549,12 +554,20 @@ renderStatic();
 (async function(){
   const stage = $('#stage'), canvas = $('#gl');
   let data;
-  try { data = await (await fetch(CITY.map)).json(); } catch(e){ $('#loading').textContent = 'Map data did not load'; return; }
+  const pctEl = $('#pct'), barEl = $('#bar'), fail = m => { $('#ltxt').textContent = m; pctEl.textContent = '×'; };
+  const setP = n => { pctEl.textContent = Math.round(n); barEl.style.width = n+'%'; };
+  const tick = n => { setP(n); return new Promise(r => requestAnimationFrame(() => setTimeout(r, 0))); };
+  try { const res = await fetch(CITY.map), rd = res.body && res.body.getReader ? res.body.getReader() : null;
+    if(rd){ const parts = []; let got = 0; for(;;){ const {done, value} = await rd.read(); if(done) break; parts.push(value); got += value.length; setP(Math.min(58, got/1060000*58)); }
+      const all = new Uint8Array(got); let o = 0; for(const c of parts){ all.set(c,o); o += c.length; } data = JSON.parse(new TextDecoder().decode(all)); }
+    else data = await res.json();
+  } catch(e){ fail('Map data did not load'); return; }
+  await tick(60);
   MAP = data; O = data.o; renderStatic();
-  if(!window.THREE){ $('#loading').textContent = '3D is not available in this browser'; return; }
+  if(!window.THREE){ fail('3D is not available in this browser'); return; }
   let renderer;
   try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true, powerPreference:'high-performance'}); renderer.setClearColor(0x000000, 0); }
-  catch(e){ $('#loading').textContent = '3D is not available in this browser'; return; }
+  catch(e){ fail('3D is not available in this browser'); return; }
   const V = 'g';
   const S = {
    t:{fog:0x171c13, lo:[.115,.14,.095], mid:[.17,.23,.12], hi:[.30,.32,.19], cont:0xd9c98a, ca:.30, grid:.13, wall:[40,48,34], roofLo:[52,62,44], roofHi:[52,62,44], edge:0xd9c98a, lit:false, hemi:1, sun:0, shadows:false,
@@ -584,6 +597,7 @@ renderStatic();
   const mix = (a,b,t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
   const fogC = new THREE.Color(FOG).toArray();
 
+  await tick(64);
   // terrain
   { const pos = new Float32Array(D.w*D.h*3), col = new Float32Array(D.w*D.h*3), idx = [];
     const lo=S.lo, mid=S.mid, hi=S.hi;
@@ -635,6 +649,7 @@ renderStatic();
     if(ed.length){ const eg = new THREE.BufferGeometry(); eg.setAttribute('position', new THREE.Float32BufferAttribute(ed,3)); pm.add(new THREE.LineSegments(eg, new THREE.LineBasicMaterial({color:S.edge, transparent:true, opacity:V==='t'?.75:.85}))); }
     return pm;
   }
+  await tick(70);
   { const list = data.b.map(b => ({h:b[0], p:dec(b,2,1)})).filter(b => b.p.length>=3);
     let s = 7;
     scene.add(prisms(list, b => { s = (s*16807)%2147483647; const v = .82 + (s%100)/100*.3, t = Math.min(1,b.h/40);
@@ -650,6 +665,7 @@ renderStatic();
     beam.position.set(cx, hAt(cx,cy)+350, -cy); scene.add(beam); beams.push(beam);
   }
 
+  await tick(86);
   // ribbons and lines draped on the terrain
   function densify(p, step){ const o = [p[0]]; for(let i=1;i<p.length;i++){ const a=p[i-1], b=p[i], l=Math.hypot(b[0]-a[0],b[1]-a[1]), n=Math.max(1,Math.ceil(l/step)); for(let k=1;k<=n;k++) o.push([a[0]+(b[0]-a[0])*k/n, a[1]+(b[1]-a[1])*k/n]); } return o; }
   function ribbon(lines, w, lift, mat){ const pos = [];
@@ -673,6 +689,7 @@ renderStatic();
   scene.add(ribbon((data.trails||[]).map(a => dec(a,1)), 5, 2.5, flat(S.trail)));
   for(const c of (data.cable||[])){ const q = dec(c,1), a = q[0], b = q[q.length-1], g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute([a[0],hAt(a[0],a[1])+25,-a[1], b[0],hAt(b[0],b[1])+25,-b[1]],3)); scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({color:0xe0559a, fog:false}))); }
+  await tick(93);
   // parks and water
   function areas(list, color, lift){ const pos = [];
     for(const a of list){ const p = dec(a,1); if(p.length<3) continue; let ar=0; for(let i=0;i<p.length;i++){ const q=p[(i+1)%p.length]; ar+=p[i][0]*q[1]-q[0]*p[i][1]; }
@@ -718,18 +735,18 @@ renderStatic();
   canvas.addEventListener('pointerdown', () => { ctl.enableZoom = true; anim = null; });
   canvas.addEventListener('pointerleave', e => { if(e.pointerType==='mouse') ctl.enableZoom = false; });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
-  const HOME_T = new THREE.Vector3(500, hAt(500,900), -900), HOME_P = new THREE.Vector3(-2400, 3300, 5200);
+  const MB = toXY(CITY.places[0].at), HOME_T = new THREE.Vector3(MB[0], hAt(MB[0],MB[1])+10, -MB[1]), HOME_P = HOME_T.clone().add(new THREE.Vector3(-420, 400, 610));
   ctl.target.copy(HOME_T);
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let anim = null;
-  function tween(toT, toP, ms){ if(reduce){ ctl.target.copy(toT); cam.position.copy(toP); return; } anim = {t0:performance.now(), ms, fT:ctl.target.clone(), fP:cam.position.clone(), toT, toP}; }
+  function tween(toT, toP, ms, dive){ if(reduce){ ctl.target.copy(toT); cam.position.copy(toP); return; } anim = {t0:performance.now(), ms, dive, fT:ctl.target.clone(), fP:cam.position.clone(), toT, toP}; }
   function fly(x, y, dist){ const t = new THREE.Vector3(x, hAt(x,y), -y), dir = cam.position.clone().sub(ctl.target).normalize(); if(dir.y<.45){ dir.y=.45; dir.normalize(); } tween(t, t.clone().add(dir.multiplyScalar(dist)), 1300); }
   window.flyTo = p => { const a = toXY(p.at); fly(a[0], a[1], 1300); };
   window.fitCat = k => { if(k==='tram') return; const ps = CITY.places.filter(p => p.k===k).map(p => toXY(p.at)); if(!ps.length) return;
     const xs = ps.map(p=>p[0]), ys = ps.map(p=>p[1]), x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys);
     fly((x0+x1)/2, (y0+y1)/2, Math.max(x1-x0, y1-y0)*1.5+1500); };
   let intro = null;
-  if(reduce){ cam.position.copy(HOME_P); stage.classList.remove('intro'); } else { cam.position.set(-9000, 9500, 16000); tween(HOME_T.clone(), HOME_P.clone(), 4200); for(const g of glow) scene.add(g); setDay(0); intro = -1; }
+  if(reduce){ cam.position.copy(HOME_P); stage.classList.remove('intro'); } else { cam.position.set(-9000, 9500, 16000); tween(HOME_T.clone(), HOME_P.clone(), 2300, true); for(const g of glow) scene.add(g); setDay(0); intro = -1; }
   const zoomBy = f => { anim = null; cam.position.sub(ctl.target).multiplyScalar(f).add(ctl.target); };
   const spin = a => { anim = null; const o = cam.position.clone().sub(ctl.target); o.applyAxisAngle(new THREE.Vector3(0,1,0), a); cam.position.copy(ctl.target).add(o); };
   $('#zin').onclick = () => zoomBy(.7); $('#zout').onclick = () => zoomBy(1.4); $('#rl').onclick = () => spin(-.5); $('#rr').onclick = () => spin(.5);
@@ -753,13 +770,14 @@ renderStatic();
   size(); addEventListener('resize', size);
   let visible = true; new IntersectionObserver(e => visible = e[0].isIntersecting).observe(stage);
   const v = new THREE.Vector3();
-  $('#loading').hidden = true; renderCard();
+  await tick(100); await new Promise(r => setTimeout(r, 380));
+  $('#loading').classList.add('done'); setTimeout(() => { $('#loading').hidden = true; }, 650); if(anim) anim.t0 = performance.now(); renderCard();
   (function frame(now){ requestAnimationFrame(frame); if(!visible) return;
-    if(anim){ let k = Math.min(1,(now-anim.t0)/anim.ms); k = k<.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2; ctl.target.lerpVectors(anim.fT, anim.toT, k); cam.position.lerpVectors(anim.fP, anim.toP, k); if(k>=1) anim = null; }
-    if(intro !== null){ if(intro < 0) intro = now; const t = (now-intro)/1000, e = Math.min(1,t/2.6);
-      glowMat.uniforms.uR.value = 12500*(1-Math.pow(1-e,2.2)); glowMat.uniforms.uA.value = 1-sstep(3.3,5.3,t); setDay(sstep(2.7,5.1,t));
-      if(t > 3.1) stage.classList.remove('intro');
-      if(t > 5.4){ for(const g of glow){ scene.remove(g); g.geometry.dispose(); } setDay(1); intro = null; } }
+    if(anim){ let k = Math.min(1,(now-anim.t0)/anim.ms); k = anim.dive ? 1-Math.pow(1-k,5) : k<.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2; ctl.target.lerpVectors(anim.fT, anim.toT, k); cam.position.lerpVectors(anim.fP, anim.toP, k); if(k>=1) anim = null; }
+    if(intro !== null){ if(intro < 0) intro = now; const t = (now-intro)/1000, e = Math.min(1,t/1.5);
+      glowMat.uniforms.uR.value = 12500*(1-Math.pow(1-e,2.2)); glowMat.uniforms.uA.value = 1-sstep(1.9,3.2,t); setDay(sstep(1.3,2.9,t));
+      if(t > 1.8) stage.classList.remove('intro');
+      if(t > 3.3){ for(const g of glow){ scene.remove(g); g.geometry.dispose(); } setDay(1); intro = null; } }
     ctl.target.x = Math.min(8000, Math.max(-8000, ctl.target.x)); ctl.target.z = Math.min(6500, Math.max(-9000, ctl.target.z));
     ctl.update(); sun.position.set(ctl.target.x-3600, ctl.target.y+2900, ctl.target.z-3900); sun.target.position.copy(ctl.target);
     const floor = hAt(cam.position.x, -cam.position.z) + 60; if(cam.position.y < floor) cam.position.y = floor;
