@@ -154,10 +154,17 @@ td button{border:1px solid var(--line);background:none;border-radius:9px;padding
 .day b{display:block;margin-bottom:4px}
 .day p{margin:0;color:var(--muted);font-size:13px}
 .day{background:var(--panel)}
+.day .dimg{display:block;width:calc(100% + 32px);max-width:none;margin:-16px -16px 14px;aspect-ratio:3/2;object-fit:cover;border-radius:16px 16px 0 0}
+[data-v=r] .day .dimg{border-radius:22px 22px 0 0}
+[data-v=r] .day:first-child{background:#fff;color:inherit}[data-v=r] .day:first-child .when,[data-v=r] .day:first-child p,[data-v=r] .day:first-child .in small{color:var(--muted)}
+.day:first-child{box-shadow:0 0 0 2px #ff9500,0 6px 22px rgba(0,0,0,.08)!important}
 .day:first-child{background:linear-gradient(140deg,rgba(240,138,36,.2),#fff 70%);border-color:rgba(240,138,36,.55)}
 .check{display:grid;gap:0;margin:0;padding:0;list-style:none}
 .check li{border-top:1px solid var(--line);padding:13px 0;color:var(--muted)}
-.check b{color:var(--fg)}
+.check b{color:var(--fg);display:block;font-size:16px;margin-bottom:4px}
+.check span{display:block;line-height:1.5}
+.check li:nth-child(-n+2){background:#fff4f3;border-radius:16px;padding:14px 16px;border-top:0;margin-bottom:8px}
+.check li:nth-child(-n+2) b{color:#d70015}
 footer{margin-top:70px;border-top:1px solid var(--line);padding-block:26px 40px;color:var(--muted);font-size:12.5px}
 footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-between}
 @media (max-width:760px){
@@ -660,9 +667,27 @@ fiEyebrow:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
 fiTitle:{en:'Your first week',fr:'Ta première semaine',ru:'Твоя первая неделя'},
 fiLead:{en:'Something is not clear? Write to us. We answer in English, French, Arabic and Russian.',fr:'Quelque chose n’est pas clair ? Écris-nous. On répond en français, anglais, arabe et russe.',ru:'Что-то непонятно? Напиши нам. Отвечаем на английском, французском, арабском и русском.'},
 askTg:{en:'Write to us on Telegram',fr:'Écris-nous sur Telegram',ru:'Написать в Telegram'},
-fi:{en:[['Keep your migration card.','You get it at the border. Without it you cannot get registered.'],['Get registered.','In the first days, give your passport and migration card to the dorm or to the apartment owner.'],['Buy a SIM card.','Beeline, MTS or MegaFon. Take your passport. There is a Beeline shop by the Universam tram stop.'],['Get a Russian bank card.','Visa and Mastercard from your country do not work in Russia. Get a Mir card at Sberbank near the main building.'],['Install the apps.','Yandex Maps or 2GIS for the way, Yandex Go for a taxi, Yandex Translate to read signs with the camera.'],['Remember your tram stop.','Universam (Универсам). Trams 2, 4, 6, 7 and 8.']],
-fr:[['Garde ta carte migratoire.','On te la donne à la frontière. Sans elle, pas d’enregistrement.'],['Fais-toi enregistrer.','Les premiers jours, donne ton passeport et ta carte migratoire à la résidence ou au propriétaire.'],['Achète une carte SIM.','Beeline, MTS ou MegaFon. Prends ton passeport. Il y a une boutique Beeline à l’arrêt de tram Universam.'],['Prends une carte bancaire russe.','Les cartes Visa et Mastercard de ton pays ne marchent pas en Russie. Prends une carte Mir à la Sberbank près du bâtiment principal.'],['Installe les applis.','Yandex Maps ou 2GIS pour le chemin, Yandex Go pour le taxi, Yandex Translate pour lire les panneaux avec la caméra.'],['Retiens ton arrêt de tram.','Universam (Универсам). Trams 2, 4, 6, 7 et 8.']],
-ru:[['Сохрани миграционную карту.','Её дают на границе. Без неё не сделают регистрацию.'],['Сделай регистрацию.','В первые дни отдай паспорт и миграционную карту в общежитие или хозяину квартиры.'],['Купи SIM-карту.','Билайн, МТС или МегаФон. Возьми паспорт. Салон Билайн — у остановки «Универсам».'],['Сделай русскую банковскую карту.','Visa и Mastercard твоей страны в России не работают. Карту «Мир» дают в Сбербанке у главного корпуса.'],['Поставь приложения.','Яндекс Карты или 2ГИС — дорога, Яндекс Go — такси, Яндекс Переводчик — читать вывески камерой.'],['Запомни свою остановку.','«Универсам». Трамваи 2, 4, 6, 7 и 8.']]},
+fi:{en:[
+ ['Keep your migration card safe.','When you land in Russia, at passport control you get a migration card. It is a small paper (or an electronic one). It shows when and why you came. Keep it until you leave Russia. Without it you cannot get registered. If you lose it, tell your university straight away.'],
+ ['On day one, go to your university.','Go to the international students office (the migration office) of your university. They will explain registration and tell you exactly what to do and when. This is the most important step.'],
+ ['Get a SIM card and Gosuslugi.','Buy a SIM card (Beeline, MTS, MegaFon) with your passport. Then you must confirm your number on Gosuslugi, the state services website. If you don’t, your number can be blocked. Ask at the phone shop or at the university how to do it. Gosuslugi will also help you with many other things.'],
+ ['Get a Russian bank card (Mir).','Visa and Mastercard from your country do not work in Russia. With a Mir card you can pay in shops, order a taxi, food and delivery, and buy online. You can open one at Sberbank near the main building. Take your passport.'],
+ ['Install Russian apps.','Google Maps works badly here. Use Yandex Maps or 2GIS: they show buses and trams in real time. Yandex Go is for taxis and delivery, Yandex Eda and Samokat bring food, Yandex Translate reads signs with your camera.'],
+ ['Remember your tram stop.','Universam (Универсам). Trams 2, 4, 6, 7 and 8.']],
+fr:[
+ ['Garde bien ta carte migratoire.','Quand tu arrives en Russie, au contrôle des passeports, on te donne une carte migratoire. C’est un petit papier (ou une version électronique). Elle montre quand et pourquoi tu es venu. Garde-la jusqu’à ton départ de Russie. Sans elle, pas d’enregistrement. Si tu la perds, préviens ton université tout de suite.'],
+ ['Le premier jour, va à ton université.','Va au bureau des étudiants étrangers (le service migration) de ton université. On t’expliquera l’enregistrement et on te dira exactement quoi faire et quand. C’est l’étape la plus importante.'],
+ ['Prends une carte SIM et Gosuslugi.','Achète une carte SIM (Beeline, MTS, MegaFon) avec ton passeport. Ensuite, tu dois confirmer ton numéro sur Gosuslugi, le site des services de l’État. Sinon, ton numéro peut être bloqué. Demande comment faire à la boutique ou à l’université. Gosuslugi t’aidera aussi pour beaucoup d’autres choses.'],
+ ['Prends une carte bancaire russe (Mir).','Les cartes Visa et Mastercard de ton pays ne marchent pas en Russie. Avec une carte Mir, tu peux payer dans les magasins, commander un taxi, des repas, des livraisons et acheter en ligne. Tu peux l’ouvrir à la Sberbank près du bâtiment principal. Prends ton passeport.'],
+ ['Installe les applis russes.','Google Maps marche mal ici. Utilise Yandex Maps ou 2GIS : ils montrent les bus et les trams en direct. Yandex Go pour le taxi et la livraison, Yandex Eda et Samokat pour les repas, Yandex Translate pour lire les panneaux avec la caméra.'],
+ ['Retiens ton arrêt de tram.','Universam (Универсам). Trams 2, 4, 6, 7 et 8.']],
+ru:[
+ ['Береги миграционную карту.','Когда прилетаешь в Россию, на паспортном контроле дают миграционную карту — небольшой бланк (или электронную). В ней видно, когда и зачем ты приехал. Храни её до отъезда из России. Без неё не сделают регистрацию. Если потерял — сразу скажи в вузе.'],
+ ['В первый же день иди в свой вуз.','Иди в отдел по работе с иностранными студентами (миграционный отдел) своего вуза. Там объяснят про регистрацию и скажут, что и когда делать. Это самый важный шаг.'],
+ ['Купи SIM-карту и сделай Госуслуги.','Купи SIM-карту (Билайн, МТС, МегаФон) по паспорту. Потом номер обязательно нужно подтвердить на Госуслугах — это сайт государственных услуг. Иначе номер могут заблокировать. Как это сделать, спроси в салоне связи или в вузе. Госуслуги помогут и во многом другом.'],
+ ['Сделай русскую банковскую карту «Мир».','Visa и Mastercard твоей страны в России не работают. С картой «Мир» можно платить в магазинах, заказывать такси, еду и доставку, покупать в интернете. Открыть её можно в Сбербанке у главного корпуса. Возьми паспорт.'],
+ ['Поставь русские приложения.','Google Карты здесь работают плохо. Ставь Яндекс Карты или 2ГИС: там видно автобусы и трамваи в реальном времени. Яндекс Go — такси и доставка, Яндекс Еда и Самокат — еда, Яндекс Переводчик — читать вывески камерой.'],
+ ['Запомни свою остановку.','«Универсам». Трамваи 2, 4, 6, 7 и 8.']]},
 foot:{en:'A student city guide. Not the official website of the university.',fr:'Un guide de la ville pour étudiants. Ce n’est pas le site officiel de l’université.',ru:'Гид по городу для студентов. Это не официальный сайт института.'}
 };
 const SOS = {
@@ -708,12 +733,12 @@ let sosLast = null;
 function openSos(){ sosLast = document.activeElement; renderSos(); $('#sos').hidden = false; document.body.style.overflow = 'hidden'; $('#sos .sheet-x').focus(); }
 function closeSos(){ $('#sos').hidden = true; document.body.style.overflow = ''; if(sosLast && sosLast.focus) sosLast.focus(); }
 const HOL = [
- {m:1,d:1,off:1,n:{en:'New Year',fr:'Nouvel An',ru:'Новый год'},t:{en:'The biggest holiday of the year. Days off from 1 to 8 January, fireworks at midnight, a tree on Lenin Square.',fr:'La plus grande fête de l’année. Congés du 1er au 8 janvier, feux d’artifice à minuit, sapin place Lénine.',ru:'Главный праздник года. Выходные с 1 по 8 января, салют в полночь, ёлка на площади Ленина.'}},
- {m:1,d:7,off:1,n:{en:'Orthodox Christmas',fr:'Noël orthodoxe',ru:'Рождество'},t:{en:'Celebrated on 7 January by the Orthodox calendar.',fr:'Célébré le 7 janvier selon le calendrier orthodoxe.',ru:'Отмечают 7 января по православному календарю.'}},
- {m:1,d:25,n:{en:'Students’ Day',fr:'Journée des étudiants',ru:'День студента'},t:{en:'Tatiana’s Day. The end of winter exams, parties and student discounts.',fr:'La Sainte-Tatiana. Fin des examens d’hiver, fêtes et réductions étudiantes.',ru:'Татьянин день. Конец зимней сессии, вечеринки и скидки студентам.'}},
- {m:2,d:23,off:1,n:{en:'Defender of the Fatherland Day',fr:'Jour du défenseur de la patrie',ru:'День защитника Отечества'},t:{en:'People congratulate men. Day off.',fr:'On félicite les hommes. Jour férié.',ru:'Поздравляют мужчин. Выходной.'}},
- {m:3,d:8,off:1,n:{en:'International Women’s Day',fr:'Journée internationale des femmes',ru:'8 Марта'},t:{en:'Flowers for every woman you know: classmates, teachers, the dorm warden. Buy early.',fr:'Des fleurs pour toutes les femmes : camarades, professeures, gardienne. Achetez-les tôt.',ru:'Цветы всем знакомым женщинам: одногруппницам, преподавателям, коменданту. Покупайте заранее.'}},
- {date:'2027-03-08',end:'2027-03-14',n:{en:'Maslenitsa',fr:'Maslenitsa',ru:'Масленица'},t:{en:'Pancake week before Lent. On Sunday a straw doll is burned in the park.',fr:'La semaine des crêpes avant le carême. Le dimanche, on brûle une poupée de paille au parc.',ru:'Блинная неделя перед постом. В воскресенье в парке сжигают чучело.'}},
+ {m:1,d:1,off:1,img:'newyear',n:{en:'New Year',fr:'Nouvel An',ru:'Новый год'},t:{en:'The biggest holiday of the year. Days off from 1 to 8 January, fireworks at midnight, a tree on Lenin Square.',fr:'La plus grande fête de l’année. Congés du 1er au 8 janvier, feux d’artifice à minuit, sapin place Lénine.',ru:'Главный праздник года. Выходные с 1 по 8 января, салют в полночь, ёлка на площади Ленина.'}},
+ {m:1,d:7,off:1,img:'christmas',n:{en:'Orthodox Christmas',fr:'Noël orthodoxe',ru:'Рождество'},t:{en:'Celebrated on 7 January by the Orthodox calendar.',fr:'Célébré le 7 janvier selon le calendrier orthodoxe.',ru:'Отмечают 7 января по православному календарю.'}},
+ {m:1,d:25,img:'students',n:{en:'Students’ Day',fr:'Journée des étudiants',ru:'День студента'},t:{en:'Tatiana’s Day. The end of winter exams, parties and student discounts.',fr:'La Sainte-Tatiana. Fin des examens d’hiver, fêtes et réductions étudiantes.',ru:'Татьянин день. Конец зимней сессии, вечеринки и скидки студентам.'}},
+ {m:2,d:23,off:1,img:'feb23',n:{en:'Defender of the Fatherland Day',fr:'Jour du défenseur de la patrie',ru:'День защитника Отечества'},t:{en:'People congratulate men. Day off.',fr:'On félicite les hommes. Jour férié.',ru:'Поздравляют мужчин. Выходной.'}},
+ {m:3,d:8,off:1,img:'mar8',n:{en:'International Women’s Day',fr:'Journée internationale des femmes',ru:'8 Марта'},t:{en:'Flowers for every woman you know: classmates, teachers, the dorm warden. Buy early.',fr:'Des fleurs pour toutes les femmes : camarades, professeures, gardienne. Achetez-les tôt.',ru:'Цветы всем знакомым женщинам: одногруппницам, преподавателям, коменданту. Покупайте заранее.'}},
+ {date:'2027-03-08',end:'2027-03-14',img:'maslenitsa',n:{en:'Maslenitsa',fr:'Maslenitsa',ru:'Масленица'},t:{en:'Pancake week before Lent. On Sunday a straw doll is burned in the park.',fr:'La semaine des crêpes avant le carême. Le dimanche, on brûle une poupée de paille au parc.',ru:'Блинная неделя перед постом. В воскресенье в парке сжигают чучело.'}},
  {m:5,d:1,off:1,n:{en:'Spring and Labour Day',fr:'Fête du printemps et du travail',ru:'Праздник Весны и Труда'},t:{en:'Long May weekend. The city goes out to Mashuk for barbecue.',fr:'Long week-end de mai. Toute la ville part faire des grillades au Machouk.',ru:'Майские выходные. Весь город едет на шашлыки к Машуку.'}},
  {m:5,d:9,off:1,n:{en:'Victory Day',fr:'Jour de la Victoire',ru:'День Победы'},t:{en:'Parade, the Eternal Flame, fireworks in the evening. Be respectful: this day is very important here.',fr:'Défilé, Flamme éternelle, feux d’artifice le soir. Soyez respectueux : ce jour est très important ici.',ru:'Парад, Вечный огонь, вечером салют. Очень важный день — относитесь с уважением.'}},
  {m:6,d:12,off:1,n:{en:'Russia Day',fr:'Jour de la Russie',ru:'День России'},t:{en:'National day. Concerts in the centre.',fr:'Fête nationale. Concerts au centre-ville.',ru:'Государственный праздник. Концерты в центре.'}},
@@ -764,7 +789,7 @@ function renderStatic(){
     <h3>${esc(nm(p))}</h3><ul><li>${esc(p.d[L])}</li></ul>
     <div class="acts"><button class="btn" data-go="${p.id}">${tx('showMap')}</button></div></article>`).join('');
   $('#rgQa').innerHTML = T.rg[L].map(q => `<div><dt>${q[0]}</dt><dd>${q[1]}</dd></div>`).join('');
-  $('#check').innerHTML = T.fi[L].map(q => `<li><b>${q[0]}</b> ${q[1]}</li>`).join('');
+  $('#check').innerHTML = T.fi[L].map((q,i) => `<li><b>${i+1}. ${q[0]}</b><span>${q[1]}</span></li>`).join('');
   // holidays
   const now = new Date(); now.setHours(0,0,0,0);
   const up = HOL.map(h => { let d;
@@ -772,7 +797,7 @@ function renderStatic(){
       else { d = new Date(now.getFullYear(), h.m-1, h.d); if(d < now) d = new Date(now.getFullYear()+1, h.m-1, h.d); }
       return {h, d, n: Math.max(0, Math.round((d-now)/864e5))}; }).filter(Boolean).sort((a,b) => a.d-b.d).slice(0,6);
   const fmt = new Intl.DateTimeFormat(L==='en'?'en-GB':L, {day:'numeric', month:'long', year:'numeric'});
-  $('#days').innerHTML = up.map(u => `<div class="day"><div class="in">${u.n===0?tx('today'):u.n+`<small>${tx('inDays')}</small>`}</div>
+  $('#days').innerHTML = up.map(u => `<div class="day">${u.h.img ? `<img class="dimg" src="img/hol/${u.h.img}.jpg" alt="" loading="lazy">` : ''}<div class="in">${u.n===0?tx('today'):u.n+`<small>${tx('inDays')}</small>`}</div>
     <div class="when">${fmt.format(u.d)}${u.h.off?' · '+tx('dayOff'):''}</div><b>${u.h.n[L]}</b><p>${u.h.t[L]}</p></div>`).join('');
   if(!$('#sos').hidden) renderSos();
   renderTramTable(); renderCard(); if(window.pinsRelabel) pinsRelabel(); if(window.wxRender) wxRender(); if(window.buddyText) buddyText();
