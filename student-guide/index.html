@@ -107,6 +107,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .lsky i{position:absolute;border-radius:50%;background:rgba(255,255,255,.07);filter:blur(30px)}
 .lsky i:nth-child(1){width:46vw;height:16vh;left:-8vw;top:22vh}.lsky i:nth-child(2){width:52vw;height:18vh;right:-10vw;top:40vh}.lsky i:nth-child(3){width:70vw;height:20vh;left:14vw;bottom:-6vh;background:rgba(255,200,160,.16)}
 .lmagic{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.lplane{z-index:2}
 .lpath{position:absolute;inset:0;width:100%;height:100%}
 .lplane{position:absolute;left:0;top:0;width:clamp(54px,7vw,96px);height:auto;margin:calc(clamp(54px,7vw,96px)*-.3) 0 0 calc(clamp(54px,7vw,96px)*-.5);filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));will-change:transform;transition:transform .35s linear}
 .ltext{position:absolute;left:max(24px,6vw);right:max(24px,6vw);bottom:max(40px,9vh);text-align:left}
@@ -319,6 +320,10 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .sos-foot{margin:18px 0 0;font-size:13px;color:#6e6e73;display:grid;gap:4px}
 .sos-foot b{color:#1d1d1f}
 @media (max-width:760px){.sheet{padding:0;align-items:flex-end}.sheet-in{border-radius:24px 24px 0 0;max-height:92vh;padding:22px 16px calc(22px + env(safe-area-inset-bottom,0px))}.num b{font-size:28px}.sosb span{display:none}.sosb{padding:6px}}
+.toast{position:absolute;z-index:7;left:50%;top:16px;transform:translateX(-50%);max-width:min(440px,calc(100% - 32px));background:rgba(29,29,31,.92);color:#fff;font:600 13.5px/1.35 var(--body);padding:10px 14px;border-radius:14px;text-align:center}
+.pin.me{pointer-events:none}
+[data-v=r] .pin.me i{width:18px;height:18px;background:#0a84ff;box-shadow:0 0 0 4px #fff,0 0 0 12px rgba(10,132,255,.25);animation:flatDot 2s infinite}
+[data-v=r] .pin.me span{display:block;background:#0a84ff;color:#fff}
 .hrow{display:flex;align-items:flex-end;gap:10px 26px;flex-wrap:wrap;margin:0 0 12px}
 .hrow h2.t{margin:0}
 .buddy{display:flex;align-items:flex-end;gap:4px;flex:none;max-width:100%}
@@ -374,7 +379,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
 <div class="loader" id="loading" aria-live="polite">
   <div class="lsky"><i></i><i></i><i></i></div>
   <canvas class="lmagic" id="lmagic" aria-hidden="true"></canvas>
-  <svg class="lpath" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true"><path d="M60 110 Q 560 110 900 265" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-dasharray="3 10" vector-effect="non-scaling-stroke"/><path d="M700 267 H 980" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+  <svg class="lpath" viewBox="0 0 1000 400" preserveAspectRatio="none" aria-hidden="true"><path d="M60 110 Q 560 110 900 265" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="2" stroke-dasharray="3 10" vector-effect="non-scaling-stroke"/><path d="M700 267 H 980" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
   <svg class="lplane" id="lplane" viewBox="-34 -20 68 40" aria-hidden="true"><path d="M31 1 Q24 -6 6 -6 L-16 -6 L-25 -18 L-31 -18 L-27 -2 Q-28 4 -18 5 L18 6 Q28 6 31 1Z" fill="#fff"/><path d="M8 2 L-12 19 L-19 19 L-8 2Z" fill="#dfe6f5"/></svg>
   <div class="ltext"><h1 data-i="loadHi"></h1><p id="ltxt" data-i="loadSub"></p><div class="lbar"><u id="bar"></u></div><b id="pct">0</b></div>
 </div>
@@ -425,8 +430,10 @@ details.stopsBox[open] summary::after{content:" ▴"}
     <button id="rl" aria-label="Rotate left">⟲</button>
     <button id="rr" aria-label="Rotate right">⟳</button>
     <button id="home" aria-label="Reset view">⌂</button>
+    <button id="loc" aria-label="My location" title="My location">◎</button>
   </div>
   <div class="hint" data-i="hint"></div>
+  <div class="toast" id="toast" hidden></div>
   <div class="card" id="card" hidden></div>
 </div>
 
@@ -573,13 +580,13 @@ const CITY = {
 
     {k:'coffee',n:'Noir House',fr:'Noir House',ru:'Нуар Хаус',at:[43.0630,44.0499],ad:'пр. 40 лет Октября, 26'},
     {k:'coffee',n:'Lermontov Coffee',fr:'Lermontov Coffee',ru:'Лермонтов кофе',at:[43.0749,44.0375],ad:'ул. Октябрьская, 1'},
-    {k:'coffee',n:'Roboost',fr:'Roboost',ru:'Кофейня Roboost',at:[43.0623,44.0370],ad:'ул. Октябрьская, 44'},
+    {k:'coffee',id:'rb',n:'Roboost',fr:'Roboost',ru:'Roboost · ул. Октябрьская, 44',at:[43.0623,44.0370],d:{en:'A cool coffee place. Good for working with a laptop.',fr:'Un café sympa. Bien pour travailler avec un ordinateur.',ru:'Прикольная кофейня. Удобно сидеть с ноутбуком.'}},
+    {k:'coffee',id:'c1908',n:'1908 Brew Bar',fr:'1908 Brew Bar',ru:'1908 Brew Bar · ул. Октябрьская, 6',at:[43.0740,44.0376],d:{en:'A cool coffee place in the centre. Open 8:00–24:00.',fr:'Un café sympa au centre. Ouvert de 8 h à minuit.',ru:'Прикольная кофейня в центре. Работает 8:00–24:00.'}},
     {k:'coffee',n:'Cafeteria',fr:'Cafeteria',ru:'Cafeteria',at:[43.0711,44.0405],ad:'пл. Ленина, 1'},
     {k:'study',n:'Gorky City Library',fr:'Bibliothèque municipale Gorki',ru:'Библиотека им. М. Горького · ул. Козлова, 1',at:[43.0703,44.03888],d:{en:'Free reading rooms and quiet desks.',fr:'Salles de lecture gratuites et tables calmes.',ru:'Бесплатные читальные залы, тихие столы.'}},
     {k:'food',n:'Brosco Halal',fr:'Brosco Halal',ru:'Brosco Halal',at:[43.0720,44.0374],ad:'ул. Октябрьская, 10',d:{en:'Halal food in the centre.',fr:'Cuisine halal au centre-ville.',ru:'Халяль в центре.'}},
     {k:'food',n:'Doner Home',fr:'Doner Home',ru:'Doner Home',at:[43.0636,44.0548],ad:'ул. Панагюриште, 4'},
     {k:'food',n:'Syty Slon canteen',fr:'Cantine Syty Slon',ru:'Столовая «Сытый слон»',at:[43.0683,44.0489],ad:'ул. Пушкинская, 2Б',d:{en:'Cheap canteen (stolovaya) close to the dorms.',fr:'Cantine bon marché (stolovaïa) près des résidences.',ru:'Недорогая столовая рядом с общежитиями.'}},
-    {k:'food',n:'Khychinok',fr:'Khytchinok',ru:'Хычинок',at:[43.0705,44.0438],ad:'ул. Крайнего, 24',d:{en:'Khychiny: Caucasian flatbread with cheese or meat.',fr:'Khytchiny : galettes caucasiennes au fromage ou à la viande.',ru:'Хычины с сыром и мясом.'}},
     {k:'food',n:'Roma Pizza',fr:'Roma Pizza',ru:'Рома Пицца',at:[43.0633,44.0526],ad:'ул. 1-я Бульварная, 17'},
     {k:'need',n:'Magnit supermarket',fr:'Supermarché Magnit',ru:'Магнит',at:[43.0661,44.0511],ad:'ул. Пушкинская, 2',d:{en:'Nearest supermarket to the dorms.',fr:'Supermarché le plus proche des résidences.',ru:'Ближайший к общежитиям супермаркет.'}},
     {k:'need',n:'Pyaterochka supermarket',fr:'Supermarché Piatiorotchka',ru:'Пятёрочка',at:[43.0641,44.0496],ad:'ул. Новороссийская, 3'},
@@ -681,6 +688,7 @@ swipe:{en:'Swipe to see more →',fr:'Glisse pour voir plus →',ru:'Листа�
 cPyat:{en:'Pyatigorsk',fr:'Piatigorsk',ru:'Пятигорск'},cNal:{en:'Nalchik',fr:'Naltchik',ru:'Нальчик'},cKra:{en:'Krasnodar',fr:'Krasnodar',ru:'Краснодар'},cRos:{en:'Rostov-on-Don',fr:'Rostov-sur-le-Don',ru:'Ростов-на-Дону'},
 loadSub:{en:'A guide for foreign students',fr:'Le guide des étudiants étrangers',ru:'Гид для иностранных студентов'},loadHi:{en:'Welcome to Russia',fr:'Bienvenue en Russie',ru:'Добро пожаловать в Россию'},
 sosBtn:{en:'Emergency',fr:'Urgences',ru:'Экстренно'},
+locMe:{en:'You are here',fr:'Tu es ici',ru:'Ты здесь'},locNo:{en:'Could not get your location. Allow location in your browser. In this preview it may not work at all.',fr:'Impossible d’obtenir ta position. Autorise la localisation dans ton navigateur. Dans cet aperçu, ça peut ne pas marcher.',ru:'Не получилось узнать, где ты. Разреши геолокацию в браузере. В этом предпросмотре она может не работать совсем.'},locFar:{en:'You are outside this map.',fr:'Tu es en dehors de cette carte.',ru:'Ты за пределами этой карты.'},
 h24:{en:'Open 24 hours',fr:'Ouvert 24 h/24',ru:'Круглосуточно'},
 soon:{en:'soon',fr:'bientôt',ru:'скоро'},
 navFlats:{en:'Apartments',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Places',fr:'Sorties',ru:'Куда сходить'},navHol:{en:'Holidays',fr:'Jours fériés',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
@@ -1040,40 +1048,31 @@ scene('life','blob');
 
 })();
 
-/* ================= loading screen: the Russian flag appears like a spell ================= */
+/* ================= loading screen: the plane leaves a trail in the colours of the Russian flag ================= */
 (function(){
   const cv = document.getElementById('lmagic'); if(!cv) return; const g = cv.getContext('2d');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, COL = [[255,255,255],[40,96,255],[255,52,48]];
-  let W = 0, H = 0, dpr = 1, out = 0, t0 = performance.now(), last = t0; const P = [];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, COL = ['#ffffff','#2a62ff','#ff3a34'], P = [];
+  let W = 0, H = 0, dpr = 1, out = 0, shown = 0, last = performance.now();
   const size = () => { dpr = Math.min(devicePixelRatio||1, 2); W = cv.clientWidth; H = cv.clientHeight; cv.width = W*dpr; cv.height = H*dpr; }; size(); addEventListener('resize', size);
   window.flagOut = () => { if(!out) out = performance.now(); };
-  const spark = (x,y,c,vx,vy,life,sz) => { if(P.length < 600) P.push({x,y,c,vx,vy,life,age:0,sz,tw:Math.random()*6}); };
-  function star(x,y,r,a,c){ g.globalAlpha = a; g.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`; g.beginPath(); for(let k=0;k<8;k++){ const rr = k%2 ? r*.28 : r, an = k*Math.PI/4; g.lineTo(x+Math.cos(an)*rr, y+Math.sin(an)*rr); } g.closePath(); g.fill(); }
+  const pos = u => { const x = (1-u)*(1-u)*60+2*(1-u)*u*560+u*u*900, y = (1-u)*(1-u)*110+2*(1-u)*u*110+u*u*265; return [x/1000*W, y/400*H]; };
   (function frame(now){ const ld = document.getElementById('loading'); if(!ld || ld.hidden) return; requestAnimationFrame(frame);
-    const dt = Math.min(.05,(now-last)/1000); last = now; const t = (now-t0)/1000, to = out ? (now-out)/1000 : 0;
-    g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
-    const mob = W < 760, fw = mob ? W*.7 : Math.min(W*.42, 520), fh = fw*.56, x0 = mob ? W*.15 : W - fw - Math.max(40, W*.07), y0 = mob ? H*.14 : H*.13, bh = fh/3;
-    const grow = reduce ? 1 : Math.min(1, Math.max(0, (t-.25)/1.5)), ge = 1-Math.pow(1-grow,3), fade = out ? Math.max(0, 1-to/.7) : 1;
-    const wave = (u, k) => Math.sin(u*5.2 - t*2.4 + k*.5)*bh*.2*(.25+u*.9) + Math.sin(u*2.1 - t*1.3)*bh*.16;
-    g.globalCompositeOperation = 'lighter';
-    for(let k=0;k<3;k++){ const c = COL[k], n = 44, front = ge;
-      for(let pass=0;pass<2;pass++){ g.beginPath();
-        for(let i=0;i<=n;i++){ const u = i/n*front, x = x0+u*fw, y = y0+k*bh+wave(u,k) - u*fh*.12; i ? g.lineTo(x,y) : g.moveTo(x,y); }
-        for(let i=n;i>=0;i--){ const u = i/n*front, x = x0+u*fw, y = y0+(k+1)*bh+wave(u,k+1) - u*fh*.12; g.lineTo(x,y); }
-        g.closePath(); const gr = g.createLinearGradient(x0,0,x0+fw*front+1,0); const al = (pass ? .5 : .3)*fade*(.86+.14*Math.sin(t*3+k));
-        gr.addColorStop(0,`rgba(${c[0]},${c[1]},${c[2]},0)`); gr.addColorStop(.12,`rgba(${c[0]},${c[1]},${c[2]},${al})`); gr.addColorStop(.86,`rgba(${c[0]},${c[1]},${c[2]},${al})`); gr.addColorStop(1,`rgba(${c[0]},${c[1]},${c[2]},${al*.35})`);
-        g.fillStyle = gr; g.shadowColor = `rgba(${c[0]},${c[1]},${c[2]},.9)`; g.shadowBlur = pass ? 0 : 36; g.globalAlpha = 1; g.fill(); }
+    const dt = Math.min(.05,(now-last)/1000); last = now; const t = now/1000;
+    const target = Math.min(1, (parseFloat(document.getElementById('pct').textContent)||0)/100); shown += (target-shown)*Math.min(1, dt*6);
+    const fade = out ? Math.max(0, 1-(now-out)/900) : 1, bw = Math.max(5, Math.min(W,H)*.011);
+    g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); g.lineCap = 'round'; g.lineJoin = 'round';
+    if(shown > .004){ const n = 60;
+      for(let k=0;k<3;k++){ for(let pass=0;pass<2;pass++){ g.beginPath();
+          for(let i=0;i<=n;i++){ const u = i/n*shown, [x,y] = pos(u), [x2,y2] = pos(Math.min(1,u+.004)); let nx = -(y2-y), ny = x2-x; const l = Math.hypot(nx,ny)||1; nx/=l; ny/=l;
+            const wob = reduce ? 0 : Math.sin(u*26 - t*3 + k)*bw*.22*(1-u/Math.max(shown,.01)*.6), off = (k-1)*bw + wob; i ? g.lineTo(x+nx*off, y+ny*off) : g.moveTo(x+nx*off, y+ny*off); }
+          const gr = g.createLinearGradient(pos(0)[0],0,pos(shown)[0]+1,0); gr.addColorStop(0,'rgba(255,255,255,0)'); gr.addColorStop(.18,COL[k]); gr.addColorStop(1,COL[k]);
+          g.strokeStyle = gr; g.globalAlpha = (pass ? .95 : .35)*fade; g.lineWidth = pass ? bw : bw*2.6; g.shadowColor = COL[k]; g.shadowBlur = pass ? 0 : 22; g.stroke(); } }
       g.shadowBlur = 0;
-      // sparkles: a bright head while the ribbon is being cast, then a gentle twinkle along it
-      if(!reduce && fade > 0){ const u = front, hx = x0+u*fw, hy = y0+(k+.5)*bh+wave(u,k)-u*fh*.12;
-        if(grow < 1){ for(let q=0;q<3;q++) spark(hx, hy+(Math.random()-.5)*bh, Math.random()<.5 ? [255,236,170] : c, -40-Math.random()*90, (Math.random()-.5)*70, .5+Math.random()*.7, 2+Math.random()*3.5); star(hx,hy,9+Math.sin(t*30)*3,1,[255,244,200]); }
-        else for(let q=0;q<2;q++) if(Math.random() < .6){ const uu = Math.random(); spark(x0+uu*fw, y0+(k+Math.random())*bh+wave(uu,k)-uu*fh*.12, Math.random()<.4 ? [255,236,170] : [255,255,255], (Math.random()-.5)*14, -6-Math.random()*14, .7+Math.random()*.9, 2+Math.random()*4.2); } } }
-    // the flag breaks into sparks and flies away
-    if(out && to < .5 && !reduce) for(let q=0;q<16;q++){ const k = (Math.random()*3)|0, uu = Math.random(); spark(x0+uu*fw, y0+(k+Math.random())*bh+wave(uu,k)-uu*fh*.12, Math.random()<.3 ? [255,236,170] : COL[k], 30+Math.random()*130, -50-Math.random()*150, .8+Math.random()*.9, 2+Math.random()*4); }
-    for(let i=P.length-1;i>=0;i--){ const p = P[i]; p.age += dt; if(p.age >= p.life){ P.splice(i,1); continue; }
-      p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 26*dt; const a = Math.sin(Math.PI*p.age/p.life)*(.55+.45*Math.sin(t*14+p.tw)); star(p.x, p.y, p.sz*(1.3-.5*p.age/p.life), Math.max(0,a), p.c); }
-    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
-  })(t0);
+      if(!reduce && fade > 0 && shown < .995 && P.length < 260){ const [hx,hy] = pos(shown); for(let q=0;q<2;q++) P.push({x:hx-10-Math.random()*26, y:hy+(Math.random()-.5)*bw*4, vx:-20-Math.random()*40, vy:(Math.random()-.5)*26, life:.6+Math.random()*.8, age:0, c:COL[(Math.random()*3)|0], s:1.5+Math.random()*3}); } }
+    for(let i=P.length-1;i>=0;i--){ const p = P[i]; p.age += dt; if(p.age >= p.life){ P.splice(i,1); continue; } p.x += p.vx*dt; p.y += p.vy*dt;
+      g.globalAlpha = Math.sin(Math.PI*p.age/p.life)*fade; g.fillStyle = p.c; g.beginPath(); for(let k=0;k<8;k++){ const rr = k%2 ? p.s*.3 : p.s, an = k*Math.PI/4; g.lineTo(p.x+Math.cos(an)*rr, p.y+Math.sin(an)*rr); } g.closePath(); g.fill(); }
+    g.globalAlpha = 1;
+  })(last);
 })();
 
 /* ================= a student next to each section, saying what the section is for ================= */
@@ -1433,6 +1432,14 @@ scene('life','blob');
   const spin = a => { anim = null; const o = cam.position.clone().sub(ctl.target); o.applyAxisAngle(new THREE.Vector3(0,1,0), a); cam.position.copy(ctl.target).add(o); };
   $('#zin').onclick = () => zoomBy(.7); $('#zout').onclick = () => zoomBy(1.4); $('#rl').onclick = () => spin(-.5); $('#rr').onclick = () => spin(.5);
   $('#home').onclick = () => tween(HOME_T.clone(), HOME_P.clone(), 1200);
+  // "where am I": a blue dot at the visitor's position (needs the browser's permission)
+  { const toast = m => { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 5000); }; let me = null;
+    $('#loc').onclick = () => { if(!navigator.geolocation){ toast(tx('locNo')); return; }
+      navigator.geolocation.getCurrentPosition(g2 => { const a = toXY([g2.coords.longitude, g2.coords.latitude]);
+        if(Math.abs(a[0]) > 9000 || a[1] < -7000 || a[1] > 9800){ toast(tx('locFar')); return; }
+        if(!me){ const el = document.createElement('div'); el.className = 'pin me'; el.innerHTML = '<i></i><span></span>'; pinsEl.appendChild(el); me = {p:{k:'peak'}, pk:{en:T.locMe.en, fr:T.locMe.fr, ru:T.locMe.ru}, el, v:new THREE.Vector3()}; pins.push(me); }
+        me.v.set(a[0], hAt(a[0],a[1])+12, -a[1]); me.el.lastChild.textContent = tx('locMe'); fly(a[0], a[1], 900);
+      }, () => toast(tx('locNo')), {enableHighAccuracy:true, timeout:10000, maximumAge:30000}); }; }
 
   // pins
   const pinsEl = $('#pins'), pins = [];
