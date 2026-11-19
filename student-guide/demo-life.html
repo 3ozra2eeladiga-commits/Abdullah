@@ -1,0 +1,113 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Student Life Backdrop</title>
+<style>
+/* Layout: two animated strips stacked, one per drawing style, each labelled; a short note on the third idea below. */
+:root{color-scheme:light;--bg:#f5f5f7;--panel:#ffffff;--fg:#1d1d1f;--muted:#6e6e73;--line:rgba(0,0,0,.1);--accent:#0071e3;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--font);margin:0;-webkit-font-smoothing:antialiased;padding-block:28px 48px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+main{max-width:1500px;margin:0 auto;display:grid;gap:26px}
+h1{font:700 clamp(26px,4.5vw,40px)/1.1 var(--font);letter-spacing:-.03em;margin:0 0 6px;text-wrap:balance}
+p{margin:0;color:var(--muted);max-width:65ch}
+section{background:var(--panel);border-radius:22px;padding:18px;box-shadow:0 4px 18px rgba(0,0,0,.06);min-width:0}
+h2{font:700 20px/1.2 var(--font);letter-spacing:-.02em;margin:0 0 4px}
+canvas{display:block;width:100%;height:auto;border-radius:14px;margin-top:14px;background:#fff}
+.dark canvas{background:#111418}
+ul{margin:8px 0 0;padding-left:20px;color:var(--muted)}
+</style>
+<main>
+  <header>
+    <h1>Студенческая жизнь на фоне</h1>
+    <p>Три пробы одной сцены: кофейня, круг иностранных студентов, хирург, стоматолог и самолёт. Всё двигается само, по кругу.</p>
+  </header>
+  <section>
+    <h2>1. Стикмены, тонкая линия</h2>
+    <p>Чёрные человечки как нарисованные ручкой. Лёгкий и смешной вариант, не спорит с картой.</p>
+    <canvas id="c1" width="1200" height="420"></canvas>
+  </section>
+  <section>
+    <h2>2. Цветные человечки</h2>
+    <p>Те же сцены, но фигурки плотные и цветные: врачи в зелёном, у каждого студента свой цвет. Ближе к стилю Apple.</p>
+    <canvas id="c2" width="1200" height="420"></canvas>
+  </section>
+  <section class="dark">
+    <h2>3. Светящиеся линии на тёмном</h2>
+    <p>Стикмены белым светом на тёмной полосе, реплики цветные. Самый «технологичный» вид.</p>
+    <canvas id="c3" width="1200" height="420"></canvas>
+  </section>
+</main>
+<script>
+const SAY = [['Hello!','#0071e3'],['Bonjour !','#af52de'],['你好！','#ff3b30'],['مرحبا!','#34c759'],['Привет!','#ff9500'],['How are you?','#0071e3'],['Ça va ?','#af52de'],['你是哪国人？','#ff3b30'],['أنا من الأردن','#34c759'],['Пойдём в кафе?','#ff9500']];
+const COL = ['#0071e3','#af52de','#ff3b30','#34c759','#ff9500','#00c7be','#5856d6'];
+function scene(id, style){
+  const cv = document.getElementById(id), g = cv.getContext('2d'), W = 1200, H = 420;
+  const dpr = Math.min(devicePixelRatio||1, 2); cv.width = W*dpr; cv.height = H*dpr;
+  const ink = style==='glow' ? '#f2f4f8' : '#1d1d1f', soft = style==='glow' ? 'rgba(242,244,248,.35)' : 'rgba(29,29,31,.28)';
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function L(x1,y1,x2,y2){ g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); }
+  // one person. o: x, y (hip), s, sit, face, a1, a2 (arm angles), col, cap, mask, lie
+  function person(o){ const s = o.s||1, f = o.face||1, col = style==='blob' ? (o.col||'#0071e3') : ink;
+    g.save(); g.translate(o.x, o.y); if(o.lie){ g.rotate(-Math.PI/2*f); }
+    g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = col; g.fillStyle = col; g.lineWidth = (style==='blob' ? 7 : 3)*s;
+    if(style==='glow'){ g.shadowColor = o.col||'#6db7ff'; g.shadowBlur = 12; }
+    const neck = -30*s, sh = -25*s;
+    if(o.sit){ L(0,0, f*15*s,0); L(f*15*s,0, f*15*s,18*s); L(0,0, f*11*s,3*s); L(f*11*s,3*s, f*11*s,18*s); }
+    else if(!o.lie){ const w = o.walk||0; L(0,0, -6*s+w*6*s,30*s); L(0,0, 6*s-w*6*s,30*s); }
+    else { L(0,0,-3*s,28*s); L(0,0,4*s,28*s); }
+    if(style==='blob'){ g.beginPath(); g.moveTo(-8*s,sh); g.lineTo(8*s,sh); g.lineTo(7*s,2*s); g.lineTo(-7*s,2*s); g.closePath(); g.fill(); g.lineWidth = 5*s; g.stroke(); g.lineWidth = 5*s; }
+    else L(0,0,0,neck);
+    for(const a of [o.a1, o.a2]) if(a!=null){ const ex = Math.cos(a)*18*s*f, ey = Math.sin(a)*18*s; L(0,sh, ex, sh+ey); if(o.tool && a===o.a1){ g.save(); g.lineWidth = 2*s; g.strokeStyle = style==='glow' ? '#fff' : '#8e8e93'; L(ex, sh+ey, ex+f*9*s, sh+ey+5*s); g.restore(); } }
+    g.beginPath(); g.arc(0, neck-10*s, 9.5*s, 0, 7);
+    if(style==='blob'){ g.fillStyle = '#f2c9a5'; g.fill(); g.lineWidth = 2.2*s; g.strokeStyle = '#1d1d1f'; g.stroke(); } else { g.fillStyle = style==='glow' ? '#111418' : '#fff'; g.fill(); g.stroke(); }
+    if(o.cap){ g.fillStyle = style==='blob' ? '#34c759' : ink; g.beginPath(); g.arc(0, neck-12*s, 10*s, Math.PI, 0); g.closePath(); g.fill(); }
+    if(o.mask){ g.fillStyle = style==='blob' ? '#bfeccb' : (style==='glow' ? '#9fd0ff' : '#c7c7cc'); g.fillRect(-7*s, neck-9*s, 14*s, 7*s); }
+    g.restore(); }
+  function bubble(x, y, txt, color, a){ if(a<=0) return; g.save(); g.globalAlpha = Math.min(1,a); g.font = '600 17px -apple-system,"Segoe UI","Noto Sans Arabic","Noto Sans SC",Arial,sans-serif';
+    const w = g.measureText(txt).width + 22, h = 32, bx = Math.max(6, Math.min(W-w-6, x-w/2)), by = y-h;
+    g.fillStyle = color; g.beginPath(); if(g.roundRect) g.roundRect(bx, by, w, h, 12); else g.rect(bx, by, w, h); g.fill();
+    g.beginPath(); g.moveTo(x-6, by+h-1); g.lineTo(x+6, by+h-1); g.lineTo(x, by+h+8); g.fill();
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, bx+w/2, by+h/2+1); g.restore(); }
+  function label(x, t){ g.save(); g.font = '600 12px -apple-system,Arial,sans-serif'; g.fillStyle = soft; g.textAlign = 'center'; g.fillText(t, x, 392); g.restore(); }
+  function furn(){ g.strokeStyle = ink; g.lineWidth = 3; g.lineCap = 'round'; if(style==='glow'){ g.shadowColor = '#6db7ff'; g.shadowBlur = 8; } }
+  function frame(ms){ const t = reduce ? 3.2 : ms/1000; g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H); g.shadowBlur = 0;
+    g.strokeStyle = soft; g.lineWidth = 2; L(20,350,W-20,350);
+    // ---- plane: takes off on the left, lands on the right
+    { const u = (t/14)%1, px = -60 + u*1320, py = u<.16 ? 338-(u/.16)**2*278 : u>.84 ? 60+((u-.84)/.16)**2*278 : 60 + Math.sin(u*9)*5, d = .004,
+        u2 = u+d, px2 = -60+u2*1320, py2 = u2<.16 ? 338-(u2/.16)**2*278 : u2>.84 ? 60+((u2-.84)/.16)**2*278 : 60+Math.sin(u2*9)*5, ang = Math.atan2(py2-py, px2-px);
+      g.save(); g.setLineDash([3,9]); g.strokeStyle = soft; g.lineWidth = 2; g.beginPath(); for(let k=0;k<26;k++){ const v = u-k*.006; if(v<0) break; const qx = -60+v*1320, qy = v<.16 ? 338-(v/.16)**2*278 : v>.84 ? 60+((v-.84)/.16)**2*278 : 60+Math.sin(v*9)*5; k ? g.lineTo(qx,qy) : g.moveTo(qx,qy); } g.stroke(); g.restore();
+      g.save(); g.translate(px,py); g.rotate(ang); g.fillStyle = style==='blob' ? '#0071e3' : ink; if(style==='glow'){ g.shadowColor = '#6db7ff'; g.shadowBlur = 14; }
+      g.beginPath(); g.moveTo(26,0); g.quadraticCurveTo(18,-6,-18,-5); g.lineTo(-27,-16); g.lineTo(-31,-16); g.lineTo(-25,0); g.lineTo(-18,4); g.quadraticCurveTo(18,5,26,0); g.fill();
+      g.beginPath(); g.moveTo(4,0); g.lineTo(-10,17); g.lineTo(-15,17); g.lineTo(-8,0); g.fill(); g.restore(); g.shadowBlur = 0; }
+    // ---- leaving: student with a suitcase waves
+    person({x:70,y:320,s:1,face:1,a1:-1.9+Math.sin(t*6)*.35,a2:1.2,col:COL[5]}); furn(); g.strokeRect(84,330,16,20); L(92,330,92,322); g.shadowBlur = 0; label(78,'улетает домой');
+    // ---- cafe: two students talk over coffee
+    { const x = 250; furn(); L(x-22,322,x+22,322); L(x,322,x,350); L(x-12,350,x+12,350);
+      for(const sx of [-8,9]){ g.strokeRect(x+sx-4,313,8,9); g.save(); g.strokeStyle = soft; g.lineWidth = 2; g.beginPath(); for(let k=0;k<12;k++){ const yy = 310-k*2.2, xx = x+sx+Math.sin(t*3+k*.7+sx)*3; k ? g.lineTo(xx,yy) : g.moveTo(xx,yy); } g.stroke(); g.restore(); }
+      g.shadowBlur = 0; person({x:x-46,y:332,sit:1,face:1,a1:.2+Math.sin(t*2.2)*.5,a2:.9,col:COL[1]}); person({x:x+46,y:332,sit:1,face:-1,a1:.3+Math.sin(t*2.2+2)*.5,a2:.9,col:COL[4]});
+      const k = Math.floor(t/2.4)%2; bubble(k ? x+46 : x-46, 262, k ? 'Ça va ?' : 'Coffee?', k ? '#af52de' : '#0071e3', Math.sin((t/2.4%1)*Math.PI)*2.4); label(x,'кофейня'); }
+    // ---- circle of international students
+    { const cx = 520, n = 5, who = Math.floor(t/1.9)%SAY.length, ph = (t/1.9)%1;
+      furn(); g.beginPath(); g.ellipse(cx,336,54,10,0,0,7); g.stroke(); g.shadowBlur = 0;
+      for(let i=0;i<n;i++){ const px = cx-112+i*56, f = i<2 ? 1 : i>2 ? -1 : (i%2?1:-1), talk = who%n===i;
+        person({x:px,y:330-(i===2?10:0),sit:1,face:f,a1:talk ? -.4+Math.sin(t*7)*.5 : .7,a2:.95,col:COL[i]});
+        if(talk) bubble(px, 248-(i===2?10:0), SAY[who][0], SAY[who][1], Math.sin(ph*Math.PI)*2.6); }
+      label(cx,'знакомятся'); }
+    // ---- surgery
+    { const x = 810; furn(); L(x-58,318,x+58,318); L(x-44,318,x-44,350); L(x+44,318,x+44,350);
+      L(x,206,x,226); g.beginPath(); g.arc(x,240,22,Math.PI,0); g.stroke();
+      g.strokeRect(x+78,250,54,36); g.save(); g.strokeStyle = style==='blob' ? '#34c759' : (style==='glow' ? '#5dff9d' : ink); g.lineWidth = 2.2; g.beginPath(); for(let k=0;k<=46;k++){ const q = (k/46+t*.6)%1, yy = 268-(q>.42&&q<.5 ? Math.sin((q-.42)/.08*Math.PI)*13 : q>.5&&q<.56 ? -Math.sin((q-.5)/.06*Math.PI)*6 : 0); k ? g.lineTo(x+82+k,yy) : g.moveTo(x+82+k,yy); } g.stroke(); g.restore(); g.shadowBlur = 0;
+      person({x:x+34,y:310,s:.9,lie:1,face:1,col:'#8e8e93'});
+      person({x:x-12,y:320,face:1,a1:.75+Math.sin(t*3)*.18,a2:.5+Math.cos(t*3)*.18,col:'#34c759',cap:1,mask:1,tool:1});
+      person({x:x+70,y:320,face:-1,a1:.9,a2:.6+Math.sin(t*1.5)*.2,col:'#30b0c7',cap:1,mask:1}); label(x,'хирурги'); }
+    // ---- dentist
+    { const x = 1070; furn(); L(x-6,330,x+40,318); L(x+40,318,x+62,296); L(x+16,326,x+16,350); L(x+2,350,x+30,350);
+      L(x-8,236,x+12,262); g.beginPath(); g.arc(x+16,266,6,0,7); g.stroke(); g.shadowBlur = 0;
+      g.save(); g.translate(x+30,316); g.rotate(-.55); person({x:0,y:0,s:.9,lie:1,face:1,col:'#8e8e93'}); g.restore();
+      person({x:x-34,y:332,sit:1,face:1,a1:-.25+Math.sin(t*5)*.12,a2:.4,col:'#00c7be',cap:1,mask:1,tool:1});
+      bubble(x+70, 262, '🦷', style==='glow' ? '#2a3038' : '#e8e8ed', 1.2+Math.sin(t*2)); label(x+14,'стоматолог'); }
+    if(!reduce) requestAnimationFrame(frame); }
+  requestAnimationFrame(frame); }
+scene('c1','stick'); scene('c2','blob'); scene('c3','glow');
+</script>
