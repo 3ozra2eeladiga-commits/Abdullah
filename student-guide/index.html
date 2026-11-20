@@ -28,6 +28,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .stage{position:relative;height:min(90vh,1300px);min-height:540px;overflow:hidden;background:var(--night)}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #gl:active{cursor:grabbing}
+#gl.over-balloon{cursor:pointer}
 .stage::before{content:"";position:absolute;inset:0 0 auto;height:150px;background:linear-gradient(var(--deep),transparent);pointer-events:none;z-index:2;opacity:.9;transition:opacity 1.4s}
 .stage::after{content:"";position:absolute;inset:auto 0 0;height:150px;background:linear-gradient(transparent,var(--night));pointer-events:none;z-index:2;transition:opacity 1.4s}
 #pins{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
@@ -249,7 +250,8 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 [data-v=r] .btn{border-radius:999px;border:0;background:rgba(0,0,0,.06);font:600 14px/1 var(--body);padding:12px 18px;color:#0071e3}
 [data-v=r] .btn.main{background:#0071e3;color:#fff}
 [data-v=r] .tag{font:600 11px/1 var(--body);letter-spacing:0;text-transform:none;border-radius:999px;padding:5px 9px}
-[data-v=r] .routes button{border-radius:12px;font:700 16px/1 var(--display);background:rgba(0,0,0,.05);border:0}
+[data-v=r] .routes button{border-radius:12px;font:700 16px/1 var(--display);background:rgba(0,0,0,.05);border:0;transition:transform .2s,box-shadow .2s}
+[data-v=r] .routes button[aria-pressed="true"]{background:var(--c);color:#fff;transform:scale(1.12);box-shadow:0 0 0 3px #fff,0 0 0 5px var(--c),0 6px 16px rgba(0,0,0,.25);text-shadow:0 1px 2px rgba(0,0,0,.35)}
 [data-v=r] .verdict{background:rgba(0,113,227,.08);border:0;border-radius:14px;color:#1d1d1f}
 [data-v=r] .verdict.no{background:rgba(0,0,0,.05);color:#6e6e73}
 [data-v=r] .day:first-child{background:#1d1d1f;color:#fff}[data-v=r] .day:first-child .when,[data-v=r] .day:first-child p,[data-v=r] .day:first-child .in small{color:#a1a1a6}
@@ -1533,7 +1535,11 @@ scene('life','pro');
       if(!hit) return;
       const d = Math.max(ctl.minDistance*1.2, cam.position.distanceTo(ctl.target)*.45); fly(hit.x, -hit.z, d); };
     canvas.addEventListener('pointerdown', e => { dx0 = e.clientX; dy0 = e.clientY; });
+    let hov = 0; canvas.addEventListener('pointermove', e => { if(e.pointerType !== 'mouse' || e.buttons) return; const now = performance.now(); if(now-hov < 120) return; hov = now;
+      const r = canvas.getBoundingClientRect(); rc.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1, -((e.clientY-r.top)/r.height*2-1)), cam); canvas.classList.toggle('over-balloon', rc.intersectObject(balloon, true).length > 0); });
     canvas.addEventListener('pointerup', e => { if(e.button > 0 || Math.hypot(e.clientX-dx0, e.clientY-dy0) > 8) { lastUp = 0; return; }
+      { const r = canvas.getBoundingClientRect(); rc.setFromCamera(new THREE.Vector2((e.clientX-r.left)/r.width*2-1, -((e.clientY-r.top)/r.height*2-1)), cam);
+        if(rc.intersectObject(balloon, true).length){ lastUp = 0; select(CITY.places.find(x => x.id==='bal')); return; } }
       const now = performance.now(); if(now-lastUp < 520 && Math.hypot(e.clientX-lx, e.clientY-ly) < 30){ lastUp = 0; zoomAt(e.clientX, e.clientY); } else { lastUp = now; lx = e.clientX; ly = e.clientY; } }); }
   const MB = toXY(CITY.places[0].at), HOME_T = new THREE.Vector3(MB[0], hAt(MB[0],MB[1])+10, -MB[1]), orbP = (az, r, h) => HOME_T.clone().add(new THREE.Vector3(Math.sin(az)*r, h, -Math.cos(az)*r)), ORB0 = {az:2.36, r:7800, h:1500}, ORB1 = {az:4.92, r:1150, h:470}, HOME_P = orbP(ORB1.az, ORB1.r, ORB1.h);
   ctl.target.copy(HOME_T);
