@@ -23,6 +23,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 /* ---------- map hero ---------- */
 .stage,.stage .pin,.stage .tools,.stage .headline{touch-action:none}
+@media (pointer:coarse){.stage,#gl,.stage .pin,.stage .headline{touch-action:pan-y}}
+.twof{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:rgba(0,0,0,.28);color:#fff;font:600 16px/1.35 var(--body);text-align:center;padding:24px;pointer-events:none;opacity:0;transition:opacity .25s}
+.twof.on{opacity:1}
 .stage .card{touch-action:pan-y}
 .stage .chips{touch-action:pan-x}
 .stage{position:relative;height:min(90vh,1300px);min-height:540px;overflow:hidden;background:var(--night)}
@@ -296,7 +299,7 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 [data-v=r] .bar .city[aria-current]{background:#e8f1fd;color:#0071e3}
 .stage{height:min(80vh,1200px)}
 [data-v=r] .stage::before{display:none}
-@media (max-width:760px){.stage{height:min(82vh,780px)}.tools{top:14px}.bar .chips{padding-top:6px}}
+@media (max-width:760px){.stage{height:min(74vh,700px)}.tools{top:14px}.bar .chips{padding-top:6px}}
 .sosb{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;background:#fff0ef;color:#d70015;font:600 13px/1 var(--body);padding:6px 12px 6px 6px;white-space:nowrap}
 .sosb b{background:#ff3b30;color:#fff;font:800 10.5px/1 var(--body);letter-spacing:.04em;border-radius:999px;padding:5px 7px}
 .sosb:hover{background:#ffe2e0}
@@ -456,6 +459,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
   </div>
   <div class="hint" data-i="hint"></div>
   <div class="toast" id="toast" hidden></div>
+  <div class="twof" id="twof"><span data-i="twoFingers"></span></div>
   <div class="pickhint" id="pickhint" data-i="pickHint"></div>
   <div class="card" id="card" hidden></div>
 </div>
@@ -745,8 +749,9 @@ soon:{en:'soon',fr:'bientôt',ru:'скоро'},
 navFlats:{en:'Apartments',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Places',fr:'Sorties',ru:'Куда сходить'},navHol:{en:'Holidays',fr:'Jours fériés',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
 h1:{en:'Your new city.',fr:'Ta nouvelle ville.',ru:'Твой новый город.'},
 h1p:{en:'Find your university, a home, the tram, a café and help. All on one map.',fr:'Trouve ton université, un logement, le tram, un café et de l’aide. Tout sur une seule carte.',ru:'Найди свой корпус, жильё, трамвай, кафе и помощь. Всё на одной карте.'},
-hint:{en:'Drag to move · two fingers to turn',fr:'Glisse pour bouger · deux doigts pour tourner',ru:'Тяни, чтобы двигать · два пальца — повернуть'},
+hint:{en:'Drag to move · scroll to zoom',fr:'Glisse pour bouger · molette pour zoomer',ru:'Тяни, чтобы двигать · колёсико — приблизить'},
 all:{en:'Main',fr:'L’essentiel',ru:'Главное'},
+twoFingers:{en:'Use two fingers to move the map',fr:'Utilise deux doigts pour bouger la carte',ru:'Двигай карту двумя пальцами'},
 pickHint:{en:'Tap a button above to see more places',fr:'Touche un bouton en haut pour voir plus d’endroits',ru:'Нажми кнопку сверху, чтобы увидеть больше мест'},
 walk:{en:'walk from the main building',fr:'à pied du bâtiment principal',ru:'пешком от главного корпуса'},min:{en:'min',fr:'min',ru:'мин'},
 openMap:{en:'Open in Yandex Maps',fr:'Ouvrir dans Yandex Maps',ru:'Открыть в Яндекс Картах'},
@@ -1521,7 +1526,13 @@ scene('life','pro');
   const ctl = new THREE.OrbitControls(cam, canvas);
   ctl.enableDamping = true; ctl.dampingFactor = .09; ctl.screenSpacePanning = false; ctl.minDistance = 350; ctl.maxDistance = 19000; ctl.maxPolarAngle = Math.PI*.455; ctl.zoomSpeed = .8; ctl.enableZoom = true;
   ctl.mouseButtons = {LEFT:THREE.MOUSE.PAN, MIDDLE:THREE.MOUSE.DOLLY, RIGHT:THREE.MOUSE.ROTATE};
-  ctl.touches = {ONE:THREE.TOUCH.PAN, TWO:THREE.TOUCH.DOLLY_ROTATE};
+  ctl.touches = {ONE:THREE.TOUCH.PAN, TWO:THREE.TOUCH.DOLLY_PAN};
+  // on phones one finger scrolls the page, two fingers move and zoom the map (like Google Maps on websites)
+  if(matchMedia('(pointer: coarse)').matches){ canvas.style.touchAction = 'pan-y'; const tf = $('#twof'); let tfT = 0, sy = 0, sx = 0;
+    let multi = false; const one = e => { if(e.touches.length >= 2) multi = true; if(e.touches.length < 2 && !multi){ e.stopPropagation(); return true; } return false; };
+    stage.addEventListener('touchstart', e => { if(one(e)){ sy = e.touches[0]?.clientY||0; sx = e.touches[0]?.clientX||0; } }, {capture:true, passive:true});
+    stage.addEventListener('touchmove', e => { if(!one(e)) return; if(e.target === canvas && e.touches[0] && Math.abs(e.touches[0].clientX-sx) > 30 && Math.abs(e.touches[0].clientX-sx) > Math.abs(e.touches[0].clientY-sy)){ tf.classList.add('on'); clearTimeout(tfT); tfT = setTimeout(() => tf.classList.remove('on'), 1300); } }, {capture:true, passive:true});
+    stage.addEventListener('touchend', e => { if(e.touches.length < 1){ if(!multi) e.stopPropagation(); multi = false; } }, {capture:true, passive:true}); }
   const hideHead = () => document.querySelector('.headline').classList.add('gone');
   canvas.addEventListener('pointerdown', () => { anim = null; hideHead(); });
   canvas.addEventListener('wheel', () => { anim = null; }, {passive:true});
