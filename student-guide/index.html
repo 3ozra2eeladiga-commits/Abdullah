@@ -329,6 +329,13 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .pin.me{pointer-events:none}
 [data-v=r] .pin.me i{width:18px;height:18px;background:#0a84ff;box-shadow:0 0 0 4px #fff,0 0 0 12px rgba(10,132,255,.25);animation:flatDot 2s infinite}
 [data-v=r] .pin.me span{display:block;background:#0a84ff;color:#fff}
+.musicb{position:fixed;z-index:60;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:10px 14px 10px 12px;background:rgba(29,29,31,.86);color:#fff;font:600 13px/1 -apple-system,BlinkMacSystemFont,"Inter",Arial,sans-serif;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.22)}
+.musicb .mi{display:inline-grid;place-items:center;width:20px;height:20px;font-size:16px}
+.musicb[aria-pressed="true"] .mi{animation:mpulse 1.6s ease-in-out infinite}
+.musicb[aria-pressed="false"] .mi{opacity:.55;text-decoration:line-through}
+@keyframes mpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@media (max-width:760px){.musicb .ml{display:none}.musicb{padding:11px}}
+@media (prefers-reduced-motion:reduce){.musicb .mi{animation:none!important}}
 .hrow{display:flex;align-items:flex-end;gap:10px 26px;flex-wrap:wrap;margin:0 0 12px}
 .hrow h2.t{margin:0}
 .buddy{display:flex;align-items:flex-end;gap:4px;flex:none;max-width:100%}
@@ -402,6 +409,7 @@ details.stopsBox[open] summary::after{content:" ▴"}
     <div id="sosBody"></div>
   </div>
 </div>
+<button class="musicb" id="musicBtn" type="button" aria-pressed="false" aria-label="Music"><span class="mi">♪</span><span class="ml" data-i="musicOff"></span></button>
 <header class="bar">
   <div class="top">
     <a class="brand" href="#top"><small data-i="brandTop"></small><span data-i="cPyat"></span></a>
@@ -730,6 +738,7 @@ loadSub:{en:'A guide for foreign students',fr:'Le guide des étudiants étranger
 sosBtn:{en:'Emergency',fr:'Urgences',ru:'Экстренно'},
 locMe:{en:'You are here',fr:'Tu es ici',ru:'Ты здесь'},locNo:{en:'Could not get your location. Allow location in your browser. In this preview it may not work at all.',fr:'Impossible d’obtenir ta position. Autorise la localisation dans ton navigateur. Dans cet aperçu, ça peut ne pas marcher.',ru:'Не получилось узнать, где ты. Разреши геолокацию в браузере. В этом предпросмотре она может не работать совсем.'},locFar:{en:'You are outside this map.',fr:'Tu es en dehors de cette carte.',ru:'Ты за пределами этой карты.'},
 h24:{en:'Open 24 hours',fr:'Ouvert 24 h/24',ru:'Круглосуточно'},
+musicOn:{en:'Music on',fr:'Musique activée',ru:'Музыка играет'},musicOff:{en:'Music off',fr:'Musique coupée',ru:'Музыка выключена'},
 soon:{en:'soon',fr:'bientôt',ru:'скоро'},
 navFlats:{en:'Apartments',fr:'Logements',ru:'Квартиры'},navTrams:{en:'Trams',fr:'Tramways',ru:'Трамваи'},navSee:{en:'Places',fr:'Sorties',ru:'Куда сходить'},navHol:{en:'Holidays',fr:'Jours fériés',ru:'Праздники'},navFirst:{en:'First days',fr:'Premiers jours',ru:'Первые дни'},
 h1:{en:'Your new city.',fr:'Ta nouvelle ville.',ru:'Твой новый город.'},
@@ -930,7 +939,7 @@ function renderStatic(){
   $('#days').innerHTML = up.map(u => `<div class="day">${u.h.img ? `<img class="dimg" src="img/hol/${u.h.img}.jpg" alt="" loading="lazy">` : ''}<div class="in">${u.n===0?tx('today'):u.n+`<small>${tx('inDays')}</small>`}</div>
     <div class="when">${fmt.format(u.d)}${u.h.off?' · '+tx('dayOff'):''}</div><b>${u.h.n[L]}</b><p>${u.h.t[L]}</p></div>`).join('');
   if(!$('#sos').hidden) renderSos();
-  renderTramTable(); renderCard(); if(window.pinsRelabel) pinsRelabel(); if(window.wxRender) wxRender(); if(window.buddyText) buddyText();
+  renderTramTable(); renderCard(); if(window.pinsRelabel) pinsRelabel(); if(window.wxRender) wxRender(); if(window.buddyText) buddyText(); if(window.musicLabel) musicLabel();
 }
 function renderTramTable(){
   if(!MAP){ $('#tramTable').innerHTML = ''; return; }
@@ -1172,6 +1181,49 @@ scene('life','pro');
     } }
   (function frame(now){ requestAnimationFrame(frame); const dt = Math.min(.05,(now-last)/1000); last = now; if(document.hidden) return;
     for(const q of list) if(q.on || !q.drawn){ draw(q, reduce ? 1 : now/1000, dt); q.drawn = true; } })(last);
+})();
+
+/* ================= background music: calm, epic, no bass. Made in the browser, so it has no copyright issues.
+   Browsers do not allow sound before the visitor touches the page, so it starts on the first tap or click. */
+(function(){
+  const btn = document.getElementById('musicBtn'); let ctx = null, master = null, bus = null, on = false, timer = 0, step = 0, nextT = 0;
+  let pref = 'on'; try { pref = localStorage.getItem('sg-music') || 'on'; } catch(e){}
+  const label = () => { btn.setAttribute('aria-pressed', on); btn.lastChild.textContent = tx(on ? 'musicOn' : 'musicOff'); };
+  window.musicLabel = label;
+  const hz = m => 440*Math.pow(2,(m-69)/12);
+  function impulse(sec){ const n = ctx.sampleRate*sec, b = ctx.createBuffer(2, n, ctx.sampleRate); for(let c=0;c<2;c++){ const d = b.getChannelData(c); for(let i=0;i<n;i++) d[i] = (Math.random()*2-1)*Math.pow(1-i/n, 3.2); } return b; }
+  function build(){ ctx = new (window.AudioContext||window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = 0;
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 230; hp.Q.value = .7;   // no bass
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3600;
+    const rev = ctx.createConvolver(); rev.buffer = impulse(5); const wet = ctx.createGain(); wet.gain.value = .6; const dry = ctx.createGain(); dry.gain.value = .55;
+    bus = ctx.createGain(); bus.connect(dry); bus.connect(rev); rev.connect(wet); dry.connect(hp); wet.connect(hp); hp.connect(lp); lp.connect(master); master.connect(ctx.destination); }
+  // D minor, slow and wide: Dm – Bb – F – C, then Dm – Gm – Bb – A
+  const CH = [[62,65,69,74],[58,62,65,70],[60,65,69,72],[60,64,67,72],[62,65,69,74],[58,62,67,70],[58,62,65,70],[61,64,69,73]];
+  const MEL = [[[74,0,3.5],[77,4,3.5]],[[76,0,6]],[[72,0,3],[74,3.5,4]],[[76,0,7]],[[81,0,3],[79,3.5,4]],[[77,0,6]],[[74,0,3],[77,3.5,4]],[[76,0,7.5]]];
+  const BAR = 8;
+  function pad(m, t, len){ for(const det of [-7,7]){ const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = hz(m); o.detune.value = det;
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(1200, t+len*.5); f.frequency.linearRampToValueAtTime(700, t+len);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.032, t+3); g.gain.setValueAtTime(.032, t+len-2.5); g.gain.linearRampToValueAtTime(0, t+len+1.5);
+      o.connect(f); f.connect(g); g.connect(bus); o.start(t); o.stop(t+len+1.6); } }
+  function voice(m, t, len){ const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = hz(m);
+    const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = hz(m)*2; const g2 = ctx.createGain(); g2.gain.value = .25; o2.connect(g2);
+    const vib = ctx.createOscillator(); vib.frequency.value = 5; const vg = ctx.createGain(); vg.gain.value = 4; vib.connect(vg); vg.connect(o.frequency); vg.connect(o2.detune);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.07, t+1.2); g.gain.setValueAtTime(.07, t+len-1.2); g.gain.linearRampToValueAtTime(0, t+len+.8);
+    o.connect(g); g2.connect(g); g.connect(bus); for(const x of [o,o2,vib]){ x.start(t); x.stop(t+len+1); } }
+  function schedule(){ while(nextT < ctx.currentTime + 2){ const i = step % CH.length; for(const m of CH[i]) pad(m, nextT, BAR);
+      if(step >= 2) for(const [m,off,len] of MEL[i]) voice(m, nextT+off, len); step++; nextT += BAR; } }
+  function start(){ if(!ctx) build(); if(ctx.state === 'suspended') ctx.resume(); if(!nextT || nextT < ctx.currentTime) nextT = ctx.currentTime + .1;
+    master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value, ctx.currentTime); master.gain.linearRampToValueAtTime(.8, ctx.currentTime+3);
+    schedule(); clearInterval(timer); timer = setInterval(schedule, 1000); on = true; label(); }
+  function stop(){ on = false; label(); if(!ctx) return; clearInterval(timer); master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setValueAtTime(master.gain.value, ctx.currentTime); master.gain.linearRampToValueAtTime(0, ctx.currentTime+.8);
+    setTimeout(() => { if(!on && ctx) ctx.suspend(); }, 900); }
+  btn.addEventListener('click', e => { e.stopPropagation(); if(on){ stop(); pref = 'off'; } else { start(); pref = 'on'; } try { localStorage.setItem('sg-music', pref); } catch(err){} });
+  const first = () => { document.removeEventListener('pointerdown', first, true); document.removeEventListener('keydown', first, true); if(pref === 'on' && !on) start(); };
+  document.addEventListener('pointerdown', first, true); document.addEventListener('keydown', first, true);
+  // leave the page or switch app: silence; come back: play again
+  document.addEventListener('visibilitychange', () => { if(!ctx) return; if(document.hidden){ clearInterval(timer); ctx.suspend(); } else if(on){ ctx.resume(); nextT = Math.max(nextT, ctx.currentTime+.1); clearInterval(timer); timer = setInterval(schedule, 1000); } });
+  addEventListener('pagehide', () => { if(ctx) ctx.suspend(); });
+  label();
 })();
 
 /* ================= weather today (Open-Meteo, no key) ================= */
