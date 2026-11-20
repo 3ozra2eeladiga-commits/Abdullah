@@ -24,7 +24,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* ---------- map hero ---------- */
 .stage,.stage .pin,.stage .tools,.stage .headline{touch-action:none}
 @media (pointer:coarse){.stage,#gl,.stage .pin,.stage .headline{touch-action:pan-y}}
-.twof{position:absolute;inset:0;z-index:5;display:grid;place-items:center;background:rgba(0,0,0,.28);color:#fff;font:600 16px/1.35 var(--body);text-align:center;padding:24px;pointer-events:none;opacity:0;transition:opacity .25s}
+.twof{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:5;width:max-content;max-width:calc(100% - 32px);background:rgba(20,20,22,.78);color:#fff;font:600 14px/1.35 var(--body);text-align:center;padding:10px 16px;border-radius:16px;white-space:pre-line;pointer-events:none;opacity:0;transition:opacity .25s}
 .twof.on{opacity:1}
 .stage .card{touch-action:pan-y}
 .stage .chips{touch-action:pan-x}
@@ -339,7 +339,7 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .musicb[aria-pressed="true"] .mi{animation:mpulse 1.6s ease-in-out infinite}
 .musicb[aria-pressed="false"] .mi{opacity:.55;text-decoration:line-through}
 @keyframes mpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
-@media (max-width:760px){.musicb .ml{display:none}.musicb{padding:9px;top:calc(18px + env(safe-area-inset-top,0px));bottom:auto;right:calc(90px + env(safe-area-inset-right,0px));box-shadow:none}}
+@media (max-width:760px){.musicb .ml{display:none}.musicb{padding:11px}}
 @media (prefers-reduced-motion:reduce){.musicb .mi{animation:none!important}}
 .hrow{display:flex;align-items:flex-end;gap:10px 26px;flex-wrap:wrap;margin:0 0 12px}
 .hrow h2.t{margin:0}
@@ -373,14 +373,6 @@ footer .wrap{display:flex;gap:10px 30px;flex-wrap:wrap;justify-content:space-bet
 .pin.fl span{display:block}
 [data-v=r] .pin.fl span{background:#0a84ff;color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(0,60,140,.35)}
 @media (prefers-reduced-motion:reduce){[data-v=r] .bar .chip[data-c="flat"],[data-v=r] .pin.fl i{animation:none}}
-.plist{list-style:none;margin:6px -6px 0;padding:0;display:grid;gap:2px;max-height:min(46vh,420px);overflow:auto}
-.plist button{width:100%;display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:9px 8px;border-radius:12px;color:#1d1d1f}
-.plist button:hover,.plist button:focus-visible{background:rgba(0,0,0,.05)}
-.plist i{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 2px #fff,0 0 0 3px rgba(0,0,0,.08)}
-.plist span{flex:1;min-width:0}.plist b{display:block;font:600 14px/1.25 var(--body)}.plist small{display:block;color:#6e6e73;font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.plist em{font:600 12px/1 var(--body);font-style:normal;color:#6e6e73;white-space:nowrap}
-.card .back{border:0;background:none;color:#0071e3;font:600 13px/1 var(--body);padding:0 0 10px;cursor:pointer}
-@media (max-width:760px){.card.list{max-height:52%}.plist{max-height:none}}
 figure.ph{margin:0 0 4px;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/2;background:#e9e2d6}
 figure.ph img{width:100%;height:100%;object-fit:cover;display:block}
 figure.ph figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 5px;font:500 9.5px/1.2 var(--mono);color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -759,8 +751,7 @@ h1:{en:'Your new city.',fr:'Ta nouvelle ville.',ru:'Твой новый горо
 h1p:{en:'Find your university, a home, the tram, a café and help. All on one map.',fr:'Trouve ton université, un logement, le tram, un café et de l’aide. Tout sur une seule carte.',ru:'Найди свой корпус, жильё, трамвай, кафе и помощь. Всё на одной карте.'},
 hint:{en:'Drag to move · scroll to zoom',fr:'Glisse pour bouger · molette pour zoomer',ru:'Тяни, чтобы двигать · колёсико — приблизить'},
 all:{en:'Main',fr:'L’essentiel',ru:'Главное'},
-twoFingers:{en:'Use two fingers to move the map',fr:'Utilise deux doigts pour bouger la carte',ru:'Двигай карту двумя пальцами'},
-placesN:{en:'places · tap one to see it on the map',fr:'endroits · touche-en un pour le voir sur la carte',ru:'мест · нажми на любое, чтобы увидеть на карте'},backList:{en:'← Back to the list',fr:'← Retour à la liste',ru:'← Назад к списку'},
+twoFingers:{en:'↔ one finger — turn · ↕ scroll page\ntwo fingers — move, zoom, tilt',fr:'↔ un doigt — tourner · ↕ défiler\ndeux doigts — bouger, zoomer, incliner',ru:'↔ один палец — повернуть · ↕ листать\nдва пальца — двигать, приблизить, наклонить'},
 pickHint:{en:'Tap a button above to see more places',fr:'Touche un bouton en haut pour voir plus d’endroits',ru:'Нажми кнопку сверху, чтобы увидеть больше мест'},
 walk:{en:'walk from the main building',fr:'à pied du bâtiment principal',ru:'пешком от главного корпуса'},min:{en:'min',fr:'min',ru:'мин'},
 openMap:{en:'Open in Yandex Maps',fr:'Ouvrir dans Yandex Maps',ru:'Открыть в Яндекс Картах'},
@@ -977,16 +968,9 @@ function renderCard(){
     c.innerHTML = h; c.classList.add('tram'); c.hidden = false; $('#stage').classList.add('busy'); return;
   }
   c.classList.remove('tram');
-  if(!sel && activeCat!=='all' && CITY.groups[activeCat]){   // a simple list of the places in this group: tap one to see it on the map
-    const g = CITY.groups[activeCat], list = CITY.places.filter(inAct).filter(p => !p.sky || true).sort((a,b) => walkMin(a.at)-walkMin(b.at));
-    c.innerHTML = `<button class="x" aria-label="Close">×</button><h2>${esc(g[L])}</h2><div class="ru">${L==='ru' ? list.length+' '+(list.length%10===1&&list.length%100!==11?'место':[2,3,4].includes(list.length%10)&&![12,13,14].includes(list.length%100)?'места':'мест')+' · '+tx('placesN').split(' · ')[1] : list.length+' '+tx('placesN')}</div>
-      <ul class="plist">${list.map(p => `<li><button data-go="${p.id||''}" data-gi="${CITY.places.indexOf(p)}" style="--c:${CITY.cats[p.k].c}"><i></i><span><b>${esc(nm(p))}</b>${addr(p) ? `<small>${esc(L==='ru' ? addr(p) : lat(addr(p)))}</small>` : ''}</span><em>${p.far ? '🚕' : walkMin(p.at)+' '+tx('min')}</em></button></li>`).join('')}</ul>`;
-    c.classList.add('list'); c.hidden = false; $('#stage').classList.add('busy'); return; }
-  c.classList.remove('list');
   if(!sel){ c.hidden = true; $('#stage').classList.toggle('busy', activeCat!=='all' || !MAP); return; }
   const p = sel, cat = CITY.cats[p.k];
   c.innerHTML = `<button class="x" aria-label="Close">×</button>
-    ${activeCat!=='all' && CITY.groups[activeCat] ? `<button class="back" data-back="1">${tx('backList')}</button>` : ''}
     ${p.ph?`<figure class="ph"><img src="${p.ph}" alt=""><figcaption>${tx('photo')}</figcaption></figure>`:''}
     <span class="tag" style="--c:${cat.c}">${cat[L]}</span>${p.demo?`<span class="tag ghost">${tx('demo')}</span>`:''}
     <h2>${esc(nm(p))}</h2><div class="ru">${esc(p.ru.split(' · ')[0])}</div>${addr(p) ? `<div class="addr">📍 ${esc(L==='ru' ? addr(p) : lat(addr(p)))}${L==='ru' ? '' : `<small>${esc(addr(p))}</small>`}</div>` : ''}
@@ -1001,7 +985,7 @@ function renderCard(){
 }
 function setCat(k){ activeCat = k; subCat = null; sel = null; if(k!=='tram') setRoute(null, true); renderStatic(); if(window.pinsFilter) pinsFilter(); if(k!=='all' && window.fitCat) fitCat(k); }
 function setRoute(r, quiet){ selRoute = r; if(window.showRoute) showRoute(r); if(!quiet){ activeCat = 'tram'; sel = null; renderStatic(); if(window.pinsFilter) pinsFilter(); } }
-function select(p){ sel = p; if(p && activeCat!=='all' && !CITY.groups[activeCat].cats.includes(p.k)){ activeCat = 'all'; subCat = null; } renderStatic(); if(window.pinsFilter) pinsFilter(); if(p && window.flyTo) flyTo(p); }
+function select(p){ sel = p; if(p && !inAct(p)){ activeCat = 'all'; subCat = null; } renderStatic(); if(window.pinsFilter) pinsFilter(); if(p && window.flyTo) flyTo(p); }
 document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('#sos').hidden) closeSos(); });
 document.addEventListener('click', e => {
   if(e.target.closest('[data-close]')){ closeSos(); return; }
@@ -1011,8 +995,6 @@ document.addEventListener('click', e => {
   else if(t.dataset.c) setCat(t.dataset.c);
   else if(t.dataset.s){ subCat = subCat===t.dataset.s ? null : t.dataset.s; sel = null; renderStatic(); if(window.pinsFilter) pinsFilter(); if(window.fitCat) fitCat(activeCat); }
   else if(t.dataset.route){ setRoute(selRoute===t.dataset.route && t.closest('.routes') ? null : t.dataset.route); }
-  else if(t.dataset.back){ sel = null; renderStatic(); if(window.pinsFilter) pinsFilter(); if(window.fitCat) fitCat(activeCat); }
-  else if(t.dataset.gi){ select(CITY.places[+t.dataset.gi]); }
   else if(t.dataset.go){ select(CITY.places.find(p => p.id===t.dataset.go)); $('#stage').scrollIntoView({block:'start'}); }
   else if(t.classList.contains('x')){ if(sel) { sel = null; renderStatic(); pinsFilter && pinsFilter(); } else setCat('all'); }
 });
@@ -1542,21 +1524,33 @@ scene('life','pro');
 
   // camera and controls
   const ctl = new THREE.OrbitControls(cam, canvas);
-  ctl.enableDamping = true; ctl.dampingFactor = .09; ctl.screenSpacePanning = false; ctl.minDistance = 350; ctl.maxDistance = 19000; ctl.maxPolarAngle = Math.PI*.44; ctl.minPolarAngle = Math.PI*.12; ctl.zoomSpeed = .8; ctl.enableZoom = true;
+  ctl.enableDamping = true; ctl.dampingFactor = .09; ctl.screenSpacePanning = false; ctl.minDistance = 350; ctl.maxDistance = 19000; ctl.maxPolarAngle = Math.PI*.455; ctl.zoomSpeed = .8; ctl.enableZoom = true;
   ctl.mouseButtons = {LEFT:THREE.MOUSE.PAN, MIDDLE:THREE.MOUSE.DOLLY, RIGHT:THREE.MOUSE.ROTATE};
   ctl.touches = {ONE:THREE.TOUCH.PAN, TWO:THREE.TOUCH.DOLLY_PAN};
   // on phones one finger scrolls the page, two fingers move and zoom the map (like Google Maps on websites)
-  if(matchMedia('(pointer: coarse)').matches){ canvas.style.touchAction = 'pan-y'; const tf = $('#twof'); let tfT = 0, sy = 0, sx = 0;
-    let multi = false; const one = e => { if(e.touches.length >= 2) multi = true; if(e.touches.length < 2 && !multi){ e.stopPropagation(); return true; } return false; };
-    stage.addEventListener('touchstart', e => { if(one(e)){ sy = e.touches[0]?.clientY||0; sx = e.touches[0]?.clientX||0; } }, {capture:true, passive:true});
-    stage.addEventListener('touchmove', e => { if(!one(e)) return; if(e.target === canvas && e.touches[0] && Math.abs(e.touches[0].clientX-sx) > 30 && Math.abs(e.touches[0].clientX-sx) > Math.abs(e.touches[0].clientY-sy)){ tf.classList.add('on'); clearTimeout(tfT); tfT = setTimeout(() => tf.classList.remove('on'), 1300); } }, {capture:true, passive:true});
-    stage.addEventListener('touchend', e => { if(e.touches.length < 1){ if(!multi) e.stopPropagation(); multi = false; } }, {capture:true, passive:true}); }
-  // two fingers twisting = turn the map left or right (works together with pinch-zoom and two-finger pan)
-  { let ang = null; const A = t => Math.atan2(t[1].clientY-t[0].clientY, t[1].clientX-t[0].clientX);
-    canvas.addEventListener('touchstart', e => { ang = e.touches.length === 2 ? A(e.touches) : null; }, {passive:true});
-    canvas.addEventListener('touchmove', e => { if(e.touches.length !== 2 || ang === null) return; const a2 = A(e.touches); let d = a2-ang; if(d > Math.PI) d -= 2*Math.PI; if(d < -Math.PI) d += 2*Math.PI; ang = a2;
-      if(Math.abs(d) < .0015) return; anim = null; const o = cam.position.clone().sub(ctl.target); o.applyAxisAngle(new THREE.Vector3(0,1,0), d); cam.position.copy(ctl.target).add(o); }, {passive:true});
-    canvas.addEventListener('touchend', e => { if(e.touches.length < 2) ang = null; }, {passive:true}); }
+  /* PHONE GESTURES (simple, like a normal map inside a page):
+     one finger up/down = scroll the page; one finger left/right = turn the map;
+     two fingers = move + zoom, twist = turn, both fingers up/down together = tilt (3D view). */
+  const turn = d => { anim = null; const o = cam.position.clone().sub(ctl.target); o.applyAxisAngle(new THREE.Vector3(0,1,0), d); cam.position.copy(ctl.target).add(o); };
+  const tilt = d => { anim = null; const o = cam.position.clone().sub(ctl.target), sp = new THREE.Spherical().setFromVector3(o); sp.phi = Math.min(ctl.maxPolarAngle, Math.max(.05, sp.phi+d)); o.setFromSpherical(sp); cam.position.copy(ctl.target).add(o); cam.lookAt(ctl.target); };
+  if(matchMedia('(pointer: coarse)').matches){ canvas.style.touchAction = 'pan-y'; const tf = $('#twof'); let shown = false, sy = 0, sx = 0, lx = 0, mode = null, multi = false;
+    const hint = () => { if(shown) return; shown = true; tf.classList.add('on'); setTimeout(() => tf.classList.remove('on'), 3200); };
+    stage.addEventListener('touchstart', e => { if(e.touches.length >= 2){ multi = true; return; } if(multi) return; e.stopPropagation(); mode = null; sx = lx = e.touches[0].clientX; sy = e.touches[0].clientY; if(e.target === canvas) hint(); }, {capture:true, passive:true});
+    stage.addEventListener('touchmove', e => { if(e.touches.length >= 2 || multi) return; e.stopPropagation(); const t = e.touches[0];
+      if(!mode && Math.hypot(t.clientX-sx, t.clientY-sy) > 9) mode = Math.abs(t.clientX-sx) > Math.abs(t.clientY-sy) ? 'turn' : 'scroll';
+      if(mode === 'turn' && e.target === canvas){ turn(-(t.clientX-lx)*.0075); } lx = t.clientX; }, {capture:true, passive:true});
+    stage.addEventListener('touchend', e => { if(e.touches.length < 1){ if(!multi) e.stopPropagation(); multi = false; mode = null; } }, {capture:true, passive:true});
+    // two fingers: decide in the first moment whether the person tilts (both fingers go up/down together) or moves/zooms/twists
+    let p0 = null, last = null, two = null, ang = null; const A = t => Math.atan2(t[1].clientY-t[0].clientY, t[1].clientX-t[0].clientX), D = t => Math.hypot(t[1].clientX-t[0].clientX, t[1].clientY-t[0].clientY);
+    const snap = t => [{x:t[0].clientX,y:t[0].clientY},{x:t[1].clientX,y:t[1].clientY}];
+    canvas.addEventListener('touchstart', e => { if(e.touches.length === 2){ p0 = last = snap(e.touches); two = null; ang = A(e.touches); } }, {passive:true});
+    canvas.addEventListener('touchmove', e => { if(e.touches.length !== 2 || !p0) return; const c = snap(e.touches);
+      if(!two){ const d0 = c[0].y-p0[0].y, d1 = c[1].y-p0[1].y, dx = (c[0].x-p0[0].x + c[1].x-p0[1].x)/2, spread = Math.abs(D(e.touches) - Math.hypot(p0[1].x-p0[0].x, p0[1].y-p0[0].y));
+        if(Math.abs(d0) + Math.abs(d1) > 22){ two = (d0*d1 > 0 && Math.abs(d0+d1)/2 > 2*Math.abs(dx) && spread < 28) ? 'tilt' : 'move'; if(two === 'tilt') ctl.enabled = false; } }
+      if(two === 'tilt'){ tilt(-((c[0].y-last[0].y)+(c[1].y-last[1].y))/2*.006); }
+      else { const a2 = A(e.touches); let d = a2-ang; if(d > Math.PI) d -= 2*Math.PI; if(d < -Math.PI) d += 2*Math.PI; if(Math.abs(d) > .0015) turn(d); }
+      ang = A(e.touches); last = c; }, {passive:true});
+    canvas.addEventListener('touchend', e => { if(e.touches.length < 2){ p0 = null; two = null; ctl.enabled = true; } }, {passive:true}); }
   const hideHead = () => document.querySelector('.headline').classList.add('gone');
   canvas.addEventListener('pointerdown', () => { anim = null; hideHead(); });
   canvas.addEventListener('wheel', () => { anim = null; }, {passive:true});
