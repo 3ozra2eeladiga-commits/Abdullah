@@ -6,6 +6,27 @@ set -u
 REPO="$HOME/repo"
 WEB="$HOME/public_html"
 cd "$REPO" || exit 0
+# ===== ПЕРЕЕЗД НА ОТДЕЛЬНЫЕ РЕПОЗИТОРИИ (22.11.2026) =====
+# Сайты теперь живут в своих репозиториях: vizkod и gradosfera (приватные, доступ — deploy-ключи ~/.ssh/deploy_*).
+# Если ключи есть — скачиваем репозитории в ~/repos и дальше обновляем сайты ИХ скриптами; старая выкладка ниже не выполняется.
+# Если что-то не так (нет ключей, не скачалось) — всё работает по-старому, сайты не ломаются.
+git fetch -q --depth 1 origin main && [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ] && git reset -q --hard origin/main
+if [ -f "$HOME/.ssh/deploy_vizkod" ] && [ -f "$HOME/.ssh/deploy_gradosfera" ]; then
+  mkdir -p "$HOME/repos"; NEWV=""; NEWG=""
+  if [ ! -d "$HOME/repos/vizkod/.git" ]; then
+    git clone -q --depth 1 git@github-vizkod:3ozra2eeladiga-commits/vizkod.git "$HOME/repos/vizkod" >> "$HOME/deploy.log" 2>&1 && NEWV=force
+  fi
+  if [ ! -d "$HOME/repos/gradosfera/.git" ]; then
+    git clone -q --depth 1 git@github-gradosfera:3ozra2eeladiga-commits/gradosfera.git "$HOME/repos/gradosfera" >> "$HOME/deploy.log" 2>&1 && NEWG=force
+  fi
+  if [ -d "$HOME/repos/vizkod/.git" ] && [ -d "$HOME/repos/gradosfera/.git" ]; then
+    [ -n "$NEWV$NEWG" ] && echo "$(date '+%F %T') переезд: сайты теперь из отдельных репозиториев" >> "$HOME/deploy.log"
+    /bin/bash "$HOME/repos/vizkod/deploy/hosting-update.sh" $NEWV
+    /bin/bash "$HOME/repos/gradosfera/deploy/hosting-update.sh" $NEWG
+    exit 0
+  fi
+fi
+# ===== дальше — старая выкладка (на случай, если переезд не удался) =====
 # сторож: проверяет сайт, бот ЖК и сервер бота цветов; при сбое пишет Абдулле в Telegram (в фоне, не мешает обновлению)
 ( curl -s -m 90 "https://gradosfera.com/gk-watch.php" >/dev/null 2>&1 || wget -q -T 90 -O /dev/null "https://gradosfera.com/gk-watch.php" ) &
 # 3D-модель (gk-tour) на сайт НЕ выкладываем — она не готова и будет отдельно, для планшетов. Если папка осталась — убрать.
