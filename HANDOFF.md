@@ -13,7 +13,7 @@
 - **Abdullah** (этот) — только бот цветов НА.РОМАШКЕ (VPS обновляется из main).
 - **vizkod** — сайт vizkod.ru; **gradosfera** — сайт ЖК + бот ЖК + 3D-тур (tour-3d/); **student-guide** — гид для студентов (на хостинг не выложен).
 - Хостинг Timeweb: Crontab по-прежнему запускает ~/repo/deploy/hosting-update.sh (из ЭТОГО репо) — теперь это только «диспетчер»:
-  каждые 30 с (9 проходов за запуск cron) вызывает ~/repos/vizkod и ~/repos/gradosfera deploy/hosting-update.sh.
+  каждые 10 с вызывает ~/repos/vizkod и ~/repos/gradosfera deploy/hosting-update.sh.
   Доступ к приватным репо — deploy-ключи ~/.ssh/deploy_vizkod, deploy_gradosfera (ssh.github.com:443, алиасы github-vizkod/github-gradosfera).
 - Правки сайтов больше НЕ трогают бота: правь в их репозиториях. Этот репо трогать только для бота (каждый пуш сюда перезапускает бота).
 

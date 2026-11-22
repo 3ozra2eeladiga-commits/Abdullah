@@ -3,15 +3,16 @@
 # Запускается по расписанию (Crontab) каждые 5 минут:  /bin/bash $HOME/repo/deploy/hosting-update.sh
 # С любым аргументом (например: force) — обновить сайт, даже если новых правок нет.
 set -u
-# ===== проверка каждые 30 секунд: cron запускает раз в 5 минут, а скрипт внутри делает 9 проходов с паузой 30 с =====
+# ===== проверка каждые 10 секунд: cron запускает раз в 5 минут, скрипт внутри проверяет GitHub каждые 10 с почти до следующего запуска =====
 if [ -z "${DEPLOY_INNER:-}" ]; then
   LOCK="$HOME/.deploy.lock"
   if ! mkdir "$LOCK" 2>/dev/null; then
-    [ -n "$(find "$LOCK" -maxdepth 0 -mmin +9 2>/dev/null)" ] && rm -rf "$LOCK" && mkdir "$LOCK" || exit 0
+    [ -n "$(find "$LOCK" -maxdepth 0 -mmin +6 2>/dev/null)" ] && rm -rf "$LOCK" && mkdir "$LOCK" || exit 0
   fi
-  for i in 1 2 3 4 5 6 7 8 9; do
-    DEPLOY_INNER=$i /bin/bash "$HOME/repo/deploy/hosting-update.sh" "$@"
-    [ "$i" = 9 ] || sleep 30
+  START=$(date +%s); i=0
+  while [ $(( $(date +%s) - START )) -lt 285 ]; do   # почти 5 минут, до следующего запуска cron
+    i=$((i+1)); DEPLOY_INNER=$i /bin/bash "$HOME/repo/deploy/hosting-update.sh" "$@"
+    sleep 10
   done
   rmdir "$LOCK" 2>/dev/null; exit 0
 fi
