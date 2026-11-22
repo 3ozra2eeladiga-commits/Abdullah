@@ -12,7 +12,7 @@
 ## ПЛАН (22.11): разнести репозиторий — Абдулла сказал «делай»
 - Проблема: VPS бота (deploy/update.sh) перезапускает бота на ЛЮБОЙ коммит в main, включая правки сайтов.
 - Решение (согласовано): бот остаётся в этом репо (VPS не трогаем); сайты — в отдельные репо: vizkod (из studio/) и gradosfera (из gradosfera/).
-- Ждём: Абдулла создаёт на GitHub два ПУСТЫХ репо (без README) → add_repo с access push → залить файлы (история остаётся тут; клон shallow).
+- СДЕЛАНО 22.11: репо 3ozra2eeladiga-commits/vizkod (site/ ← studio/) и 3ozra2eeladiga-commits/gradosfera (site/ ← gradosfera/, tour-3d/ ← gk-tour/) созданы Абдуллой и залиты (53ecf1b, 55ea9d9), в каждом свой deploy/hosting-update.sh (~/repos/<имя>). ДАЛЬШЕ: переключить хостинг (SSH-консоль Timeweb: клон в ~/repos, Crontab), проверить оба сайта, потом удалить studio/ gradosfera/ gk-tour/ отсюда и убрать vizkod из deploy/hosting-update.sh. Уточнить: репо public или private (private → deploy-ключи). Сайт-гид для студентов — где лежит?
 - Потом хостинг: через «SSH-консоль» в панели Timeweb склонировать новые репо (публичные — по https; приватные — нужны deploy-ключи, по одному на репо),
   новый скрипт обновления (vizkod → ~/vizkod/public_html, gradosfera → ~/public_html), заменить строку в Crontab. После проверки — удалить studio/ и gradosfera/ отсюда.
 - Секретов в gradosfera/ и studio/ нет (токены читаются из gs-config.php, он в .gitignore).
