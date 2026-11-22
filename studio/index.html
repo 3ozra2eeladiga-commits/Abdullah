@@ -394,7 +394,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;paddin
   <section class="scrub" id="work">
     <div class="scrub-stick">
       <div class="scrub-win glass">
-        <video id="workVideo" muted playsinline webkit-playsinline preload="auto" poster="media/work.jpg" src="media/work.mp4"></video>
+        <video id="workVideo" muted playsinline webkit-playsinline preload="metadata" poster="media/work.jpg" src="media/work.mp4"></video>
         <div class="scrub-cap"><span class="pill"><span class="dot"></span>Мы работаем</span><span class="scrub-hint">Листайте вниз</span></div>
         <div class="scrub-bar"><i id="workBar"></i></div>
       </div>
@@ -582,6 +582,12 @@ addEventListener('DOMContentLoaded',applyLang);setTimeout(applyLang,0);
 (()=>{const sec=document.getElementById('work'),wv=document.getElementById('workVideo'),bar=document.getElementById('workBar');if(!sec||!wv)return;
   wv.muted=true;wv.setAttribute('muted','');wv.playsInline=true;
   const touch=matchMedia('(pointer:coarse)').matches;
+  // в лёгком режиме (батарея/слабый ПК) перемотка прокруткой тяжёлая — видео просто играет по кругу, как на телефоне
+  function autoMode(){sec.classList.add('auto');wv.loop=true;wv.preload='auto';
+    new IntersectionObserver(es=>es.forEach(e=>{e.isIntersecting?wv.play().catch(()=>{}):wv.pause()}),{threshold:.2}).observe(wv);
+    wv.addEventListener('timeupdate',()=>{if(wv.duration)bar.style.width=(wv.currentTime/wv.duration*100).toFixed(1)+'%'})}
+  if(!touch&&LITE()){autoMode();return}
+  if(!touch){let sw=false;document.addEventListener('litechange',()=>{if(LITE()&&!sw){sw=true;scrubOff=true;autoMode()}})}
   if(touch){
     // телефон: перемотка прокруткой работает плохо (особенно iPhone) — просто играем по кругу, пока блок на экране
     sec.classList.add('auto');wv.loop=true;
@@ -590,13 +596,13 @@ addEventListener('DOMContentLoaded',applyLang);setTimeout(applyLang,0);
     wv.addEventListener('timeupdate',()=>{if(wv.duration)bar.style.width=(wv.currentTime/wv.duration*100).toFixed(1)+'%'});
     return;
   }
-  let target=0,cur=0,ready=false;
+  let target=0,cur=0,ready=false;var scrubOff=false;wv.preload='auto';
   const ok=()=>{ready=true};wv.addEventListener('loadedmetadata',ok);if(wv.readyState>=1)ready=true;
   wv.load();
   function prog(){const r=sec.getBoundingClientRect(),len=r.height-innerHeight;return Math.min(1,Math.max(0,-r.top/len))}
   let wr=0;const wk=()=>{if(!wr)wr=requestAnimationFrame(tick)};
   addEventListener('scroll',()=>{target=prog();wk()},{passive:true});target=prog();wv.addEventListener('loadedmetadata',wk);wv.addEventListener('seeked',wk);
-  function tick(){wr=0;cur+=(target-cur)*.12;if(Math.abs(target-cur)<.0005)cur=target;bar.style.width=(cur*100).toFixed(1)+'%';
+  function tick(){wr=0;if(scrubOff)return;cur+=(target-cur)*.12;if(Math.abs(target-cur)<.0005)cur=target;bar.style.width=(cur*100).toFixed(1)+'%';
     if(ready&&wv.duration&&!wv.seeking&&Math.abs(wv.currentTime-cur*(wv.duration-.05))>.03)wv.currentTime=cur*(wv.duration-.05);
     if(cur!==target)wk()}
   wk();
