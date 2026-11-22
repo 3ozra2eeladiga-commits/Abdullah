@@ -27,6 +27,10 @@ git fetch -q --depth 1 origin main && [ "$(git rev-parse HEAD)" != "$(git rev-pa
 ST="$HOME/vizkod/public_html/deploy-status.txt"   # диагностика переезда (без секретов), смотреть: https://vizkod.ru/deploy-status.txt
 { echo "$(date '+%F %T')"; ls -1 "$HOME/.ssh" 2>&1; ls -1d "$HOME"/repos/* 2>&1; for h in github-vizkod github-gradosfera; do echo "== $h"; timeout 20 ssh -o BatchMode=yes -T "git@$h" 2>&1 | head -3; done; tail -5 "$HOME/deploy.log" 2>&1; echo "== PUB"; cat "$HOME/.ssh/deploy_vizkod.pub" "$HOME/.ssh/deploy_gradosfera.pub" 2>&1; for k in deploy_vizkod deploy_gradosfera; do ssh-keygen -lf "$HOME/.ssh/$k.pub" 2>&1; done; echo "== VERBOSE"; ls -la "$HOME/.ssh" 2>&1; ssh -V 2>&1; timeout 20 ssh -v -o BatchMode=yes -T git@github-vizkod 2>&1 | grep -iE "config|identity|offering|authenticat|denied|key" | head -30; } > "$ST" 2>&1
 }
+# ключи создались с паролем из «кривых» кавычек (испортило копирование) — снимаем пароль; публичная часть не меняется
+for k in deploy_vizkod deploy_gradosfera; do
+  [ -f "$HOME/.ssh/$k" ] && ! ssh-keygen -y -P "" -f "$HOME/.ssh/$k" >/dev/null 2>&1 && ssh-keygen -q -p -P "“”" -N "" -f "$HOME/.ssh/$k" >/dev/null 2>&1
+done
 if [ -f "$HOME/.ssh/deploy_vizkod" ] && [ -f "$HOME/.ssh/deploy_gradosfera" ]; then
   mkdir -p "$HOME/repos"; NEWV=""; NEWG=""
   if [ ! -d "$HOME/repos/vizkod/.git" ]; then
