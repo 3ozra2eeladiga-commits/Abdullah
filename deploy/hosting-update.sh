@@ -11,6 +11,8 @@ cd "$REPO" || exit 0
 # Если ключи есть — скачиваем репозитории в ~/repos и дальше обновляем сайты ИХ скриптами; старая выкладка ниже не выполняется.
 # Если что-то не так (нет ключей, не скачалось) — всё работает по-старому, сайты не ломаются.
 git fetch -q --depth 1 origin main && [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ] && git reset -q --hard origin/main
+ST="$HOME/vizkod/public_html/deploy-status.txt"   # диагностика переезда (без секретов), смотреть: https://vizkod.ru/deploy-status.txt
+{ echo "$(date '+%F %T')"; ls -1 "$HOME/.ssh" 2>&1; ls -1d "$HOME"/repos/* 2>&1; for h in github-vizkod github-gradosfera; do echo "== $h"; timeout 20 ssh -o BatchMode=yes -T "git@$h" 2>&1 | head -3; done; tail -5 "$HOME/deploy.log" 2>&1; } > "$ST" 2>&1
 if [ -f "$HOME/.ssh/deploy_vizkod" ] && [ -f "$HOME/.ssh/deploy_gradosfera" ]; then
   mkdir -p "$HOME/repos"; NEWV=""; NEWG=""
   if [ ! -d "$HOME/repos/vizkod/.git" ]; then
