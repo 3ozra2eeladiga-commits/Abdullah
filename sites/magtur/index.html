@@ -1,232 +1,254 @@
 <title>МАГТУР — туры на Кавказ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Идея вёрстки: страница — это восхождение. Скролл поднимает высотомер от Пятигорска (512 м) до Эльбруса (5642 м), заявка лежит на вершине. */
+/* Идея: сайт — это ночной выход на Эльбрус. За страницей летит живой рельеф гор; скролл набирает высоту от 512 до 5642 м, на вершине наступает рассвет. Один тёмный мир, без светлой темы — намеренно. */
 :root{
-  --bg:#F2F6FB; --surface:#FFFFFF; --ink:#0D1A2D; --muted:#56667E; --line:#D3DDEA;
-  --blue:#1B58B8; --blue-soft:#DCE8F8; --accent:#FF5A1F; --accent-ink:#10192A;
-  --photo-ink:#FFFFFF; --scrim:rgba(8,18,34,.72); --ok:#1E8A5A;
-  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
-  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+  --night:#060D18; --panel:rgba(7,15,28,.86); --panel-solid:#0A1424; --ink:#F1ECE3; --muted:#9AA9BE; --line:rgba(190,215,245,.16);
+  --ice:#A9E2FF; --glow-a:#FF8A4C; --glow-b:#FF4D7E; --paper:#F3EEE4; --paper-ink:#141C2A; --paper-muted:#6B7385;
+  --glow:linear-gradient(100deg,var(--glow-a),var(--glow-b));
+  --f-display:"Cormorant Garamond","Times New Roman",Georgia,serif;
+  --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
-  --r:6px; --max:1120px;
+  --max:1180px;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#09121F; --surface:#111D2F; --ink:#EAF1FA; --muted:#95A6BE; --line:#24354D;
-  --blue:#78AEFF; --blue-soft:#172B47; --accent:#FF6B35; --accent-ink:#10192A; --ok:#4CC48C; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#09121F; --surface:#111D2F; --ink:#EAF1FA; --muted:#95A6BE; --line:#24354D;
-  --blue:#78AEFF; --blue-soft:#172B47; --accent:#FF6B35; --accent-ink:#10192A; --ok:#4CC48C; color-scheme:dark}
-
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--f-body);-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+body{margin:0;background:var(--night);color:var(--ink);font:400 16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--night)}
 .wrap{max-width:var(--max);margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1;letter-spacing:-.01em}
-h2{font-size:clamp(1.5rem,3.6vw,2.4rem);font-weight:700}
-h3{font-size:1rem;font-weight:500;line-height:1.3}
+h1,h2,h3{font-family:var(--f-display);font-weight:500;text-wrap:balance;margin:0;line-height:1;letter-spacing:-.015em}
+h2{font-size:clamp(2.4rem,6.4vw,5rem)}
+h2 i,h1 i,.win i{font-style:italic;background:var(--glow);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
+h3{font-size:1.45rem;line-height:1.1}
 p{margin:0}
-a{color:var(--blue)}
-.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-.eyebrow{font:500 .75rem/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:.6em;align-items:center}
-.eyebrow b{color:var(--accent);font-weight:700}
-.lead{color:var(--muted);max-width:62ch}
-section{padding-block:clamp(48px,8vw,96px)}
-.head{display:grid;gap:14px;margin-bottom:32px}
-:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;font:600 1rem/1 var(--f-body);padding:.95em 1.3em;border-radius:var(--r);border:1.5px solid transparent;cursor:pointer;text-decoration:none;min-height:44px}
-.btn-main{background:var(--accent);color:var(--accent-ink)}
-.btn-main:hover{filter:brightness(1.08)}
-.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+a{color:var(--ice)}
+.eyebrow{font:500 .72rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;gap:.8em;align-items:center}
+.eyebrow b{color:var(--glow-a);font-weight:700}
+.lead{color:var(--muted);max-width:56ch;font-size:1.05rem}
+:focus-visible{outline:2px solid var(--ice);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.6em;font:600 .95rem/1 var(--f-body);padding:1.1em 1.6em;border-radius:99px;border:1px solid transparent;cursor:pointer;text-decoration:none;min-height:48px;transition:transform .2s,box-shadow .2s,border-color .2s}
+.btn-main{background:var(--glow);color:#1A0F0A;box-shadow:0 8px 34px -8px rgba(255,100,90,.6)}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 14px 44px -8px rgba(255,100,90,.8)}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--ink);border-color:var(--line);backdrop-filter:blur(8px)}
 .btn-ghost:hover{border-color:var(--ink)}
 
+/* небо и рельеф */
+.sky{position:fixed;inset:0;z-index:-3;background:linear-gradient(180deg,#040912 0%,#0A1930 55%,#12284A 100%)}
+.stars{position:fixed;inset:0;z-index:-3;background-image:radial-gradient(1.2px 1.2px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 31% 9%,#cfe 50%,transparent 51%),radial-gradient(1.4px 1.4px at 54% 22%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 72% 12%,#fff 50%,transparent 51%),radial-gradient(1.2px 1.2px at 88% 26%,#def 50%,transparent 51%),radial-gradient(1px 1px at 43% 34%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 7% 38%,#fff 50%,transparent 51%),radial-gradient(1.3px 1.3px at 64% 5%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 22% 28%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 94% 8%,#fff 50%,transparent 51%);background-size:620px 420px;opacity:.8}
+.dawn{position:fixed;inset:0;z-index:-3;opacity:0;background:linear-gradient(180deg,#1B2A55 0%,#6B4470 38%,#E0705F 62%,#FFB877 82%,#FFD9A0 100%)}
+#terrain{position:fixed;inset:0;width:100%;height:100%;z-index:-2;display:block}
+.vignette{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(6,13,24,.55) 0%,transparent 22%,transparent 70%,rgba(6,13,24,.6) 100%)}
+
 /* шапка */
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;gap:18px;height:60px}
-.logo{font:800 1.05rem/1 var(--f-display);color:var(--ink);text-decoration:none;letter-spacing:.02em}
-.logo span{color:var(--accent)}
-.top nav{display:flex;gap:18px;margin-left:8px}
-.top nav a{color:var(--muted);text-decoration:none;font-weight:500;font-size:.92rem}
+header.top{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:9;transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
+header.top.solid{background:rgba(6,13,24,.82);backdrop-filter:blur(14px);border-color:var(--line)}
+.top .wrap{display:flex;align-items:center;gap:22px;height:68px}
+.logo{font:600 1.55rem/1 var(--f-display);color:var(--ink);text-decoration:none;letter-spacing:.14em}
+.top nav{display:flex;gap:22px;margin-left:14px}
+.top nav a{color:var(--muted);text-decoration:none;font-size:.9rem}
 .top nav a:hover{color:var(--ink)}
-.alt-pill{margin-left:auto;font:700 .82rem/1 var(--f-mono);display:flex;gap:.6em;align-items:center;white-space:nowrap}
-.alt-pill i{font-style:normal;color:var(--accent)}
-.alt-pill small{font:500 .78rem/1 var(--f-body);color:var(--muted)}
-.top .btn{padding:.7em 1em;font-size:.9rem;min-height:40px}
-@media(max-width:860px){.top nav{display:none}}
-@media(max-width:520px){.alt-pill small{display:none}.top .wrap{gap:10px}}
+.alt-pill{margin-left:auto;font:700 .8rem/1 var(--f-mono);display:flex;gap:.7em;align-items:center;white-space:nowrap;font-variant-numeric:tabular-nums}
+.alt-pill i{font-style:normal;color:var(--glow-a)}
+.alt-pill small{font:400 .8rem/1 var(--f-body);color:var(--muted)}
+.top .btn{padding:.8em 1.2em;min-height:40px;font-size:.88rem}
+@media(max-width:900px){.top nav{display:none}}
+@media(max-width:520px){.alt-pill small{display:none}.top .wrap{gap:12px}.logo{font-size:1.3rem}}
 
 /* первый экран */
-.hero{position:relative;padding-block:0;color:var(--photo-ink);background:#0b1a30 url(img/hero.jpg) center 42%/cover}
-.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,22,46,.50) 0%,rgba(8,22,46,.18) 45%,var(--scrim) 100%)}
-.hero .wrap{position:relative;z-index:1;padding-block:clamp(56px,10vw,120px) clamp(28px,5vw,48px);display:grid;gap:26px}
-.hero .eyebrow{color:var(--photo-ink);opacity:.9}
-.hero h1{font-size:clamp(2.1rem,7.2vw,5rem);font-weight:800;max-width:13ch;text-shadow:0 2px 24px rgba(4,12,28,.45)}
-.hero h1 em{font-style:normal;color:var(--accent)}
-.hero p.sub{font-size:clamp(1rem,1.6vw,1.2rem);max-width:54ch;text-shadow:0 1px 12px rgba(4,12,28,.6)}
-.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
-.hero .btn-ghost{color:var(--photo-ink);border-color:rgba(255,255,255,.55);background:rgba(8,22,46,.3)}
-.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.25);margin-top:22px}
-.facts div{background:rgba(8,20,40,.62);padding:16px 14px;display:grid;gap:4px;min-width:0}
-.facts b{font:700 clamp(1.2rem,2.6vw,1.9rem)/1 var(--f-display)}
-.facts span{font-size:.84rem;opacity:.88}
-@media(max-width:640px){.facts{grid-template-columns:repeat(2,1fr)}}
+.hero{min-height:100svh;display:flex;align-items:flex-end;padding-block:120px clamp(28px,6vh,64px)}
+.hero .wrap{width:100%;display:grid;gap:clamp(20px,3.4vh,34px)}
+.hero h1{font-size:clamp(3.4rem,12.5vw,11rem);line-height:.86;max-width:9ch}
+.hero .row{display:flex;flex-wrap:wrap;gap:28px 56px;align-items:flex-end;justify-content:space-between}
+.hero p.sub{font-size:clamp(1rem,1.5vw,1.2rem);max-width:44ch;color:#D5DCE8}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+.facts{display:flex;flex-wrap:wrap;gap:14px 44px;padding-top:22px;border-top:1px solid var(--line)}
+.facts div{display:grid;gap:4px}
+.facts b{font:500 clamp(1.8rem,3.6vw,2.8rem)/1 var(--f-display)}
+.facts span{font-size:.82rem;color:var(--muted);max-width:22ch}
+.scrollhint{font:500 .7rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;gap:.8em;align-items:center}
+.scrollhint::before{content:"";width:1px;height:34px;background:linear-gradient(var(--glow-a),transparent);animation:drop 2s infinite}
+@keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
-/* фильтры и каталог */
-.filters{display:grid;gap:14px;padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:22px}
+/* секции-панели и «окна» в горы */
+section.panel{background:var(--panel);backdrop-filter:blur(10px);border-block:1px solid var(--line);padding-block:clamp(64px,10vw,130px)}
+.head{display:grid;gap:20px;margin-bottom:clamp(30px,5vw,56px)}
+.win{min-height:86svh;display:grid;place-items:center;text-align:center;padding-block:80px}
+.win .wrap{display:grid;gap:22px;justify-items:center}
+.win p.big{font:500 clamp(2.6rem,9vw,7.5rem)/.92 var(--f-display);letter-spacing:-.02em;max-width:12ch;text-shadow:0 4px 50px rgba(4,9,18,.7)}
+.win p.small{max-width:40ch;color:#DDE3EC;text-shadow:0 1px 16px rgba(4,9,18,.9)}
+
+/* подбор */
+.filters{display:grid;gap:16px;margin-bottom:28px}
 .frow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.frow > span{font:500 .72rem/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);flex:0 0 108px}
-.chip{font:500 .9rem/1 var(--f-body);padding:.6em .85em;border-radius:99px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;min-height:36px}
+.frow > span{font:500 .68rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);flex:0 0 100px}
+.chip{font:400 .88rem/1 var(--f-body);padding:.7em 1em;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;min-height:38px;transition:border-color .2s,background .2s}
 .chip:hover{border-color:var(--ink)}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.found{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;color:var(--muted)}
-.found b{color:var(--ink);font-family:var(--f-mono)}
-.linkbtn{background:none;border:0;color:var(--blue);font:inherit;cursor:pointer;text-decoration:underline;padding:0}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
-.card{display:grid;grid-template-rows:auto 1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;text-align:left;padding:0;color:inherit;font:inherit;cursor:pointer;transition:transform .18s,border-color .18s}
-.card:hover{transform:translateY(-3px);border-color:var(--ink)}
-.card .ph{position:relative;aspect-ratio:400/245;background:var(--blue-soft)}
-.card .ph img{width:100%;height:100%;object-fit:cover;display:block}
-.tag{position:absolute;left:10px;top:10px;font:700 .68rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;background:var(--surface);color:var(--ink);padding:.5em .6em;border-radius:3px}
-.tag.new{left:auto;right:10px;background:var(--accent);color:var(--accent-ink)}
-.card .bd{padding:14px;display:grid;gap:10px;align-content:start;grid-template-rows:auto auto 1fr}
-.meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.84rem;color:var(--muted)}
-.price{align-self:end;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-top:10px;border-top:1px dashed var(--line)}
-.price b{font:700 1.15rem/1 var(--f-mono)}
-.price s{color:var(--muted);font:500 .85rem/1 var(--f-mono)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--night);border-color:var(--ink);font-weight:600}
+.found{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;color:var(--muted);font-size:.9rem}
+.found b{color:var(--ink);font:500 1.6rem/1 var(--f-display)}
+.linkbtn{background:none;border:0;color:var(--ice);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.card{position:relative;display:block;aspect-ratio:4/3;border-radius:14px;overflow:hidden;border:0;padding:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer;background:var(--panel-solid);min-width:0;max-width:100%}
+.card:first-child{grid-column:1/-1;aspect-ratio:21/9}
+@media(max-width:720px){.card,.card:first-child{aspect-ratio:4/5}}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.card:hover img{transform:scale(1.06)}
+.card::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,13,24,.35) 0%,transparent 30%,rgba(6,13,24,.25) 52%,rgba(6,13,24,.94) 100%)}
+.card .in{position:absolute;inset:0;z-index:1;padding:clamp(16px,2.4vw,28px);display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.card .tp{display:flex;justify-content:space-between;gap:8px;font:500 .68rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase}
+.card .tp em{font-style:normal;background:var(--glow);color:#1A0F0A;padding:.45em .7em;border-radius:99px;font-weight:700}
+.card .bt{display:grid;gap:10px}
+.card h3{font-size:clamp(1.5rem,2.6vw,2.3rem);max-width:20ch}
+.card:first-child h3{font-size:clamp(1.7rem,4.2vw,3.6rem)}
+.meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.84rem;color:#D3DAE6}
+.price{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.price b{font:700 1.1rem/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.price s{color:var(--muted);font:500 .84rem/1 var(--f-mono)}
 .price small{color:var(--muted);font-size:.78rem}
+.card .go{position:absolute;right:clamp(16px,2.4vw,28px);bottom:clamp(16px,2.4vw,28px);width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.5);display:grid;place-items:center;font-size:1.1rem;transition:background .25s,color .25s,transform .25s}
+.card:hover .go{background:var(--ink);color:var(--night);transform:rotate(-45deg)}
 .peaks{display:inline-flex;gap:2px;vertical-align:-1px}
-.peaks i{width:9px;height:10px;background:var(--line);clip-path:polygon(50% 0,100% 100%,0 100%)}
-.peaks i.on{background:var(--accent)}
-.empty{padding:28px;border:1px dashed var(--line);border-radius:var(--r);text-align:center;color:var(--muted)}
+.peaks i{width:9px;height:10px;background:rgba(255,255,255,.28);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.peaks i.on{background:var(--glow-a)}
+.empty{padding:40px;border:1px dashed var(--line);border-radius:14px;text-align:center;color:var(--muted);grid-column:1/-1}
+.more{margin-top:28px;text-align:center}
 
-/* календарь сезонов */
-.band{background:var(--surface);border-block:1px solid var(--line)}
-.cal-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--bg)}
-.cal{display:grid;grid-template-columns:minmax(200px,1.5fr) repeat(12,minmax(38px,1fr));min-width:760px;font-size:.84rem}
-.cal > *{padding:7px 4px;border-bottom:1px solid var(--line);min-width:0}
-.cal .mh{font:700 .7rem/1 var(--f-mono);text-transform:uppercase;text-align:center;color:var(--muted);background:var(--surface);border:0;border-bottom:1px solid var(--line);cursor:pointer;padding:12px 2px}
+/* календарь */
+.cal-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:rgba(4,9,18,.5)}
+.cal{display:grid;grid-template-columns:minmax(210px,1.5fr) repeat(12,minmax(40px,1fr));min-width:780px;font-size:.86rem}
+.cal > *{padding:9px 4px;border:0;border-bottom:1px solid var(--line);min-width:0}
+.cal .mh{font:700 .68rem/1 var(--f-mono);text-transform:uppercase;letter-spacing:.08em;text-align:center;color:var(--muted);background:transparent;cursor:pointer;padding:16px 2px}
 .cal .mh:hover{color:var(--ink)}
-.cal .mh.now{color:var(--accent-ink);background:var(--accent)}
-.cal .nm{position:sticky;left:0;background:var(--surface);padding-left:12px;border-right:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;font:inherit;color:var(--ink);cursor:pointer;border-top:0;border-left:0}
-.cal .nm:hover{color:var(--blue)}
+.cal .mh.now{color:#1A0F0A;background:var(--glow)}
+.cal .nm{position:sticky;left:0;background:var(--panel-solid);padding-left:16px;border-right:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.cal .nm:hover{color:var(--ice)}
 .cal .c{display:flex;align-items:center;padding-inline:0}
-.cal .c i{display:block;height:12px;width:100%;background:var(--blue)}
-.cal .c.s i{border-radius:6px 0 0 6px}.cal .c.e i{border-radius:0 6px 6px 0}.cal .c.s.e i{border-radius:6px}
-.cal .c.col-now{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.cal .c i{display:block;height:8px;width:100%;background:linear-gradient(90deg,var(--ice),#6FB6FF)}
+.cal .c.s i{border-radius:4px 0 0 4px}.cal .c.e i{border-radius:0 4px 4px 0}.cal .c.s.e i{border-radius:4px}
+.cal .c.col-now{background:rgba(255,120,90,.13)}
+.cal .c.col-now i{background:var(--glow)}
 .cal .c.q{justify-content:center;color:var(--muted);font-size:.75rem}
-.cal-note{margin-top:12px;font-size:.88rem;color:var(--muted)}
+.cal-note{margin-top:14px;font-size:.86rem;color:var(--muted)}
 
 /* шаги */
-.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:0;counter-reset:s;border-top:2px solid var(--ink)}
-.steps li{list-style:none;padding:18px 16px 0 0;display:grid;gap:8px;align-content:start;position:relative}
-.steps li::before{counter-increment:s;content:"0" counter(s);font:700 .8rem/1 var(--f-mono);color:var(--accent)}
-.steps li::after{content:"";position:absolute;top:-7px;left:0;width:12px;height:12px;background:var(--ink);clip-path:polygon(50% 0,100% 100%,0 100%)}
+ol.steps{margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);counter-reset:s}
+.steps li{list-style:none;padding:26px 20px 0 0;display:grid;gap:10px;align-content:start;border-top:1px solid var(--line);position:relative}
+.steps li::before{counter-increment:s;content:counter(s);font:italic 500 3.4rem/1 var(--f-display);background:var(--glow);-webkit-background-clip:text;background-clip:text;color:transparent}
+.steps li::after{content:"";position:absolute;top:-4px;left:0;width:7px;height:7px;border-radius:50%;background:var(--glow-a)}
 .steps p{font-size:.9rem;color:var(--muted)}
-ol.steps{margin:0;padding:0}
-@media(max-width:860px){.steps{grid-template-columns:1fr;border-top:0;border-left:2px solid var(--ink)}.steps li{padding:0 0 22px 20px}.steps li::after{top:2px;left:-7px;transform:rotate(90deg)}}
-.pay{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:36px}
-.pay div{border-left:3px solid var(--accent);padding-left:14px;display:grid;gap:4px}
-.pay b{font:700 1.5rem/1 var(--f-display)}
-.pay span{font-size:.9rem;color:var(--muted)}
-@media(max-width:700px){.pay{grid-template-columns:1fr}}
+@media(max-width:900px){ol.steps{grid-template-columns:1fr}.steps li{padding:22px 0}}
+.pay{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:64px}
+.pay div{display:grid;gap:8px}
+.pay b{font:500 clamp(2.6rem,5vw,4rem)/1 var(--f-display)}
+.pay span{font-size:.92rem;color:var(--muted);max-width:30ch}
+@media(max-width:720px){.pay{grid-template-columns:1fr}}
 
 /* гиды */
-.guides{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px 18px}
-.guide{display:grid;gap:10px;align-content:start}
-.guide img{aspect-ratio:1;width:100%;object-fit:cover;border-radius:var(--r);filter:saturate(.9);background:var(--blue-soft)}
-.guide small{font:700 .7rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.guides{display:grid;grid-template-columns:repeat(4,1fr);gap:34px 18px}
+@media(max-width:900px){.guides{grid-template-columns:repeat(2,1fr)}}
+.guide{display:grid;gap:10px;align-content:start;min-width:0}
+.guide .im{aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:var(--panel-solid)}
+.guide img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05);transition:filter .6s,transform 1s}
+.guide:hover img{filter:none;transform:scale(1.04)}
+.guide small{font:500 .66rem/1.3 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--glow-a);margin-top:6px}
 .guide p{font-size:.88rem;color:var(--muted)}
-.said{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);display:grid;gap:12px}
+.said{margin-top:56px;padding-top:26px;border-top:1px solid var(--line);display:grid;gap:16px}
 .said ul{margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.said li{list-style:none;font-size:.86rem;border:1px solid var(--line);border-radius:99px;padding:.4em .8em;background:var(--surface)}
-.said li b{font-weight:600}
+.said li{list-style:none;font-size:.84rem;border:1px solid var(--line);border-radius:99px;padding:.5em .95em;color:var(--muted)}
+.said li b{font-weight:500;color:var(--ink)}
 
 /* вопросы */
-.faq{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+.faq{display:grid;grid-template-columns:1fr 1fr;gap:0 48px}
 @media(max-width:800px){.faq{grid-template-columns:1fr}}
 details{border-bottom:1px solid var(--line)}
-summary{cursor:pointer;padding:16px 28px 16px 0;font-weight:600;list-style:none;position:relative}
+summary{cursor:pointer;padding:22px 36px 22px 0;font:500 1.5rem/1.15 var(--f-display);list-style:none;position:relative}
 summary::-webkit-details-marker{display:none}
-summary::after{content:"+";position:absolute;right:4px;top:12px;font:500 1.4rem/1 var(--f-mono);color:var(--accent)}
-details[open] summary::after{content:"−"}
-details p{padding:0 0 16px;color:var(--muted);font-size:.94rem;max-width:60ch}
+summary::after{content:"+";position:absolute;right:4px;top:18px;font:500 1.5rem/1 var(--f-mono);color:var(--glow-a);transition:transform .25s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{padding:0 0 22px;color:var(--muted);font-size:.95rem;max-width:58ch}
 
 /* заявка */
-.summit{background:var(--ink);color:var(--bg)}
-.summit .eyebrow,.summit .lead{color:color-mix(in srgb,var(--bg) 72%,transparent)}
-.book{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:start}
-@media(max-width:900px){.book{grid-template-columns:1fr}}
-form.f{background:var(--surface);color:var(--ink);border-radius:var(--r);padding:22px;display:grid;gap:14px;min-width:0}
-.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.book{display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:start}
+@media(max-width:920px){.book{grid-template-columns:1fr}}
+form.f{display:grid;gap:18px;min-width:0}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:520px){.fg{grid-template-columns:1fr}}
-label.fl{display:grid;gap:6px;font-size:.84rem;font-weight:600;min-width:0}
-label.fl em{font-style:normal;color:var(--accent)}
-input,select,textarea{font:400 1rem/1.3 var(--f-body);padding:.75em .8em;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);width:100%;min-width:0}
-textarea{resize:vertical;min-height:76px}
-input:focus,select:focus,textarea:focus{border-color:var(--blue);outline:0}
-.stepper{display:flex;gap:6px}.stepper button{width:44px;flex:none;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:var(--r);font:700 1.1rem/1 var(--f-mono);cursor:pointer}
+label.fl{display:grid;gap:8px;font:500 .68rem/1.2 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-width:0}
+label.fl em{font-style:normal;color:var(--glow-a)}
+input,select,textarea{font:400 1rem/1.3 var(--f-body);letter-spacing:0;text-transform:none;padding:.95em 1em;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04);color:var(--ink);width:100%;min-width:0}
+select option{background:var(--panel-solid);color:var(--ink)}
+textarea{resize:vertical;min-height:84px}
+input:focus,select:focus,textarea:focus{border-color:var(--ice);outline:0}
+.stepper{display:flex;gap:6px}.stepper button{width:48px;flex:none;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink);border-radius:10px;font:700 1.1rem/1 var(--f-mono);cursor:pointer}
 .stepper input{text-align:center}
-.agree{display:flex;gap:10px;align-items:flex-start;font-size:.84rem;color:var(--muted);font-weight:400}
-.agree input{width:20px;height:20px;flex:none;margin-top:2px}
-.err{color:#C4321A;font-size:.88rem;font-weight:600}
-.done{display:grid;gap:12px;padding:16px;border:1.5px solid var(--ok);border-radius:var(--r)}
-.done h3{color:var(--ok)}
+.agree{display:flex;gap:12px;align-items:flex-start;font-size:.86rem;color:var(--muted)}
+.agree input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--glow-a)}
+.err{color:#FF9C8A;font-size:.9rem;font-weight:500}
+.done{display:grid;gap:14px;padding:20px;border:1px solid var(--ice);border-radius:14px}
 .done .row{display:flex;flex-wrap:wrap;gap:10px}
-
-.ticket{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);background:var(--bg);color:var(--ink);border-radius:var(--r);font-family:var(--f-mono);font-size:.86rem;overflow:hidden}
-.ticket header{padding:16px 18px;background:var(--accent);color:var(--accent-ink);display:flex;justify-content:space-between;gap:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.75rem}
-.ticket .tb{padding:18px;display:grid;gap:12px}
-.ticket h3{font-size:1.05rem}
-.ticket dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px}
-.ticket dt{color:var(--muted)}.ticket dd{margin:0;text-align:right;font-weight:700;min-width:0;overflow-wrap:anywhere}
-.perf{border-top:2px dashed var(--line);margin-inline:-18px;position:relative}
-.perf::before,.perf::after{content:"";position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:var(--ink)}
-.perf::before{left:-9px}.perf::after{right:-9px}
-.ticket .total dd{font-size:1.25rem}
-.ticket .pre dd{color:var(--accent)}
-.ticket small{font:400 .78rem/1.4 var(--f-body);color:var(--muted)}
+.ticket{position:sticky;top:calc(env(safe-area-inset-top,0px) + 92px);background:var(--paper);color:var(--paper-ink);border-radius:14px;font-family:var(--f-mono);font-size:.84rem;overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.8);transform:rotate(1.2deg)}
+.ticket header{padding:16px 20px;background:var(--glow);color:#1A0F0A;display:flex;justify-content:space-between;gap:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.7rem}
+.ticket .tb{padding:22px 20px;display:grid;gap:14px}
+.ticket h3{font-size:1.7rem}
+.ticket dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:9px 14px}
+.ticket dt{color:var(--paper-muted)}.ticket dd{margin:0;text-align:right;font-weight:700;min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.perf{border-top:2px dashed #C9C1B2;margin-inline:-20px;position:relative}
+.perf::before,.perf::after{content:"";position:absolute;top:-11px;width:20px;height:20px;border-radius:50%;background:var(--panel-solid)}
+.perf::before{left:-10px}.perf::after{right:-10px}
+.ticket .total dd{font:600 2rem/1 var(--f-display)}
+.ticket .pre dd{color:#D8421F}
+.ticket small{font:400 .78rem/1.45 var(--f-body);color:var(--paper-muted)}
 
 /* подвал */
-footer{padding-block:40px 56px;font-size:.9rem;color:var(--muted)}
-.fcols{display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:28px}
+footer{background:var(--night);padding-block:56px 64px;font-size:.9rem;color:var(--muted);border-top:1px solid var(--line)}
+.fcols{display:grid;grid-template-columns:1.2fr 1fr 1.3fr;gap:32px}
 @media(max-width:800px){.fcols{grid-template-columns:1fr}}
-.fcols h3{font-size:.8rem;margin-bottom:10px;color:var(--ink)}
-.fcols p,.fcols li{margin:0 0 6px}.fcols ul{margin:0;padding:0;list-style:none}
-.tel{font:700 1.1rem/1.4 var(--f-mono);color:var(--ink);user-select:all}
-.copy{font:500 .75rem/1 var(--f-body);border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:99px;padding:.35em .7em;cursor:pointer;margin-left:6px}
+.fcols h3{font:500 .68rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px;color:var(--ink)}
+.fcols p,.fcols li{margin:0 0 8px}.fcols ul{margin:0;padding:0;list-style:none}
+.tel{font:500 1.7rem/1.3 var(--f-display);color:var(--ink);user-select:all}
+.copy{font:400 .72rem/1 var(--f-body);border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:99px;padding:.4em .8em;cursor:pointer;margin-left:8px;vertical-align:middle}
 
-/* высотомер */
-.rail{position:fixed;right:max(18px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 96px);bottom:calc(env(safe-area-inset-bottom,0px) + 36px);width:2px;background:var(--line);z-index:5;display:none}
-@media(min-width:1340px){.rail{display:block}}
-.rail .st{position:absolute;right:-3px;width:8px;height:2px;background:var(--muted)}
-.rail .st span{position:absolute;right:16px;top:-.55em;white-space:nowrap;font:500 .66rem/1 var(--f-mono);color:var(--muted)}
-.rail .st.pass{background:var(--accent)}.rail .st.pass span{color:var(--ink)}
-.rail .me{position:absolute;right:-6px;width:14px;height:13px;background:var(--accent);clip-path:polygon(50% 0,100% 100%,0 100%);transform:translateY(50%);transition:bottom .12s linear}
-.rail .fill{position:absolute;left:0;bottom:0;width:2px;background:var(--accent);transition:height .12s linear}
+/* высотомер сбоку */
+.rail{position:fixed;right:max(22px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 110px);bottom:calc(env(safe-area-inset-bottom,0px) + 40px);width:1px;background:var(--line);z-index:5;display:none}
+@media(min-width:1400px){.rail{display:block}}
+.rail .st{position:absolute;right:-3px;width:7px;height:1px;background:var(--muted)}
+.rail .st span{position:absolute;right:16px;top:-.5em;white-space:nowrap;font:500 .62rem/1 var(--f-mono);color:var(--muted);opacity:.7}
+.rail .st.pass{background:var(--glow-a)}.rail .st.pass span{color:var(--ink);opacity:1}
+.rail .me{position:absolute;right:-6px;width:13px;height:12px;background:var(--glow-a);clip-path:polygon(50% 0,100% 100%,0 100%);transform:translateY(50%)}
+.rail .fill{position:absolute;left:0;bottom:0;width:1px;background:var(--glow-a)}
 
-/* карточка тура */
-dialog{border:0;padding:0;border-radius:var(--r);background:var(--surface);color:var(--ink);width:min(680px,calc(100vw - 32px));max-height:calc(100dvh - 48px)}
-dialog::backdrop{background:rgba(5,12,24,.7)}
-.dl-img{aspect-ratio:400/200;width:100%;object-fit:cover;display:block;background:var(--blue-soft)}
-.dl-b{padding:20px;display:grid;gap:16px}
-.dl-b h3{font-size:1.25rem;font-weight:700}
-.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
-.specs div{background:var(--surface);padding:10px;display:grid;gap:3px;font-size:.9rem;font-weight:600;min-width:0}
-.specs small{font:500 .66rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+/* окно тура */
+dialog{border:1px solid var(--line);padding:0;border-radius:18px;background:var(--panel-solid);color:var(--ink);width:min(760px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto}
+dialog::backdrop{background:rgba(3,7,14,.8);backdrop-filter:blur(6px)}
+.dl-img{aspect-ratio:16/8;width:100%;object-fit:cover;display:block}
+.dl-b{padding:clamp(20px,4vw,34px);display:grid;gap:20px}
+.dl-b h3{font-size:clamp(1.8rem,4.4vw,2.8rem)}
+.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 14px;padding-block:18px;border-block:1px solid var(--line)}
+.specs div{display:grid;gap:6px;font-size:.95rem;min-width:0}
+.specs small{font:500 .62rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 @media(max-width:480px){.specs{grid-template-columns:repeat(2,1fr)}}
 .dl-b .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.x{position:absolute;right:10px;top:10px;width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);color:var(--ink);font-size:1.3rem;cursor:pointer}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+.x{position:absolute;right:14px;top:14px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(6,13,24,.7);color:var(--ink);font-size:1.4rem;cursor:pointer;z-index:2}
+
+/* появление */
+.rv{opacity:1;transform:none}
+.js .rv{transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+.js .rv.wait{opacity:.001;transform:translateY(34px)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}.js .rv.wait{opacity:1;transform:none}}
 </style>
 
-<header class="top"><div class="wrap">
-  <a class="logo" href="#top">МАГ<span>ТУР</span></a>
+<div class="sky"></div><div class="stars" id="stars"></div><div class="dawn" id="dawn"></div>
+<canvas id="terrain" aria-hidden="true"></canvas><div class="vignette"></div>
+
+<header class="top" id="hdr"><div class="wrap">
+  <a class="logo" href="#top">МАГТУР</a>
   <nav aria-label="Разделы">
     <a href="#tours">Туры</a><a href="#season">Сезоны</a><a href="#how">Бронирование</a><a href="#guides">Гиды</a><a href="#faq">Вопросы</a>
   </nav>
-  <div class="alt-pill" aria-live="off" title="Высота растёт, пока вы листаете страницу"><i>▲</i><span id="altNum">512 м</span><small id="altPlace">Пятигорск</small></div>
+  <div class="alt-pill" title="Высота растёт, пока вы листаете страницу"><i>▲</i><span id="altNum">512 м</span><small id="altPlace">Пятигорск</small></div>
   <a class="btn btn-main" href="#book">Заявка</a>
 </div></header>
 
@@ -235,78 +257,93 @@ dialog::backdrop{background:rgba(5,12,24,.7)}
 <section class="hero" id="top" data-alt="512" data-place="Пятигорск">
   <div class="wrap">
     <p class="eyebrow"><b>●</b> Международная академия горного туризма · с 2013 года</p>
-    <h1>Кавказ, на&nbsp;который <em>возвращаются</em></h1>
-    <p class="sub">Каждый четвёртый турист едет с нами снова. Пешие, конные, экскурсионные и горнолыжные туры по шести регионам: от нарзанных галерей Кисловодска до ледников Эльбруса.</p>
-    <div class="cta">
-      <a class="btn btn-main" href="#tours">Подобрать тур</a>
-      <a class="btn btn-ghost" href="#season">Что идёт в этом месяце</a>
+    <h1>Кавказ, на который <i>возвращаются</i></h1>
+    <div class="row">
+      <p class="sub">Пешие, конные, экскурсионные и горнолыжные туры по шести регионам. Листайте вниз: страница набирает высоту вместе с вами, а на вершине Эльбруса наступит рассвет.</p>
+      <div class="cta">
+        <a class="btn btn-main" href="#tours">Подобрать тур</a>
+        <a class="btn btn-ghost" href="#season">Что идёт в этом месяце</a>
+      </div>
     </div>
     <div class="facts">
-      <div><b>20&nbsp;000+</b><span>туристов прошли маршруты</span></div>
+      <div><b>20 000+</b><span>туристов прошли наши маршруты</span></div>
       <div><b>20+</b><span>гидов в команде</span></div>
       <div><b>от 1</b><span>человека: тур состоится в любом случае</span></div>
       <div><b>100%</b><span>возврат при отмене за 72 часа</span></div>
+      <p class="scrollhint" style="margin-left:auto;align-self:end">Начать подъём</p>
     </div>
   </div>
 </section>
 
-<section id="tours" data-alt="1450" data-place="Архыз">
+<section class="panel" id="tours" data-alt="1450" data-place="Архыз">
   <div class="wrap">
-    <div class="head">
+    <div class="head rv">
       <p class="eyebrow"><b>1450 м</b> Архыз · выбор маршрута</p>
-      <h2>Найдите свой тур за полминуты</h2>
-      <p class="lead">Отметьте, как хотите двигаться и когда свободны. Список ниже перестраивается сразу, без кнопки «Найти».</p>
+      <h2>Найдите <i>свой</i> тур</h2>
+      <p class="lead">Отметьте, как хотите двигаться и когда свободны. Список перестраивается сразу, без кнопки «Найти».</p>
     </div>
-    <div class="filters">
+    <div class="filters rv">
       <div class="frow" id="fType"><span>Формат</span></div>
       <div class="frow" id="fMonth"><span>Месяц</span></div>
       <div class="frow" id="fDiff"><span>Нагрузка</span></div>
       <div class="frow" id="fBudget"><span>Бюджет</span></div>
     </div>
-    <div class="found"><span>Подходит туров: <b id="cnt">19</b></span><button class="linkbtn" id="reset" type="button">Сбросить фильтры</button></div>
+    <div class="found"><span><b id="cnt">19</b> &nbsp;туров подходит</span><button class="linkbtn" id="reset" type="button">Сбросить фильтры</button></div>
     <div class="grid" id="grid"></div>
-    <p style="margin-top:22px;text-align:center"><button class="btn btn-ghost" id="moreBtn" type="button" hidden></button></p>
+    <p class="more"><button class="btn btn-ghost" id="moreBtn" type="button" hidden></button></p>
   </div>
 </section>
 
-<section class="band" id="season" data-alt="1650" data-place="Домбай">
+<div class="win"><div class="wrap">
+  <p class="eyebrow"><b>●</b> 12 лет в горах</p>
+  <p class="big rv">Каждый <i>четвёртый</i> едет снова</p>
+  <p class="small">С 2013 года с нами прошли больше 20 000 человек. Больше 80% говорят, что готовы повторить.</p>
+</div></div>
+
+<section class="panel" id="season" data-alt="1650" data-place="Домбай">
   <div class="wrap">
-    <div class="head">
+    <div class="head rv">
       <p class="eyebrow"><b>1650 м</b> Домбай · сезоны</p>
-      <h2>Весь год на одной странице</h2>
+      <h2>Весь год <i>на одной</i> карте</h2>
       <p class="lead">Полоса показывает месяцы, когда тур проводится. Нажмите на месяц, чтобы оставить в каталоге только его туры, или на название, чтобы открыть тур.</p>
     </div>
-    <div class="cal-scroll"><div class="cal" id="cal"></div></div>
-    <p class="cal-note">Оранжевый столбец — текущий месяц. Период «Кавказского калейдоскопа» уточняйте у менеджера.</p>
+    <div class="cal-scroll rv"><div class="cal" id="cal"></div></div>
+    <p class="cal-note">Подсвеченный столбец — текущий месяц. Период «Кавказского калейдоскопа» уточняйте у менеджера.</p>
   </div>
 </section>
 
-<section id="how" data-alt="3050" data-place="Чегет">
+<section class="panel" id="how" data-alt="3050" data-place="Чегет" style="border-top:0">
   <div class="wrap">
-    <div class="head">
+    <div class="head rv">
       <p class="eyebrow"><b>3050 м</b> Чегет · как всё устроено</p>
-      <h2>От заявки до поездки пять шагов</h2>
+      <h2>Пять шагов <i>до гор</i></h2>
     </div>
-    <ol class="steps">
+    <ol class="steps rv">
       <li><h3>Заявка</h3><p>Вы пишете, какой тур и когда. Менеджер проверяет места и подтверждает.</p></li>
       <li><h3>Анкета</h3><p>Присылаем форму: данные участников для договора, здоровье и питание для гида.</p></li>
       <li><h3>Договор и оплата</h3><p>Ссылка или QR-код на оплату картой, частями через «Долями» или перевод на счёт.</p></li>
       <li><h3>Билеты</h3><p>Дорога до Кавказа в цену не входит. Можем купить билеты за вас, комиссия 500 ₽ за билет.</p></li>
       <li><h3>Встреча</h3><p>Забираем в аэропорту или на вокзале Минеральных Вод, дальше всё по программе.</p></li>
     </ol>
-    <div class="pay">
+    <div class="pay rv">
       <div><b>30%</b><span>предоплата при бронировании, остаток до начала тура</span></div>
-      <div><b>72 часа</b><span>до старта можно перенести тур на любой срок с той же ценой или вернуть 100%</span></div>
+      <div><b>72 часа</b><span>до старта можно перенести тур с той же ценой или вернуть 100%</span></div>
       <div><b>до 10%</b><span>скидка постоянным клиентам; 5% пенсионерам, именинникам, многодетным, детям до 7 лет</span></div>
     </div>
   </div>
 </section>
 
-<section class="band" id="guides" data-alt="3847" data-place="Гара-Баши">
+<div class="win"><div class="wrap">
+  <p class="eyebrow"><b>●</b> Наше правило</p>
+  <p class="big rv">Поедем, даже если вы <i>один</i></p>
+  <p class="small">Тур проводится при любом составе группы. Мы не отменяем поездку из-за того, что не набрались люди.</p>
+</div></div>
+
+<section class="panel" id="guides" data-alt="3847" data-place="Гара-Баши">
   <div class="wrap">
-    <div class="head">
+    <div class="head rv">
       <p class="eyebrow"><b>3847 м</b> Гара-Баши · кто ведёт</p>
-      <h2>Гиды, которые здесь выросли</h2>
+      <h2>Гиды, которые <i>здесь</i> выросли</h2>
       <p class="lead">Маршруты составляют альпинисты и историки, а ведут люди, для которых эти ущелья — дом.</p>
     </div>
     <div class="guides" id="guidesGrid"></div>
@@ -318,11 +355,11 @@ dialog::backdrop{background:rgba(5,12,24,.7)}
   </div>
 </section>
 
-<section id="faq" data-alt="4700" data-place="Скалы Пастухова">
+<section class="panel" id="faq" data-alt="4700" data-place="Скалы Пастухова" style="border-top:0">
   <div class="wrap">
-    <div class="head">
+    <div class="head rv">
       <p class="eyebrow"><b>4700 м</b> Скалы Пастухова · перед выходом</p>
-      <h2>Что спрашивают до поездки</h2>
+      <h2>Что спрашивают <i>до поездки</i></h2>
     </div>
     <div class="faq">
       <div>
@@ -334,19 +371,25 @@ dialog::backdrop{background:rgba(5,12,24,.7)}
       <div>
         <details><summary>Какая погода в горах?</summary><p>Переменчивая. Ночью возможны заморозки, а при ярком солнце дует ледяной ветер. Берите тёплый слой даже летом и крем с защитой не ниже SPF 50.</p></details>
         <details><summary>Что брать на восхождение?</summary><p>Рюкзак на 65–80 литров, кошки, ледоруб, каску и спальник с комфортом до −5 °C. Страховочную систему стандарта EN 12277 выдаём мы. Для экскурсионных, конных и джип-туров списки проще, менеджер пришлёт нужный.</p></details>
-        <details><summary>Что если планы изменятся?</summary><p>Сообщите не позднее чем за 72 часа до начала: перенесём тур на любой срок с сохранением цены или вернём 100% на ту же карту. Позже 72 часов возможен перерасчёт.</p></details>
+        <details><summary>Что если планы изменятся?</summary><p>Сообщите не позднее чем за 72 часа до начала: перенесём тур с сохранением цены или вернём 100% на ту же карту. Позже 72 часов возможен перерасчёт.</p></details>
         <details><summary>Вы официальный туроператор?</summary><p>Да. ООО «МАГТУР» состоит в Едином федеральном реестре туроператоров, номер РТО В031-00161-77/02027409. С каждым туристом заключаем договор.</p></details>
       </div>
     </div>
   </div>
 </section>
 
-<section class="summit" id="book" data-alt="5642" data-place="Эльбрус, вершина">
+<div class="win"><div class="wrap">
+  <p class="eyebrow"><b>●</b> 5642 м · Эльбрус</p>
+  <p class="big rv">Рассвет встречают <i>на вершине</i></p>
+  <p class="small">На Эльбрус выходят ночью, чтобы подняться к восходу. Вы прошли весь путь. Остался один шаг.</p>
+</div></div>
+
+<section class="panel" id="book" data-alt="5642" data-place="Эльбрус, вершина">
   <div class="wrap">
-    <div class="head">
-      <p class="eyebrow"><b>5642 м</b> Эльбрус · вы на вершине</p>
-      <h2>Осталось оставить заявку</h2>
-      <p class="lead">Справа собирается ваш путевой лист с ценой и предоплатой. Заявка ни к чему не обязывает: менеджер сначала проверит места.</p>
+    <div class="head rv">
+      <p class="eyebrow"><b>5642 м</b> Вершина · заявка</p>
+      <h2>Соберите <i>путевой лист</i></h2>
+      <p class="lead">Он заполняется справа, пока вы выбираете. Заявка ни к чему не обязывает: менеджер сначала проверит места.</p>
     </div>
     <div class="book">
       <form class="f" id="form" novalidate>
@@ -382,9 +425,9 @@ dialog::backdrop{background:rgba(5,12,24,.7)}
         <label class="fl">Пожелания<textarea id="bWish" placeholder="Например: едем с ребёнком 8 лет, нужен номер с двумя кроватями"></textarea></label>
         <label class="agree"><input type="checkbox" id="bAgree"><span>Согласен на обработку персональных данных для подбора и бронирования тура</span></label>
         <p class="err" id="err" hidden></p>
-        <button class="btn btn-main" type="submit">Собрать заявку</button>
+        <div><button class="btn btn-main" type="submit">Собрать заявку →</button></div>
         <div class="done" id="done" hidden>
-          <h3>Заявка собрана. Отправьте её менеджеру одним нажатием</h3>
+          <h3>Заявка собрана. Отправьте её менеджеру</h3>
           <textarea id="msg" readonly rows="7"></textarea>
           <div class="row">
             <a class="btn btn-main" id="toWa" target="_blank" rel="noopener">Открыть WhatsApp</a>
@@ -452,7 +495,7 @@ dialog::backdrop{background:rgba(5,12,24,.7)}
     <p class="eyebrow" id="dType"></p>
     <h3 id="dTitle"></h3>
     <div class="specs" id="dSpecs"></div>
-    <div class="price" id="dPrice" style="border:0;padding:0"></div>
+    <div class="price" id="dPrice"></div>
     <div class="row">
       <button class="btn btn-main" id="dBook" type="button">Забронировать этот тур</button>
       <a class="btn btn-ghost" id="dMore" target="_blank" rel="noopener">Программа по дням</a>
@@ -460,35 +503,37 @@ dialog::backdrop{background:rgba(5,12,24,.7)}
   </div>
 </dialog>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+document.documentElement.classList.add('js');
 const M=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 const MF=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 const TYPES={hike:'Пешком',bus:'Экскурсии',horse:'Верхом',ski:'Горные лыжи',rest:'Ретрит и отдых'};
 const DIFF=['','базовая','средняя','продвинутая','сложная'];
 const ALL=[1,2,3,4,5,6,7,8,9,10,11,12], r=(a,b)=>{const o=[];for(let i=a;;i=i%12+1){o.push(i);if(i===b)break}return o};
 const U='https://akademiya-gornih-turov.ru/tour/';
-// id, тип, название, регион, дни, ночи, месяцы, возраст, сложность, комфорт, цена, старая цена, фото, адрес, новинка
 const T=[
- [1,'rest','Wellness-программа «Кавказские минералы»','Пятигорск, Железноводск, Кисловодск',6,5,ALL,6,1,'высокий',530000,0,'t1','caucasian-minerals-wellness-program/'],
- [2,'rest','Digital detox-ретрит «Тишина гор»','Кабардино-Балкария',4,3,ALL,18,2,'простой',480000,0,'t2','digital-detox-silence-of-the-mountains/'],
- [3,'rest','Агротуризм премиум «Жизнь аула»','Карачаево-Черкесия',5,4,ALL,5,2,'простой',210000,0,'t3','agro-tourism-premium-life-aula/'],
- [4,'hike','Хайкинг «Архипелаг скалистых островов»','Кавказские Минеральные Воды',12,11,r(6,10),10,2,'выше среднего',71200,89000,'t4','peshij-trekking-tur-arhipelag-skalistyh-ostrovov-2027/'],
- [5,'hike','Хайкинг «Горный Дагестан: тропой Императора»','Дагестан',8,7,r(5,10),12,4,'средний',79999,99999,'t5','peshij-trekking-tur-gornyj-dagestan-tropoj-imperatora-2027/'],
- [6,'hike','Хайкинг «Домбай и его окрестности»','Карачаево-Черкесия',8,7,r(6,10),6,2,'выше среднего',71111,88888,'t6','peshij-trekking-tur-dombaj-i-ego-okrestnosti-2027/'],
  [7,'hike','Хайкинг «Притяжение Эльбруса»','Кабардино-Балкария',8,7,r(6,10),12,3,'выше среднего',79200,99000,'t7','peshij-trekking-tur-prityazhenie-elbrusa-2027/'],
+ [5,'hike','Хайкинг «Горный Дагестан: тропой Императора»','Дагестан',8,7,r(5,10),12,4,'средний',79999,99999,'t5','peshij-trekking-tur-gornyj-dagestan-tropoj-imperatora-2027/'],
+ [13,'bus','Экскурсионный тур «Курортный роман»','КЧР, КБР и Кавминводы',8,7,r(4,10),6,1,'выше среднего',79200,99000,'t13','ekskursionnyj-tur-kurortnyj-roman-2027/'],
+ [6,'hike','Хайкинг «Домбай и его окрестности»','Карачаево-Черкесия',8,7,r(6,10),6,2,'выше среднего',71111,88888,'t6','peshij-trekking-tur-dombaj-i-ego-okrestnosti-2027/'],
+ [14,'horse','Конный тур «Джигитовка для чайников»','Карачаево-Черкесия',8,7,r(3,11),12,1,'выше среднего',71111,88888,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-2027/'],
+ [11,'bus','Экскурсионный тур «Завораживающий Дагестан»','Дагестан',8,7,r(4,10),8,1,'средний',79200,99000,'t11','ekskursionnyj-tur-zavorazhivayushhij-dagestan-2027/'],
  [8,'hike','Хайкинг «Чарующий Архыз»','Карачаево-Черкесия',8,7,r(6,10),6,3,'выше среднего',79999,99999,'t8','peshij-trekking-tur-charuyushhij-arhyz-2027/'],
  [9,'hike','Пеший тур «Горная Дигория: ледники, водопады и тайны Осетии»','Северная Осетия',8,7,r(6,10),8,1,'выше среднего',79999,99999,'t9','mountain-digory-secrets-of-ossetia-2027/'],
  [10,'bus','Экскурсионный тур «Грани Кавказа»','Осетия, Чечня, Ингушетия',8,7,r(4,10),8,1,'выше среднего',88000,110000,'t10','excursion-tour-edges-of-the-caucasus-2027/'],
- [11,'bus','Экскурсионный тур «Завораживающий Дагестан»','Дагестан',8,7,r(4,10),8,1,'средний',79200,99000,'t11','ekskursionnyj-tur-zavorazhivayushhij-dagestan-2027/'],
+ [4,'hike','Хайкинг «Архипелаг скалистых островов»','Кавказские Минеральные Воды',12,11,r(6,10),10,2,'выше среднего',71200,89000,'t4','peshij-trekking-tur-arhipelag-skalistyh-ostrovov-2027/'],
  [12,'bus','Экскурсионный тур «Звёздный путь»','Карачаево-Черкесия',6,5,r(4,10),8,1,'выше среднего',63200,79000,'t12','excursion-tour-star-trek-2027/'],
- [13,'bus','Экскурсионный тур «Курортный роман»','КЧР, КБР и Кавминводы',8,7,r(4,10),6,1,'выше среднего',79200,99000,'t13','ekskursionnyj-tur-kurortnyj-roman-2027/'],
- [14,'horse','Конный тур «Джигитовка для чайников»','Карачаево-Черкесия',8,7,r(3,11),12,1,'выше среднего',71111,88888,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-2027/'],
  [15,'horse','Конный тур «Кубанское кольцо»','Карачаево-Черкесия',8,7,r(6,9),12,4,'простой',79200,99000,'t15','konnyj-tur-kubanskoe-koltso-2027/'],
  [16,'horse','Конный тур «Зимняя джигитовка для чайников»','Карачаево-Черкесия',6,5,r(11,3),12,1,'выше среднего',45000,0,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-winter-2026-2027/',1],
  [17,'bus','«Кавказский калейдоскоп: от древних тайн до вершин Домбая»','Карачаево-Черкесия',6,5,null,6,1,'выше среднего',49000,0,'t6','caucasian-kaleidoscope-from-ancient-secrets-to-the-peaks-of-dombay/',1],
  [18,'ski','Горнолыжный тур в Домбай на автобусе из Москвы','Карачаево-Черкесия',6,5,r(1,3),6,0,'',64990,0,'t18','gornolyzhnyj-tur-v-dombaj-na-avtobuse/'],
  [19,'ski','Горнолыжный тур в Архыз на автобусе из Москвы','Карачаево-Черкесия',6,5,r(1,3),6,0,'',64990,0,'t19','gornolyzhnyj-tur-v-arhyz-iz-moskvy/'],
+ [3,'rest','Агротуризм премиум «Жизнь аула»','Карачаево-Черкесия',5,4,ALL,5,2,'простой',210000,0,'t3','agro-tourism-premium-life-aula/'],
+ [2,'rest','Digital detox-ретрит «Тишина гор»','Кабардино-Балкария',4,3,ALL,18,2,'простой',480000,0,'t2','digital-detox-silence-of-the-mountains/'],
+ [1,'rest','Wellness-программа «Кавказские минералы»','Пятигорск, Железноводск, Кисловодск',6,5,ALL,6,1,'высокий',530000,0,'t1','caucasian-minerals-wellness-program/'],
 ].map(a=>({id:a[0],type:a[1],name:a[2],reg:a[3],d:a[4],n:a[5],m:a[6],age:a[7],diff:a[8],comfort:a[9],price:a[10],old:a[11],img:'img/'+a[12]+'.jpg',url:U+a[13],isNew:!!a[14]}));
+const short=n=>n.replace(/^(Хайкинг|Экскурсионный тур|Конный тур|Пеший тур|Wellness-программа|Digital detox-ретрит|Агротуризм премиум) /,'').replace(/^«(.*)»$/,'$1');
 
 const $=id=>document.getElementById(id), rub=n=>Math.round(n).toLocaleString('ru-RU')+' ₽';
 const NOW=new Date().getMonth()+1;
@@ -496,37 +541,33 @@ const period=t=>!t.m?'уточняйте':t.m.length===12?'круглый год
 const peaks=d=>d?`<span class="peaks" title="Нагрузка: ${DIFF[d]}">${[1,2,3,4].map(i=>`<i class="${i<=d?'on':''}"></i>`).join('')}</span> ${DIFF[d]}`:'';
 const priceHTML=t=>`<b>${rub(t.price)}</b>${t.old?`<s>${rub(t.old)}</s>`:''}<small>за человека</small>`;
 
-/* ---------- фильтры ---------- */
-const F={type:'',month:0,diff:0,budget:0};
-try{Object.assign(F,JSON.parse(localStorage.getItem('magtur-f')||'{}'))}catch(e){}
+/* ---------- фильтры и каталог ---------- */
+const F={type:'',month:0,diff:0,budget:0};let more=false;
 const groups={
   fType:['type',[['','Любой'],...Object.entries(TYPES)]],
   fMonth:['month',[[0,'Любой'],...M.map((m,i)=>[i+1,m])]],
   fDiff:['diff',[[0,'Любая'],[1,'Базовая'],[2,'Средняя'],[3,'Продвинутая и выше']]],
   fBudget:['budget',[[0,'Любой'],[50000,'до 50 000 ₽'],[80000,'до 80 000 ₽'],[100000,'до 100 000 ₽']]]
 };
-for(const [id,[key,opts]] of Object.entries(groups)){
-  for(const [v,label] of opts){
-    const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=label;b.dataset.k=key;b.dataset.v=v;
-    b.onclick=()=>{F[key]=v;apply()};$(id).append(b);
-  }
+for(const [id,[key,opts]] of Object.entries(groups))for(const [v,label] of opts){
+  const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=label;b.dataset.k=key;b.dataset.v=v;
+  b.onclick=()=>{F[key]=v;apply()};$(id).append(b);
 }
-let more=false;
-const match=t=>(!F.type||t.type===F.type)&&(!F.month||!t.m||t.m.includes(+F.month))&&(!+F.diff||(+F.diff===3?t.diff>=3:t.diff===+F.diff))&&(!+F.budget||t.price<=+F.budget);
+const match=t=>(!F.type||t.type===F.type)&&(!+F.month||!t.m||t.m.includes(+F.month))&&(!+F.diff||(+F.diff===3?t.diff>=3:t.diff===+F.diff))&&(!+F.budget||t.price<=+F.budget);
 function apply(){
   document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(F[b.dataset.k])===b.dataset.v));
-  const list=T.filter(match);$('cnt').textContent=list.length;
-  const shown=more?list:list.slice(0,8);
-  $('moreBtn').hidden=more||list.length<=8;$('moreBtn').textContent='Показать все туры: '+list.length;
+  const list=T.filter(match),shown=more?list:list.slice(0,7);$('cnt').textContent=list.length;
+  $('moreBtn').hidden=more||list.length<=7;$('moreBtn').textContent='Показать все туры: '+list.length;
   $('grid').innerHTML=list.length?shown.map(t=>`
     <button class="card" data-id="${t.id}" type="button">
-      <span class="ph"><img src="${t.img}" alt="" loading="lazy"><span class="tag">${TYPES[t.type]}</span>${t.isNew?'<span class="tag new">Новинка</span>':''}</span>
-      <span class="bd"><h3>${t.name}</h3>
-        <span class="meta"><span>${t.reg}</span></span>
-        <span class="meta"><span>${t.d} дн. / ${t.n} ноч.</span><span>${period(t)}</span><span>${t.age}+</span><span>${peaks(t.diff)}</span></span>
-        <span class="price">${priceHTML(t)}</span></span>
-    </button>`).join(''):'<div class="empty" style="grid-column:1/-1">Под такие условия тура нет. Снимите один из фильтров или напишите нам: соберём маршрут под вас.</div>';
-  try{localStorage.setItem('magtur-f',JSON.stringify(F))}catch(e){}
+      <img src="${t.img}" alt="" loading="lazy">
+      <span class="in">
+        <span class="tp"><span>${TYPES[t.type]} · ${t.reg}</span>${t.isNew?'<em>Новинка</em>':''}</span>
+        <span class="bt"><h3>${short(t.name)}</h3>
+          <span class="meta"><span>${t.d} дней</span><span>${period(t)}</span><span>${t.age}+</span><span>${peaks(t.diff)}</span></span>
+          <span class="price">${priceHTML(t)}</span></span>
+      </span><span class="go" aria-hidden="true">→</span>
+    </button>`).join(''):'<div class="empty">Под такие условия тура нет. Снимите один из фильтров или напишите нам: соберём маршрут под вас.</div>';
 }
 $('moreBtn').onclick=()=>{more=true;apply()};
 $('reset').onclick=()=>{Object.assign(F,{type:'',month:0,diff:0,budget:0});apply()};
@@ -534,21 +575,21 @@ $('grid').onclick=e=>{const c=e.target.closest('.card');if(c)openTour(+c.dataset
 
 /* ---------- календарь ---------- */
 (function(){
-  let h='<div class="nm" style="cursor:default;font:700 .7rem/1 var(--f-mono);text-transform:uppercase;color:var(--muted);padding-block:12px">Тур</div>'+M.map((m,i)=>`<button class="mh${i+1===NOW?' now':''}" data-m="${i+1}" type="button">${m}</button>`).join('');
-  for(const t of T){
-    h+=`<button class="nm" data-id="${t.id}" type="button" title="${t.name.replace(/"/g,'')}">${t.name.replace(/^(Хайкинг|Экскурсионный тур|Конный тур|Пеший тур|Горнолыжный тур|Wellness-программа|Digital detox-ретрит|Агротуризм премиум) /,'')}</button>`;
+  const order=[...T].sort((a,b)=>a.id-b.id);
+  let h='<div class="nm" style="cursor:default;font:700 .68rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-block:16px">Тур</div>'+M.map((m,i)=>`<button class="mh${i+1===NOW?' now':''}" data-m="${i+1}" type="button">${m}</button>`).join('');
+  for(const t of order){
+    h+=`<button class="nm" data-id="${t.id}" type="button">${short(t.name)}</button>`;
     for(let m=1;m<=12;m++){
       const col=m===NOW?' col-now':'';
       if(!t.m){h+=`<div class="c q${col}">${m===6?'?':''}</div>`;continue}
-      const on=t.m.includes(m),prev=t.m.includes(m===1?12:m-1),next=t.m.includes(m===12?1:m+1);
-      const all=t.m.length===12;
-      h+=`<div class="c${col}${on&&(!prev||(all&&m===1)||m===1)?' s':''}${on&&(!next||m===12)?' e':''}">${on?'<i></i>':''}</div>`;
+      const on=t.m.includes(m),prev=m>1&&t.m.includes(m-1),next=m<12&&t.m.includes(m+1);
+      h+=`<div class="c${col}${on&&!prev?' s':''}${on&&!next?' e':''}">${on?'<i></i>':''}</div>`;
     }
   }
   $('cal').innerHTML=h;
   $('cal').onclick=e=>{
     const m=e.target.closest('.mh'),n=e.target.closest('.nm[data-id]');
-    if(m){F.month=+m.dataset.m;apply();$('tours').scrollIntoView()}
+    if(m){F.month=+m.dataset.m;more=true;apply();$('tours').scrollIntoView()}
     if(n)openTour(+n.dataset.id);
   };
 })();
@@ -568,12 +609,12 @@ $('dClose').onclick=()=>$('dlg').close();
 $('dlg').onclick=e=>{if(e.target===$('dlg'))$('dlg').close()};
 $('dBook').onclick=()=>{$('bTour').value=cur.id;fillMonths();ticket();$('dlg').close();$('book').scrollIntoView()};
 
-/* ---------- заявка и путевой лист ---------- */
+/* ---------- заявка ---------- */
 $('bTour').innerHTML=T.map(t=>`<option value="${t.id}">${t.name} · ${rub(t.price)}</option>`).join('');
 function fillMonths(){
   const t=T.find(x=>x.id==$('bTour').value),ms=t.m||ALL,keep=$('bMonth').value;
   $('bMonth').innerHTML='<option value="">Пока не знаю</option>'+ms.map(m=>`<option value="${m}">${MF[m-1]}</option>`).join('');
-  if(ms.includes(+keep))$('bMonth').value=keep;else if(F.month&&ms.includes(+F.month))$('bMonth').value=F.month;
+  if(ms.includes(+keep))$('bMonth').value=keep;else if(+F.month&&ms.includes(+F.month))$('bMonth').value=F.month;
 }
 function calc(){
   const t=T.find(x=>x.id==$('bTour').value),n=Math.min(30,Math.max(1,+$('bPeople').value||1)),d=+$('bDisc').value;
@@ -581,7 +622,7 @@ function calc(){
 }
 function ticket(){
   const {t,n,d,total,pre}=calc();
-  $('tNo').textContent='МТ-'+String(t.id).padStart(2,'0');$('tTitle').textContent=t.name;$('tReg').textContent=t.reg;
+  $('tNo').textContent='МТ-'+String(t.id).padStart(2,'0');$('tTitle').textContent=short(t.name);$('tReg').textContent=t.reg;
   $('tDur').textContent=`${t.d} дн. / ${t.n} ноч.`;$('tWhen').textContent=$('bMonth').value?MF[$('bMonth').value-1]:period(t);
   $('tPpl').textContent=n+' чел.';$('tPer').textContent=rub(t.price);$('tDisc').textContent=d?'−'+d+'%':'нет';
   $('tTotal').textContent=rub(total);$('tPre').textContent=rub(pre);$('tRest').textContent=rub(total-pre);
@@ -618,30 +659,95 @@ $('guidesGrid').innerHTML=[
  ['g_hub','Абдуррахман Хубиев','Гид, инструктор','В команде с основания. Горный туризм и горные лыжи, поднимался на Эльбрус.'],
  ['g_chek','Эдуард Чеккуев','Гид-экскурсовод','Историк. С 2006 года участвует в археологических раскопках.'],
  ['g_mag','Абдула Магомедов','Гид по Дагестану','Водит группы по Дагестану с 2016 года.'],
- ['g_ilis','Абдула Илистубегов','Гид по Дагестану','Знает горные аулы и дороги, которых нет на картах.']
-].map(g=>`<div class="guide"><img src="img/${g[0]}.jpg" alt="${g[1]}" loading="lazy"><small>${g[2]}</small><h3>${g[1]}</h3><p>${g[3]}</p></div>`).join('');
+ ['g_ilis','Абдула Илистубегов','Гид по Дагестану','Ведёт группы по горному Дагестану.']
+].map(g=>`<div class="guide rv"><div class="im"><img src="img/${g[0]}.jpg" alt="${g[1]}" loading="lazy"></div><small>${g[2]}</small><h3>${g[1]}</h3><p>${g[3]}</p></div>`).join('');
 $('said').innerHTML=[['Софья К.','«Курортный роман»','Рамазан'],['Екатерина У.','«Домбай и его окрестности»','Азнаур и Мурадин'],['Иван','«Путешествие в страну гор»','Магомед'],['Михаил','«Выходные в седле»','Казбек'],['Галина','«Приключения в стране гор»','Ахмед'],['Наталья','«Калейдоскоп времён»','Сеит'],['Елена','«Курортный роман»','Эдуард'],['Сергей','«Горнолыжка для чайников»','Абдуррахман']]
  .map(s=>`<li><b>${s[0]}</b> · ${s[1]} · гид ${s[2]}</li>`).join('');
 
+/* ---------- появление блоков ---------- */
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.remove('wait');io.unobserve(e.target)}}),{rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.rv').forEach(el=>{if(el.getBoundingClientRect().top>innerHeight){el.classList.add('wait');io.observe(el)}});
+}
+
 /* ---------- высотомер ---------- */
 const stations=[...document.querySelectorAll('[data-alt]')].map(el=>({el,alt:+el.dataset.alt,place:el.dataset.place}));
-const LO=512,HI=5642,pct=a=>(a-LO)/(HI-LO)*100;
+const LO=512,HI=5642,pct=a=>(a-LO)/(HI-LO)*100;let climb=0;
 stations.forEach(s=>{const d=document.createElement('div');d.className='st';d.style.bottom=pct(s.alt)+'%';d.innerHTML=`<span>${s.place.split(',')[0]} ${s.alt}</span>`;$('rail').append(d);s.tick=d});
 function altitude(){
-  const y=scrollY+innerHeight*.45,tops=stations.map(s=>s.el.getBoundingClientRect().top+scrollY);
+  const y=scrollY+innerHeight*.5*Math.min(1,scrollY/(innerHeight*.5)),tops=stations.map(s=>s.el.getBoundingClientRect().top+scrollY);
   let alt=LO,place=stations[0].place;
-  for(let i=0;i<stations.length;i++){
-    if(y>=tops[i]){place=stations[i].place;
-      if(i===stations.length-1)alt=HI;
-      else alt=stations[i].alt+(stations[i+1].alt-stations[i].alt)*Math.min(1,(y-tops[i])/(tops[i+1]-tops[i]));
-    }
-  }
-  alt=Math.round(alt);
+  for(let i=0;i<stations.length;i++)if(y>=tops[i]){place=stations[i].place;
+    alt=i===stations.length-1?HI:stations[i].alt+(stations[i+1].alt-stations[i].alt)*Math.min(1,(y-tops[i])/(tops[i+1]-tops[i]));}
+  alt=Math.round(alt);climb=(alt-LO)/(HI-LO);
   $('altNum').textContent=alt.toLocaleString('ru-RU')+' м';$('altPlace').textContent=place;
   $('railMe').style.bottom=pct(alt)+'%';$('railFill').style.height=pct(alt)+'%';
   stations.forEach(s=>s.tick.classList.toggle('pass',alt>=s.alt));
+  $('hdr').classList.toggle('solid',scrollY>40);
+  const dawn=Math.min(1,Math.max(0,(climb-.72)/.28));
+  $('dawn').style.opacity=dawn;$('stars').style.opacity=.8*(1-dawn);
+  if(window.terrainTick)terrainTick();
 }
 addEventListener('scroll',altitude,{passive:true});addEventListener('resize',altitude);
+
+/* ---------- живой рельеф ---------- */
+(function(){
+  if(!window.THREE)return;
+  let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('terrain'),alpha:true,antialias:true,powerPreference:'high-performance'})}catch(e){return}
+  const still=matchMedia('(prefers-reduced-motion:reduce)').matches, phone=innerWidth<700;
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,phone?1.25:1.6));
+  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(52,1,.1,400);
+  const geo=new THREE.PlaneGeometry(300,230,phone?150:260,phone?130:210);geo.rotateX(-Math.PI/2);geo.translate(0,0,-80);
+  const uni={uT:{value:0},uDawn:{value:0}};
+  const mat=new THREE.ShaderMaterial({uniforms:uni,transparent:true,extensions:{derivatives:true},
+   vertexShader:`
+    uniform float uT;varying float vH;varying vec3 vN;varying float vD;
+    float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+    float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+      return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
+    float H(vec2 w){vec2 p=w*.022;float a=1.,s=0.,h=0.;
+      for(int i=0;i<6;i++){float n=1.-abs(noise(p)*2.-1.);h+=n*n*a;s+=a;a*=.5;p=p*2.07+vec2(13.1,7.7);}
+      h=pow(h/s,1.7)*1.9;
+      float cor=.07+.93*smoothstep(7.,62.,abs(w.x+sin(w.y*.021)*11.));
+      return h*cor;}
+    void main(){vec3 p=position;vec2 w=vec2(p.x,p.z-uT);
+      float h=H(w),e=.55,hx=H(w+vec2(e,0.)),hz=H(w+vec2(0.,e)),S=44.;
+      vN=normalize(vec3((h-hx)*S,e,(h-hz)*S));vH=h;p.y=h*S;
+      vec4 mv=modelViewMatrix*vec4(p,1.);vD=-mv.z;gl_Position=projectionMatrix*mv;}`,
+   fragmentShader:`
+    uniform float uDawn;varying float vH;varying vec3 vN;varying float vD;
+    void main(){vec3 n=normalize(vN);
+      vec3 low=mix(vec3(.02,.05,.10),vec3(.10,.08,.17),uDawn);
+      vec3 rock=mix(vec3(.07,.14,.25),vec3(.30,.20,.30),uDawn);
+      vec3 snow=mix(vec3(.62,.76,.95),vec3(1.,.72,.60),uDawn);
+      vec3 sun=normalize(mix(vec3(-.5,.55,.5),vec3(.75,.3,-.5),uDawn));
+      float lit=clamp(dot(n,sun),0.,1.);
+      float sn=smoothstep(.34,.56,vH+(n.y-.75)*.25);
+      vec3 col=mix(low,rock,smoothstep(0.,.4,vH));col=mix(col,snow,sn);
+      col*=.32+.95*lit;
+      col+=snow*pow(lit,6.)*sn*.35*uDawn;
+      float c=vH*26.,ln=1.-smoothstep(0.,1.3,abs(fract(c-.5)-.5)/fwidth(c));
+      col+=ln*mix(vec3(.35,.72,1.),vec3(1.,.62,.42),uDawn)*.38*(1.-sn*.75);
+      float fog=smoothstep(55.,190.,vD);
+      gl_FragColor=vec4(col,(1.-fog));}`});
+  scene.add(new THREE.Mesh(geo,mat));
+  function size(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+  size();addEventListener('resize',size);
+  let t0=performance.now(),fly=0,cl=0,dw=0,vis=true;
+  function frame(now){
+    const dt=Math.min(.05,(now-t0)/1000);t0=now;
+    if(!still)fly+=dt*2.2;
+    cl+=(climb-cl)*.08;const dT=Math.min(1,Math.max(0,(climb-.72)/.28));dw+=(dT-dw)*.08;
+    uni.uT.value=fly+scrollY*.035;uni.uDawn.value=dw;
+    cam.position.set(Math.sin(now*.00012)*2.5,13+cl*32,34);
+    cam.lookAt(Math.sin(now*.00009)*4,11+cl*16,-70);
+    renderer.render(scene,cam);
+    if(vis&&!still)requestAnimationFrame(frame);
+  }
+  window.terrainTick=()=>{if(still)frame(performance.now())};
+  document.addEventListener('visibilitychange',()=>{vis=!document.hidden;if(vis&&!still){t0=performance.now();requestAnimationFrame(frame)}});
+  requestAnimationFrame(frame);
+})();
 
 apply();fillMonths();ticket();altitude();
 </script>
