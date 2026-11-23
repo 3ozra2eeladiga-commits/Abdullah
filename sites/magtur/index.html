@@ -61,7 +61,9 @@ header.top.solid{background:rgba(255,255,255,.86);backdrop-filter:blur(16px);box
 
 /* первый экран: разрез «стекло | фото» */
 .hero{position:relative;height:100vh;height:100svh;min-height:620px;overflow:hidden;color:#fff;background:#0A0B2E;--seam:44vw;touch-action:pan-y}
-.slides{position:absolute;inset:0}
+.slides{position:absolute;inset:0;z-index:1}
+.clouds{position:absolute;inset:0;z-index:2;width:100%;height:100%;display:block;pointer-events:none;opacity:0;transition:opacity 2s}
+.clouds.on{opacity:1}
 .sl{position:absolute;inset:0;z-index:1;clip-path:polygon(0 100%,0 96%,9% 86%,17% 92%,26% 78%,34% 88%,43% 70%,51% 84%,60% 76%,68% 90%,77% 74%,86% 87%,93% 80%,100% 90%,100% 100%)}
 .sl.was{z-index:2;clip-path:polygon(0 100%,0 0,9% 0,17% 0,26% 0,34% 0,43% 0,51% 0,60% 0,68% 0,77% 0,86% 0,93% 0,100% 0,100% 100%)}
 .sl.on{z-index:3;clip-path:polygon(0 100%,0 0,9% 0,17% 0,26% 0,34% 0,43% 0,51% 0,60% 0,68% 0,77% 0,86% 0,93% 0,100% 0,100% 100%);transition:clip-path 1.5s cubic-bezier(.7,0,.2,1)}
@@ -197,6 +199,29 @@ section.panel{padding-block:clamp(28px,4vw,48px);padding-left:var(--gut);padding
 .port-cap p{font:500 clamp(1.6rem,3.6vw,3rem)/1.05 var(--f-display);max-width:22ch;text-shadow:0 2px 30px rgba(0,0,0,.4)}
 .port-cap p + p{font:400 1rem/1.55 var(--f-body);max-width:46ch;opacity:.92}
 
+/* КАВКАЗ — тонкие кадры с буквами */
+.word-sec{padding-block:clamp(28px,4vw,48px);padding-left:var(--gut);padding-right:var(--gutr)}
+.word-sheet{max-width:var(--max);margin:0 auto;background:#0C0E2A;color:#fff;border-radius:clamp(22px,3vw,36px);padding:clamp(36px,6vw,90px) clamp(16px,4vw,64px);overflow:hidden;box-shadow:0 40px 100px -40px rgba(10,10,50,.7);text-align:center}
+.word-sheet .eyebrow{justify-content:center;color:rgba(255,255,255,.6)}
+.word-sheet h2{font-size:clamp(3.4rem,11vw,9rem);margin-top:14px;letter-spacing:-.02em}
+.word-sheet .lead{margin:16px auto 0;color:rgba(255,255,255,.7)}
+.strips{display:flex;justify-content:center;gap:clamp(8px,2.2vw,30px);margin-top:clamp(36px,6vw,70px);height:clamp(260px,46vw,460px)}
+.strip{flex:0 1 150px;min-width:0;display:grid;grid-template-rows:1fr auto;gap:14px;background:none;border:0;padding:0;color:#fff;cursor:pointer;font:inherit;transition:flex-basis .7s cubic-bezier(.2,.8,.2,1),flex-grow .7s cubic-bezier(.2,.8,.2,1)}
+.strip .ph{position:relative;overflow:hidden;border-radius:4px;clip-path:inset(0 0 0 0);transition:clip-path 1.2s cubic-bezier(.7,0,.2,1) var(--d,0ms),transform 1.2s cubic-bezier(.2,.8,.2,1) var(--d,0ms)}
+.strip img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.4s cubic-bezier(.2,.8,.2,1) var(--d,0ms)}
+.strip .cap{position:absolute;left:0;right:0;bottom:0;padding:16px 14px;text-align:left;font:500 .9rem/1.25 var(--f-body);background:linear-gradient(transparent,rgba(5,6,25,.85));opacity:0;transform:translateY(10px);transition:opacity .4s,transform .4s}
+.strip .lt{font:500 clamp(1.6rem,4vw,3.2rem)/1 var(--f-display);transition:opacity .8s calc(var(--d,0ms) + 500ms),transform .8s calc(var(--d,0ms) + 500ms),color .3s}
+.strips.wait .ph{clip-path:inset(100% 0 0 0);transform:translateY(60px)}
+.strips.wait img{transform:scale(1.4)}
+.strips.wait .lt{opacity:0;transform:translateY(-20px)}
+@media(hover:hover){
+  .strips:hover .strip{flex-basis:110px}
+  .strip:hover{flex:1 0 360px!important}
+  .strip:hover .cap{opacity:1;transform:none}
+  .strip:hover .lt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+}
+.strip:focus-visible .cap{opacity:1;transform:none}
+
 /* календарь */
 .cal-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:20px;background:var(--solid)}
 .cal{display:grid;grid-template-columns:minmax(210px,1.5fr) repeat(12,minmax(40px,1fr));min-width:780px;font-size:.88rem}
@@ -284,7 +309,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--a3);background:var(--
 .ticket:hover{transform:rotate(0)}
 .ticket header{padding:16px 22px;background:var(--grad);color:#fff;display:flex;justify-content:space-between;gap:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.7rem}
 .ticket .tb{padding:22px;display:grid;gap:14px}
-.ticket h3{font-size:1.8rem}
+.ticket h3{font-size:1.8rem;transform-origin:left}
 .ticket dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:9px 14px}
 .ticket dt{color:var(--muted)}.ticket dd{margin:0;text-align:right;font-weight:700;min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .perf{border-top:2px dashed #D9D3C4;margin-inline:-22px;position:relative}
@@ -352,6 +377,7 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
 
 <section class="hero" id="top" data-alt="512" data-place="Пятигорск" aria-roledescription="карусель" aria-label="Направления МАГТУР">
   <div class="slides" id="slides"></div>
+  <canvas class="clouds" id="clouds" aria-hidden="true"></canvas>
   <div class="glass" aria-hidden="true"></div>
   <div class="word" id="word" aria-hidden="true"></div>
   <div class="hero-in">
@@ -386,7 +412,6 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
       <div class="frow" id="fReg"><span>Регион</span></div>
       <div class="frow" id="fMonth"><span>Месяц</span></div>
       <div class="frow" id="fDiff"><span>Нагрузка</span></div>
-      <div class="frow" id="fBudget"><span>Бюджет</span></div>
     </div>
     <div class="found"><span><b id="cnt">19</b> &nbsp;<span id="cntWord">туров подходит</span></span><button class="linkbtn" id="reset" type="button">Сбросить фильтры</button></div>
     <div class="grid" id="grid"></div>
@@ -403,6 +428,15 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
       <p>В ясную погоду его видно прямо из Пятигорска, где начинаются наши туры. В хайкинге «Притяжение Эльбруса» вы подойдёте к нему вплотную.</p>
       <button class="btn btn-main" type="button" data-open="7">Смотреть тур</button>
     </div>
+  </div>
+</section>
+
+<section class="word-sec" aria-label="Кавказ в шести кадрах">
+  <div class="word-sheet">
+    <p class="eyebrow">● шесть кадров · шесть туров</p>
+    <h2 data-r="words">Кавказ.</h2>
+    <p class="lead">Каждый кадр — отдельный тур. Нажмите, чтобы открыть его.</p>
+    <div class="strips" id="strips"></div>
   </div>
 </section>
 
@@ -440,7 +474,7 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
       <li data-r="up" style="--d:0ms"><h3>Заявка</h3><p>Вы пишете, какой тур и когда. Менеджер проверяет места и подтверждает.</p></li>
       <li data-r="up" style="--d:120ms"><h3>Анкета</h3><p>Присылаем форму: данные участников для договора, здоровье и питание для гида.</p></li>
       <li data-r="up" style="--d:240ms"><h3>Договор и оплата</h3><p>Ссылка или QR-код на оплату картой, частями через «Долями» или перевод на счёт.</p></li>
-      <li data-r="up" style="--d:360ms"><h3>Билеты</h3><p>Дорога до Кавказа в цену не входит. Можем купить билеты за вас, комиссия 500 ₽ за билет.</p></li>
+      <li data-r="up" style="--d:360ms"><h3>Билеты</h3><p>Дорога до Кавказа в цену не входит. Можем купить билеты за вас за небольшую комиссию.</p></li>
       <li data-r="up" style="--d:480ms"><h3>Встреча</h3><p>Забираем в аэропорту или на вокзале Минеральных Вод, дальше всё по программе.</p></li>
     </ol>
     <div class="pay">
@@ -518,16 +552,6 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
             <span class="stepper"><button type="button" id="minus" aria-label="Меньше">−</button><input id="bPeople" type="number" min="1" max="30" value="2" inputmode="numeric"><button type="button" id="plus" aria-label="Больше">+</button></span>
           </label>
         </div>
-        <label class="fl">Скидка (одна, не суммируются)
-          <select id="bDisc">
-            <option value="0">Без скидки</option>
-            <option value="10">Постоянный клиент, 10%</option>
-            <option value="5">Пенсионер, 5%</option>
-            <option value="5">День рождения ±14 дней, 5%</option>
-            <option value="5">Многодетная семья, 5%</option>
-            <option value="5">Участник локальных конфликтов или семья, 5%</option>
-          </select>
-        </label>
         <div class="fg">
           <label class="fl"><span>Ваше имя <em>*</em></span><input id="bName" autocomplete="name" required></label>
           <label class="fl"><span>Телефон <em>*</em></span><input id="bPhone" type="tel" autocomplete="tel" placeholder="+7 900 000-00-00" required></label>
@@ -564,16 +588,11 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
             <dt>Длительность</dt><dd id="tDur">—</dd>
             <dt>Заезд</dt><dd id="tWhen">—</dd>
             <dt>Группа</dt><dd id="tPpl">—</dd>
-            <dt>Цена за человека</dt><dd id="tPer">—</dd>
-            <dt>Скидка</dt><dd id="tDisc">—</dd>
+            <dt>Возраст</dt><dd id="tAge">—</dd>
+            <dt>Нагрузка</dt><dd id="tDiff">—</dd>
           </dl>
           <div class="perf"></div>
-          <dl>
-            <div style="display:contents" class="total"><dt>Итого</dt><dd id="tTotal">—</dd></div>
-            <div style="display:contents" class="pre"><dt>Предоплата 30%</dt><dd id="tPre">—</dd></div>
-            <dt>Остаток до тура</dt><dd id="tRest">—</dd>
-          </dl>
-          <small>Расчёт предварительный. Точную сумму и наличие мест подтвердит менеджер.</small>
+          <small>Стоимость, свободные места и программу по дням пришлёт менеджер после заявки.</small>
         </div>
       </aside>
     </div>
@@ -613,7 +632,6 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
     <p class="eyebrow" id="dType"></p>
     <h3 id="dTitle"></h3>
     <div class="specs" id="dSpecs"></div>
-    <div class="price" id="dPrice"></div>
     <div class="row">
       <button class="btn btn-main" id="dBook" type="button">Забронировать этот тур</button>
       <a class="btn btn-ghost" id="dMore" target="_blank" rel="noopener">Программа по дням</a>
@@ -660,7 +678,6 @@ const $=id=>document.getElementById(id), rub=n=>Math.round(n).toLocaleString('ru
 const NOW=new Date().getMonth()+1;
 const period=t=>!t.m?'уточняйте':t.m.length===12?'круглый год':M[t.m[0]-1]+'–'+M[t.m[t.m.length-1]-1];
 const peaks=d=>d?`<span class="peaks" title="Нагрузка: ${DIFF[d]}">${[1,2,3,4].map(i=>`<i class="${i<=d?'on':''}"></i>`).join('')}</span> ${DIFF[d]}`:'';
-const priceHTML=t=>`<b>${rub(t.price)}</b>${t.old?`<s>${rub(t.old)}</s>`:''}<small>за человека</small>`;
 
 /* ---------- появление: слова, блоки, счётчики ---------- */
 function split(el){
@@ -694,14 +711,13 @@ const groups={
   fType:['type',[['','Любой'],...Object.entries(TYPES)]],
   fReg:['reg',[['','Любой'],...Object.entries(REGSHORT)]],
   fMonth:['month',[[0,'Любой'],...M.map((m,i)=>[i+1,m])]],
-  fDiff:['diff',[[0,'Любая'],[1,'Базовая'],[2,'Средняя'],[3,'Продвинутая и выше']]],
-  fBudget:['budget',[[0,'Любой'],[50000,'до 50 000 ₽'],[80000,'до 80 000 ₽'],[100000,'до 100 000 ₽']]]
+  fDiff:['diff',[[0,'Любая'],[1,'Базовая'],[2,'Средняя'],[3,'Продвинутая и выше']]]
 };
 for(const [id,[key,opts]] of Object.entries(groups))for(const [v,label] of opts){
   const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=label;b.dataset.k=key;b.dataset.v=v;
   b.onclick=()=>{F[key]=v;apply()};$(id).append(b);
 }
-const match=t=>(!F.type||t.type===F.type)&&(!F.reg||t.rg.includes(F.reg))&&(!+F.month||!t.m||t.m.includes(+F.month))&&(!+F.diff||(+F.diff===3?t.diff>=3:t.diff===+F.diff))&&(!+F.budget||t.price<=+F.budget);
+const match=t=>(!F.type||t.type===F.type)&&(!F.reg||t.rg.includes(F.reg))&&(!+F.month||!t.m||t.m.includes(+F.month))&&(!+F.diff||(+F.diff===3?t.diff>=3:t.diff===+F.diff));
 function apply(){
   document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(F[b.dataset.k])===b.dataset.v));
   const list=T.filter(match),shown=more?list:list.slice(0,7);
@@ -713,8 +729,7 @@ function apply(){
       <span class="in">
         <span class="tp"><span>${TYPES[t.type]} · ${t.reg}</span>${t.isNew?'<em>Новинка</em>':''}</span>
         <span class="bt"><h3>${short(t.name)}</h3>
-          <span class="meta"><span>${t.d} дней</span><span>${period(t)}</span><span>${t.age}+</span><span>${peaks(t.diff)}</span></span>
-          <span class="price">${priceHTML(t)}</span></span>
+          <span class="meta"><span>${t.d} дней</span><span>${period(t)}</span><span>${t.age}+</span><span>${peaks(t.diff)}</span></span></span>
       </span><span class="gl"></span><span class="go" aria-hidden="true">→</span>
     </button>`).join(''):'<div class="empty">Под такие условия тура нет. Снимите один из фильтров или напишите нам: соберём маршрут под вас.</div>';
   $('grid').querySelectorAll('.card').forEach(arm);
@@ -825,6 +840,11 @@ $('profile').addEventListener('keydown',e=>{const g=e.target.closest('.stop');if
 $('sTxt').textContent=SLIDES[0].txt;setWord(SLIDES[0].word,true);drawProfile();restart();
 if(document.fonts)document.fonts.ready.then(layoutWord);
 
+/* ---------- КАВКАЗ ---------- */
+$('strips').innerHTML=[['К',5],['А',8],['В',9],['К',14],['А',11],['З',18]].map(([l,id],i)=>{const t=T.find(x=>x.id===id);
+  return`<button class="strip" type="button" data-open="${id}" style="--d:${i*130}ms" aria-label="${t.name}"><span class="ph"><img src="${t.img}" alt="" loading="lazy"><span class="cap">${short(t.name)}<br><small style="opacity:.7">${t.reg}</small></span></span><span class="lt">${l}</span></button>`}).join('');
+arm($('strips'));
+
 /* ---------- календарь ---------- */
 (function(){
   const order=[...T].sort((a,b)=>a.id-b.id);
@@ -853,34 +873,32 @@ function openTour(id){
   $('dImg').src=t.img;$('dType').innerHTML=`<b>●</b> ${TYPES[t.type]} · ${t.reg}`;$('dTitle').textContent=t.name;
   const sp=[['Длительность',`${t.d} дней / ${t.n} ночей`],['Сезон',period(t)],['Возраст',`от ${t.age} лет`]];
   if(t.diff)sp.push(['Нагрузка',peaks(t.diff)]);if(t.comfort)sp.push(['Комфорт',t.comfort]);
-  sp.push(['Предоплата',rub(t.price*.3)]);
   $('dSpecs').innerHTML=sp.map(([a,b])=>`<div><small>${a}</small><span>${b}</span></div>`).join('');
-  $('dPrice').innerHTML=priceHTML(t);$('dMore').href=t.url;$('dlg').showModal();
+  $('dMore').href=t.url;$('dlg').showModal();
 }
 $('dClose').onclick=()=>$('dlg').close();
 $('dlg').onclick=e=>{if(e.target===$('dlg'))$('dlg').close()};
 $('dBook').onclick=()=>{$('bTour').value=cur.id;fillMonths();ticket();$('dlg').close();$('book').scrollIntoView()};
 
 /* ---------- заявка ---------- */
-$('bTour').innerHTML=T.map(t=>`<option value="${t.id}">${t.name} · ${rub(t.price)}</option>`).join('');
+$('bTour').innerHTML=T.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
 function fillMonths(){
   const t=T.find(x=>x.id==$('bTour').value),ms=t.m||ALL,keep=$('bMonth').value;
   $('bMonth').innerHTML='<option value="">Пока не знаю</option>'+ms.map(m=>`<option value="${m}">${MF[m-1]}</option>`).join('');
   if(ms.includes(+keep))$('bMonth').value=keep;else if(+F.month&&ms.includes(+F.month))$('bMonth').value=F.month;
 }
 function calc(){
-  const t=T.find(x=>x.id==$('bTour').value),n=Math.min(30,Math.max(1,+$('bPeople').value||1)),d=+$('bDisc').value;
-  const total=t.price*n*(1-d/100);return{t,n,d,total,pre:total*.3};
+  const t=T.find(x=>x.id==$('bTour').value),n=Math.min(30,Math.max(1,+$('bPeople').value||1));return{t,n};
 }
 function ticket(){
-  const {t,n,d,total,pre}=calc();
-  $('tNo').textContent='МТ-'+String(t.id).padStart(2,'0');$('tTitle').textContent=short(t.name);$('tReg').textContent=t.reg;
-  $('tDur').textContent=`${t.d} дн. / ${t.n} ноч.`;$('tWhen').textContent=$('bMonth').value?MF[$('bMonth').value-1]:period(t);
-  $('tPpl').textContent=n+' чел.';$('tPer').textContent=rub(t.price);$('tDisc').textContent=d?'−'+d+'%':'нет';
-  const tt=$('tTotal');if(tt.textContent!==rub(total)){tt.textContent=rub(total);tt.classList.remove('bump');void tt.offsetWidth;tt.classList.add('bump')}
-  $('tPre').textContent=rub(pre);$('tRest').textContent=rub(total-pre);
+  const {t,n}=calc(),h=$('tTitle');
+  $('tNo').textContent='МТ-'+String(t.id).padStart(2,'0');
+  if(h.textContent!==short(t.name)){h.textContent=short(t.name);h.classList.remove('bump');void h.offsetWidth;h.classList.add('bump')}
+  $('tReg').textContent=t.reg;$('tDur').textContent=`${t.d} дн. / ${t.n} ноч.`;
+  $('tWhen').textContent=$('bMonth').value?MF[$('bMonth').value-1]:period(t);$('tPpl').textContent=n+' чел.';
+  $('tAge').textContent=`от ${t.age} лет`;$('tDiff').textContent=t.diff?DIFF[t.diff]:'по программе';
 }
-['bTour','bMonth','bPeople','bDisc'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='bTour')fillMonths();ticket()}));
+['bTour','bMonth','bPeople'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='bTour')fillMonths();ticket()}));
 $('minus').onclick=()=>{$('bPeople').value=Math.max(1,(+$('bPeople').value||1)-1);ticket()};
 $('plus').onclick=()=>{$('bPeople').value=Math.min(30,(+$('bPeople').value||1)+1);ticket()};
 $('form').addEventListener('submit',e=>{
@@ -888,9 +906,9 @@ $('form').addEventListener('submit',e=>{
   const name=$('bName').value.trim(),ph=$('bPhone').value.replace(/\D/g,'');
   const bad=!name?['bName','Напишите, как к вам обращаться.']:ph.length<10?['bPhone','Проверьте телефон: нужно не меньше 10 цифр.']:!$('bAgree').checked?['bAgree','Отметьте согласие на обработку данных, без него мы не можем принять заявку.']:null;
   if(bad){err.textContent=bad[1];err.hidden=false;$(bad[0]).focus();return}
-  const {t,n,d,total,pre}=calc();
+  const {t,n}=calc();
   const text=[`Здравствуйте! Хочу забронировать тур.`,`Тур: ${t.name}`,`Заезд: ${$('bMonth').value?MF[$('bMonth').value-1]:'пока не знаю'}`,`Человек: ${n}`,
-    d?`Скидка: ${$('bDisc').selectedOptions[0].text}`:'',`Предварительно: ${rub(total)}, предоплата ${rub(pre)}`,`Имя: ${name}`,`Телефон: ${$('bPhone').value.trim()}`,
+    `Имя: ${name}`,`Телефон: ${$('bPhone').value.trim()}`,
     `Связь: ${$('bWay').value}, ${$('bTime').value.toLowerCase()}`,$('bWish').value.trim()?`Пожелания: ${$('bWish').value.trim()}`:''].filter(Boolean).join('\n');
   $('msg').value=text;
   $('toWa').href='https://api.whatsapp.com/send/?phone=79054928841&text='+encodeURIComponent(text);
@@ -1026,6 +1044,44 @@ let terrain=null;
   requestAnimationFrame(()=>$('terrain').classList.add('on'));
 })();
 
+/* ---------- облака над первым экраном ---------- */
+let clouds=null;
+(function(){
+  if(!window.THREE)return;
+  let r;try{r=new THREE.WebGLRenderer({canvas:$('clouds'),alpha:true,antialias:false})}catch(e){return}
+  r.setPixelRatio(.5);
+  const scene=new THREE.Scene(),cam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+  const u={uT:{value:0},uA:{value:1.6},uM:{value:new THREE.Vector2()}};
+  const m=new THREE.ShaderMaterial({uniforms:u,transparent:true,
+    vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`,
+    fragmentShader:`
+      uniform float uT,uA;uniform vec2 uM;varying vec2 vUv;
+      float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+        return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
+      float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<6;i++){v+=a*noise(p);p=p*2.03+vec2(17.,9.);a*=.5;}return v;}
+      void main(){
+        vec2 uv=vec2(vUv.x*uA*.7,vUv.y*1.5);
+        vec2 p=uv*1.7+vec2(uT*.035,uT*.006)+uM*.06;
+        vec2 q=vec2(fbm(p+vec2(0.,uT*.012)),fbm(p+vec2(5.2,1.3)));
+        float f=fbm(p+1.5*q);
+        float lightF=fbm(p+1.5*q+vec2(-.05,.07));
+        float cov=.6-.2*smoothstep(.55,0.,vUv.y)-.06*smoothstep(.25,.5,abs(vUv.x-.5))-.05*smoothstep(.75,1.,vUv.y);
+        float d=smoothstep(cov,cov+.26,f);
+        vec3 col=mix(vec3(.70,.74,.83),vec3(1.),clamp((f-lightF)*7.+.65,0.,1.));
+        float a=d*.9;
+        gl_FragColor=vec4(col*a,a);
+      }`});
+  scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),m));
+  function size(){const h=$('top');r.setSize(h.clientWidth,h.clientHeight,false);u.uA.value=h.clientWidth/h.clientHeight}
+  size();addEventListener('resize',size);
+  const target=new THREE.Vector2();
+  $('top').addEventListener('pointermove',e=>{target.set(e.clientX/innerWidth-.5,e.clientY/innerHeight-.5)});
+  let t=20;
+  clouds=dt=>{if(!STILL)t+=dt;u.uT.value=t;u.uM.value.lerp(target,.04);r.render(scene,cam)};
+  requestAnimationFrame(()=>$('clouds').classList.add('on'));
+})();
+
 /* ---------- общий цикл ---------- */
 let cl=0,t0=performance.now(),vis=true;
 function frame(now){
@@ -1034,6 +1090,7 @@ function frame(now){
   if(Math.abs(cl-shownC)>.0005){paintSky(cl);shownC=cl}
   porthole();ribbons(dt);
   if(terrain)terrain(dt,now,cl);
+  if(clouds&&heroSeen)clouds(dt);
   if(vis)requestAnimationFrame(frame);
 }
 addEventListener('scroll',altitude,{passive:true});
