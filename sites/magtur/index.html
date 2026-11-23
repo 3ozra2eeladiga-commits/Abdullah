@@ -1,0 +1,647 @@
+<title>МАГТУР — туры на Кавказ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Идея вёрстки: страница — это восхождение. Скролл поднимает высотомер от Пятигорска (512 м) до Эльбруса (5642 м), заявка лежит на вершине. */
+:root{
+  --bg:#F2F6FB; --surface:#FFFFFF; --ink:#0D1A2D; --muted:#56667E; --line:#D3DDEA;
+  --blue:#1B58B8; --blue-soft:#DCE8F8; --accent:#FF5A1F; --accent-ink:#10192A;
+  --photo-ink:#FFFFFF; --scrim:rgba(8,18,34,.72); --ok:#1E8A5A;
+  --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:6px; --max:1120px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#09121F; --surface:#111D2F; --ink:#EAF1FA; --muted:#95A6BE; --line:#24354D;
+  --blue:#78AEFF; --blue-soft:#172B47; --accent:#FF6B35; --accent-ink:#10192A; --ok:#4CC48C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#09121F; --surface:#111D2F; --ink:#EAF1FA; --muted:#95A6BE; --line:#24354D;
+  --blue:#78AEFF; --blue-soft:#172B47; --accent:#FF6B35; --accent-ink:#10192A; --ok:#4CC48C; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--f-body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:var(--max);margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1;letter-spacing:-.01em}
+h2{font-size:clamp(1.5rem,3.6vw,2.4rem);font-weight:700}
+h3{font-size:1rem;font-weight:500;line-height:1.3}
+p{margin:0}
+a{color:var(--blue)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.eyebrow{font:500 .75rem/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:.6em;align-items:center}
+.eyebrow b{color:var(--accent);font-weight:700}
+.lead{color:var(--muted);max-width:62ch}
+section{padding-block:clamp(48px,8vw,96px)}
+.head{display:grid;gap:14px;margin-bottom:32px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;font:600 1rem/1 var(--f-body);padding:.95em 1.3em;border-radius:var(--r);border:1.5px solid transparent;cursor:pointer;text-decoration:none;min-height:44px}
+.btn-main{background:var(--accent);color:var(--accent-ink)}
+.btn-main:hover{filter:brightness(1.08)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--ink)}
+
+/* шапка */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:18px;height:60px}
+.logo{font:800 1.05rem/1 var(--f-display);color:var(--ink);text-decoration:none;letter-spacing:.02em}
+.logo span{color:var(--accent)}
+.top nav{display:flex;gap:18px;margin-left:8px}
+.top nav a{color:var(--muted);text-decoration:none;font-weight:500;font-size:.92rem}
+.top nav a:hover{color:var(--ink)}
+.alt-pill{margin-left:auto;font:700 .82rem/1 var(--f-mono);display:flex;gap:.6em;align-items:center;white-space:nowrap}
+.alt-pill i{font-style:normal;color:var(--accent)}
+.alt-pill small{font:500 .78rem/1 var(--f-body);color:var(--muted)}
+.top .btn{padding:.7em 1em;font-size:.9rem;min-height:40px}
+@media(max-width:860px){.top nav{display:none}}
+@media(max-width:520px){.alt-pill small{display:none}.top .wrap{gap:10px}}
+
+/* первый экран */
+.hero{position:relative;padding-block:0;color:var(--photo-ink);background:#0b1a30 url(img/hero.jpg) center 42%/cover}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,22,46,.50) 0%,rgba(8,22,46,.18) 45%,var(--scrim) 100%)}
+.hero .wrap{position:relative;z-index:1;padding-block:clamp(56px,10vw,120px) clamp(28px,5vw,48px);display:grid;gap:26px}
+.hero .eyebrow{color:var(--photo-ink);opacity:.9}
+.hero h1{font-size:clamp(2.1rem,7.2vw,5rem);font-weight:800;max-width:13ch;text-shadow:0 2px 24px rgba(4,12,28,.45)}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p.sub{font-size:clamp(1rem,1.6vw,1.2rem);max-width:54ch;text-shadow:0 1px 12px rgba(4,12,28,.6)}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
+.hero .btn-ghost{color:var(--photo-ink);border-color:rgba(255,255,255,.55);background:rgba(8,22,46,.3)}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.25);margin-top:22px}
+.facts div{background:rgba(8,20,40,.62);padding:16px 14px;display:grid;gap:4px;min-width:0}
+.facts b{font:700 clamp(1.2rem,2.6vw,1.9rem)/1 var(--f-display)}
+.facts span{font-size:.84rem;opacity:.88}
+@media(max-width:640px){.facts{grid-template-columns:repeat(2,1fr)}}
+
+/* фильтры и каталог */
+.filters{display:grid;gap:14px;padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:22px}
+.frow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.frow > span{font:500 .72rem/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);flex:0 0 108px}
+.chip{font:500 .9rem/1 var(--f-body);padding:.6em .85em;border-radius:99px;border:1.5px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;min-height:36px}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.found{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;color:var(--muted)}
+.found b{color:var(--ink);font-family:var(--f-mono)}
+.linkbtn{background:none;border:0;color:var(--blue);font:inherit;cursor:pointer;text-decoration:underline;padding:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.card{display:grid;grid-template-rows:auto 1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;text-align:left;padding:0;color:inherit;font:inherit;cursor:pointer;transition:transform .18s,border-color .18s}
+.card:hover{transform:translateY(-3px);border-color:var(--ink)}
+.card .ph{position:relative;aspect-ratio:400/245;background:var(--blue-soft)}
+.card .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.tag{position:absolute;left:10px;top:10px;font:700 .68rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;background:var(--surface);color:var(--ink);padding:.5em .6em;border-radius:3px}
+.tag.new{left:auto;right:10px;background:var(--accent);color:var(--accent-ink)}
+.card .bd{padding:14px;display:grid;gap:10px;align-content:start;grid-template-rows:auto auto 1fr}
+.meta{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.84rem;color:var(--muted)}
+.price{align-self:end;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-top:10px;border-top:1px dashed var(--line)}
+.price b{font:700 1.15rem/1 var(--f-mono)}
+.price s{color:var(--muted);font:500 .85rem/1 var(--f-mono)}
+.price small{color:var(--muted);font-size:.78rem}
+.peaks{display:inline-flex;gap:2px;vertical-align:-1px}
+.peaks i{width:9px;height:10px;background:var(--line);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.peaks i.on{background:var(--accent)}
+.empty{padding:28px;border:1px dashed var(--line);border-radius:var(--r);text-align:center;color:var(--muted)}
+
+/* календарь сезонов */
+.band{background:var(--surface);border-block:1px solid var(--line)}
+.cal-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--bg)}
+.cal{display:grid;grid-template-columns:minmax(200px,1.5fr) repeat(12,minmax(38px,1fr));min-width:760px;font-size:.84rem}
+.cal > *{padding:7px 4px;border-bottom:1px solid var(--line);min-width:0}
+.cal .mh{font:700 .7rem/1 var(--f-mono);text-transform:uppercase;text-align:center;color:var(--muted);background:var(--surface);border:0;border-bottom:1px solid var(--line);cursor:pointer;padding:12px 2px}
+.cal .mh:hover{color:var(--ink)}
+.cal .mh.now{color:var(--accent-ink);background:var(--accent)}
+.cal .nm{position:sticky;left:0;background:var(--surface);padding-left:12px;border-right:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;font:inherit;color:var(--ink);cursor:pointer;border-top:0;border-left:0}
+.cal .nm:hover{color:var(--blue)}
+.cal .c{display:flex;align-items:center;padding-inline:0}
+.cal .c i{display:block;height:12px;width:100%;background:var(--blue)}
+.cal .c.s i{border-radius:6px 0 0 6px}.cal .c.e i{border-radius:0 6px 6px 0}.cal .c.s.e i{border-radius:6px}
+.cal .c.col-now{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.cal .c.q{justify-content:center;color:var(--muted);font-size:.75rem}
+.cal-note{margin-top:12px;font-size:.88rem;color:var(--muted)}
+
+/* шаги */
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:0;counter-reset:s;border-top:2px solid var(--ink)}
+.steps li{list-style:none;padding:18px 16px 0 0;display:grid;gap:8px;align-content:start;position:relative}
+.steps li::before{counter-increment:s;content:"0" counter(s);font:700 .8rem/1 var(--f-mono);color:var(--accent)}
+.steps li::after{content:"";position:absolute;top:-7px;left:0;width:12px;height:12px;background:var(--ink);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.steps p{font-size:.9rem;color:var(--muted)}
+ol.steps{margin:0;padding:0}
+@media(max-width:860px){.steps{grid-template-columns:1fr;border-top:0;border-left:2px solid var(--ink)}.steps li{padding:0 0 22px 20px}.steps li::after{top:2px;left:-7px;transform:rotate(90deg)}}
+.pay{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:36px}
+.pay div{border-left:3px solid var(--accent);padding-left:14px;display:grid;gap:4px}
+.pay b{font:700 1.5rem/1 var(--f-display)}
+.pay span{font-size:.9rem;color:var(--muted)}
+@media(max-width:700px){.pay{grid-template-columns:1fr}}
+
+/* гиды */
+.guides{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px 18px}
+.guide{display:grid;gap:10px;align-content:start}
+.guide img{aspect-ratio:1;width:100%;object-fit:cover;border-radius:var(--r);filter:saturate(.9);background:var(--blue-soft)}
+.guide small{font:700 .7rem/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.guide p{font-size:.88rem;color:var(--muted)}
+.said{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);display:grid;gap:12px}
+.said ul{margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.said li{list-style:none;font-size:.86rem;border:1px solid var(--line);border-radius:99px;padding:.4em .8em;background:var(--surface)}
+.said li b{font-weight:600}
+
+/* вопросы */
+.faq{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+@media(max-width:800px){.faq{grid-template-columns:1fr}}
+details{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;padding:16px 28px 16px 0;font-weight:600;list-style:none;position:relative}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:4px;top:12px;font:500 1.4rem/1 var(--f-mono);color:var(--accent)}
+details[open] summary::after{content:"−"}
+details p{padding:0 0 16px;color:var(--muted);font-size:.94rem;max-width:60ch}
+
+/* заявка */
+.summit{background:var(--ink);color:var(--bg)}
+.summit .eyebrow,.summit .lead{color:color-mix(in srgb,var(--bg) 72%,transparent)}
+.book{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:start}
+@media(max-width:900px){.book{grid-template-columns:1fr}}
+form.f{background:var(--surface);color:var(--ink);border-radius:var(--r);padding:22px;display:grid;gap:14px;min-width:0}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.fg{grid-template-columns:1fr}}
+label.fl{display:grid;gap:6px;font-size:.84rem;font-weight:600;min-width:0}
+label.fl em{font-style:normal;color:var(--accent)}
+input,select,textarea{font:400 1rem/1.3 var(--f-body);padding:.75em .8em;border:1.5px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);width:100%;min-width:0}
+textarea{resize:vertical;min-height:76px}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);outline:0}
+.stepper{display:flex;gap:6px}.stepper button{width:44px;flex:none;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:var(--r);font:700 1.1rem/1 var(--f-mono);cursor:pointer}
+.stepper input{text-align:center}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:.84rem;color:var(--muted);font-weight:400}
+.agree input{width:20px;height:20px;flex:none;margin-top:2px}
+.err{color:#C4321A;font-size:.88rem;font-weight:600}
+.done{display:grid;gap:12px;padding:16px;border:1.5px solid var(--ok);border-radius:var(--r)}
+.done h3{color:var(--ok)}
+.done .row{display:flex;flex-wrap:wrap;gap:10px}
+
+.ticket{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);background:var(--bg);color:var(--ink);border-radius:var(--r);font-family:var(--f-mono);font-size:.86rem;overflow:hidden}
+.ticket header{padding:16px 18px;background:var(--accent);color:var(--accent-ink);display:flex;justify-content:space-between;gap:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.75rem}
+.ticket .tb{padding:18px;display:grid;gap:12px}
+.ticket h3{font-size:1.05rem}
+.ticket dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px}
+.ticket dt{color:var(--muted)}.ticket dd{margin:0;text-align:right;font-weight:700;min-width:0;overflow-wrap:anywhere}
+.perf{border-top:2px dashed var(--line);margin-inline:-18px;position:relative}
+.perf::before,.perf::after{content:"";position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:var(--ink)}
+.perf::before{left:-9px}.perf::after{right:-9px}
+.ticket .total dd{font-size:1.25rem}
+.ticket .pre dd{color:var(--accent)}
+.ticket small{font:400 .78rem/1.4 var(--f-body);color:var(--muted)}
+
+/* подвал */
+footer{padding-block:40px 56px;font-size:.9rem;color:var(--muted)}
+.fcols{display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:28px}
+@media(max-width:800px){.fcols{grid-template-columns:1fr}}
+.fcols h3{font-size:.8rem;margin-bottom:10px;color:var(--ink)}
+.fcols p,.fcols li{margin:0 0 6px}.fcols ul{margin:0;padding:0;list-style:none}
+.tel{font:700 1.1rem/1.4 var(--f-mono);color:var(--ink);user-select:all}
+.copy{font:500 .75rem/1 var(--f-body);border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:99px;padding:.35em .7em;cursor:pointer;margin-left:6px}
+
+/* высотомер */
+.rail{position:fixed;right:max(18px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 96px);bottom:calc(env(safe-area-inset-bottom,0px) + 36px);width:2px;background:var(--line);z-index:5;display:none}
+@media(min-width:1340px){.rail{display:block}}
+.rail .st{position:absolute;right:-3px;width:8px;height:2px;background:var(--muted)}
+.rail .st span{position:absolute;right:16px;top:-.55em;white-space:nowrap;font:500 .66rem/1 var(--f-mono);color:var(--muted)}
+.rail .st.pass{background:var(--accent)}.rail .st.pass span{color:var(--ink)}
+.rail .me{position:absolute;right:-6px;width:14px;height:13px;background:var(--accent);clip-path:polygon(50% 0,100% 100%,0 100%);transform:translateY(50%);transition:bottom .12s linear}
+.rail .fill{position:absolute;left:0;bottom:0;width:2px;background:var(--accent);transition:height .12s linear}
+
+/* карточка тура */
+dialog{border:0;padding:0;border-radius:var(--r);background:var(--surface);color:var(--ink);width:min(680px,calc(100vw - 32px));max-height:calc(100dvh - 48px)}
+dialog::backdrop{background:rgba(5,12,24,.7)}
+.dl-img{aspect-ratio:400/200;width:100%;object-fit:cover;display:block;background:var(--blue-soft)}
+.dl-b{padding:20px;display:grid;gap:16px}
+.dl-b h3{font-size:1.25rem;font-weight:700}
+.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.specs div{background:var(--surface);padding:10px;display:grid;gap:3px;font-size:.9rem;font-weight:600;min-width:0}
+.specs small{font:500 .66rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+@media(max-width:480px){.specs{grid-template-columns:repeat(2,1fr)}}
+.dl-b .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.x{position:absolute;right:10px;top:10px;width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);color:var(--ink);font-size:1.3rem;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+<header class="top"><div class="wrap">
+  <a class="logo" href="#top">МАГ<span>ТУР</span></a>
+  <nav aria-label="Разделы">
+    <a href="#tours">Туры</a><a href="#season">Сезоны</a><a href="#how">Бронирование</a><a href="#guides">Гиды</a><a href="#faq">Вопросы</a>
+  </nav>
+  <div class="alt-pill" aria-live="off" title="Высота растёт, пока вы листаете страницу"><i>▲</i><span id="altNum">512 м</span><small id="altPlace">Пятигорск</small></div>
+  <a class="btn btn-main" href="#book">Заявка</a>
+</div></header>
+
+<div class="rail" id="rail" aria-hidden="true"><div class="fill" id="railFill"></div><div class="me" id="railMe"></div></div>
+
+<section class="hero" id="top" data-alt="512" data-place="Пятигорск">
+  <div class="wrap">
+    <p class="eyebrow"><b>●</b> Международная академия горного туризма · с 2013 года</p>
+    <h1>Кавказ, на&nbsp;который <em>возвращаются</em></h1>
+    <p class="sub">Каждый четвёртый турист едет с нами снова. Пешие, конные, экскурсионные и горнолыжные туры по шести регионам: от нарзанных галерей Кисловодска до ледников Эльбруса.</p>
+    <div class="cta">
+      <a class="btn btn-main" href="#tours">Подобрать тур</a>
+      <a class="btn btn-ghost" href="#season">Что идёт в этом месяце</a>
+    </div>
+    <div class="facts">
+      <div><b>20&nbsp;000+</b><span>туристов прошли маршруты</span></div>
+      <div><b>20+</b><span>гидов в команде</span></div>
+      <div><b>от 1</b><span>человека: тур состоится в любом случае</span></div>
+      <div><b>100%</b><span>возврат при отмене за 72 часа</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="tours" data-alt="1450" data-place="Архыз">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow"><b>1450 м</b> Архыз · выбор маршрута</p>
+      <h2>Найдите свой тур за полминуты</h2>
+      <p class="lead">Отметьте, как хотите двигаться и когда свободны. Список ниже перестраивается сразу, без кнопки «Найти».</p>
+    </div>
+    <div class="filters">
+      <div class="frow" id="fType"><span>Формат</span></div>
+      <div class="frow" id="fMonth"><span>Месяц</span></div>
+      <div class="frow" id="fDiff"><span>Нагрузка</span></div>
+      <div class="frow" id="fBudget"><span>Бюджет</span></div>
+    </div>
+    <div class="found"><span>Подходит туров: <b id="cnt">19</b></span><button class="linkbtn" id="reset" type="button">Сбросить фильтры</button></div>
+    <div class="grid" id="grid"></div>
+    <p style="margin-top:22px;text-align:center"><button class="btn btn-ghost" id="moreBtn" type="button" hidden></button></p>
+  </div>
+</section>
+
+<section class="band" id="season" data-alt="1650" data-place="Домбай">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow"><b>1650 м</b> Домбай · сезоны</p>
+      <h2>Весь год на одной странице</h2>
+      <p class="lead">Полоса показывает месяцы, когда тур проводится. Нажмите на месяц, чтобы оставить в каталоге только его туры, или на название, чтобы открыть тур.</p>
+    </div>
+    <div class="cal-scroll"><div class="cal" id="cal"></div></div>
+    <p class="cal-note">Оранжевый столбец — текущий месяц. Период «Кавказского калейдоскопа» уточняйте у менеджера.</p>
+  </div>
+</section>
+
+<section id="how" data-alt="3050" data-place="Чегет">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow"><b>3050 м</b> Чегет · как всё устроено</p>
+      <h2>От заявки до поездки пять шагов</h2>
+    </div>
+    <ol class="steps">
+      <li><h3>Заявка</h3><p>Вы пишете, какой тур и когда. Менеджер проверяет места и подтверждает.</p></li>
+      <li><h3>Анкета</h3><p>Присылаем форму: данные участников для договора, здоровье и питание для гида.</p></li>
+      <li><h3>Договор и оплата</h3><p>Ссылка или QR-код на оплату картой, частями через «Долями» или перевод на счёт.</p></li>
+      <li><h3>Билеты</h3><p>Дорога до Кавказа в цену не входит. Можем купить билеты за вас, комиссия 500 ₽ за билет.</p></li>
+      <li><h3>Встреча</h3><p>Забираем в аэропорту или на вокзале Минеральных Вод, дальше всё по программе.</p></li>
+    </ol>
+    <div class="pay">
+      <div><b>30%</b><span>предоплата при бронировании, остаток до начала тура</span></div>
+      <div><b>72 часа</b><span>до старта можно перенести тур на любой срок с той же ценой или вернуть 100%</span></div>
+      <div><b>до 10%</b><span>скидка постоянным клиентам; 5% пенсионерам, именинникам, многодетным, детям до 7 лет</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="guides" data-alt="3847" data-place="Гара-Баши">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow"><b>3847 м</b> Гара-Баши · кто ведёт</p>
+      <h2>Гиды, которые здесь выросли</h2>
+      <p class="lead">Маршруты составляют альпинисты и историки, а ведут люди, для которых эти ущелья — дом.</p>
+    </div>
+    <div class="guides" id="guidesGrid"></div>
+    <div class="said">
+      <p class="eyebrow">В отзывах гидов называют по именам</p>
+      <ul id="said"></ul>
+      <p><a href="https://akademiya-gornih-turov.ru/otzyvy-klientov/" target="_blank" rel="noopener">Читать все 200+ отзывов</a></p>
+    </div>
+  </div>
+</section>
+
+<section id="faq" data-alt="4700" data-place="Скалы Пастухова">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow"><b>4700 м</b> Скалы Пастухова · перед выходом</p>
+      <h2>Что спрашивают до поездки</h2>
+    </div>
+    <div class="faq">
+      <div>
+        <details open><summary>Что входит в стоимость?</summary><p>Трансфер, проживание, питание, транспорт на маршруте и работа гида. Отдельно оплачиваются экскурсии вне программы, входные билеты и индивидуальный трансфер. Точный состав есть в программе каждого тура.</p></details>
+        <details><summary>Где мы будем жить?</summary><p>Гостиницы, отели и гостевые дома, номера на двоих или троих. Одноместное размещение с доплатой. В некоторых конных турах живём на экоферме, в походах с палатками выдаём палатку, спальник и коврик.</p></details>
+        <details><summary>Откуда вы забираете?</summary><p>Встречаем в аэропортах и на вокзалах Минеральных Вод и Ставрополя, а также в Кисловодске и Невинномысске.</p></details>
+        <details><summary>Можно с детьми?</summary><p>Да. Минимальный возраст указан в карточке тура: есть программы от 5 и 6 лет. Детям до 7 лет скидка 5%.</p></details>
+      </div>
+      <div>
+        <details><summary>Какая погода в горах?</summary><p>Переменчивая. Ночью возможны заморозки, а при ярком солнце дует ледяной ветер. Берите тёплый слой даже летом и крем с защитой не ниже SPF 50.</p></details>
+        <details><summary>Что брать на восхождение?</summary><p>Рюкзак на 65–80 литров, кошки, ледоруб, каску и спальник с комфортом до −5 °C. Страховочную систему стандарта EN 12277 выдаём мы. Для экскурсионных, конных и джип-туров списки проще, менеджер пришлёт нужный.</p></details>
+        <details><summary>Что если планы изменятся?</summary><p>Сообщите не позднее чем за 72 часа до начала: перенесём тур на любой срок с сохранением цены или вернём 100% на ту же карту. Позже 72 часов возможен перерасчёт.</p></details>
+        <details><summary>Вы официальный туроператор?</summary><p>Да. ООО «МАГТУР» состоит в Едином федеральном реестре туроператоров, номер РТО В031-00161-77/02027409. С каждым туристом заключаем договор.</p></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="summit" id="book" data-alt="5642" data-place="Эльбрус, вершина">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow"><b>5642 м</b> Эльбрус · вы на вершине</p>
+      <h2>Осталось оставить заявку</h2>
+      <p class="lead">Справа собирается ваш путевой лист с ценой и предоплатой. Заявка ни к чему не обязывает: менеджер сначала проверит места.</p>
+    </div>
+    <div class="book">
+      <form class="f" id="form" novalidate>
+        <label class="fl">Тур<select id="bTour"></select></label>
+        <div class="fg">
+          <label class="fl">Когда хотите ехать<select id="bMonth"></select></label>
+          <label class="fl">Сколько человек
+            <span class="stepper"><button type="button" id="minus" aria-label="Меньше">−</button><input id="bPeople" type="number" min="1" max="30" value="2" inputmode="numeric"><button type="button" id="plus" aria-label="Больше">+</button></span>
+          </label>
+        </div>
+        <label class="fl">Скидка (одна, не суммируются)
+          <select id="bDisc">
+            <option value="0">Без скидки</option>
+            <option value="10">Постоянный клиент, 10%</option>
+            <option value="5">Пенсионер, 5%</option>
+            <option value="5">День рождения ±14 дней, 5%</option>
+            <option value="5">Многодетная семья, 5%</option>
+            <option value="5">Участник локальных конфликтов или семья, 5%</option>
+          </select>
+        </label>
+        <div class="fg">
+          <label class="fl"><span>Ваше имя <em>*</em></span><input id="bName" autocomplete="name" required></label>
+          <label class="fl"><span>Телефон <em>*</em></span><input id="bPhone" type="tel" autocomplete="tel" placeholder="+7 900 000-00-00" required></label>
+        </div>
+        <div class="fg">
+          <label class="fl">Как с вами связаться
+            <select id="bWay"><option>Написать в WhatsApp</option><option>Написать в Telegram</option><option>Позвонить</option><option>Написать на email</option></select>
+          </label>
+          <label class="fl">Удобное время
+            <select id="bTime"><option>Любое с 9:00 до 19:00</option><option>9:00–12:00</option><option>12:00–15:00</option><option>15:00–19:00</option></select>
+          </label>
+        </div>
+        <label class="fl">Пожелания<textarea id="bWish" placeholder="Например: едем с ребёнком 8 лет, нужен номер с двумя кроватями"></textarea></label>
+        <label class="agree"><input type="checkbox" id="bAgree"><span>Согласен на обработку персональных данных для подбора и бронирования тура</span></label>
+        <p class="err" id="err" hidden></p>
+        <button class="btn btn-main" type="submit">Собрать заявку</button>
+        <div class="done" id="done" hidden>
+          <h3>Заявка собрана. Отправьте её менеджеру одним нажатием</h3>
+          <textarea id="msg" readonly rows="7"></textarea>
+          <div class="row">
+            <a class="btn btn-main" id="toWa" target="_blank" rel="noopener">Открыть WhatsApp</a>
+            <a class="btn btn-ghost" id="toTg" target="_blank" rel="noopener">Открыть Telegram</a>
+            <button class="btn btn-ghost" type="button" id="copyMsg">Скопировать текст</button>
+          </div>
+        </div>
+      </form>
+
+      <aside class="ticket" aria-label="Путевой лист">
+        <header><span>Путевой лист</span><span id="tNo">МТ-00</span></header>
+        <div class="tb">
+          <h3 id="tTitle">—</h3>
+          <dl>
+            <dt>Регион</dt><dd id="tReg">—</dd>
+            <dt>Длительность</dt><dd id="tDur">—</dd>
+            <dt>Заезд</dt><dd id="tWhen">—</dd>
+            <dt>Группа</dt><dd id="tPpl">—</dd>
+            <dt>Цена за человека</dt><dd id="tPer">—</dd>
+            <dt>Скидка</dt><dd id="tDisc">—</dd>
+          </dl>
+          <div class="perf"></div>
+          <dl>
+            <div style="display:contents" class="total"><dt>Итого</dt><dd id="tTotal">—</dd></div>
+            <div style="display:contents" class="pre"><dt>Предоплата 30%</dt><dd id="tPre">—</dd></div>
+            <dt>Остаток до тура</dt><dd id="tRest">—</dd>
+          </dl>
+          <small>Расчёт предварительный. Точную сумму и наличие мест подтвердит менеджер.</small>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap fcols">
+  <div>
+    <h3>Связаться</h3>
+    <p><span class="tel">+7 (905) 492-88-41</span><button class="copy" data-copy="+79054928841">копировать</button></p>
+    <p><span class="tel">+7 (906) 462-01-53</span><button class="copy" data-copy="+79064620153">копировать</button></p>
+    <p>Ежедневно с 9:00 до 19:00, без выходных</p>
+    <p style="user-select:all">hello@akademiya-gornih-turov.ru</p>
+  </div>
+  <div>
+    <h3>Мы в сети</h3>
+    <ul>
+      <li><a href="https://api.whatsapp.com/send/?phone=79054928841" target="_blank" rel="noopener">WhatsApp</a></li>
+      <li><a href="https://t.me/MAGTOURsales" target="_blank" rel="noopener">Telegram</a></li>
+      <li><a href="https://vk.com/akademiya.gornih.turov" target="_blank" rel="noopener">ВКонтакте</a></li>
+      <li><a href="https://dzen.ru/akademiya-gornih-turov.ru" target="_blank" rel="noopener">Дзен</a></li>
+    </ul>
+  </div>
+  <div>
+    <h3>ООО «МАГТУР»</h3>
+    <p>357560, Ставропольский край, Пятигорск, п. Горячеводский, ул. Эльбрусская, 13</p>
+    <p>ИНН 0919004040 · ОГРН 1130919000332</p>
+    <p>Реестр туроператоров: РТО В031-00161-77/02027409</p>
+    <p>© 2013–2026 Международная академия горного туризма</p>
+  </div>
+</div></footer>
+
+<dialog id="dlg" aria-labelledby="dTitle">
+  <button class="x" id="dClose" aria-label="Закрыть">×</button>
+  <img class="dl-img" id="dImg" alt="">
+  <div class="dl-b">
+    <p class="eyebrow" id="dType"></p>
+    <h3 id="dTitle"></h3>
+    <div class="specs" id="dSpecs"></div>
+    <div class="price" id="dPrice" style="border:0;padding:0"></div>
+    <div class="row">
+      <button class="btn btn-main" id="dBook" type="button">Забронировать этот тур</button>
+      <a class="btn btn-ghost" id="dMore" target="_blank" rel="noopener">Программа по дням</a>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const M=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const MF=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const TYPES={hike:'Пешком',bus:'Экскурсии',horse:'Верхом',ski:'Горные лыжи',rest:'Ретрит и отдых'};
+const DIFF=['','базовая','средняя','продвинутая','сложная'];
+const ALL=[1,2,3,4,5,6,7,8,9,10,11,12], r=(a,b)=>{const o=[];for(let i=a;;i=i%12+1){o.push(i);if(i===b)break}return o};
+const U='https://akademiya-gornih-turov.ru/tour/';
+// id, тип, название, регион, дни, ночи, месяцы, возраст, сложность, комфорт, цена, старая цена, фото, адрес, новинка
+const T=[
+ [1,'rest','Wellness-программа «Кавказские минералы»','Пятигорск, Железноводск, Кисловодск',6,5,ALL,6,1,'высокий',530000,0,'t1','caucasian-minerals-wellness-program/'],
+ [2,'rest','Digital detox-ретрит «Тишина гор»','Кабардино-Балкария',4,3,ALL,18,2,'простой',480000,0,'t2','digital-detox-silence-of-the-mountains/'],
+ [3,'rest','Агротуризм премиум «Жизнь аула»','Карачаево-Черкесия',5,4,ALL,5,2,'простой',210000,0,'t3','agro-tourism-premium-life-aula/'],
+ [4,'hike','Хайкинг «Архипелаг скалистых островов»','Кавказские Минеральные Воды',12,11,r(6,10),10,2,'выше среднего',71200,89000,'t4','peshij-trekking-tur-arhipelag-skalistyh-ostrovov-2027/'],
+ [5,'hike','Хайкинг «Горный Дагестан: тропой Императора»','Дагестан',8,7,r(5,10),12,4,'средний',79999,99999,'t5','peshij-trekking-tur-gornyj-dagestan-tropoj-imperatora-2027/'],
+ [6,'hike','Хайкинг «Домбай и его окрестности»','Карачаево-Черкесия',8,7,r(6,10),6,2,'выше среднего',71111,88888,'t6','peshij-trekking-tur-dombaj-i-ego-okrestnosti-2027/'],
+ [7,'hike','Хайкинг «Притяжение Эльбруса»','Кабардино-Балкария',8,7,r(6,10),12,3,'выше среднего',79200,99000,'t7','peshij-trekking-tur-prityazhenie-elbrusa-2027/'],
+ [8,'hike','Хайкинг «Чарующий Архыз»','Карачаево-Черкесия',8,7,r(6,10),6,3,'выше среднего',79999,99999,'t8','peshij-trekking-tur-charuyushhij-arhyz-2027/'],
+ [9,'hike','Пеший тур «Горная Дигория: ледники, водопады и тайны Осетии»','Северная Осетия',8,7,r(6,10),8,1,'выше среднего',79999,99999,'t9','mountain-digory-secrets-of-ossetia-2027/'],
+ [10,'bus','Экскурсионный тур «Грани Кавказа»','Осетия, Чечня, Ингушетия',8,7,r(4,10),8,1,'выше среднего',88000,110000,'t10','excursion-tour-edges-of-the-caucasus-2027/'],
+ [11,'bus','Экскурсионный тур «Завораживающий Дагестан»','Дагестан',8,7,r(4,10),8,1,'средний',79200,99000,'t11','ekskursionnyj-tur-zavorazhivayushhij-dagestan-2027/'],
+ [12,'bus','Экскурсионный тур «Звёздный путь»','Карачаево-Черкесия',6,5,r(4,10),8,1,'выше среднего',63200,79000,'t12','excursion-tour-star-trek-2027/'],
+ [13,'bus','Экскурсионный тур «Курортный роман»','КЧР, КБР и Кавминводы',8,7,r(4,10),6,1,'выше среднего',79200,99000,'t13','ekskursionnyj-tur-kurortnyj-roman-2027/'],
+ [14,'horse','Конный тур «Джигитовка для чайников»','Карачаево-Черкесия',8,7,r(3,11),12,1,'выше среднего',71111,88888,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-2027/'],
+ [15,'horse','Конный тур «Кубанское кольцо»','Карачаево-Черкесия',8,7,r(6,9),12,4,'простой',79200,99000,'t15','konnyj-tur-kubanskoe-koltso-2027/'],
+ [16,'horse','Конный тур «Зимняя джигитовка для чайников»','Карачаево-Черкесия',6,5,r(11,3),12,1,'выше среднего',45000,0,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-winter-2026-2027/',1],
+ [17,'bus','«Кавказский калейдоскоп: от древних тайн до вершин Домбая»','Карачаево-Черкесия',6,5,null,6,1,'выше среднего',49000,0,'t6','caucasian-kaleidoscope-from-ancient-secrets-to-the-peaks-of-dombay/',1],
+ [18,'ski','Горнолыжный тур в Домбай на автобусе из Москвы','Карачаево-Черкесия',6,5,r(1,3),6,0,'',64990,0,'t18','gornolyzhnyj-tur-v-dombaj-na-avtobuse/'],
+ [19,'ski','Горнолыжный тур в Архыз на автобусе из Москвы','Карачаево-Черкесия',6,5,r(1,3),6,0,'',64990,0,'t19','gornolyzhnyj-tur-v-arhyz-iz-moskvy/'],
+].map(a=>({id:a[0],type:a[1],name:a[2],reg:a[3],d:a[4],n:a[5],m:a[6],age:a[7],diff:a[8],comfort:a[9],price:a[10],old:a[11],img:'img/'+a[12]+'.jpg',url:U+a[13],isNew:!!a[14]}));
+
+const $=id=>document.getElementById(id), rub=n=>Math.round(n).toLocaleString('ru-RU')+' ₽';
+const NOW=new Date().getMonth()+1;
+const period=t=>!t.m?'уточняйте':t.m.length===12?'круглый год':M[t.m[0]-1]+'–'+M[t.m[t.m.length-1]-1];
+const peaks=d=>d?`<span class="peaks" title="Нагрузка: ${DIFF[d]}">${[1,2,3,4].map(i=>`<i class="${i<=d?'on':''}"></i>`).join('')}</span> ${DIFF[d]}`:'';
+const priceHTML=t=>`<b>${rub(t.price)}</b>${t.old?`<s>${rub(t.old)}</s>`:''}<small>за человека</small>`;
+
+/* ---------- фильтры ---------- */
+const F={type:'',month:0,diff:0,budget:0};
+try{Object.assign(F,JSON.parse(localStorage.getItem('magtur-f')||'{}'))}catch(e){}
+const groups={
+  fType:['type',[['','Любой'],...Object.entries(TYPES)]],
+  fMonth:['month',[[0,'Любой'],...M.map((m,i)=>[i+1,m])]],
+  fDiff:['diff',[[0,'Любая'],[1,'Базовая'],[2,'Средняя'],[3,'Продвинутая и выше']]],
+  fBudget:['budget',[[0,'Любой'],[50000,'до 50 000 ₽'],[80000,'до 80 000 ₽'],[100000,'до 100 000 ₽']]]
+};
+for(const [id,[key,opts]] of Object.entries(groups)){
+  for(const [v,label] of opts){
+    const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=label;b.dataset.k=key;b.dataset.v=v;
+    b.onclick=()=>{F[key]=v;apply()};$(id).append(b);
+  }
+}
+let more=false;
+const match=t=>(!F.type||t.type===F.type)&&(!F.month||!t.m||t.m.includes(+F.month))&&(!+F.diff||(+F.diff===3?t.diff>=3:t.diff===+F.diff))&&(!+F.budget||t.price<=+F.budget);
+function apply(){
+  document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(F[b.dataset.k])===b.dataset.v));
+  const list=T.filter(match);$('cnt').textContent=list.length;
+  const shown=more?list:list.slice(0,8);
+  $('moreBtn').hidden=more||list.length<=8;$('moreBtn').textContent='Показать все туры: '+list.length;
+  $('grid').innerHTML=list.length?shown.map(t=>`
+    <button class="card" data-id="${t.id}" type="button">
+      <span class="ph"><img src="${t.img}" alt="" loading="lazy"><span class="tag">${TYPES[t.type]}</span>${t.isNew?'<span class="tag new">Новинка</span>':''}</span>
+      <span class="bd"><h3>${t.name}</h3>
+        <span class="meta"><span>${t.reg}</span></span>
+        <span class="meta"><span>${t.d} дн. / ${t.n} ноч.</span><span>${period(t)}</span><span>${t.age}+</span><span>${peaks(t.diff)}</span></span>
+        <span class="price">${priceHTML(t)}</span></span>
+    </button>`).join(''):'<div class="empty" style="grid-column:1/-1">Под такие условия тура нет. Снимите один из фильтров или напишите нам: соберём маршрут под вас.</div>';
+  try{localStorage.setItem('magtur-f',JSON.stringify(F))}catch(e){}
+}
+$('moreBtn').onclick=()=>{more=true;apply()};
+$('reset').onclick=()=>{Object.assign(F,{type:'',month:0,diff:0,budget:0});apply()};
+$('grid').onclick=e=>{const c=e.target.closest('.card');if(c)openTour(+c.dataset.id)};
+
+/* ---------- календарь ---------- */
+(function(){
+  let h='<div class="nm" style="cursor:default;font:700 .7rem/1 var(--f-mono);text-transform:uppercase;color:var(--muted);padding-block:12px">Тур</div>'+M.map((m,i)=>`<button class="mh${i+1===NOW?' now':''}" data-m="${i+1}" type="button">${m}</button>`).join('');
+  for(const t of T){
+    h+=`<button class="nm" data-id="${t.id}" type="button" title="${t.name.replace(/"/g,'')}">${t.name.replace(/^(Хайкинг|Экскурсионный тур|Конный тур|Пеший тур|Горнолыжный тур|Wellness-программа|Digital detox-ретрит|Агротуризм премиум) /,'')}</button>`;
+    for(let m=1;m<=12;m++){
+      const col=m===NOW?' col-now':'';
+      if(!t.m){h+=`<div class="c q${col}">${m===6?'?':''}</div>`;continue}
+      const on=t.m.includes(m),prev=t.m.includes(m===1?12:m-1),next=t.m.includes(m===12?1:m+1);
+      const all=t.m.length===12;
+      h+=`<div class="c${col}${on&&(!prev||(all&&m===1)||m===1)?' s':''}${on&&(!next||m===12)?' e':''}">${on?'<i></i>':''}</div>`;
+    }
+  }
+  $('cal').innerHTML=h;
+  $('cal').onclick=e=>{
+    const m=e.target.closest('.mh'),n=e.target.closest('.nm[data-id]');
+    if(m){F.month=+m.dataset.m;apply();$('tours').scrollIntoView()}
+    if(n)openTour(+n.dataset.id);
+  };
+})();
+
+/* ---------- окно тура ---------- */
+let cur=null;
+function openTour(id){
+  const t=cur=T.find(x=>x.id===id);
+  $('dImg').src=t.img;$('dType').innerHTML=`<b>●</b> ${TYPES[t.type]} · ${t.reg}`;$('dTitle').textContent=t.name;
+  const sp=[['Длительность',`${t.d} дней / ${t.n} ночей`],['Сезон',period(t)],['Возраст',`от ${t.age} лет`]];
+  if(t.diff)sp.push(['Нагрузка',peaks(t.diff)]);if(t.comfort)sp.push(['Комфорт',t.comfort]);
+  sp.push(['Предоплата',rub(t.price*.3)]);
+  $('dSpecs').innerHTML=sp.map(([a,b])=>`<div><small>${a}</small><span>${b}</span></div>`).join('');
+  $('dPrice').innerHTML=priceHTML(t);$('dMore').href=t.url;$('dlg').showModal();
+}
+$('dClose').onclick=()=>$('dlg').close();
+$('dlg').onclick=e=>{if(e.target===$('dlg'))$('dlg').close()};
+$('dBook').onclick=()=>{$('bTour').value=cur.id;fillMonths();ticket();$('dlg').close();$('book').scrollIntoView()};
+
+/* ---------- заявка и путевой лист ---------- */
+$('bTour').innerHTML=T.map(t=>`<option value="${t.id}">${t.name} · ${rub(t.price)}</option>`).join('');
+function fillMonths(){
+  const t=T.find(x=>x.id==$('bTour').value),ms=t.m||ALL,keep=$('bMonth').value;
+  $('bMonth').innerHTML='<option value="">Пока не знаю</option>'+ms.map(m=>`<option value="${m}">${MF[m-1]}</option>`).join('');
+  if(ms.includes(+keep))$('bMonth').value=keep;else if(F.month&&ms.includes(+F.month))$('bMonth').value=F.month;
+}
+function calc(){
+  const t=T.find(x=>x.id==$('bTour').value),n=Math.min(30,Math.max(1,+$('bPeople').value||1)),d=+$('bDisc').value;
+  const total=t.price*n*(1-d/100);return{t,n,d,total,pre:total*.3};
+}
+function ticket(){
+  const {t,n,d,total,pre}=calc();
+  $('tNo').textContent='МТ-'+String(t.id).padStart(2,'0');$('tTitle').textContent=t.name;$('tReg').textContent=t.reg;
+  $('tDur').textContent=`${t.d} дн. / ${t.n} ноч.`;$('tWhen').textContent=$('bMonth').value?MF[$('bMonth').value-1]:period(t);
+  $('tPpl').textContent=n+' чел.';$('tPer').textContent=rub(t.price);$('tDisc').textContent=d?'−'+d+'%':'нет';
+  $('tTotal').textContent=rub(total);$('tPre').textContent=rub(pre);$('tRest').textContent=rub(total-pre);
+}
+['bTour','bMonth','bPeople','bDisc'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='bTour')fillMonths();ticket()}));
+$('minus').onclick=()=>{$('bPeople').value=Math.max(1,(+$('bPeople').value||1)-1);ticket()};
+$('plus').onclick=()=>{$('bPeople').value=Math.min(30,(+$('bPeople').value||1)+1);ticket()};
+$('form').addEventListener('submit',e=>{
+  e.preventDefault();const err=$('err');err.hidden=true;$('done').hidden=true;
+  const name=$('bName').value.trim(),ph=$('bPhone').value.replace(/\D/g,'');
+  const bad=!name?['bName','Напишите, как к вам обращаться.']:ph.length<10?['bPhone','Проверьте телефон: нужно не меньше 10 цифр.']:!$('bAgree').checked?['bAgree','Отметьте согласие на обработку данных, без него мы не можем принять заявку.']:null;
+  if(bad){err.textContent=bad[1];err.hidden=false;$(bad[0]).focus();return}
+  const {t,n,d,total,pre}=calc();
+  const text=[`Здравствуйте! Хочу забронировать тур.`,`Тур: ${t.name}`,`Заезд: ${$('bMonth').value?MF[$('bMonth').value-1]:'пока не знаю'}`,`Человек: ${n}`,
+    d?`Скидка: ${$('bDisc').selectedOptions[0].text}`:'',`Предварительно: ${rub(total)}, предоплата ${rub(pre)}`,`Имя: ${name}`,`Телефон: ${$('bPhone').value.trim()}`,
+    `Связь: ${$('bWay').value}, ${$('bTime').value.toLowerCase()}`,$('bWish').value.trim()?`Пожелания: ${$('bWish').value.trim()}`:''].filter(Boolean).join('\n');
+  $('msg').value=text;
+  $('toWa').href='https://api.whatsapp.com/send/?phone=79054928841&text='+encodeURIComponent(text);
+  $('toTg').href='https://t.me/MAGTOURsales?text='+encodeURIComponent(text);
+  $('done').hidden=false;$('done').scrollIntoView({block:'nearest'});
+});
+function copy(text,btn,sel){
+  const ok=()=>{const o=btn.textContent;btn.textContent='Скопировано';setTimeout(()=>btn.textContent=o,1500)};
+  (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(ok).catch(()=>{if(sel){sel.focus();sel.select()}});
+}
+$('copyMsg').onclick=e=>copy($('msg').value,e.target,$('msg'));
+document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>copy(b.dataset.copy,b));
+
+/* ---------- гиды ---------- */
+$('guidesGrid').innerHTML=[
+ ['g_umar','Умар Айдинов','Основатель, автор туров','Более 20 лет в туризме. Председатель Регионального союза туриндустрии СКФО.'],
+ ['g_greb','Александр Гребенюк','Эксперт по маршрутам','Около 200 восхождений за 30 лет. Руководит научно-спортивным центром СКФО.'],
+ ['g_ush','Мария Ушакова','Эксперт по маршрутам','Альпинистка и спортивный скалолаз, больше 20 восхождений.'],
+ ['g_hub','Абдуррахман Хубиев','Гид, инструктор','В команде с основания. Горный туризм и горные лыжи, поднимался на Эльбрус.'],
+ ['g_chek','Эдуард Чеккуев','Гид-экскурсовод','Историк. С 2006 года участвует в археологических раскопках.'],
+ ['g_mag','Абдула Магомедов','Гид по Дагестану','Водит группы по Дагестану с 2016 года.'],
+ ['g_ilis','Абдула Илистубегов','Гид по Дагестану','Знает горные аулы и дороги, которых нет на картах.']
+].map(g=>`<div class="guide"><img src="img/${g[0]}.jpg" alt="${g[1]}" loading="lazy"><small>${g[2]}</small><h3>${g[1]}</h3><p>${g[3]}</p></div>`).join('');
+$('said').innerHTML=[['Софья К.','«Курортный роман»','Рамазан'],['Екатерина У.','«Домбай и его окрестности»','Азнаур и Мурадин'],['Иван','«Путешествие в страну гор»','Магомед'],['Михаил','«Выходные в седле»','Казбек'],['Галина','«Приключения в стране гор»','Ахмед'],['Наталья','«Калейдоскоп времён»','Сеит'],['Елена','«Курортный роман»','Эдуард'],['Сергей','«Горнолыжка для чайников»','Абдуррахман']]
+ .map(s=>`<li><b>${s[0]}</b> · ${s[1]} · гид ${s[2]}</li>`).join('');
+
+/* ---------- высотомер ---------- */
+const stations=[...document.querySelectorAll('[data-alt]')].map(el=>({el,alt:+el.dataset.alt,place:el.dataset.place}));
+const LO=512,HI=5642,pct=a=>(a-LO)/(HI-LO)*100;
+stations.forEach(s=>{const d=document.createElement('div');d.className='st';d.style.bottom=pct(s.alt)+'%';d.innerHTML=`<span>${s.place.split(',')[0]} ${s.alt}</span>`;$('rail').append(d);s.tick=d});
+function altitude(){
+  const y=scrollY+innerHeight*.45,tops=stations.map(s=>s.el.getBoundingClientRect().top+scrollY);
+  let alt=LO,place=stations[0].place;
+  for(let i=0;i<stations.length;i++){
+    if(y>=tops[i]){place=stations[i].place;
+      if(i===stations.length-1)alt=HI;
+      else alt=stations[i].alt+(stations[i+1].alt-stations[i].alt)*Math.min(1,(y-tops[i])/(tops[i+1]-tops[i]));
+    }
+  }
+  alt=Math.round(alt);
+  $('altNum').textContent=alt.toLocaleString('ru-RU')+' м';$('altPlace').textContent=place;
+  $('railMe').style.bottom=pct(alt)+'%';$('railFill').style.height=pct(alt)+'%';
+  stations.forEach(s=>s.tick.classList.toggle('pass',alt>=s.alt));
+}
+addEventListener('scroll',altitude,{passive:true});addEventListener('resize',altitude);
+
+apply();fillMonths();ticket();altitude();
+</script>
