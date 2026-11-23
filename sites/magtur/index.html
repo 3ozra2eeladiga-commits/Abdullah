@@ -1,252 +1,325 @@
 <title>МАГТУР — туры на Кавказ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Идея: сайт — это ночной выход на Эльбрус. За страницей летит живой рельеф гор; скролл набирает высоту от 512 до 5642 м, на вершине наступает рассвет. Один тёмный мир, без светлой темы — намеренно. */
+/* Идея: страница — это подъём на Эльбрус за один день. Небо и живой рельеф меняются от ночи через рассвет к яркому дню и золотой вершине; контент лежит на светлых листах поверх гор. Один осознанный мир, без отдельной тёмной темы. */
 :root{
-  color-scheme:dark;
-  --night:#060D18; --panel:rgba(7,15,28,.86); --panel-solid:#0A1424; --ink:#F1ECE3; --muted:#9AA9BE; --line:rgba(190,215,245,.16);
-  --ice:#A9E2FF; --glow-a:#FF8A4C; --glow-b:#FF4D7E; --paper:#F3EEE4; --paper-ink:#141C2A; --paper-muted:#6B7385;
-  --glow:linear-gradient(100deg,var(--glow-a),var(--glow-b));
+  color-scheme:light;
+  --ink:#13163C; --muted:#585E82; --line:rgba(19,22,60,.12); --sheet:rgba(255,255,255,.9); --solid:#FFFFFF; --soft:#F1F3FB;
+  --a1:#FF6A3D; --a2:#FF2E7E; --a3:#7A5CFF; --cy:#0095E0;
+  --grad:linear-gradient(100deg,var(--a1),var(--a2) 55%,var(--a3));
+  --sky-ink:#FFFFFF; --sky-shadow:rgba(10,10,40,.55);
   --f-display:"Cormorant Garamond","Times New Roman",Georgia,serif;
   --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
-  --max:1180px;
+  --max:1240px; --gut:max(16px,env(safe-area-inset-left,0px)); --gutr:max(16px,env(safe-area-inset-right,0px));
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--night);color:var(--ink);font:400 16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--night)}
-.wrap{max-width:var(--max);margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{margin:0;background:#0A0B2E;color:var(--ink);font:400 16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased;overflow-x:clip}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:#0A0B2E}
+.wrap{max-width:var(--max);margin:0 auto;padding-left:var(--gut);padding-right:var(--gutr)}
 h1,h2,h3{font-family:var(--f-display);font-weight:500;text-wrap:balance;margin:0;line-height:1;letter-spacing:-.015em}
-h2{font-size:clamp(2.4rem,6.4vw,5rem)}
-h2 i,h1 i,.win i{font-style:italic;background:var(--glow);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
-h3{font-size:1.45rem;line-height:1.1}
+h2{font-size:clamp(2.5rem,6.2vw,5.2rem)}
+h3{font-size:1.5rem;line-height:1.1}
 p{margin:0}
-a{color:var(--ice)}
-.eyebrow{font:500 .72rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;gap:.8em;align-items:center}
-.eyebrow b{color:var(--glow-a);font-weight:700}
-.lead{color:var(--muted);max-width:56ch;font-size:1.05rem}
-:focus-visible{outline:2px solid var(--ice);outline-offset:3px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.6em;font:600 .95rem/1 var(--f-body);padding:1.1em 1.6em;border-radius:99px;border:1px solid transparent;cursor:pointer;text-decoration:none;min-height:48px;transition:transform .2s,box-shadow .2s,border-color .2s}
-.btn-main{background:var(--glow);color:#1A0F0A;box-shadow:0 8px 34px -8px rgba(255,100,90,.6)}
-.btn-main:hover{transform:translateY(-2px);box-shadow:0 14px 44px -8px rgba(255,100,90,.8)}
-.btn-ghost{background:rgba(255,255,255,.04);color:var(--ink);border-color:var(--line);backdrop-filter:blur(8px)}
+a{color:var(--cy)}
+h1 i,h2 i,.big i{font-style:italic;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.1em}
+.eyebrow{font:500 .72rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.8em;align-items:center}
+.eyebrow b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+.lead{color:var(--muted);max-width:56ch;font-size:1.06rem}
+:focus-visible{outline:3px solid var(--a3);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.6em;font:600 .95rem/1 var(--f-body);padding:1.1em 1.6em;border-radius:99px;border:1px solid transparent;cursor:pointer;text-decoration:none;min-height:48px;transition:transform .25s,box-shadow .25s,border-color .25s,background .25s}
+.btn-main{background:var(--grad);color:#fff;box-shadow:0 10px 30px -10px rgba(255,46,126,.65)}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 16px 40px -10px rgba(255,46,126,.85)}
+.btn-ghost{background:var(--soft);color:var(--ink);border-color:var(--line)}
 .btn-ghost:hover{border-color:var(--ink)}
+.btn-sky{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.45);backdrop-filter:blur(10px)}
+.btn-sky:hover{background:rgba(255,255,255,.26)}
 
-/* небо и рельеф */
-.sky{position:fixed;inset:0;z-index:-3;background:linear-gradient(180deg,#040912 0%,#0A1930 55%,#12284A 100%)}
-.stars{position:fixed;inset:0;z-index:-3;background-image:radial-gradient(1.2px 1.2px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 31% 9%,#cfe 50%,transparent 51%),radial-gradient(1.4px 1.4px at 54% 22%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 72% 12%,#fff 50%,transparent 51%),radial-gradient(1.2px 1.2px at 88% 26%,#def 50%,transparent 51%),radial-gradient(1px 1px at 43% 34%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 7% 38%,#fff 50%,transparent 51%),radial-gradient(1.3px 1.3px at 64% 5%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 22% 28%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 94% 8%,#fff 50%,transparent 51%);background-size:620px 420px;opacity:.8}
-.dawn{position:fixed;inset:0;z-index:-3;opacity:0;background:linear-gradient(180deg,#1B2A55 0%,#6B4470 38%,#E0705F 62%,#FFB877 82%,#FFD9A0 100%)}
-#terrain{position:fixed;inset:0;width:100%;height:100%;z-index:-2;display:block}
-.vignette{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(6,13,24,.55) 0%,transparent 22%,transparent 70%,rgba(6,13,24,.6) 100%)}
+/* небо, солнце, рельеф */
+#sky{position:fixed;inset:0;z-index:-5;background:linear-gradient(180deg,#0A0B2E,#3B2C86)}
+#stars{position:fixed;inset:0;z-index:-4;background-image:radial-gradient(1.3px 1.3px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 31% 9%,#fff 50%,transparent 51%),radial-gradient(1.6px 1.6px at 54% 22%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 72% 12%,#fff 50%,transparent 51%),radial-gradient(1.3px 1.3px at 88% 26%,#dff 50%,transparent 51%),radial-gradient(1px 1px at 43% 34%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 7% 38%,#fff 50%,transparent 51%),radial-gradient(1.4px 1.4px at 64% 5%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 22% 28%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 94% 8%,#fff 50%,transparent 51%);background-size:560px 400px}
+#sun{position:fixed;left:64%;bottom:-30%;width:34vmin;height:34vmin;z-index:-4;border-radius:50%;transform:translate(-50%,50%);background:radial-gradient(circle,#FFFBEA 0 24%,#FFE08A 36%,rgba(255,170,90,.5) 52%,transparent 70%);pointer-events:none}
+#terrain{position:fixed;inset:0;width:100%;height:100%;z-index:-3;display:block;opacity:0;transition:opacity 1.6s}
+#terrain.on{opacity:1}
 
 /* шапка */
-header.top{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:9;transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
-header.top.solid{background:rgba(6,13,24,.82);backdrop-filter:blur(14px);border-color:var(--line)}
+header.top{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:9;--hd:#fff;transition:background .35s,box-shadow .35s}
+header.top.solid{background:rgba(255,255,255,.86);backdrop-filter:blur(16px);box-shadow:0 1px 0 var(--line);--hd:var(--ink)}
 .top .wrap{display:flex;align-items:center;gap:22px;height:68px}
-.logo{font:600 1.55rem/1 var(--f-display);color:var(--ink);text-decoration:none;letter-spacing:.14em}
+.logo{font:600 1.6rem/1 var(--f-display);color:var(--hd);text-decoration:none;letter-spacing:.14em}
 .top nav{display:flex;gap:22px;margin-left:14px}
-.top nav a{color:var(--muted);text-decoration:none;font-size:.9rem}
-.top nav a:hover{color:var(--ink)}
-.alt-pill{margin-left:auto;font:700 .8rem/1 var(--f-mono);display:flex;gap:.7em;align-items:center;white-space:nowrap;font-variant-numeric:tabular-nums}
-.alt-pill i{font-style:normal;color:var(--glow-a)}
-.alt-pill small{font:400 .8rem/1 var(--f-body);color:var(--muted)}
-.top .btn{padding:.8em 1.2em;min-height:40px;font-size:.88rem}
-@media(max-width:900px){.top nav{display:none}}
+.top nav a{color:var(--hd);opacity:.75;text-decoration:none;font-size:.92rem}
+.top nav a:hover{opacity:1}
+.alt-pill{margin-left:auto;font:700 .82rem/1 var(--f-mono);display:flex;gap:.7em;align-items:center;white-space:nowrap;color:var(--hd);font-variant-numeric:tabular-nums}
+.alt-pill i{font-style:normal;color:var(--a2)}
+.alt-pill small{font:400 .8rem/1 var(--f-body);opacity:.75}
+.top .btn{padding:.8em 1.25em;min-height:40px;font-size:.88rem}
+@media(max-width:960px){.top nav{display:none}}
 @media(max-width:520px){.alt-pill small{display:none}.top .wrap{gap:12px}.logo{font-size:1.3rem}}
 
 /* первый экран */
-.hero{min-height:100svh;display:flex;align-items:flex-end;padding-block:120px clamp(28px,6vh,64px)}
+.hero{min-height:100svh;display:flex;align-items:flex-end;padding-block:120px clamp(28px,6vh,60px);color:#fff}
 .hero .wrap{width:100%;display:grid;gap:clamp(20px,3.4vh,34px)}
-.hero h1{font-size:clamp(3.4rem,12.5vw,11rem);line-height:.86;max-width:9ch}
+.hero .eyebrow{color:rgba(255,255,255,.8)}
+.hero h1{font-size:clamp(3.4rem,12.5vw,11rem);line-height:.86;max-width:9ch;text-shadow:0 6px 60px rgba(10,8,40,.5)}
 .hero .row{display:flex;flex-wrap:wrap;gap:28px 56px;align-items:flex-end;justify-content:space-between}
-.hero p.sub{font-size:clamp(1rem,1.5vw,1.2rem);max-width:44ch;color:#D5DCE8}
+.hero p.sub{font-size:clamp(1.02rem,1.5vw,1.2rem);max-width:46ch;color:rgba(255,255,255,.88)}
 .cta{display:flex;flex-wrap:wrap;gap:12px}
-.facts{display:flex;flex-wrap:wrap;gap:14px 44px;padding-top:22px;border-top:1px solid var(--line)}
+.facts{display:flex;flex-wrap:wrap;gap:14px 48px;padding-top:22px;border-top:1px solid rgba(255,255,255,.22)}
 .facts div{display:grid;gap:4px}
-.facts b{font:500 clamp(1.8rem,3.6vw,2.8rem)/1 var(--f-display)}
-.facts span{font-size:.82rem;color:var(--muted);max-width:22ch}
-.scrollhint{font:500 .7rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;gap:.8em;align-items:center}
-.scrollhint::before{content:"";width:1px;height:34px;background:linear-gradient(var(--glow-a),transparent);animation:drop 2s infinite}
-@keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.facts b{font:500 clamp(2rem,3.8vw,3rem)/1 var(--f-display);font-variant-numeric:tabular-nums}
+.facts span{font-size:.82rem;color:rgba(255,255,255,.72);max-width:22ch}
 
-/* секции-панели и «окна» в горы */
-section.panel{background:var(--panel);backdrop-filter:blur(10px);border-block:1px solid var(--line);padding-block:clamp(64px,10vw,130px)}
-.head{display:grid;gap:20px;margin-bottom:clamp(30px,5vw,56px)}
-.win{min-height:86svh;display:grid;place-items:center;text-align:center;padding-block:80px}
-.win .wrap{display:grid;gap:22px;justify-items:center}
-.win p.big{font:500 clamp(2.6rem,9vw,7.5rem)/.92 var(--f-display);letter-spacing:-.02em;max-width:12ch;text-shadow:0 4px 50px rgba(4,9,18,.7)}
-.win p.small{max-width:40ch;color:#DDE3EC;text-shadow:0 1px 16px rgba(4,9,18,.9)}
+/* бегущие ленты */
+.ribbons{position:relative;height:clamp(150px,20vw,230px);overflow:hidden;margin-block:-20px}
+.rb{position:absolute;left:-10%;right:-10%;top:50%;white-space:nowrap;padding-block:.35em;font:italic 500 clamp(1.8rem,4.6vw,3.8rem)/1 var(--f-display)}
+.rb span{display:inline-block;will-change:transform}
+.rb1{background:var(--grad);color:#fff;transform:translateY(-50%) rotate(-3deg);z-index:2;box-shadow:0 20px 50px -20px rgba(122,92,255,.6)}
+.rb2{background:var(--ink);color:rgba(255,255,255,.85);transform:translateY(-50%) rotate(2.2deg);font-style:normal;font-family:var(--f-mono);font-size:clamp(.9rem,1.6vw,1.2rem);letter-spacing:.2em;text-transform:uppercase;padding-block:1em}
+
+/* листы с контентом */
+section.panel{padding-block:clamp(28px,4vw,48px);padding-left:var(--gut);padding-right:var(--gutr)}
+.sheet{max-width:var(--max);margin:0 auto;background:var(--sheet);backdrop-filter:blur(18px) saturate(1.3);border-radius:clamp(22px,3vw,36px);padding:clamp(28px,5.5vw,80px) clamp(18px,4.5vw,72px);box-shadow:0 40px 100px -40px rgba(20,20,70,.45);min-width:0}
+.head{display:grid;gap:18px;margin-bottom:clamp(28px,4.5vw,52px)}
+
+/* «появление» */
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .06em .14em 0;margin-bottom:-.14em}
+.w > span{display:inline-block;transition:transform 1.1s cubic-bezier(.2,.85,.2,1) var(--d,0ms),opacity .6s var(--d,0ms)}
+.wait .w > span{transform:translateY(110%) rotate(7deg);opacity:0}
+[data-r="up"]{transition:transform 1s cubic-bezier(.2,.85,.2,1) var(--d,0ms),opacity .8s var(--d,0ms)}
+[data-r="up"].wait{transform:translateY(46px);opacity:0}
 
 /* подбор */
-.filters{display:grid;gap:16px;margin-bottom:28px}
+.filters{display:grid;gap:14px;margin-bottom:26px}
 .frow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .frow > span{font:500 .68rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);flex:0 0 100px}
-.chip{font:400 .88rem/1 var(--f-body);padding:.7em 1em;border-radius:99px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;min-height:38px;transition:border-color .2s,background .2s}
-.chip:hover{border-color:var(--ink)}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--night);border-color:var(--ink);font-weight:600}
-.found{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;color:var(--muted);font-size:.9rem}
-.found b{color:var(--ink);font:500 1.6rem/1 var(--f-display)}
-.linkbtn{background:none;border:0;color:var(--ice);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.chip{font:500 .88rem/1 var(--f-body);padding:.72em 1.05em;border-radius:99px;border:1px solid var(--line);background:var(--solid);color:var(--ink);cursor:pointer;min-height:38px;transition:border-color .2s,background .2s,transform .2s}
+.chip:hover{border-color:var(--ink);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--grad);color:#fff;border-color:transparent}
+.found{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;color:var(--muted);font-size:.92rem}
+.found b{color:var(--ink);font:500 1.8rem/1 var(--f-display)}
+.linkbtn{background:none;border:0;color:var(--cy);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
 @media(max-width:720px){.grid{grid-template-columns:1fr}}
-.card{position:relative;display:block;aspect-ratio:4/3;border-radius:14px;overflow:hidden;border:0;padding:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer;background:var(--panel-solid);min-width:0;max-width:100%}
+.card{--ridge:polygon(0 100%,0 0,9% 0,17% 0,26% 0,34% 0,43% 0,51% 0,60% 0,68% 0,77% 0,86% 0,93% 0,100% 0,100% 100%);
+  position:relative;display:block;aspect-ratio:4/3;border-radius:22px;overflow:hidden;border:0;padding:0;color:#fff;font:inherit;text-align:left;cursor:pointer;background:var(--soft);min-width:0;max-width:100%;
+  clip-path:var(--ridge);transform:perspective(1100px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:clip-path 1.3s cubic-bezier(.75,0,.2,1) var(--d,0ms),transform .5s cubic-bezier(.2,.8,.2,1);box-shadow:0 24px 50px -28px rgba(20,20,70,.55)}
+.card.wait{--ridge:polygon(0 100%,0 96%,9% 86%,17% 92%,26% 78%,34% 88%,43% 70%,51% 84%,60% 76%,68% 90%,77% 74%,86% 87%,93% 80%,100% 90%,100% 100%)}
+.card.tilt{transition:clip-path 1.3s cubic-bezier(.75,0,.2,1),transform .12s linear}
 .card:first-child{grid-column:1/-1;aspect-ratio:21/9}
 @media(max-width:720px){.card,.card:first-child{aspect-ratio:4/5}}
-.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.6s cubic-bezier(.2,.8,.2,1) var(--d,0ms)}
+.card.wait img{transform:scale(1.3)}
 .card:hover img{transform:scale(1.06)}
-.card::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,13,24,.35) 0%,transparent 30%,rgba(6,13,24,.25) 52%,rgba(6,13,24,.94) 100%)}
+.card::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,12,40,.4) 0%,transparent 28%,rgba(10,12,40,.15) 52%,rgba(10,12,40,.88) 100%)}
+.card .gl{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.35),transparent 42%);opacity:0;transition:opacity .3s}
+.card.tilt .gl{opacity:1}
 .card .in{position:absolute;inset:0;z-index:1;padding:clamp(16px,2.4vw,28px);display:flex;flex-direction:column;justify-content:space-between;gap:10px}
-.card .tp{display:flex;justify-content:space-between;gap:8px;font:500 .68rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase}
-.card .tp em{font-style:normal;background:var(--glow);color:#1A0F0A;padding:.45em .7em;border-radius:99px;font-weight:700}
-.card .bt{display:grid;gap:10px}
-.card h3{font-size:clamp(1.5rem,2.6vw,2.3rem);max-width:20ch}
-.card:first-child h3{font-size:clamp(1.7rem,4.2vw,3.6rem)}
-.meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.84rem;color:#D3DAE6}
+.card .tp{display:flex;justify-content:space-between;gap:8px;font:500 .68rem/1.3 var(--f-mono);letter-spacing:.14em;text-transform:uppercase}
+.card .tp em{font-style:normal;background:var(--grad);color:#fff;padding:.45em .75em;border-radius:99px;font-weight:700;flex:none}
+.card .bt{display:grid;gap:10px;padding-right:56px}
+.card h3{font-size:clamp(1.6rem,2.7vw,2.4rem);max-width:20ch}
+.card:first-child h3{font-size:clamp(1.8rem,4.4vw,3.8rem)}
+.meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.86rem;color:rgba(255,255,255,.88)}
 .price{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.price b{font:700 1.1rem/1 var(--f-mono);font-variant-numeric:tabular-nums}
-.price s{color:var(--muted);font:500 .84rem/1 var(--f-mono)}
-.price small{color:var(--muted);font-size:.78rem}
-.card .go{position:absolute;right:clamp(16px,2.4vw,28px);bottom:clamp(16px,2.4vw,28px);width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.5);display:grid;place-items:center;font-size:1.1rem;transition:background .25s,color .25s,transform .25s}
-.card:hover .go{background:var(--ink);color:var(--night);transform:rotate(-45deg)}
+.price b{font:700 1.12rem/1 var(--f-mono);font-variant-numeric:tabular-nums}
+.price s{opacity:.65;font:500 .84rem/1 var(--f-mono)}
+.price small{opacity:.7;font-size:.78rem}
+.card .go{position:absolute;z-index:2;right:clamp(16px,2.4vw,28px);bottom:clamp(16px,2.4vw,28px);width:48px;height:48px;border-radius:50%;background:#fff;color:var(--ink);display:grid;place-items:center;font-size:1.15rem;transition:transform .3s,background .3s,color .3s}
+.card:hover .go{background:var(--grad);color:#fff;transform:rotate(-45deg) scale(1.08)}
 .peaks{display:inline-flex;gap:2px;vertical-align:-1px}
-.peaks i{width:9px;height:10px;background:rgba(255,255,255,.28);clip-path:polygon(50% 0,100% 100%,0 100%)}
-.peaks i.on{background:var(--glow-a)}
-.empty{padding:40px;border:1px dashed var(--line);border-radius:14px;text-align:center;color:var(--muted);grid-column:1/-1}
+.peaks i{width:9px;height:10px;background:rgba(255,255,255,.35);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.peaks i.on{background:#FFB07A}
+.empty{padding:40px;border:1.5px dashed var(--line);border-radius:22px;text-align:center;color:var(--muted);grid-column:1/-1}
 .more{margin-top:28px;text-align:center}
 
+/* иллюминатор */
+.port{position:relative;height:260vh}
+.port-stick{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:grid;place-items:center}
+.port-img{position:absolute;inset:0;clip-path:circle(var(--r,9%) at 50% 52%);will-change:clip-path}
+.port-img img{width:100%;height:100%;object-fit:cover;transform:scale(var(--s,1.35));will-change:transform}
+.port-img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(10,12,40,.7))}
+.port-num{position:relative;z-index:2;text-align:center;color:var(--sky-ink);font:500 clamp(5rem,22vw,19rem)/.8 var(--f-display);letter-spacing:-.04em;text-shadow:0 10px 60px var(--sky-shadow);pointer-events:none}
+.port-num small{display:block;font:500 clamp(.7rem,1.2vw,.9rem)/1 var(--f-mono);letter-spacing:.3em;text-transform:uppercase;margin-top:1.4em}
+.port-cap{position:absolute;z-index:2;left:0;right:0;bottom:clamp(28px,7vh,72px);color:#fff;display:grid;gap:18px;justify-items:start;opacity:0}
+.port-cap p{font:500 clamp(1.6rem,3.6vw,3rem)/1.05 var(--f-display);max-width:22ch;text-shadow:0 2px 30px rgba(0,0,0,.4)}
+.port-cap p + p{font:400 1rem/1.55 var(--f-body);max-width:46ch;opacity:.92}
+
+/* регионы — галерея вбок */
+.hz{position:relative}
+.hz-stick{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:flex;align-items:center}
+.hz-track{display:flex;gap:clamp(16px,2.4vw,32px);align-items:center;padding-left:max(var(--gut),calc((100vw - var(--max))/2 + 16px));padding-right:10vw;will-change:transform}
+.hz-intro{flex:none;width:min(420px,80vw);color:var(--sky-ink);display:grid;gap:18px;text-shadow:0 2px 30px var(--sky-shadow)}
+.hz-intro h2{font-size:clamp(2.8rem,5.6vw,5rem)}
+.hz-intro p{font-size:1.05rem;opacity:.9}
+.hz-intro .eyebrow{color:inherit;opacity:.85}
+.rg{flex:none;position:relative;width:min(62vw,760px);height:min(70vh,580px);border-radius:30px;overflow:hidden;color:#fff;box-shadow:0 40px 80px -30px rgba(10,10,50,.6);will-change:transform}
+.rg img{position:absolute;top:-4%;left:-8%;width:116%;height:108%;max-width:none;object-fit:cover;will-change:transform}
+.rg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,12,40,.25) 0%,transparent 35%,rgba(10,12,40,.85) 100%)}
+.rg .in{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(20px,3vw,40px)}
+.rg .cnt{align-self:flex-start;font:700 .72rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;background:rgba(255,255,255,.16);backdrop-filter:blur(10px);padding:.7em 1em;border-radius:99px}
+.rg h3{font-size:clamp(2.2rem,5vw,4.6rem);line-height:.92;max-width:11ch}
+.rg p{font-size:.98rem;opacity:.92;max-width:36ch}
+.rg .bt{display:grid;gap:14px;justify-items:start}
+.hz-end{flex:none;width:min(360px,76vw);display:grid;gap:16px;justify-items:start;color:var(--sky-ink);text-shadow:0 2px 30px var(--sky-shadow)}
+.hz-end p{font:500 clamp(1.8rem,3.4vw,2.8rem)/1.05 var(--f-display)}
+@media(max-width:799px){
+  .hz-stick{position:static;height:auto;display:block;padding-block:40px}
+  .hz-track{overflow-x:auto;scroll-snap-type:x mandatory;padding-left:var(--gut);padding-right:var(--gutr);scrollbar-width:none}
+  .hz-track::-webkit-scrollbar{display:none}
+  .rg{width:84vw;height:min(118vw,560px);scroll-snap-align:center}
+  .hz-intro{width:78vw}
+}
+
 /* календарь */
-.cal-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:rgba(4,9,18,.5)}
-.cal{display:grid;grid-template-columns:minmax(210px,1.5fr) repeat(12,minmax(40px,1fr));min-width:780px;font-size:.86rem}
+.cal-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:20px;background:var(--solid)}
+.cal{display:grid;grid-template-columns:minmax(210px,1.5fr) repeat(12,minmax(40px,1fr));min-width:780px;font-size:.88rem}
 .cal > *{padding:9px 4px;border:0;border-bottom:1px solid var(--line);min-width:0}
 .cal .mh{font:700 .68rem/1 var(--f-mono);text-transform:uppercase;letter-spacing:.08em;text-align:center;color:var(--muted);background:transparent;cursor:pointer;padding:16px 2px}
-.cal .mh:hover{color:var(--ink)}
-.cal .mh.now{color:#1A0F0A;background:var(--glow)}
-.cal .nm{position:sticky;left:0;background:var(--panel-solid);padding-left:16px;border-right:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
-.cal .nm:hover{color:var(--ice)}
+.cal .mh:hover{color:var(--ink);background:var(--soft)}
+.cal .mh.now{color:#fff;background:var(--grad)}
+.cal .nm{position:sticky;left:0;background:var(--solid);padding-left:16px;border-right:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;font:inherit;color:var(--ink);cursor:pointer;z-index:1}
+.cal .nm:hover{color:var(--a2)}
 .cal .c{display:flex;align-items:center;padding-inline:0}
-.cal .c i{display:block;height:8px;width:100%;background:linear-gradient(90deg,var(--ice),#6FB6FF)}
-.cal .c.s i{border-radius:4px 0 0 4px}.cal .c.e i{border-radius:0 4px 4px 0}.cal .c.s.e i{border-radius:4px}
-.cal .c.col-now{background:rgba(255,120,90,.13)}
-.cal .c.col-now i{background:var(--glow)}
+.cal .c i{display:block;height:10px;width:100%;background:linear-gradient(90deg,var(--a3),var(--cy));transform-origin:left;transition:transform .7s cubic-bezier(.2,.8,.2,1) var(--d,0ms)}
+.cal.wait .c i{transform:scaleX(0)}
+.cal .c.s i{border-radius:5px 0 0 5px}.cal .c.e i{border-radius:0 5px 5px 0}.cal .c.s.e i{border-radius:5px}
+.cal .c.col-now{background:rgba(255,46,126,.08)}
+.cal .c.col-now i{background:var(--grad)}
 .cal .c.q{justify-content:center;color:var(--muted);font-size:.75rem}
-.cal-note{margin-top:14px;font-size:.86rem;color:var(--muted)}
+.cal-note{margin-top:14px;font-size:.88rem;color:var(--muted)}
 
 /* шаги */
-ol.steps{margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);counter-reset:s}
-.steps li{list-style:none;padding:26px 20px 0 0;display:grid;gap:10px;align-content:start;border-top:1px solid var(--line);position:relative}
-.steps li::before{counter-increment:s;content:counter(s);font:italic 500 3.4rem/1 var(--f-display);background:var(--glow);-webkit-background-clip:text;background-clip:text;color:transparent}
-.steps li::after{content:"";position:absolute;top:-4px;left:0;width:7px;height:7px;border-radius:50%;background:var(--glow-a)}
-.steps p{font-size:.9rem;color:var(--muted)}
-@media(max-width:900px){ol.steps{grid-template-columns:1fr}.steps li{padding:22px 0}}
-.pay{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:64px}
-.pay div{display:grid;gap:8px}
-.pay b{font:500 clamp(2.6rem,5vw,4rem)/1 var(--f-display)}
+ol.steps{margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:0 18px;counter-reset:s}
+.steps li{list-style:none;padding:24px 0 0;display:grid;gap:10px;align-content:start;border-top:2px solid var(--ink);position:relative}
+.steps li::before{counter-increment:s;content:counter(s);font:italic 500 4rem/1 var(--f-display);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.1em;justify-self:start}
+.steps p{font-size:.92rem;color:var(--muted)}
+@media(max-width:900px){ol.steps{grid-template-columns:1fr}.steps li{padding:20px 0 24px}}
+.pay{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px}
+.pay div{display:grid;gap:8px;background:var(--soft);border-radius:22px;padding:26px}
+.pay b{font:500 clamp(2.8rem,5vw,4.2rem)/1 var(--f-display);background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;justify-self:start;padding-right:.08em;font-variant-numeric:tabular-nums}
 .pay span{font-size:.92rem;color:var(--muted);max-width:30ch}
 @media(max-width:720px){.pay{grid-template-columns:1fr}}
 
-/* гиды */
-.guides{display:grid;grid-template-columns:repeat(4,1fr);gap:34px 18px}
-@media(max-width:900px){.guides{grid-template-columns:repeat(2,1fr)}}
-.guide{display:grid;gap:10px;align-content:start;min-width:0}
-.guide .im{aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:var(--panel-solid)}
-.guide img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05);transition:filter .6s,transform 1s}
-.guide:hover img{filter:none;transform:scale(1.04)}
-.guide small{font:500 .66rem/1.3 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--glow-a);margin-top:6px}
-.guide p{font-size:.88rem;color:var(--muted)}
+/* гиды-полароиды */
+.guides{display:grid;grid-template-columns:repeat(4,1fr);gap:34px 22px}
+@media(max-width:900px){.guides{grid-template-columns:repeat(2,1fr);gap:26px 14px}}
+.guide{background:var(--solid);padding:10px 10px 18px;border-radius:6px;box-shadow:0 18px 40px -18px rgba(20,20,70,.45);display:grid;gap:8px;align-content:start;min-width:0;transform:rotate(var(--rot,0deg));transition:transform .9s cubic-bezier(.2,.9,.25,1.25) var(--d,0ms),opacity .6s var(--d,0ms),box-shadow .3s}
+.guide.wait{opacity:0;transform:translateY(90px) rotate(calc(var(--rot,0deg) * -5)) scale(.92)}
+.guide:hover{transform:rotate(0deg) scale(1.04);box-shadow:0 28px 60px -20px rgba(20,20,70,.55);transition-delay:0ms}
+.guide .im{aspect-ratio:1;border-radius:3px;overflow:hidden;background:var(--soft)}
+.guide img{width:100%;height:100%;object-fit:cover}
+.guide small{font:500 .64rem/1.3 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--a2);margin-top:6px;padding-inline:4px}
+.guide h3{padding-inline:4px;font-size:1.45rem}
+.guide p{font-size:.86rem;color:var(--muted);padding-inline:4px}
 .said{margin-top:56px;padding-top:26px;border-top:1px solid var(--line);display:grid;gap:16px}
 .said ul{margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.said li{list-style:none;font-size:.84rem;border:1px solid var(--line);border-radius:99px;padding:.5em .95em;color:var(--muted)}
-.said li b{font-weight:500;color:var(--ink)}
+.said li{list-style:none;font-size:.86rem;background:var(--soft);border-radius:99px;padding:.55em 1em;color:var(--muted)}
+.said li b{font-weight:600;color:var(--ink)}
+
+/* окна-фразы */
+.win{min-height:80svh;display:grid;place-items:center;text-align:center;padding-block:80px;color:var(--sky-ink)}
+.win .wrap{display:grid;gap:22px;justify-items:center}
+.win .eyebrow{color:inherit;opacity:.85}
+.win .big{font:500 clamp(2.8rem,9.5vw,8rem)/.92 var(--f-display);letter-spacing:-.02em;max-width:12ch;text-shadow:0 6px 60px var(--sky-shadow)}
+.win .small{max-width:42ch;font-size:1.06rem;text-shadow:0 1px 18px var(--sky-shadow)}
 
 /* вопросы */
 .faq{display:grid;grid-template-columns:1fr 1fr;gap:0 48px}
 @media(max-width:800px){.faq{grid-template-columns:1fr}}
 details{border-bottom:1px solid var(--line)}
-summary{cursor:pointer;padding:22px 36px 22px 0;font:500 1.5rem/1.15 var(--f-display);list-style:none;position:relative}
+summary{cursor:pointer;padding:22px 44px 22px 0;font:500 1.55rem/1.15 var(--f-display);list-style:none;position:relative}
 summary::-webkit-details-marker{display:none}
-summary::after{content:"+";position:absolute;right:4px;top:18px;font:500 1.5rem/1 var(--f-mono);color:var(--glow-a);transition:transform .25s}
+summary::after{content:"+";position:absolute;right:0;top:20px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:500 1.1rem/1 var(--f-mono);color:#fff;background:var(--grad);transition:transform .3s}
 details[open] summary::after{transform:rotate(45deg)}
-details p{padding:0 0 22px;color:var(--muted);font-size:.95rem;max-width:58ch}
+details p{padding:0 0 22px;color:var(--muted);font-size:.96rem;max-width:58ch}
 
 /* заявка */
-.book{display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:start}
+.book{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:start}
 @media(max-width:920px){.book{grid-template-columns:1fr}}
 form.f{display:grid;gap:18px;min-width:0}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:520px){.fg{grid-template-columns:1fr}}
 label.fl{display:grid;gap:8px;font:500 .68rem/1.2 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-width:0}
-label.fl em{font-style:normal;color:var(--glow-a)}
-input,select,textarea{font:400 1rem/1.3 var(--f-body);letter-spacing:0;text-transform:none;padding:.95em 1em;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.04);color:var(--ink);width:100%;min-width:0}
-select option{background:var(--panel-solid);color:var(--ink)}
+label.fl em{font-style:normal;color:var(--a2)}
+input,select,textarea{font:400 1rem/1.3 var(--f-body);letter-spacing:0;text-transform:none;padding:.95em 1em;border:1.5px solid transparent;border-radius:14px;background:var(--soft);color:var(--ink);width:100%;min-width:0;transition:border-color .2s,background .2s}
 textarea{resize:vertical;min-height:84px}
-input:focus,select:focus,textarea:focus{border-color:var(--ice);outline:0}
-.stepper{display:flex;gap:6px}.stepper button{width:48px;flex:none;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--ink);border-radius:10px;font:700 1.1rem/1 var(--f-mono);cursor:pointer}
+input:focus,select:focus,textarea:focus{border-color:var(--a3);background:var(--solid);outline:0}
+.stepper{display:flex;gap:6px}.stepper button{width:50px;flex:none;border:0;background:var(--soft);color:var(--ink);border-radius:14px;font:700 1.1rem/1 var(--f-mono);cursor:pointer}
+.stepper button:hover{background:var(--ink);color:#fff}
 .stepper input{text-align:center}
-.agree{display:flex;gap:12px;align-items:flex-start;font-size:.86rem;color:var(--muted)}
-.agree input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--glow-a)}
-.err{color:#FF9C8A;font-size:.9rem;font-weight:500}
-.done{display:grid;gap:14px;padding:20px;border:1px solid var(--ice);border-radius:14px}
+.agree{display:flex;gap:12px;align-items:flex-start;font-size:.88rem;color:var(--muted)}
+.agree input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--a2)}
+.err{color:#D4262F;font-size:.92rem;font-weight:600}
+.done{display:grid;gap:14px;padding:20px;border-radius:20px;background:var(--soft)}
+.done h3{font-size:1.7rem}
 .done .row{display:flex;flex-wrap:wrap;gap:10px}
-.ticket{position:sticky;top:calc(env(safe-area-inset-top,0px) + 92px);background:var(--paper);color:var(--paper-ink);border-radius:14px;font-family:var(--f-mono);font-size:.84rem;overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.8);transform:rotate(1.2deg)}
-.ticket header{padding:16px 20px;background:var(--glow);color:#1A0F0A;display:flex;justify-content:space-between;gap:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.7rem}
-.ticket .tb{padding:22px 20px;display:grid;gap:14px}
-.ticket h3{font-size:1.7rem}
+.ticket{position:sticky;top:calc(env(safe-area-inset-top,0px) + 92px);background:#FFFDF6;color:var(--ink);border-radius:20px;font-family:var(--f-mono);font-size:.84rem;overflow:hidden;box-shadow:0 40px 80px -30px rgba(20,20,70,.5);transform:rotate(1.4deg);transition:transform .4s}
+.ticket:hover{transform:rotate(0)}
+.ticket header{padding:16px 22px;background:var(--grad);color:#fff;display:flex;justify-content:space-between;gap:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.7rem}
+.ticket .tb{padding:22px;display:grid;gap:14px}
+.ticket h3{font-size:1.8rem}
 .ticket dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:9px 14px}
-.ticket dt{color:var(--paper-muted)}.ticket dd{margin:0;text-align:right;font-weight:700;min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
-.perf{border-top:2px dashed #C9C1B2;margin-inline:-20px;position:relative}
-.perf::before,.perf::after{content:"";position:absolute;top:-11px;width:20px;height:20px;border-radius:50%;background:var(--panel-solid)}
+.ticket dt{color:var(--muted)}.ticket dd{margin:0;text-align:right;font-weight:700;min-width:0;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.perf{border-top:2px dashed #D9D3C4;margin-inline:-22px;position:relative}
+.perf::before,.perf::after{content:"";position:absolute;top:-11px;width:20px;height:20px;border-radius:50%;background:#F3F3F8}
 .perf::before{left:-10px}.perf::after{right:-10px}
-.ticket .total dd{font:600 2rem/1 var(--f-display)}
-.ticket .pre dd{color:#D8421F}
-.ticket small{font:400 .78rem/1.45 var(--f-body);color:var(--paper-muted)}
+.ticket .total dd{font:600 2.1rem/1 var(--f-display)}
+.ticket .pre dd{color:var(--a2)}
+.ticket small{font:400 .78rem/1.45 var(--f-body);color:var(--muted)}
+.bump{animation:bump .5s}
+@keyframes bump{30%{transform:scale(1.12)}}
 
 /* подвал */
-footer{background:var(--night);padding-block:56px 64px;font-size:.9rem;color:var(--muted);border-top:1px solid var(--line)}
+footer{background:var(--ink);color:rgba(255,255,255,.7);padding-block:64px 72px;font-size:.92rem;margin-top:40px}
 .fcols{display:grid;grid-template-columns:1.2fr 1fr 1.3fr;gap:32px}
 @media(max-width:800px){.fcols{grid-template-columns:1fr}}
-.fcols h3{font:500 .68rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px;color:var(--ink)}
+.fcols h3{font:500 .68rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px;color:#fff}
 .fcols p,.fcols li{margin:0 0 8px}.fcols ul{margin:0;padding:0;list-style:none}
-.tel{font:500 1.7rem/1.3 var(--f-display);color:var(--ink);user-select:all}
-.copy{font:400 .72rem/1 var(--f-body);border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:99px;padding:.4em .8em;cursor:pointer;margin-left:8px;vertical-align:middle}
+footer a{color:#9FD8FF}
+.tel{font:500 1.8rem/1.3 var(--f-display);color:#fff;user-select:all}
+.copy{font:400 .72rem/1 var(--f-body);border:1px solid rgba(255,255,255,.25);background:transparent;color:rgba(255,255,255,.75);border-radius:99px;padding:.45em .85em;cursor:pointer;margin-left:8px;vertical-align:middle}
 
-/* высотомер сбоку */
-.rail{position:fixed;right:max(22px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 110px);bottom:calc(env(safe-area-inset-bottom,0px) + 40px);width:1px;background:var(--line);z-index:5;display:none}
-@media(min-width:1400px){.rail{display:block}}
-.rail .st{position:absolute;right:-3px;width:7px;height:1px;background:var(--muted)}
-.rail .st span{position:absolute;right:16px;top:-.5em;white-space:nowrap;font:500 .62rem/1 var(--f-mono);color:var(--muted);opacity:.7}
-.rail .st.pass{background:var(--glow-a)}.rail .st.pass span{color:var(--ink);opacity:1}
-.rail .me{position:absolute;right:-6px;width:13px;height:12px;background:var(--glow-a);clip-path:polygon(50% 0,100% 100%,0 100%);transform:translateY(50%)}
-.rail .fill{position:absolute;left:0;bottom:0;width:1px;background:var(--glow-a)}
+/* высотомер */
+.rail{position:fixed;right:max(24px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 110px);bottom:calc(env(safe-area-inset-bottom,0px) + 40px);width:2px;border-radius:2px;background:rgba(255,255,255,.25);z-index:5;display:none}
+@media(min-width:1560px){.rail{display:block}}
+.rail .st{position:absolute;right:-3px;width:8px;height:2px;background:var(--sky-ink);opacity:.5}
+.rail .st span{position:absolute;right:16px;top:-.55em;white-space:nowrap;font:500 .64rem/1 var(--f-mono);color:var(--sky-ink)}
+.rail .st.pass{opacity:1}
+.rail .me{position:absolute;right:-7px;width:16px;height:14px;background:var(--a2);clip-path:polygon(50% 0,100% 100%,0 100%);transform:translateY(50%)}
+.rail .fill{position:absolute;left:0;bottom:0;width:2px;background:var(--grad)}
 
 /* окно тура */
-dialog{border:1px solid var(--line);padding:0;border-radius:18px;background:var(--panel-solid);color:var(--ink);width:min(760px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto}
-dialog::backdrop{background:rgba(3,7,14,.8);backdrop-filter:blur(6px)}
+dialog{border:0;padding:0;border-radius:26px;background:var(--solid);color:var(--ink);width:min(780px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;box-shadow:0 50px 120px -30px rgba(0,0,0,.6)}
+dialog[open]{animation:pop .5s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{transform:translateY(40px) scale(.94);opacity:0}}
+dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
 .dl-img{aspect-ratio:16/8;width:100%;object-fit:cover;display:block}
-.dl-b{padding:clamp(20px,4vw,34px);display:grid;gap:20px}
-.dl-b h3{font-size:clamp(1.8rem,4.4vw,2.8rem)}
-.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 14px;padding-block:18px;border-block:1px solid var(--line)}
-.specs div{display:grid;gap:6px;font-size:.95rem;min-width:0}
+.dl-b{padding:clamp(20px,4vw,36px);display:grid;gap:20px}
+.dl-b h3{font-size:clamp(1.9rem,4.4vw,3rem)}
+.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 14px;padding:18px;border-radius:18px;background:var(--soft)}
+.specs div{display:grid;gap:6px;font-size:.96rem;min-width:0;font-weight:500}
 .specs small{font:500 .62rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.specs .peaks i{background:var(--line)}.specs .peaks i.on{background:var(--a2)}
 @media(max-width:480px){.specs{grid-template-columns:repeat(2,1fr)}}
 .dl-b .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.x{position:absolute;right:14px;top:14px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(6,13,24,.7);color:var(--ink);font-size:1.4rem;cursor:pointer;z-index:2}
+.x{position:absolute;right:14px;top:14px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:var(--ink);font-size:1.4rem;cursor:pointer;z-index:2}
 
-/* появление */
-.rv{opacity:1;transform:none}
-.js .rv{transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
-.js .rv.wait{opacity:.001;transform:translateY(34px)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}.js .rv.wait{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
 </style>
 
-<div class="sky"></div><div class="stars" id="stars"></div><div class="dawn" id="dawn"></div>
-<canvas id="terrain" aria-hidden="true"></canvas><div class="vignette"></div>
+<div id="sky"></div><div id="stars"></div><div id="sun"></div>
+<canvas id="terrain" aria-hidden="true"></canvas>
 
 <header class="top" id="hdr"><div class="wrap">
   <a class="logo" href="#top">МАГТУР</a>
   <nav aria-label="Разделы">
-    <a href="#tours">Туры</a><a href="#season">Сезоны</a><a href="#how">Бронирование</a><a href="#guides">Гиды</a><a href="#faq">Вопросы</a>
+    <a href="#tours">Туры</a><a href="#regions">Регионы</a><a href="#season">Сезоны</a><a href="#how">Бронирование</a><a href="#guides">Гиды</a>
   </nav>
   <div class="alt-pill" title="Высота растёт, пока вы листаете страницу"><i>▲</i><span id="altNum">512 м</span><small id="altPlace">Пятигорск</small></div>
   <a class="btn btn-main" href="#book">Заявка</a>
@@ -257,94 +330,123 @@ dialog::backdrop{background:rgba(3,7,14,.8);backdrop-filter:blur(6px)}
 <section class="hero" id="top" data-alt="512" data-place="Пятигорск">
   <div class="wrap">
     <p class="eyebrow"><b>●</b> Международная академия горного туризма · с 2013 года</p>
-    <h1>Кавказ, на который <i>возвращаются</i></h1>
+    <h1 data-r="words">Кавказ, на который <i>возвращаются</i></h1>
     <div class="row">
-      <p class="sub">Пешие, конные, экскурсионные и горнолыжные туры по шести регионам. Листайте вниз: страница набирает высоту вместе с вами, а на вершине Эльбруса наступит рассвет.</p>
-      <div class="cta">
+      <p class="sub" data-r="up" style="--d:500ms">Пешие, конные, экскурсионные и горнолыжные туры по всему Северному Кавказу. Листайте: вы поднимаетесь от Пятигорска к вершине Эльбруса, а ночь сменяется рассветом и ярким днём.</p>
+      <div class="cta" data-r="up" style="--d:650ms">
         <a class="btn btn-main" href="#tours">Подобрать тур</a>
-        <a class="btn btn-ghost" href="#season">Что идёт в этом месяце</a>
+        <a class="btn btn-sky" href="#season">Что идёт в этом месяце</a>
       </div>
     </div>
-    <div class="facts">
-      <div><b>20 000+</b><span>туристов прошли наши маршруты</span></div>
-      <div><b>20+</b><span>гидов в команде</span></div>
+    <div class="facts" id="heroFacts">
+      <div><b data-count="20000" data-suf="+">20 000+</b><span>туристов прошли наши маршруты</span></div>
+      <div><b data-count="20" data-suf="+">20+</b><span>гидов в команде</span></div>
       <div><b>от 1</b><span>человека: тур состоится в любом случае</span></div>
-      <div><b>100%</b><span>возврат при отмене за 72 часа</span></div>
-      <p class="scrollhint" style="margin-left:auto;align-self:end">Начать подъём</p>
+      <div><b data-count="100" data-suf="%">100%</b><span>возврат при отмене за 72 часа</span></div>
     </div>
   </div>
 </section>
 
+<div class="ribbons" aria-hidden="true">
+  <div class="rb rb2"><span id="rb2">Пятигорск 512 · Архыз 1450 · Домбай 1650 · Чегет 3050 · Гара-Баши 3847 · Скалы Пастухова 4700 · Седловина 5300 · Эльбрус 5642 · Пятигорск 512 · Архыз 1450 · Домбай 1650 · Чегет 3050 · Гара-Баши 3847 · Скалы Пастухова 4700 · Седловина 5300 · Эльбрус 5642 · </span></div>
+  <div class="rb rb1"><span id="rb1">Домбай ✦ Архыз ✦ Эльбрус ✦ Чегет ✦ Дигория ✦ Гамсутль ✦ Сулакский каньон ✦ Дербент ✦ Кисловодск ✦ Теберда ✦ Домбай ✦ Архыз ✦ Эльбрус ✦ Чегет ✦ Дигория ✦ Гамсутль ✦ Сулакский каньон ✦ Дербент ✦ Кисловодск ✦ Теберда ✦ </span></div>
+</div>
+
 <section class="panel" id="tours" data-alt="1450" data-place="Архыз">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="eyebrow"><b>1450 м</b> Архыз · выбор маршрута</p>
-      <h2>Найдите <i>свой</i> тур</h2>
-      <p class="lead">Отметьте, как хотите двигаться и когда свободны. Список перестраивается сразу, без кнопки «Найти».</p>
+  <div class="sheet">
+    <div class="head">
+      <p class="eyebrow" data-r="up"><b>1450 м</b> Архыз · выбор маршрута</p>
+      <h2 data-r="words">Найдите <i>свой</i> тур</h2>
+      <p class="lead" data-r="up" style="--d:200ms">Отметьте, как хотите двигаться, куда и когда. Карточки перестраиваются сразу и вырастают, как горный хребет.</p>
     </div>
-    <div class="filters rv">
+    <div class="filters" data-r="up" style="--d:250ms">
       <div class="frow" id="fType"><span>Формат</span></div>
+      <div class="frow" id="fReg"><span>Регион</span></div>
       <div class="frow" id="fMonth"><span>Месяц</span></div>
       <div class="frow" id="fDiff"><span>Нагрузка</span></div>
       <div class="frow" id="fBudget"><span>Бюджет</span></div>
     </div>
-    <div class="found"><span><b id="cnt">19</b> &nbsp;туров подходит</span><button class="linkbtn" id="reset" type="button">Сбросить фильтры</button></div>
+    <div class="found"><span><b id="cnt">19</b> &nbsp;<span id="cntWord">туров подходит</span></span><button class="linkbtn" id="reset" type="button">Сбросить фильтры</button></div>
     <div class="grid" id="grid"></div>
     <p class="more"><button class="btn btn-ghost" id="moreBtn" type="button" hidden></button></p>
   </div>
 </section>
 
-<div class="win"><div class="wrap">
-  <p class="eyebrow"><b>●</b> 12 лет в горах</p>
-  <p class="big rv">Каждый <i>четвёртый</i> едет снова</p>
-  <p class="small">С 2013 года с нами прошли больше 20 000 человек. Больше 80% говорят, что готовы повторить.</p>
-</div></div>
-
-<section class="panel" id="season" data-alt="1650" data-place="Домбай">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="eyebrow"><b>1650 м</b> Домбай · сезоны</p>
-      <h2>Весь год <i>на одной</i> карте</h2>
-      <p class="lead">Полоса показывает месяцы, когда тур проводится. Нажмите на месяц, чтобы оставить в каталоге только его туры, или на название, чтобы открыть тур.</p>
+<section class="port" id="port" aria-label="Эльбрус">
+  <div class="port-stick">
+    <div class="port-img" id="portImg"><img src="img/t7.jpg" alt="Эльбрус в облаках над заснеженным плато"></div>
+    <div class="port-num" id="portNum">5642<small>метра над морем</small></div>
+    <div class="port-cap wrap" id="portCap">
+      <p>Эльбрус — самая высокая вершина России и Европы</p>
+      <p>В ясную погоду его видно прямо из Пятигорска, где начинаются наши туры. В хайкинге «Притяжение Эльбруса» вы подойдёте к нему вплотную.</p>
+      <button class="btn btn-main" type="button" data-open="7">Смотреть тур</button>
     </div>
-    <div class="cal-scroll rv"><div class="cal" id="cal"></div></div>
+  </div>
+</section>
+
+<section class="hz" id="regions" data-alt="1650" data-place="Домбай">
+  <div class="hz-stick">
+    <div class="hz-track" id="hzTrack">
+      <div class="hz-intro">
+        <p class="eyebrow">1650 м · Домбай · направления</p>
+        <h2>Пять направлений, <i>один</i> Кавказ</h2>
+        <p>Листайте дальше: галерея поедет вбок. Нажмите на регион, и в каталоге останутся только его туры.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="season" data-alt="3050" data-place="Чегет">
+  <div class="sheet">
+    <div class="head">
+      <p class="eyebrow" data-r="up"><b>3050 м</b> Чегет · сезоны</p>
+      <h2 data-r="words">Весь год <i>на одной</i> карте</h2>
+      <p class="lead" data-r="up" style="--d:200ms">Полоса показывает месяцы, когда тур проводится. Нажмите на месяц, чтобы оставить в каталоге только его туры, или на название, чтобы открыть тур.</p>
+    </div>
+    <div class="cal-scroll"><div class="cal" id="cal"></div></div>
     <p class="cal-note">Подсвеченный столбец — текущий месяц. Период «Кавказского калейдоскопа» уточняйте у менеджера.</p>
   </div>
 </section>
 
-<section class="panel" id="how" data-alt="3050" data-place="Чегет" style="border-top:0">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="eyebrow"><b>3050 м</b> Чегет · как всё устроено</p>
-      <h2>Пять шагов <i>до гор</i></h2>
+<div class="win"><div class="wrap">
+  <p class="eyebrow">● 12 лет в горах</p>
+  <p class="big" data-r="words">Каждый <i>четвёртый</i> едет снова</p>
+  <p class="small" data-r="up" style="--d:400ms">С 2013 года с нами прошли больше 20 000 человек. Больше 80% говорят, что готовы повторить.</p>
+</div></div>
+
+<section class="panel" id="how" data-alt="3847" data-place="Гара-Баши">
+  <div class="sheet">
+    <div class="head">
+      <p class="eyebrow" data-r="up"><b>3847 м</b> Гара-Баши · как всё устроено</p>
+      <h2 data-r="words">Пять шагов <i>до гор</i></h2>
     </div>
-    <ol class="steps rv">
-      <li><h3>Заявка</h3><p>Вы пишете, какой тур и когда. Менеджер проверяет места и подтверждает.</p></li>
-      <li><h3>Анкета</h3><p>Присылаем форму: данные участников для договора, здоровье и питание для гида.</p></li>
-      <li><h3>Договор и оплата</h3><p>Ссылка или QR-код на оплату картой, частями через «Долями» или перевод на счёт.</p></li>
-      <li><h3>Билеты</h3><p>Дорога до Кавказа в цену не входит. Можем купить билеты за вас, комиссия 500 ₽ за билет.</p></li>
-      <li><h3>Встреча</h3><p>Забираем в аэропорту или на вокзале Минеральных Вод, дальше всё по программе.</p></li>
+    <ol class="steps">
+      <li data-r="up" style="--d:0ms"><h3>Заявка</h3><p>Вы пишете, какой тур и когда. Менеджер проверяет места и подтверждает.</p></li>
+      <li data-r="up" style="--d:120ms"><h3>Анкета</h3><p>Присылаем форму: данные участников для договора, здоровье и питание для гида.</p></li>
+      <li data-r="up" style="--d:240ms"><h3>Договор и оплата</h3><p>Ссылка или QR-код на оплату картой, частями через «Долями» или перевод на счёт.</p></li>
+      <li data-r="up" style="--d:360ms"><h3>Билеты</h3><p>Дорога до Кавказа в цену не входит. Можем купить билеты за вас, комиссия 500 ₽ за билет.</p></li>
+      <li data-r="up" style="--d:480ms"><h3>Встреча</h3><p>Забираем в аэропорту или на вокзале Минеральных Вод, дальше всё по программе.</p></li>
     </ol>
-    <div class="pay rv">
-      <div><b>30%</b><span>предоплата при бронировании, остаток до начала тура</span></div>
-      <div><b>72 часа</b><span>до старта можно перенести тур с той же ценой или вернуть 100%</span></div>
-      <div><b>до 10%</b><span>скидка постоянным клиентам; 5% пенсионерам, именинникам, многодетным, детям до 7 лет</span></div>
+    <div class="pay">
+      <div data-r="up"><b data-count="30" data-suf="%">30%</b><span>предоплата при бронировании, остаток до начала тура</span></div>
+      <div data-r="up" style="--d:120ms"><b data-count="72" data-suf=" часа">72 часа</b><span>до старта можно перенести тур с той же ценой или вернуть 100%</span></div>
+      <div data-r="up" style="--d:240ms"><b data-pre="до " data-count="10" data-suf="%">до 10%</b><span>скидка постоянным клиентам; 5% пенсионерам, именинникам, многодетным, детям до 7 лет</span></div>
     </div>
   </div>
 </section>
 
 <div class="win"><div class="wrap">
-  <p class="eyebrow"><b>●</b> Наше правило</p>
-  <p class="big rv">Поедем, даже если вы <i>один</i></p>
-  <p class="small">Тур проводится при любом составе группы. Мы не отменяем поездку из-за того, что не набрались люди.</p>
+  <p class="eyebrow">● Наше правило</p>
+  <p class="big" data-r="words">Поедем, даже если вы <i>один</i></p>
+  <p class="small" data-r="up" style="--d:400ms">Тур проводится при любом составе группы. Мы не отменяем поездку из-за того, что не набрались люди.</p>
 </div></div>
 
-<section class="panel" id="guides" data-alt="3847" data-place="Гара-Баши">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="eyebrow"><b>3847 м</b> Гара-Баши · кто ведёт</p>
-      <h2>Гиды, которые <i>здесь</i> выросли</h2>
-      <p class="lead">Маршруты составляют альпинисты и историки, а ведут люди, для которых эти ущелья — дом.</p>
+<section class="panel" id="guides" data-alt="4700" data-place="Скалы Пастухова">
+  <div class="sheet">
+    <div class="head">
+      <p class="eyebrow" data-r="up"><b>4700 м</b> Скалы Пастухова · кто ведёт</p>
+      <h2 data-r="words">Гиды, которые <i>здесь</i> выросли</h2>
+      <p class="lead" data-r="up" style="--d:200ms">Маршруты составляют альпинисты и историки, а ведут люди, для которых эти ущелья — дом.</p>
     </div>
     <div class="guides" id="guidesGrid"></div>
     <div class="said">
@@ -355,11 +457,11 @@ dialog::backdrop{background:rgba(3,7,14,.8);backdrop-filter:blur(6px)}
   </div>
 </section>
 
-<section class="panel" id="faq" data-alt="4700" data-place="Скалы Пастухова" style="border-top:0">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="eyebrow"><b>4700 м</b> Скалы Пастухова · перед выходом</p>
-      <h2>Что спрашивают <i>до поездки</i></h2>
+<section class="panel" id="faq" data-alt="5300" data-place="Седловина">
+  <div class="sheet">
+    <div class="head">
+      <p class="eyebrow" data-r="up"><b>5300 м</b> Седловина · перед выходом</p>
+      <h2 data-r="words">Что спрашивают <i>до поездки</i></h2>
     </div>
     <div class="faq">
       <div>
@@ -379,17 +481,17 @@ dialog::backdrop{background:rgba(3,7,14,.8);backdrop-filter:blur(6px)}
 </section>
 
 <div class="win"><div class="wrap">
-  <p class="eyebrow"><b>●</b> 5642 м · Эльбрус</p>
-  <p class="big rv">Рассвет встречают <i>на вершине</i></p>
-  <p class="small">На Эльбрус выходят ночью, чтобы подняться к восходу. Вы прошли весь путь. Остался один шаг.</p>
+  <p class="eyebrow">● 5642 м · вершина</p>
+  <p class="big" data-r="words">Остался <i>один</i> шаг</p>
+  <p class="small" data-r="up" style="--d:400ms">Пока вы листали, вы поднялись от Пятигорска до вершины Эльбруса. Осталось выбрать даты.</p>
 </div></div>
 
 <section class="panel" id="book" data-alt="5642" data-place="Эльбрус, вершина">
-  <div class="wrap">
-    <div class="head rv">
-      <p class="eyebrow"><b>5642 м</b> Вершина · заявка</p>
-      <h2>Соберите <i>путевой лист</i></h2>
-      <p class="lead">Он заполняется справа, пока вы выбираете. Заявка ни к чему не обязывает: менеджер сначала проверит места.</p>
+  <div class="sheet">
+    <div class="head">
+      <p class="eyebrow" data-r="up"><b>5642 м</b> Вершина · заявка</p>
+      <h2 data-r="words">Соберите <i>путевой лист</i></h2>
+      <p class="lead" data-r="up" style="--d:200ms">Он заполняется справа, пока вы выбираете. Заявка ни к чему не обязывает: менеджер сначала проверит места.</p>
     </div>
     <div class="book">
       <form class="f" id="form" novalidate>
@@ -505,35 +607,38 @@ dialog::backdrop{background:rgba(3,7,14,.8);backdrop-filter:blur(6px)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-document.documentElement.classList.add('js');
+const STILL=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const M=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 const MF=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
 const TYPES={hike:'Пешком',bus:'Экскурсии',horse:'Верхом',ski:'Горные лыжи',rest:'Ретрит и отдых'};
+const REG={kchr:'Карачаево-Черкесия',kbr:'Кабардино-Балкария',dag:'Дагестан',oset:'Осетия, Чечня, Ингушетия',kmv:'Кавминводы'};
+const REGSHORT={kchr:'КЧР',kbr:'КБР',dag:'Дагестан',oset:'Осетия, Чечня, Ингушетия',kmv:'Кавминводы'};
 const DIFF=['','базовая','средняя','продвинутая','сложная'];
 const ALL=[1,2,3,4,5,6,7,8,9,10,11,12], r=(a,b)=>{const o=[];for(let i=a;;i=i%12+1){o.push(i);if(i===b)break}return o};
 const U='https://akademiya-gornih-turov.ru/tour/';
 const T=[
- [7,'hike','Хайкинг «Притяжение Эльбруса»','Кабардино-Балкария',8,7,r(6,10),12,3,'выше среднего',79200,99000,'t7','peshij-trekking-tur-prityazhenie-elbrusa-2027/'],
- [5,'hike','Хайкинг «Горный Дагестан: тропой Императора»','Дагестан',8,7,r(5,10),12,4,'средний',79999,99999,'t5','peshij-trekking-tur-gornyj-dagestan-tropoj-imperatora-2027/'],
- [13,'bus','Экскурсионный тур «Курортный роман»','КЧР, КБР и Кавминводы',8,7,r(4,10),6,1,'выше среднего',79200,99000,'t13','ekskursionnyj-tur-kurortnyj-roman-2027/'],
- [6,'hike','Хайкинг «Домбай и его окрестности»','Карачаево-Черкесия',8,7,r(6,10),6,2,'выше среднего',71111,88888,'t6','peshij-trekking-tur-dombaj-i-ego-okrestnosti-2027/'],
- [14,'horse','Конный тур «Джигитовка для чайников»','Карачаево-Черкесия',8,7,r(3,11),12,1,'выше среднего',71111,88888,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-2027/'],
- [11,'bus','Экскурсионный тур «Завораживающий Дагестан»','Дагестан',8,7,r(4,10),8,1,'средний',79200,99000,'t11','ekskursionnyj-tur-zavorazhivayushhij-dagestan-2027/'],
- [8,'hike','Хайкинг «Чарующий Архыз»','Карачаево-Черкесия',8,7,r(6,10),6,3,'выше среднего',79999,99999,'t8','peshij-trekking-tur-charuyushhij-arhyz-2027/'],
- [9,'hike','Пеший тур «Горная Дигория: ледники, водопады и тайны Осетии»','Северная Осетия',8,7,r(6,10),8,1,'выше среднего',79999,99999,'t9','mountain-digory-secrets-of-ossetia-2027/'],
- [10,'bus','Экскурсионный тур «Грани Кавказа»','Осетия, Чечня, Ингушетия',8,7,r(4,10),8,1,'выше среднего',88000,110000,'t10','excursion-tour-edges-of-the-caucasus-2027/'],
- [4,'hike','Хайкинг «Архипелаг скалистых островов»','Кавказские Минеральные Воды',12,11,r(6,10),10,2,'выше среднего',71200,89000,'t4','peshij-trekking-tur-arhipelag-skalistyh-ostrovov-2027/'],
- [12,'bus','Экскурсионный тур «Звёздный путь»','Карачаево-Черкесия',6,5,r(4,10),8,1,'выше среднего',63200,79000,'t12','excursion-tour-star-trek-2027/'],
- [15,'horse','Конный тур «Кубанское кольцо»','Карачаево-Черкесия',8,7,r(6,9),12,4,'простой',79200,99000,'t15','konnyj-tur-kubanskoe-koltso-2027/'],
- [16,'horse','Конный тур «Зимняя джигитовка для чайников»','Карачаево-Черкесия',6,5,r(11,3),12,1,'выше среднего',45000,0,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-winter-2026-2027/',1],
- [17,'bus','«Кавказский калейдоскоп: от древних тайн до вершин Домбая»','Карачаево-Черкесия',6,5,null,6,1,'выше среднего',49000,0,'t6','caucasian-kaleidoscope-from-ancient-secrets-to-the-peaks-of-dombay/',1],
- [18,'ski','Горнолыжный тур в Домбай на автобусе из Москвы','Карачаево-Черкесия',6,5,r(1,3),6,0,'',64990,0,'t18','gornolyzhnyj-tur-v-dombaj-na-avtobuse/'],
- [19,'ski','Горнолыжный тур в Архыз на автобусе из Москвы','Карачаево-Черкесия',6,5,r(1,3),6,0,'',64990,0,'t19','gornolyzhnyj-tur-v-arhyz-iz-moskvy/'],
- [3,'rest','Агротуризм премиум «Жизнь аула»','Карачаево-Черкесия',5,4,ALL,5,2,'простой',210000,0,'t3','agro-tourism-premium-life-aula/'],
- [2,'rest','Digital detox-ретрит «Тишина гор»','Кабардино-Балкария',4,3,ALL,18,2,'простой',480000,0,'t2','digital-detox-silence-of-the-mountains/'],
- [1,'rest','Wellness-программа «Кавказские минералы»','Пятигорск, Железноводск, Кисловодск',6,5,ALL,6,1,'высокий',530000,0,'t1','caucasian-minerals-wellness-program/'],
-].map(a=>({id:a[0],type:a[1],name:a[2],reg:a[3],d:a[4],n:a[5],m:a[6],age:a[7],diff:a[8],comfort:a[9],price:a[10],old:a[11],img:'img/'+a[12]+'.jpg',url:U+a[13],isNew:!!a[14]}));
+ [7,'hike','Хайкинг «Притяжение Эльбруса»','Кабардино-Балкария','kbr',8,7,r(6,10),12,3,'выше среднего',79200,99000,'t7','peshij-trekking-tur-prityazhenie-elbrusa-2027/'],
+ [5,'hike','Хайкинг «Горный Дагестан: тропой Императора»','Дагестан','dag',8,7,r(5,10),12,4,'средний',79999,99999,'t5','peshij-trekking-tur-gornyj-dagestan-tropoj-imperatora-2027/'],
+ [13,'bus','Экскурсионный тур «Курортный роман»','КЧР, КБР и Кавминводы','kchr kbr kmv',8,7,r(4,10),6,1,'выше среднего',79200,99000,'t13','ekskursionnyj-tur-kurortnyj-roman-2027/'],
+ [12,'bus','Экскурсионный тур «Звёздный путь»','Карачаево-Черкесия','kchr',6,5,r(4,10),8,1,'выше среднего',63200,79000,'t12','excursion-tour-star-trek-2027/'],
+ [10,'bus','Экскурсионный тур «Грани Кавказа»','Осетия, Чечня, Ингушетия','oset',8,7,r(4,10),8,1,'выше среднего',88000,110000,'t10','excursion-tour-edges-of-the-caucasus-2027/'],
+ [15,'horse','Конный тур «Кубанское кольцо»','Карачаево-Черкесия','kchr',8,7,r(6,9),12,4,'простой',79200,99000,'t15','konnyj-tur-kubanskoe-koltso-2027/'],
+ [9,'hike','Пеший тур «Горная Дигория: ледники, водопады и тайны Осетии»','Северная Осетия','oset',8,7,r(6,10),8,1,'выше среднего',79999,99999,'t9','mountain-digory-secrets-of-ossetia-2027/'],
+ [6,'hike','Хайкинг «Домбай и его окрестности»','Карачаево-Черкесия','kchr',8,7,r(6,10),6,2,'выше среднего',71111,88888,'t6','peshij-trekking-tur-dombaj-i-ego-okrestnosti-2027/'],
+ [11,'bus','Экскурсионный тур «Завораживающий Дагестан»','Дагестан','dag',8,7,r(4,10),8,1,'средний',79200,99000,'t11','ekskursionnyj-tur-zavorazhivayushhij-dagestan-2027/'],
+ [8,'hike','Хайкинг «Чарующий Архыз»','Карачаево-Черкесия','kchr',8,7,r(6,10),6,3,'выше среднего',79999,99999,'t8','peshij-trekking-tur-charuyushhij-arhyz-2027/'],
+ [14,'horse','Конный тур «Джигитовка для чайников»','Карачаево-Черкесия','kchr',8,7,r(3,11),12,1,'выше среднего',71111,88888,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-2027/'],
+ [4,'hike','Хайкинг «Архипелаг скалистых островов»','Кавказские Минеральные Воды','kmv',12,11,r(6,10),10,2,'выше среднего',71200,89000,'t4','peshij-trekking-tur-arhipelag-skalistyh-ostrovov-2027/'],
+ [16,'horse','Конный тур «Зимняя джигитовка для чайников»','Карачаево-Черкесия','kchr',6,5,r(11,3),12,1,'выше среднего',45000,0,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-winter-2026-2027/',1],
+ [17,'bus','«Кавказский калейдоскоп: от древних тайн до вершин Домбая»','Карачаево-Черкесия','kchr',6,5,null,6,1,'выше среднего',49000,0,'t6','caucasian-kaleidoscope-from-ancient-secrets-to-the-peaks-of-dombay/',1],
+ [18,'ski','Горнолыжный тур в Домбай на автобусе из Москвы','Карачаево-Черкесия','kchr',6,5,r(1,3),6,0,'',64990,0,'t18','gornolyzhnyj-tur-v-dombaj-na-avtobuse/'],
+ [19,'ski','Горнолыжный тур в Архыз на автобусе из Москвы','Карачаево-Черкесия','kchr',6,5,r(1,3),6,0,'',64990,0,'t19','gornolyzhnyj-tur-v-arhyz-iz-moskvy/'],
+ [3,'rest','Агротуризм премиум «Жизнь аула»','Карачаево-Черкесия','kchr',5,4,ALL,5,2,'простой',210000,0,'t3','agro-tourism-premium-life-aula/'],
+ [2,'rest','Digital detox-ретрит «Тишина гор»','Кабардино-Балкария','kbr',4,3,ALL,18,2,'простой',480000,0,'t2','digital-detox-silence-of-the-mountains/'],
+ [1,'rest','Wellness-программа «Кавказские минералы»','Пятигорск, Железноводск, Кисловодск','kmv',6,5,ALL,6,1,'высокий',530000,0,'t1','caucasian-minerals-wellness-program/'],
+].map(a=>({id:a[0],type:a[1],name:a[2],reg:a[3],rg:a[4].split(' '),d:a[5],n:a[6],m:a[7],age:a[8],diff:a[9],comfort:a[10],price:a[11],old:a[12],img:'img/'+a[13]+'.jpg',url:U+a[14],isNew:!!a[15]}));
 const short=n=>n.replace(/^(Хайкинг|Экскурсионный тур|Конный тур|Пеший тур|Wellness-программа|Digital detox-ретрит|Агротуризм премиум) /,'').replace(/^«(.*)»$/,'$1');
+const plural=(n,a,b,c)=>{const m=n%10,h=n%100;return m===1&&h!==11?a:m>=2&&m<=4&&(h<12||h>14)?b:c};
 
 const $=id=>document.getElementById(id), rub=n=>Math.round(n).toLocaleString('ru-RU')+' ₽';
 const NOW=new Date().getMonth()+1;
@@ -541,10 +646,38 @@ const period=t=>!t.m?'уточняйте':t.m.length===12?'круглый год
 const peaks=d=>d?`<span class="peaks" title="Нагрузка: ${DIFF[d]}">${[1,2,3,4].map(i=>`<i class="${i<=d?'on':''}"></i>`).join('')}</span> ${DIFF[d]}`:'';
 const priceHTML=t=>`<b>${rub(t.price)}</b>${t.old?`<s>${rub(t.old)}</s>`:''}<small>за человека</small>`;
 
+/* ---------- появление: слова, блоки, счётчики ---------- */
+function split(el){
+  let i=0;const out=[];
+  const wrap=node=>{const w=document.createElement('span');w.className='w';const s=document.createElement('span');s.style.setProperty('--d',(i++*75)+'ms');s.append(node);w.append(s);return w};
+  [...el.childNodes].forEach(n=>{
+    if(n.nodeType===3)n.textContent.split(/(\s+)/).forEach(p=>{if(!p)return;out.push(/^\s+$/.test(p)?document.createTextNode(' '):wrap(document.createTextNode(p)))});
+    else out.push(wrap(n.cloneNode(true)));
+  });
+  el.replaceChildren(...out);
+}
+function count(el){
+  const n=+el.dataset.count,pre=el.dataset.pre||'',suf=el.dataset.suf||'';
+  if(STILL){el.textContent=pre+n.toLocaleString('ru-RU')+suf;return}
+  const t0=performance.now();
+  (function f(now){const p=Math.min(1,(now-t0)/1500),e=1-Math.pow(1-p,4);el.textContent=pre+Math.round(n*e).toLocaleString('ru-RU')+suf;if(p<1)requestAnimationFrame(f)})(t0);
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;const el=e.target;el.classList.remove('wait');
+  if(el.dataset.count)count(el);el.querySelectorAll('[data-count]').forEach(count);io.unobserve(el)}),{rootMargin:'0px 0px -10% 0px'});
+function arm(el){if(STILL)return;el.classList.add('wait');io.observe(el)}
+document.querySelectorAll('[data-r="words"]').forEach(split);
+document.querySelectorAll('[data-r]').forEach(el=>{
+  if(el.closest('.hero')){if(!STILL){el.classList.add('wait');setTimeout(()=>el.classList.remove('wait'),120)}return}
+  if(el.getBoundingClientRect().top>innerHeight*.9)arm(el);
+});
+if(!STILL)document.querySelectorAll('.pay [data-count]').forEach(b=>{if(b.getBoundingClientRect().top>innerHeight)b.textContent=(b.dataset.pre||'')+'0'+(b.dataset.suf||'')});
+document.querySelectorAll('#heroFacts [data-count]').forEach(b=>setTimeout(()=>count(b),300));
+
 /* ---------- фильтры и каталог ---------- */
-const F={type:'',month:0,diff:0,budget:0};let more=false;
+const F={type:'',reg:'',month:0,diff:0,budget:0};let more=false;
 const groups={
   fType:['type',[['','Любой'],...Object.entries(TYPES)]],
+  fReg:['reg',[['','Любой'],...Object.entries(REGSHORT)]],
   fMonth:['month',[[0,'Любой'],...M.map((m,i)=>[i+1,m])]],
   fDiff:['diff',[[0,'Любая'],[1,'Базовая'],[2,'Средняя'],[3,'Продвинутая и выше']]],
   fBudget:['budget',[[0,'Любой'],[50000,'до 50 000 ₽'],[80000,'до 80 000 ₽'],[100000,'до 100 000 ₽']]]
@@ -553,40 +686,65 @@ for(const [id,[key,opts]] of Object.entries(groups))for(const [v,label] of opts)
   const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=label;b.dataset.k=key;b.dataset.v=v;
   b.onclick=()=>{F[key]=v;apply()};$(id).append(b);
 }
-const match=t=>(!F.type||t.type===F.type)&&(!+F.month||!t.m||t.m.includes(+F.month))&&(!+F.diff||(+F.diff===3?t.diff>=3:t.diff===+F.diff))&&(!+F.budget||t.price<=+F.budget);
+const match=t=>(!F.type||t.type===F.type)&&(!F.reg||t.rg.includes(F.reg))&&(!+F.month||!t.m||t.m.includes(+F.month))&&(!+F.diff||(+F.diff===3?t.diff>=3:t.diff===+F.diff))&&(!+F.budget||t.price<=+F.budget);
 function apply(){
   document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',String(F[b.dataset.k])===b.dataset.v));
-  const list=T.filter(match),shown=more?list:list.slice(0,7);$('cnt').textContent=list.length;
+  const list=T.filter(match),shown=more?list:list.slice(0,7);
+  $('cnt').textContent=list.length;$('cntWord').textContent=plural(list.length,'тур подходит','тура подходят','туров подходит');
   $('moreBtn').hidden=more||list.length<=7;$('moreBtn').textContent='Показать все туры: '+list.length;
-  $('grid').innerHTML=list.length?shown.map(t=>`
-    <button class="card" data-id="${t.id}" type="button">
+  $('grid').innerHTML=list.length?shown.map((t,i)=>`
+    <button class="card" data-id="${t.id}" type="button" style="--d:${(i%4)*110}ms">
       <img src="${t.img}" alt="" loading="lazy">
       <span class="in">
         <span class="tp"><span>${TYPES[t.type]} · ${t.reg}</span>${t.isNew?'<em>Новинка</em>':''}</span>
         <span class="bt"><h3>${short(t.name)}</h3>
           <span class="meta"><span>${t.d} дней</span><span>${period(t)}</span><span>${t.age}+</span><span>${peaks(t.diff)}</span></span>
           <span class="price">${priceHTML(t)}</span></span>
-      </span><span class="go" aria-hidden="true">→</span>
+      </span><span class="gl"></span><span class="go" aria-hidden="true">→</span>
     </button>`).join(''):'<div class="empty">Под такие условия тура нет. Снимите один из фильтров или напишите нам: соберём маршрут под вас.</div>';
+  $('grid').querySelectorAll('.card').forEach(arm);
 }
 $('moreBtn').onclick=()=>{more=true;apply()};
-$('reset').onclick=()=>{Object.assign(F,{type:'',month:0,diff:0,budget:0});apply()};
+$('reset').onclick=()=>{Object.assign(F,{type:'',reg:'',month:0,diff:0,budget:0});apply()};
 $('grid').onclick=e=>{const c=e.target.closest('.card');if(c)openTour(+c.dataset.id)};
+$('grid').addEventListener('pointermove',e=>{
+  const c=e.target.closest('.card');if(!c||e.pointerType!=='mouse'||STILL||c.classList.contains('wait'))return;
+  const b=c.getBoundingClientRect(),x=(e.clientX-b.left)/b.width,y=(e.clientY-b.top)/b.height;
+  c.classList.add('tilt');c.style.setProperty('--rx',((.5-y)*7)+'deg');c.style.setProperty('--ry',((x-.5)*9)+'deg');
+  c.style.setProperty('--mx',x*100+'%');c.style.setProperty('--my',y*100+'%');
+});
+$('grid').addEventListener('pointerout',e=>{const c=e.target.closest('.card');if(c&&!c.contains(e.relatedTarget)){c.classList.remove('tilt');c.style.setProperty('--rx','0deg');c.style.setProperty('--ry','0deg')}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-open]');if(b)openTour(+b.dataset.open)});
+
+/* ---------- регионы ---------- */
+const REGIONS=[
+ ['kchr','t12','Домбай, Архыз, Теберда','Водопады, осенние леса и самый большой выбор туров: пешком, верхом, на лыжах.'],
+ ['kbr','t2','Эльбрус, Чегет, Приэльбрусье','Горные реки, ледники и подножие высшей точки Европы.'],
+ ['dag','t11','Гамсутль, Сулакский каньон, Дербент','Аулы на скалах и бирюзовая вода каньона.'],
+ ['oset','t10','Дигория и древние башни','Башенные комплексы, ущелья и ледники Северной Осетии, Чечни и Ингушетии.'],
+ ['kmv','t13','Пятигорск, Кисловодск, Железноводск','Курортные парки, нарзанные источники и зелёные плато.']
+];
+$('hzTrack').insertAdjacentHTML('beforeend',REGIONS.map(([k,img,places,txt])=>{const n=T.filter(t=>t.rg.includes(k)).length;return`
+  <article class="rg"><img src="img/${img}.jpg" alt="" loading="lazy"><div class="in">
+    <span class="cnt">${n} ${plural(n,'тур','тура','туров')}</span>
+    <div class="bt"><h3>${REG[k]}</h3><p><b>${places}.</b> ${txt}</p><button class="btn btn-sky" type="button" data-reg="${k}">Показать туры →</button></div>
+  </div></article>`}).join('')+`<div class="hz-end"><p>Не нашли свой регион?</p><span>Соберём маршрут под вашу группу.</span><a class="btn btn-main" href="#book">Оставить заявку</a></div>`);
+$('hzTrack').addEventListener('click',e=>{const b=e.target.closest('[data-reg]');if(!b)return;Object.assign(F,{type:'',month:0,diff:0,budget:0,reg:b.dataset.reg});more=true;apply();$('tours').scrollIntoView()});
 
 /* ---------- календарь ---------- */
 (function(){
   const order=[...T].sort((a,b)=>a.id-b.id);
   let h='<div class="nm" style="cursor:default;font:700 .68rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-block:16px">Тур</div>'+M.map((m,i)=>`<button class="mh${i+1===NOW?' now':''}" data-m="${i+1}" type="button">${m}</button>`).join('');
-  for(const t of order){
+  order.forEach((t,row)=>{
     h+=`<button class="nm" data-id="${t.id}" type="button">${short(t.name)}</button>`;
     for(let m=1;m<=12;m++){
       const col=m===NOW?' col-now':'';
       if(!t.m){h+=`<div class="c q${col}">${m===6?'?':''}</div>`;continue}
       const on=t.m.includes(m),prev=m>1&&t.m.includes(m-1),next=m<12&&t.m.includes(m+1);
-      h+=`<div class="c${col}${on&&!prev?' s':''}${on&&!next?' e':''}">${on?'<i></i>':''}</div>`;
+      h+=`<div class="c${col}${on&&!prev?' s':''}${on&&!next?' e':''}">${on?`<i style="--d:${row*45+m*25}ms"></i>`:''}</div>`;
     }
-  }
-  $('cal').innerHTML=h;
+  });
+  $('cal').innerHTML=h;if($('cal').getBoundingClientRect().top>innerHeight*.9)arm($('cal'));
   $('cal').onclick=e=>{
     const m=e.target.closest('.mh'),n=e.target.closest('.nm[data-id]');
     if(m){F.month=+m.dataset.m;more=true;apply();$('tours').scrollIntoView()}
@@ -625,7 +783,8 @@ function ticket(){
   $('tNo').textContent='МТ-'+String(t.id).padStart(2,'0');$('tTitle').textContent=short(t.name);$('tReg').textContent=t.reg;
   $('tDur').textContent=`${t.d} дн. / ${t.n} ноч.`;$('tWhen').textContent=$('bMonth').value?MF[$('bMonth').value-1]:period(t);
   $('tPpl').textContent=n+' чел.';$('tPer').textContent=rub(t.price);$('tDisc').textContent=d?'−'+d+'%':'нет';
-  $('tTotal').textContent=rub(total);$('tPre').textContent=rub(pre);$('tRest').textContent=rub(total-pre);
+  const tt=$('tTotal');if(tt.textContent!==rub(total)){tt.textContent=rub(total);tt.classList.remove('bump');void tt.offsetWidth;tt.classList.add('bump')}
+  $('tPre').textContent=rub(pre);$('tRest').textContent=rub(total-pre);
 }
 ['bTour','bMonth','bPeople','bDisc'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='bTour')fillMonths();ticket()}));
 $('minus').onclick=()=>{$('bPeople').value=Math.max(1,(+$('bPeople').value||1)-1);ticket()};
@@ -652,6 +811,7 @@ $('copyMsg').onclick=e=>copy($('msg').value,e.target,$('msg'));
 document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>copy(b.dataset.copy,b));
 
 /* ---------- гиды ---------- */
+const ROT=[-3,2,-1.5,3,-2.5,1.5,-1];
 $('guidesGrid').innerHTML=[
  ['g_umar','Умар Айдинов','Основатель, автор туров','Более 20 лет в туризме. Председатель Регионального союза туриндустрии СКФО.'],
  ['g_greb','Александр Гребенюк','Эксперт по маршрутам','Около 200 восхождений за 30 лет. Руководит научно-спортивным центром СКФО.'],
@@ -660,19 +820,24 @@ $('guidesGrid').innerHTML=[
  ['g_chek','Эдуард Чеккуев','Гид-экскурсовод','Историк. С 2006 года участвует в археологических раскопках.'],
  ['g_mag','Абдула Магомедов','Гид по Дагестану','Водит группы по Дагестану с 2016 года.'],
  ['g_ilis','Абдула Илистубегов','Гид по Дагестану','Ведёт группы по горному Дагестану.']
-].map(g=>`<div class="guide rv"><div class="im"><img src="img/${g[0]}.jpg" alt="${g[1]}" loading="lazy"></div><small>${g[2]}</small><h3>${g[1]}</h3><p>${g[3]}</p></div>`).join('');
+].map((g,i)=>`<div class="guide" style="--rot:${ROT[i]}deg;--d:${(i%4)*120}ms"><div class="im"><img src="img/${g[0]}.jpg" alt="${g[1]}" loading="lazy"></div><small>${g[2]}</small><h3>${g[1]}</h3><p>${g[3]}</p></div>`).join('');
+$('guidesGrid').querySelectorAll('.guide').forEach(arm);
 $('said').innerHTML=[['Софья К.','«Курортный роман»','Рамазан'],['Екатерина У.','«Домбай и его окрестности»','Азнаур и Мурадин'],['Иван','«Путешествие в страну гор»','Магомед'],['Михаил','«Выходные в седле»','Казбек'],['Галина','«Приключения в стране гор»','Ахмед'],['Наталья','«Калейдоскоп времён»','Сеит'],['Елена','«Курортный роман»','Эдуард'],['Сергей','«Горнолыжка для чайников»','Абдуррахман']]
  .map(s=>`<li><b>${s[0]}</b> · ${s[1]} · гид ${s[2]}</li>`).join('');
 
-/* ---------- появление блоков ---------- */
-if('IntersectionObserver' in window){
-  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.remove('wait');io.unobserve(e.target)}}),{rootMargin:'0px 0px -8% 0px'});
-  document.querySelectorAll('.rv').forEach(el=>{if(el.getBoundingClientRect().top>innerHeight){el.classList.add('wait');io.observe(el)}});
-}
+/* ---------- день в горах: небо, солнце, высотомер ---------- */
+const hex=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255);
+const KEYS=[0,.2,.5,.78,1];
+const SKY=[['#0A0B2E','#3B2C86'],['#2D2C83','#FF8E72'],['#1F6FFF','#9FE0FF'],['#2B8CFF','#CFF0FF'],['#4A3FD1','#FFC27A']].map(a=>a.map(hex));
+const TER=[['#0E0F33','#283A8F','#A9D4FF','#63E3FF'],['#2A1C55','#7B4A8E','#FFC6B5','#FFB08A'],['#2D5A9E','#6C9BD6','#FFFFFF','#FFFFFF'],['#3A6FB0','#86B3E6','#FFFFFF','#FFFFFF'],['#3B2F7A','#A26A8C','#FFE3BE','#FFD7A0']].map(a=>a.map(hex));
+const SUNDIR=[[-.5,.5,.5],[.8,.25,-.4],[.2,.9,-.3],[.1,.95,-.2],[-.7,.35,-.5]];
+const STARS=[1,.25,0,0,0],SUNY=[-.3,.04,.56,.72,.48];
+const mix=(a,b,f)=>Array.isArray(a)?a.map((v,i)=>mix(v,b[i],f)):a+(b-a)*f;
+function at(arr,c){let i=0;while(i<KEYS.length-2&&c>KEYS[i+1])i++;let f=(c-KEYS[i])/(KEYS[i+1]-KEYS[i]);f=Math.max(0,Math.min(1,f));f=f*f*(3-2*f);return mix(arr[i],arr[i+1],f)}
+const css=c=>`rgb(${c.map(v=>Math.round(v*255)).join(',')})`;
 
-/* ---------- высотомер ---------- */
 const stations=[...document.querySelectorAll('[data-alt]')].map(el=>({el,alt:+el.dataset.alt,place:el.dataset.place}));
-const LO=512,HI=5642,pct=a=>(a-LO)/(HI-LO)*100;let climb=0;
+const LO=512,HI=5642,pct=a=>(a-LO)/(HI-LO)*100;let climb=0,shownC=-1;
 stations.forEach(s=>{const d=document.createElement('div');d.className='st';d.style.bottom=pct(s.alt)+'%';d.innerHTML=`<span>${s.place.split(',')[0]} ${s.alt}</span>`;$('rail').append(d);s.tick=d});
 function altitude(){
   const y=scrollY+innerHeight*.5*Math.min(1,scrollY/(innerHeight*.5)),tops=stations.map(s=>s.el.getBoundingClientRect().top+scrollY);
@@ -684,21 +849,68 @@ function altitude(){
   $('railMe').style.bottom=pct(alt)+'%';$('railFill').style.height=pct(alt)+'%';
   stations.forEach(s=>s.tick.classList.toggle('pass',alt>=s.alt));
   $('hdr').classList.toggle('solid',scrollY>40);
-  const dawn=Math.min(1,Math.max(0,(climb-.72)/.28));
-  $('dawn').style.opacity=dawn;$('stars').style.opacity=.8*(1-dawn);
-  if(window.terrainTick)terrainTick();
 }
-addEventListener('scroll',altitude,{passive:true});addEventListener('resize',altitude);
+function paintSky(c){
+  const [top,bot]=at(SKY,c);
+  $('sky').style.background=`linear-gradient(180deg,${css(top)} 0%,${css(mix(top,bot,.55))} 58%,${css(bot)} 100%)`;
+  $('stars').style.opacity=at(STARS,c);
+  $('sun').style.bottom=(at(SUNY,c)*100)+'%';
+  const dark=c>.36,root=document.documentElement.style;
+  root.setProperty('--sky-ink',dark?'#13163C':'#FFFFFF');
+  root.setProperty('--sky-shadow',dark?'rgba(255,255,255,.8)':'rgba(10,10,40,.55)');
+}
+
+/* ---------- иллюминатор и галерея вбок ---------- */
+const clamp=v=>Math.max(0,Math.min(1,v));
+function porthole(){
+  const b=$('port').getBoundingClientRect();if(b.bottom<0||b.top>innerHeight)return;
+  const p=clamp(-b.top/(b.height-innerHeight));
+  $('portImg').style.setProperty('--r',(9+Math.pow(p,1.3)*85)+'%');
+  $('portImg').style.setProperty('--s',(1.35-.35*p).toFixed(3));
+  $('portNum').style.opacity=clamp(1-p*2.4);$('portNum').style.transform=`scale(${1+p*.6})`;
+  const q=clamp((p-.55)*3);
+  $('portCap').style.opacity=q;$('portCap').style.transform=`translateY(${(1-q)*30}px)`;$('portCap').style.pointerEvents=q>.3?'auto':'none';
+}
+let hzW=0;
+function hzSize(){
+  if(innerWidth<800){$('regions').style.height='';$('hzTrack').style.transform='';hzW=0;return}
+  $('hzTrack').style.transform='';
+  hzW=Math.max(0,$('hzTrack').scrollWidth-innerWidth);$('regions').style.height=(hzW+innerHeight)+'px';
+}
+function hz(){
+  if(!hzW)return;
+  const b=$('regions').getBoundingClientRect();if(b.bottom<0||b.top>innerHeight)return;
+  const p=clamp(-b.top/(b.height-innerHeight));
+  $('hzTrack').style.transform=`translate3d(${-p*hzW}px,0,0)`;
+  if(STILL)return;
+  $('hzTrack').querySelectorAll('.rg').forEach(el=>{
+    const r=el.getBoundingClientRect(),d=((r.left+r.width/2)-innerWidth/2)/innerWidth;
+    el.style.transform=`rotate(${(d*5).toFixed(2)}deg) scale(${(1-Math.min(.14,Math.abs(d)*.16)).toFixed(3)})`;
+    el.firstElementChild.style.transform=`translateX(${(d*-6).toFixed(2)}%)`;
+  });
+}
+
+/* ---------- бегущие ленты ---------- */
+let rx1=0,rx2=0,lastY=scrollY,vel=0;
+function ribbons(dt){
+  vel+=((scrollY-lastY)-vel)*.15;lastY=scrollY;
+  const w1=$('rb1').offsetWidth/2,w2=$('rb2').offsetWidth/2,base=STILL?0:40*dt;
+  rx1-=base+vel*.8;rx2+=base*.7+vel*.5;
+  if(w1)rx1=((rx1%w1)-w1)%w1;if(w2)rx2=((rx2%w2)-w2)%w2;
+  $('rb1').style.transform=`translate3d(${rx1.toFixed(1)}px,0,0)`;$('rb2').style.transform=`translate3d(${rx2.toFixed(1)}px,0,0)`;
+}
 
 /* ---------- живой рельеф ---------- */
+let terrain=null;
 (function(){
   if(!window.THREE)return;
   let renderer;try{renderer=new THREE.WebGLRenderer({canvas:$('terrain'),alpha:true,antialias:true,powerPreference:'high-performance'})}catch(e){return}
-  const still=matchMedia('(prefers-reduced-motion:reduce)').matches, phone=innerWidth<700;
+  const phone=innerWidth<700;
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,phone?1.25:1.6));
   const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(52,1,.1,400);
   const geo=new THREE.PlaneGeometry(300,230,phone?150:260,phone?130:210);geo.rotateX(-Math.PI/2);geo.translate(0,0,-80);
-  const uni={uT:{value:0},uDawn:{value:0}};
+  const v3=a=>new THREE.Vector3(a[0],a[1],a[2]);
+  const uni={uT:{value:0},uLow:{value:v3(TER[0][0])},uRock:{value:v3(TER[0][1])},uSnow:{value:v3(TER[0][2])},uLine:{value:v3(TER[0][3])},uSun:{value:v3(SUNDIR[0])}};
   const mat=new THREE.ShaderMaterial({uniforms:uni,transparent:true,extensions:{derivatives:true},
    vertexShader:`
     uniform float uT;varying float vH;varying vec3 vN;varying float vD;
@@ -715,39 +927,44 @@ addEventListener('scroll',altitude,{passive:true});addEventListener('resize',alt
       vN=normalize(vec3((h-hx)*S,e,(h-hz)*S));vH=h;p.y=h*S;
       vec4 mv=modelViewMatrix*vec4(p,1.);vD=-mv.z;gl_Position=projectionMatrix*mv;}`,
    fragmentShader:`
-    uniform float uDawn;varying float vH;varying vec3 vN;varying float vD;
+    uniform vec3 uLow,uRock,uSnow,uLine,uSun;varying float vH;varying vec3 vN;varying float vD;
     void main(){vec3 n=normalize(vN);
-      vec3 low=mix(vec3(.02,.05,.10),vec3(.10,.08,.17),uDawn);
-      vec3 rock=mix(vec3(.07,.14,.25),vec3(.30,.20,.30),uDawn);
-      vec3 snow=mix(vec3(.62,.76,.95),vec3(1.,.72,.60),uDawn);
-      vec3 sun=normalize(mix(vec3(-.5,.55,.5),vec3(.75,.3,-.5),uDawn));
-      float lit=clamp(dot(n,sun),0.,1.);
+      float lit=clamp(dot(n,normalize(uSun)),0.,1.);
       float sn=smoothstep(.34,.56,vH+(n.y-.75)*.25);
-      vec3 col=mix(low,rock,smoothstep(0.,.4,vH));col=mix(col,snow,sn);
-      col*=.32+.95*lit;
-      col+=snow*pow(lit,6.)*sn*.35*uDawn;
+      vec3 col=mix(uLow,uRock,smoothstep(0.,.4,vH));col=mix(col,uSnow,sn);
+      col*=.42+.85*lit;
       float c=vH*26.,ln=1.-smoothstep(0.,1.3,abs(fract(c-.5)-.5)/fwidth(c));
-      col+=ln*mix(vec3(.35,.72,1.),vec3(1.,.62,.42),uDawn)*.38*(1.-sn*.75);
-      float fog=smoothstep(55.,190.,vD);
-      gl_FragColor=vec4(col,(1.-fog));}`});
+      col=mix(col,uLine,ln*.5*(1.-sn*.55));
+      float a=1.-smoothstep(55.,190.,vD);
+      gl_FragColor=vec4(col*a,a);}`});
   scene.add(new THREE.Mesh(geo,mat));
-  function size(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+  function size(){renderer.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
   size();addEventListener('resize',size);
-  let t0=performance.now(),fly=0,cl=0,dw=0,vis=true;
-  function frame(now){
-    const dt=Math.min(.05,(now-t0)/1000);t0=now;
-    if(!still)fly+=dt*2.2;
-    cl+=(climb-cl)*.08;const dT=Math.min(1,Math.max(0,(climb-.72)/.28));dw+=(dT-dw)*.08;
-    uni.uT.value=fly+scrollY*.035;uni.uDawn.value=dw;
-    cam.position.set(Math.sin(now*.00012)*2.5,13+cl*32,34);
-    cam.lookAt(Math.sin(now*.00009)*4,11+cl*16,-70);
+  let fly=0;
+  terrain=(dt,now,c)=>{
+    if(!STILL)fly+=dt*2.2;
+    const t=at(TER,c);uni.uLow.value.set(...t[0]);uni.uRock.value.set(...t[1]);uni.uSnow.value.set(...t[2]);uni.uLine.value.set(...t[3]);uni.uSun.value.set(...at(SUNDIR,c));
+    uni.uT.value=fly+scrollY*.035;
+    cam.position.set(Math.sin(now*.00012)*2.5,13+c*32,34);cam.lookAt(Math.sin(now*.00009)*4,11+c*16,-70);
     renderer.render(scene,cam);
-    if(vis&&!still)requestAnimationFrame(frame);
-  }
-  window.terrainTick=()=>{if(still)frame(performance.now())};
-  document.addEventListener('visibilitychange',()=>{vis=!document.hidden;if(vis&&!still){t0=performance.now();requestAnimationFrame(frame)}});
-  requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(()=>$('terrain').classList.add('on'));
 })();
 
-apply();fillMonths();ticket();altitude();
+/* ---------- общий цикл ---------- */
+let cl=0,t0=performance.now(),vis=true;
+function frame(now){
+  const dt=Math.min(.05,(now-t0)/1000);t0=now;
+  cl+=STILL?(climb-cl):(climb-cl)*.08;
+  if(Math.abs(cl-shownC)>.0005){paintSky(cl);shownC=cl}
+  porthole();hz();ribbons(dt);
+  if(terrain)terrain(dt,now,cl);
+  if(vis)requestAnimationFrame(frame);
+}
+addEventListener('scroll',altitude,{passive:true});
+addEventListener('resize',()=>{hzSize();altitude()});
+document.addEventListener('visibilitychange',()=>{vis=!document.hidden;if(vis){t0=performance.now();requestAnimationFrame(frame)}});
+addEventListener('load',()=>{hzSize();altitude()});
+
+apply();fillMonths();ticket();hzSize();altitude();paintSky(0);requestAnimationFrame(frame);
 </script>
