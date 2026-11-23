@@ -1,6 +1,6 @@
 <title>МАГТУР — туры на Кавказ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
 /* Идея: страница — это подъём на Эльбрус за один день. Небо и живой рельеф меняются от ночи через рассвет к яркому дню и золотой вершине; контент лежит на светлых листах поверх гор. Один осознанный мир, без отдельной тёмной темы. */
 :root{
@@ -59,18 +59,67 @@ header.top.solid{background:rgba(255,255,255,.86);backdrop-filter:blur(16px);box
 @media(max-width:960px){.top nav{display:none}}
 @media(max-width:520px){.alt-pill small{display:none}.top .wrap{gap:12px}.logo{font-size:1.3rem}}
 
-/* первый экран */
-.hero{min-height:100svh;display:flex;align-items:flex-end;padding-block:120px clamp(28px,6vh,60px);color:#fff}
-.hero .wrap{width:100%;display:grid;gap:clamp(20px,3.4vh,34px)}
-.hero .eyebrow{color:rgba(255,255,255,.8)}
-.hero h1{font-size:clamp(3.4rem,12.5vw,11rem);line-height:.86;max-width:9ch;text-shadow:0 6px 60px rgba(10,8,40,.5)}
-.hero .row{display:flex;flex-wrap:wrap;gap:28px 56px;align-items:flex-end;justify-content:space-between}
-.hero p.sub{font-size:clamp(1.02rem,1.5vw,1.2rem);max-width:46ch;color:rgba(255,255,255,.88)}
-.cta{display:flex;flex-wrap:wrap;gap:12px}
-.facts{display:flex;flex-wrap:wrap;gap:14px 48px;padding-top:22px;border-top:1px solid rgba(255,255,255,.22)}
+/* первый экран: разрез «стекло | фото» */
+.hero{position:relative;height:100vh;height:100svh;min-height:620px;overflow:hidden;color:#fff;background:#0A0B2E;--seam:44vw;touch-action:pan-y}
+.slides{position:absolute;inset:0}
+.sl{position:absolute;inset:0;z-index:1;clip-path:polygon(0 100%,0 96%,9% 86%,17% 92%,26% 78%,34% 88%,43% 70%,51% 84%,60% 76%,68% 90%,77% 74%,86% 87%,93% 80%,100% 90%,100% 100%)}
+.sl.was{z-index:2;clip-path:polygon(0 100%,0 0,9% 0,17% 0,26% 0,34% 0,43% 0,51% 0,60% 0,68% 0,77% 0,86% 0,93% 0,100% 0,100% 100%)}
+.sl.on{z-index:3;clip-path:polygon(0 100%,0 0,9% 0,17% 0,26% 0,34% 0,43% 0,51% 0,60% 0,68% 0,77% 0,86% 0,93% 0,100% 0,100% 100%);transition:clip-path 1.5s cubic-bezier(.7,0,.2,1)}
+.sl img{width:100%;height:100%;object-fit:cover;transform:scale(1.18);transition:transform 9s cubic-bezier(.2,.6,.2,1)}
+.sl.on img,.sl.was img{transform:scale(1.02)}
+.sl::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,30,.45) 0%,transparent 22%,transparent 62%,rgba(8,10,30,.55) 100%)}
+.glass{position:absolute;z-index:4;left:0;top:0;bottom:0;width:var(--seam);background:rgba(14,18,40,.28);backdrop-filter:blur(26px) saturate(1.25);-webkit-backdrop-filter:blur(26px) saturate(1.25);border-right:1px solid rgba(255,255,255,.28)}
+.word{position:absolute;z-index:5;top:24%;left:0;white-space:nowrap;font:800 120px/.86 var(--f-body);letter-spacing:-.03em;text-transform:uppercase;pointer-events:none;user-select:none}
+.word span{display:inline-block;color:transparent;-webkit-background-clip:text;background-clip:text;
+  background-image:linear-gradient(var(--dir,90deg),rgba(255,255,255,.34) 0,rgba(255,255,255,.34) var(--cut,0px),#fff var(--cut,0px),#fff 100%);
+  transition:transform .9s cubic-bezier(.2,.85,.2,1) var(--d,0ms),opacity .6s var(--d,0ms),filter .6s var(--d,0ms)}
+.word.out span{transform:translateY(-40%);opacity:0;filter:blur(8px);transition-duration:.45s}
+.word.pre span{transform:translateY(70%) rotate(6deg);opacity:0;transition:none}
+.hero-in{position:absolute;z-index:6;inset:0;display:grid;grid-template-rows:1fr auto;padding-block:96px 150px}
+.hero-in .wrap{width:100%;max-width:none;align-self:end;padding-left:var(--lx)}
+.hero{--lx:max(var(--gut),calc((100vw - var(--max))/2 + 16px))}
+.ptxt{width:calc(var(--seam) - var(--lx) - 40px);max-width:520px;display:grid;gap:16px;text-shadow:0 1px 18px rgba(5,8,25,.35)}
+.ptxt .eyebrow{color:rgba(255,255,255,.85)}
+.num{display:flex;align-items:center;gap:18px;font:500 .8rem/1 var(--f-mono);letter-spacing:.12em}
+.num b{font:500 2.6rem/1 var(--f-display);letter-spacing:0;font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:8px}
+.dots button{width:9px;height:9px;padding:0;border-radius:50%;border:1.5px solid #fff;background:transparent;cursor:pointer;transition:background .3s,transform .3s}
+.dots button[aria-current="true"]{background:#fff;transform:scale(1.25)}
+.ptxt h1{font-size:clamp(2.2rem,3.6vw,3.4rem);line-height:1;transition:opacity .4s}
+.ptxt p.sub{font-size:1.02rem;color:rgba(255,255,255,.9);max-width:44ch;transition:opacity .4s}
+.ptxt.fade h1,.ptxt.fade p.sub{opacity:0}
+.cta{display:flex;flex-wrap:wrap;gap:10px}
+.arrows{position:absolute;right:var(--gutr);bottom:150px;display:flex;gap:10px;z-index:7}
+.arrows button{width:54px;height:54px;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.12);backdrop-filter:blur(10px);color:#fff;font-size:1.2rem;cursor:pointer;transition:background .25s,transform .25s}
+.arrows button:hover{background:#fff;color:var(--ink);transform:scale(1.06)}
+.profile{position:absolute;z-index:6;left:0;right:0;bottom:18px;width:100%;height:118px;overflow:visible}
+.profile .ln{fill:none;stroke:rgba(255,255,255,.7);stroke-width:1.5}
+.profile .ar{fill:url(#pfFill)}
+.profile .stop{cursor:pointer}
+.profile .stop circle{fill:#fff;stroke:none;transition:r .3s}
+.profile .stop circle.hit{fill:transparent}
+.profile .stop text{fill:#fff;font:500 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.profile .stop.on text{opacity:1;font-weight:700}
+.profile .me{fill:var(--a2);filter:drop-shadow(0 0 8px rgba(255,46,126,.9))}
+.facts{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 48px;padding-top:26px;margin-top:10px;border-top:1px solid currentColor;border-color:color-mix(in srgb,currentColor 25%,transparent)}
 .facts div{display:grid;gap:4px}
 .facts b{font:500 clamp(2rem,3.8vw,3rem)/1 var(--f-display);font-variant-numeric:tabular-nums}
-.facts span{font-size:.82rem;color:rgba(255,255,255,.72);max-width:22ch}
+.facts span{font-size:.84rem;opacity:.8;max-width:22ch}
+@media(max-width:760px){
+  .hero{--seam:100vw}
+  .glass{top:47%;width:100%;border-right:0;border-top:1px solid rgba(255,255,255,.3)}
+  .hero-in{padding-block:0 104px;grid-template-rows:47% 1fr}
+  .hero-in .wrap{grid-row:2;align-self:start;padding-left:var(--gut)}
+  .ptxt{width:auto;padding-top:calc(var(--fs,60px) * .8);gap:12px}
+  .ptxt .eyebrow{display:none}
+  .ptxt p.sub{font-size:.94rem}
+  .num b{font-size:2rem}
+  .arrows{bottom:auto;top:calc(47% - var(--fs,60px) * .5 - 62px)}
+  .arrows button{width:46px;height:46px}
+  .profile{height:86px;bottom:8px}
+  .profile .stop text{display:none}
+}
+@media(max-width:760px) and (max-height:700px){.ptxt p.sub{display:none}}
 
 /* бегущие ленты */
 .ribbons{position:relative;height:clamp(150px,20vw,230px);overflow:hidden;margin-block:-20px}
@@ -147,32 +196,6 @@ section.panel{padding-block:clamp(28px,4vw,48px);padding-left:var(--gut);padding
 .port-cap{position:absolute;z-index:2;left:0;right:0;bottom:clamp(28px,7vh,72px);color:#fff;display:grid;gap:18px;justify-items:start;opacity:0}
 .port-cap p{font:500 clamp(1.6rem,3.6vw,3rem)/1.05 var(--f-display);max-width:22ch;text-shadow:0 2px 30px rgba(0,0,0,.4)}
 .port-cap p + p{font:400 1rem/1.55 var(--f-body);max-width:46ch;opacity:.92}
-
-/* регионы — галерея вбок */
-.hz{position:relative}
-.hz-stick{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:flex;align-items:center}
-.hz-track{display:flex;gap:clamp(16px,2.4vw,32px);align-items:center;padding-left:max(var(--gut),calc((100vw - var(--max))/2 + 16px));padding-right:10vw;will-change:transform}
-.hz-intro{flex:none;width:min(420px,80vw);color:var(--sky-ink);display:grid;gap:18px;text-shadow:0 2px 30px var(--sky-shadow)}
-.hz-intro h2{font-size:clamp(2.8rem,5.6vw,5rem)}
-.hz-intro p{font-size:1.05rem;opacity:.9}
-.hz-intro .eyebrow{color:inherit;opacity:.85}
-.rg{flex:none;position:relative;width:min(62vw,760px);height:min(70vh,580px);border-radius:30px;overflow:hidden;color:#fff;box-shadow:0 40px 80px -30px rgba(10,10,50,.6);will-change:transform}
-.rg img{position:absolute;top:-4%;left:-8%;width:116%;height:108%;max-width:none;object-fit:cover;will-change:transform}
-.rg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,12,40,.25) 0%,transparent 35%,rgba(10,12,40,.85) 100%)}
-.rg .in{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:space-between;padding:clamp(20px,3vw,40px)}
-.rg .cnt{align-self:flex-start;font:700 .72rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;background:rgba(255,255,255,.16);backdrop-filter:blur(10px);padding:.7em 1em;border-radius:99px}
-.rg h3{font-size:clamp(2.2rem,5vw,4.6rem);line-height:.92;max-width:11ch}
-.rg p{font-size:.98rem;opacity:.92;max-width:36ch}
-.rg .bt{display:grid;gap:14px;justify-items:start}
-.hz-end{flex:none;width:min(360px,76vw);display:grid;gap:16px;justify-items:start;color:var(--sky-ink);text-shadow:0 2px 30px var(--sky-shadow)}
-.hz-end p{font:500 clamp(1.8rem,3.4vw,2.8rem)/1.05 var(--f-display)}
-@media(max-width:799px){
-  .hz-stick{position:static;height:auto;display:block;padding-block:40px}
-  .hz-track{overflow-x:auto;scroll-snap-type:x mandatory;padding-left:var(--gut);padding-right:var(--gutr);scrollbar-width:none}
-  .hz-track::-webkit-scrollbar{display:none}
-  .rg{width:84vw;height:min(118vw,560px);scroll-snap-align:center}
-  .hz-intro{width:78vw}
-}
 
 /* календарь */
 .cal-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:20px;background:var(--solid)}
@@ -319,7 +342,7 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
 <header class="top" id="hdr"><div class="wrap">
   <a class="logo" href="#top">МАГТУР</a>
   <nav aria-label="Разделы">
-    <a href="#tours">Туры</a><a href="#regions">Регионы</a><a href="#season">Сезоны</a><a href="#how">Бронирование</a><a href="#guides">Гиды</a>
+    <a href="#tours">Туры</a><a href="#top">Направления</a><a href="#season">Сезоны</a><a href="#how">Бронирование</a><a href="#guides">Гиды</a>
   </nav>
   <div class="alt-pill" title="Высота растёт, пока вы листаете страницу"><i>▲</i><span id="altNum">512 м</span><small id="altPlace">Пятигорск</small></div>
   <a class="btn btn-main" href="#book">Заявка</a>
@@ -327,24 +350,23 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
 
 <div class="rail" id="rail" aria-hidden="true"><div class="fill" id="railFill"></div><div class="me" id="railMe"></div></div>
 
-<section class="hero" id="top" data-alt="512" data-place="Пятигорск">
-  <div class="wrap">
-    <p class="eyebrow"><b>●</b> Международная академия горного туризма · с 2013 года</p>
-    <h1 data-r="words">Кавказ, на который <i>возвращаются</i></h1>
-    <div class="row">
-      <p class="sub" data-r="up" style="--d:500ms">Пешие, конные, экскурсионные и горнолыжные туры по всему Северному Кавказу. Листайте: вы поднимаетесь от Пятигорска к вершине Эльбруса, а ночь сменяется рассветом и ярким днём.</p>
-      <div class="cta" data-r="up" style="--d:650ms">
-        <a class="btn btn-main" href="#tours">Подобрать тур</a>
-        <a class="btn btn-sky" href="#season">Что идёт в этом месяце</a>
+<section class="hero" id="top" data-alt="512" data-place="Пятигорск" aria-roledescription="карусель" aria-label="Направления МАГТУР">
+  <div class="slides" id="slides"></div>
+  <div class="glass" aria-hidden="true"></div>
+  <div class="word" id="word" aria-hidden="true"></div>
+  <div class="hero-in">
+    <div class="wrap">
+      <div class="ptxt" id="ptxt">
+        <p class="eyebrow"><b>●</b> МАГТУР · Кавказ, на который возвращаются</p>
+        <div class="num"><b id="sNum">01</b><span>/ 05</span><span class="dots" id="sDots"></span></div>
+        <h1 id="sTitle" aria-live="polite">Кабардино-Балкария</h1>
+        <p class="sub" id="sTxt"></p>
+        <div class="cta"><button class="btn btn-main" type="button" id="sGo">Туры направления →</button><a class="btn btn-sky" href="#tours">Все 19 туров</a></div>
       </div>
     </div>
-    <div class="facts" id="heroFacts">
-      <div><b data-count="20000" data-suf="+">20 000+</b><span>туристов прошли наши маршруты</span></div>
-      <div><b data-count="20" data-suf="+">20+</b><span>гидов в команде</span></div>
-      <div><b>от 1</b><span>человека: тур состоится в любом случае</span></div>
-      <div><b data-count="100" data-suf="%">100%</b><span>возврат при отмене за 72 часа</span></div>
-    </div>
   </div>
+  <div class="arrows"><button type="button" id="prev" aria-label="Предыдущее направление">←</button><button type="button" id="next" aria-label="Следующее направление">→</button></div>
+  <svg class="profile" id="profile" aria-label="Направления на горном профиле"></svg>
 </section>
 
 <div class="ribbons" aria-hidden="true">
@@ -384,18 +406,6 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
   </div>
 </section>
 
-<section class="hz" id="regions" data-alt="1650" data-place="Домбай">
-  <div class="hz-stick">
-    <div class="hz-track" id="hzTrack">
-      <div class="hz-intro">
-        <p class="eyebrow">1650 м · Домбай · направления</p>
-        <h2>Пять направлений, <i>один</i> Кавказ</h2>
-        <p>Листайте дальше: галерея поедет вбок. Нажмите на регион, и в каталоге останутся только его туры.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <section class="panel" id="season" data-alt="3050" data-place="Чегет">
   <div class="sheet">
     <div class="head">
@@ -412,6 +422,12 @@ dialog::backdrop{background:rgba(15,12,50,.55);backdrop-filter:blur(8px)}
   <p class="eyebrow">● 12 лет в горах</p>
   <p class="big" data-r="words">Каждый <i>четвёртый</i> едет снова</p>
   <p class="small" data-r="up" style="--d:400ms">С 2013 года с нами прошли больше 20 000 человек. Больше 80% говорят, что готовы повторить.</p>
+  <div class="facts" data-r="up" style="--d:550ms">
+    <div><b data-count="20000" data-suf="+">20 000+</b><span>туристов прошли наши маршруты</span></div>
+    <div><b data-count="20" data-suf="+">20+</b><span>гидов в команде</span></div>
+    <div><b>от 1</b><span>человека: тур состоится в любом случае</span></div>
+    <div><b data-count="100" data-suf="%">100%</b><span>возврат при отмене за 72 часа</span></div>
+  </div>
 </div></div>
 
 <section class="panel" id="how" data-alt="3847" data-place="Гара-Баши">
@@ -670,8 +686,7 @@ document.querySelectorAll('[data-r]').forEach(el=>{
   if(el.closest('.hero')){if(!STILL){el.classList.add('wait');setTimeout(()=>el.classList.remove('wait'),120)}return}
   if(el.getBoundingClientRect().top>innerHeight*.9)arm(el);
 });
-if(!STILL)document.querySelectorAll('.pay [data-count]').forEach(b=>{if(b.getBoundingClientRect().top>innerHeight)b.textContent=(b.dataset.pre||'')+'0'+(b.dataset.suf||'')});
-document.querySelectorAll('#heroFacts [data-count]').forEach(b=>setTimeout(()=>count(b),300));
+if(!STILL)document.querySelectorAll('[data-count]').forEach(b=>{if(b.getBoundingClientRect().top>innerHeight)b.textContent=(b.dataset.pre||'')+'0'+(b.dataset.suf||'')});
 
 /* ---------- фильтры и каталог ---------- */
 const F={type:'',reg:'',month:0,diff:0,budget:0};let more=false;
@@ -716,20 +731,99 @@ $('grid').addEventListener('pointermove',e=>{
 $('grid').addEventListener('pointerout',e=>{const c=e.target.closest('.card');if(c&&!c.contains(e.relatedTarget)){c.classList.remove('tilt');c.style.setProperty('--rx','0deg');c.style.setProperty('--ry','0deg')}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-open]');if(b)openTour(+b.dataset.open)});
 
-/* ---------- регионы ---------- */
-const REGIONS=[
- ['kchr','t12','Домбай, Архыз, Теберда','Водопады, осенние леса и самый большой выбор туров: пешком, верхом, на лыжах.'],
- ['kbr','t2','Эльбрус, Чегет, Приэльбрусье','Горные реки, ледники и подножие высшей точки Европы.'],
- ['dag','t11','Гамсутль, Сулакский каньон, Дербент','Аулы на скалах и бирюзовая вода каньона.'],
- ['oset','t10','Дигория и древние башни','Башенные комплексы, ущелья и ледники Северной Осетии, Чечни и Ингушетии.'],
- ['kmv','t13','Пятигорск, Кисловодск, Железноводск','Курортные парки, нарзанные источники и зелёные плато.']
+/* ---------- первый экран: направления ---------- */
+const SLIDES=[
+ {k:'kbr',word:'Эльбрус',img:'t7',title:'Кабардино-Балкария',txt:'Приэльбрусье и Чегет: ледники, горные реки и подножие высшей точки Европы.'},
+ {k:'kchr',word:'Домбай',img:'t12',title:'Карачаево-Черкесия',txt:'Домбай, Архыз и Теберда: водопады, осенние леса и больше всего туров — пешком, верхом и на лыжах.'},
+ {k:'dag',word:'Дагестан',img:'t11',title:'Дагестан',txt:'Гамсутль, Сулакский каньон и Дербент: аулы на скалах и бирюзовая вода каньона.'},
+ {k:'oset',word:'Осетия',img:'t9',title:'Осетия, Чечня, Ингушетия',txt:'Дигорское ущелье, ледники, водопады и древние башенные комплексы.'},
+ {k:'kmv',word:'Кавминводы',img:'t4',title:'Кавказские Минеральные Воды',txt:'Пятигорск, Кисловодск и Железноводск: курортные парки, нарзан и зелёные плато.'}
 ];
-$('hzTrack').insertAdjacentHTML('beforeend',REGIONS.map(([k,img,places,txt])=>{const n=T.filter(t=>t.rg.includes(k)).length;return`
-  <article class="rg"><img src="img/${img}.jpg" alt="" loading="lazy"><div class="in">
-    <span class="cnt">${n} ${plural(n,'тур','тура','туров')}</span>
-    <div class="bt"><h3>${REG[k]}</h3><p><b>${places}.</b> ${txt}</p><button class="btn btn-sky" type="button" data-reg="${k}">Показать туры →</button></div>
-  </div></article>`}).join('')+`<div class="hz-end"><p>Не нашли свой регион?</p><span>Соберём маршрут под вашу группу.</span><a class="btn btn-main" href="#book">Оставить заявку</a></div>`);
-$('hzTrack').addEventListener('click',e=>{const b=e.target.closest('[data-reg]');if(!b)return;Object.assign(F,{type:'',month:0,diff:0,budget:0,reg:b.dataset.reg});more=true;apply();$('tours').scrollIntoView()});
+let si=0,busy=false,auto=null;
+$('slides').innerHTML=SLIDES.map((d,i)=>`<div class="sl${i===0?' on':''}"><img src="img/${d.img}.jpg" alt="${d.title}" ${i?'loading="lazy"':''}></div>`).join('');
+$('sDots').innerHTML=SLIDES.map((d,i)=>`<button type="button" aria-label="${d.title}" data-i="${i}"></button>`).join('');
+const vert=()=>innerWidth<=760;
+function seamPos(){const g=document.querySelector('.glass').getBoundingClientRect();return vert()?g.top:g.right}
+function layoutWord(){
+  const w=$('word'),hero=$('top').getBoundingClientRect(),txt=w.textContent||'',len=Math.max(4,txt.length);
+  let fs=Math.round(vert()?Math.min(innerWidth*.9/(len*.68),110):Math.min(innerHeight*.27,innerWidth*.74/(len*.68)));
+  w.style.fontSize=fs+'px';
+  const room=vert()?innerWidth-32:innerWidth*.8;if(w.offsetWidth>room)w.style.fontSize=(fs=Math.floor(fs*room/w.offsetWidth))+'px';
+  $('top').style.setProperty('--fs',fs+'px');
+  const ww=w.offsetWidth,seam=seamPos();
+  if(vert()){w.style.left=Math.max(16,(innerWidth-ww)/2)+'px';w.style.top=(seamPos()-hero.top-fs*.5)+'px'}
+  else{w.style.top='';w.style.left=Math.max(16,seam-ww*.42)+'px'}
+  const r=w.getBoundingClientRect(),sp=seamPos();
+  w.querySelectorAll('span').forEach(l=>{
+    if(vert()){/* нижняя часть буквы под стеклом — призрачная */
+      const top=r.top+l.offsetTop,h=l.offsetHeight;l.style.setProperty('--dir','0deg');l.style.setProperty('--cut',Math.min(h,Math.max(0,top+h-sp))+'px');}
+    else{l.style.setProperty('--dir','90deg');l.style.setProperty('--cut',Math.max(0,sp-(r.left+l.offsetLeft))+'px')}
+  });
+}
+function setWord(t,animate){
+  const w=$('word');
+  w.innerHTML=[...t].map((c,i)=>`<span style="--d:${i*45}ms">${c}</span>`).join('');
+  layoutWord();
+  if(animate&&!STILL){w.classList.add('pre');void w.offsetWidth;requestAnimationFrame(()=>w.classList.remove('pre'))}
+}
+function show(n){
+  if(busy||n===si)return;busy=true;
+  n=(n+SLIDES.length)%SLIDES.length;const d=SLIDES[n],sl=document.querySelectorAll('.sl');
+  sl.forEach(e=>e.classList.remove('was'));sl[si].classList.replace('on','was');sl[n].classList.add('on');
+  $('word').classList.add('out');$('ptxt').classList.add('fade');
+  setTimeout(()=>{
+    $('word').classList.remove('out');setWord(d.word,true);
+    $('sTitle').textContent=d.title;$('sTxt').textContent=d.txt;$('sNum').textContent=String(n+1).padStart(2,'0');
+    $('ptxt').classList.remove('fade');
+  },STILL?0:420);
+  moveMarker(n);si=n;mark();setTimeout(()=>busy=false,STILL?0:900);
+}
+function mark(){
+  $('sDots').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-current',i===si));
+  $('profile').querySelectorAll('.stop').forEach((g,i)=>{g.classList.toggle('on',i===si);g.querySelector('circle').setAttribute('r',i===si?7:4)});
+}
+function restart(){clearInterval(auto);if(!STILL)auto=setInterval(()=>{if(heroSeen&&!document.hidden)show(si+1)},7000)}
+$('next').onclick=()=>{show(si+1);restart()};$('prev').onclick=()=>{show(si-1);restart()};
+$('sDots').onclick=e=>{const b=e.target.closest('button');if(b){show(+b.dataset.i);restart()}};
+$('sGo').onclick=()=>{Object.assign(F,{type:'',month:0,diff:0,budget:0,reg:SLIDES[si].k});more=true;apply();$('tours').scrollIntoView()};
+let px0=null;
+$('top').addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')px0=e.clientX});
+$('top').addEventListener('pointerup',e=>{if(px0===null)return;const dx=e.clientX-px0;px0=null;if(Math.abs(dx)>50){show(si+(dx<0?1:-1));restart()}});
+let heroSeen=true;new IntersectionObserver(es=>{heroSeen=es[0].isIntersecting}).observe($('top'));
+
+/* горный профиль с точками-направлениями */
+let pfPath=null,pfLens=[],mLen=0,mAnim=null;
+function drawProfile(){
+  const svg=$('profile'),W=svg.clientWidth||innerWidth,H=svg.clientHeight||110,ns='http://www.w3.org/2000/svg';
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const xs=SLIDES.map((d,i)=>W*(.1+i*.2)),ys=[.2,.5,.34,.58,.72].map(v=>v*H*.8+6);
+  let pts=[[0,H*.86]],seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+  for(let i=0;i<xs.length;i++){
+    const x0=i?xs[i-1]:0,y0=i?ys[i-1]:H*.86;
+    for(let k=1;k<4;k++){const t=k/4;pts.push([x0+(xs[i]-x0)*t,Math.min(H*.9,y0+(ys[i]-y0)*t+(rnd()-.4)*H*.22)])}
+    pts.push([xs[i],ys[i]]);
+  }
+  for(let k=1;k<4;k++){const t=k/4;pts.push([xs[4]+(W-xs[4])*t,ys[4]+(H*.86-ys[4])*t+(rnd()-.5)*H*.14])}
+  pts.push([W,H*.86]);
+  const d='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
+  svg.innerHTML=`<defs><linearGradient id="pfFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+    <path class="ar" d="${d} L${W} ${H} L0 ${H} Z"/><path class="ln" id="pfLine" d="${d}"/>`+
+    SLIDES.map((s,i)=>`<g class="stop" data-i="${i}" role="button" tabindex="0" aria-label="${s.title}"><circle cx="${xs[i]}" cy="${ys[i]}" r="4"/><circle class="hit" cx="${xs[i]}" cy="${ys[i]}" r="18"/><text x="${xs[i]}" y="${ys[i]-16}" text-anchor="middle">${String(i+1).padStart(2,'0')} ${s.word}</text></g>`).join('')+
+    `<circle class="me" id="pfMe" r="6"/>`;
+  pfPath=$('pfLine');const L=pfPath.getTotalLength();
+  pfLens=xs.map(x=>{let lo=0,hi=L;for(let j=0;j<24;j++){const m=(lo+hi)/2;pfPath.getPointAtLength(m).x<x?lo=m:hi=m}return lo});
+  mLen=pfLens[si];placeMe();mark();
+}
+function placeMe(){const p=pfPath.getPointAtLength(mLen);$('pfMe').setAttribute('cx',p.x);$('pfMe').setAttribute('cy',p.y)}
+function moveMarker(n){
+  if(!pfPath)return;cancelAnimationFrame(mAnim);const a=mLen,b=pfLens[(n+SLIDES.length)%SLIDES.length],t0=performance.now();
+  if(STILL){mLen=b;placeMe();return}
+  (function f(now){const p=Math.min(1,(now-t0)/1200),e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;mLen=a+(b-a)*e;placeMe();if(p<1)mAnim=requestAnimationFrame(f)})(t0);
+}
+$('profile').addEventListener('click',e=>{const g=e.target.closest('.stop');if(g){show(+g.dataset.i);restart()}});
+$('profile').addEventListener('keydown',e=>{const g=e.target.closest('.stop');if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();show(+g.dataset.i);restart()}});
+$('sTxt').textContent=SLIDES[0].txt;setWord(SLIDES[0].word,true);drawProfile();restart();
+if(document.fonts)document.fonts.ready.then(layoutWord);
 
 /* ---------- календарь ---------- */
 (function(){
@@ -871,25 +965,6 @@ function porthole(){
   const q=clamp((p-.55)*3);
   $('portCap').style.opacity=q;$('portCap').style.transform=`translateY(${(1-q)*30}px)`;$('portCap').style.pointerEvents=q>.3?'auto':'none';
 }
-let hzW=0;
-function hzSize(){
-  if(innerWidth<800){$('regions').style.height='';$('hzTrack').style.transform='';hzW=0;return}
-  $('hzTrack').style.transform='';
-  hzW=Math.max(0,$('hzTrack').scrollWidth-innerWidth);$('regions').style.height=(hzW+innerHeight)+'px';
-}
-function hz(){
-  if(!hzW)return;
-  const b=$('regions').getBoundingClientRect();if(b.bottom<0||b.top>innerHeight)return;
-  const p=clamp(-b.top/(b.height-innerHeight));
-  $('hzTrack').style.transform=`translate3d(${-p*hzW}px,0,0)`;
-  if(STILL)return;
-  $('hzTrack').querySelectorAll('.rg').forEach(el=>{
-    const r=el.getBoundingClientRect(),d=((r.left+r.width/2)-innerWidth/2)/innerWidth;
-    el.style.transform=`rotate(${(d*5).toFixed(2)}deg) scale(${(1-Math.min(.14,Math.abs(d)*.16)).toFixed(3)})`;
-    el.firstElementChild.style.transform=`translateX(${(d*-6).toFixed(2)}%)`;
-  });
-}
-
 /* ---------- бегущие ленты ---------- */
 let rx1=0,rx2=0,lastY=scrollY,vel=0;
 function ribbons(dt){
@@ -957,14 +1032,14 @@ function frame(now){
   const dt=Math.min(.05,(now-t0)/1000);t0=now;
   cl+=STILL?(climb-cl):(climb-cl)*.08;
   if(Math.abs(cl-shownC)>.0005){paintSky(cl);shownC=cl}
-  porthole();hz();ribbons(dt);
+  porthole();ribbons(dt);
   if(terrain)terrain(dt,now,cl);
   if(vis)requestAnimationFrame(frame);
 }
 addEventListener('scroll',altitude,{passive:true});
-addEventListener('resize',()=>{hzSize();altitude()});
+addEventListener('resize',()=>{layoutWord();drawProfile();altitude()});
 document.addEventListener('visibilitychange',()=>{vis=!document.hidden;if(vis){t0=performance.now();requestAnimationFrame(frame)}});
-addEventListener('load',()=>{hzSize();altitude()});
+addEventListener('load',()=>{layoutWord();altitude()});
 
-apply();fillMonths();ticket();hzSize();altitude();paintSky(0);requestAnimationFrame(frame);
+apply();fillMonths();ticket();altitude();paintSky(0);requestAnimationFrame(frame);
 </script>
