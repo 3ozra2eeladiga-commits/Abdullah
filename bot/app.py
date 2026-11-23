@@ -1752,6 +1752,31 @@ def tg_hook_gk():
     return Response("ok", status=200)
 
 
+# То же для бота заявок сайта врача (vizkod.ru/works/dr-mahmoud/bot.php): Telegram → этот сервер → хостинг.
+@app.post("/tg-hook/dm")
+def tg_hook_dm():
+    body = request.get_data(cache=False)[:262144]
+    secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    if not secret or not body:
+        abort(403)
+
+    def forward():
+        import urllib.request
+        for attempt in range(3):
+            try:
+                req = urllib.request.Request("https://vizkod.ru/works/dr-mahmoud/bot.php", data=body, method="POST",
+                                             headers={"Content-Type": "application/json", "X-Telegram-Bot-Api-Secret-Token": secret})
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    r.read()
+                return
+            except Exception as e:
+                log.warning("tg-hook dm, попытка %s: %s", attempt + 1, e)
+                time.sleep(2 + attempt * 3)
+
+    threading.Thread(target=forward, daemon=True).start()
+    return Response("ok", status=200)
+
+
 @app.get("/qa")
 def qa_page():
     """Живая страница тайного покупателя (только тестовые разговоры — настоящих клиентов там нет)."""
