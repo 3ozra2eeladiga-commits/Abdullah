@@ -1,7 +1,9 @@
-"""Security камера, версия 1.
+"""Security камера, версия 2.
 
 Смотрит видео (файл или камера/регистратор по RTSP), находит людей, обводит их на экране,
 при появлении нового человека включает голосовое предупреждение из колонки.
+Следит за руками: потянулся к полке (жёлтая рамка) -> та же рука спрятана/убрана к телу
+(красная рамка «ПОДОЗРЕНИЕ», кадр сохраняется в alerts/, голос «не забудьте оплатить»).
 
 Запуск:
   python watch.py --source видео.mov --save demo.mp4          # проверка на записи, без окна
@@ -21,7 +23,47 @@ from ultralytics import YOLO
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONTS = ["C:/Windows/Fonts/arialbd.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
          "/System/Library/Fonts/Supplemental/Arial Bold.ttf"]
-GREEN, RED, WHITE = (60, 220, 60), (255, 60, 60), (255, 255, 255)
+GREEN, RED, WHITE, YELLOW = (60, 220, 60), (255, 40, 40), (255, 255, 255), (255, 210, 0)
+REACH_X = 0.75      # кисть дальше этого от середины тела (в длинах туловища) = тянется к полке
+REACH_SEC = 0.3     # сколько секунд подряд
+HIDE_SEC = 0.5      # сколько секунд рука спрятана
+WINDOW_SEC = 5.0    # сколько секунд после полки следим за рукой
+ALERT_SEC = 6.0     # сколько секунд держим красную рамку
+
+
+class Hands:
+    """Состояние одного человека: спокойно -> взял с полки -> спрятал."""
+
+    def __init__(self):
+        self.state, self.until = "ok", 0.0
+        self.reach = {9: 0.0, 10: 0.0}   # сколько секунд тянется каждая рука
+        self.hide = 0.0
+        self.hand = None                 # какая рука брала
+        self.last = None
+
+    def update(self, k, now):
+        dt = 0.0 if self.last is None else min(0.5, max(0.0, now - self.last))
+        self.last = now
+        if min(k[5][2], k[6][2], k[11][2], k[12][2]) < 0.7:   # тело видно плохо — не судим
+            return False
+        hx, hy = (k[11][0] + k[12][0]) / 2, (k[11][1] + k[12][1]) / 2
+        sx, sy = (k[5][0] + k[6][0]) / 2, (k[5][1] + k[6][1]) / 2
+        torso = max(1.0, ((hx - sx) ** 2 + (hy - sy) ** 2) ** 0.5)
+        new_alert = False
+        for w in (9, 10):
+            far = k[w][2] > 0.6 and abs(k[w][0] - hx) / torso > REACH_X
+            self.reach[w] = self.reach[w] + dt if far else 0.0
+            if self.reach[w] >= REACH_SEC and self.state != "alert":
+                self.state, self.hand, self.until, self.hide = "reach", w, now + WINDOW_SEC, 0.0
+        if self.state == "reach" and self.reach[self.hand] == 0.0:
+            x, y, c = k[self.hand]
+            hidden = c < 0.6 or (abs(x - hx) / torso < 0.25 and -0.6 < (y - hy) / torso < 0.4)
+            self.hide = self.hide + dt if hidden else 0.0
+            if self.hide >= HIDE_SEC:
+                self.state, self.until, new_alert = "alert", now + ALERT_SEC, True
+        if self.state != "ok" and now > self.until:
+            self.state = "ok"
+        return new_alert
 
 
 def font(size):
@@ -53,7 +95,8 @@ def main():
     ap.add_argument("--save", help="сохранить результат в файл mp4")
     ap.add_argument("--show", action="store_true", help="показывать окно на экране")
     ap.add_argument("--sound", action="store_true", help="включать голос из колонки")
-    ap.add_argument("--model", default="yolo11s.pt")
+    ap.add_argument("--model", default="yolo11s-pose.pt")
+    ap.add_argument("--skip", type=int, default=1, help="обрабатывать каждый N-й кадр (быстрее)")
     ap.add_argument("--min-frames", type=int, default=8, help="сколько кадров подряд видеть человека, чтобы считать его")
     ap.add_argument("--pause", type=int, default=40, help="пауза между приветствиями, секунд")
     a = ap.parse_args()
@@ -67,6 +110,9 @@ def main():
     out = None
     seen = {}          # номер человека -> сколько кадров его видели
     counted = set()    # кого уже посчитали
+    hands = {}         # номер человека -> Hands
+    alerts = 0
+    alert_banner = -1.0
     last_voice = 0.0
     banner_until = -1.0
     n = 0
@@ -77,15 +123,17 @@ def main():
         if not ok:
             break
         n += 1
+        if n % a.skip:
+            continue
         now = n / fps if isinstance(src, str) and not src.startswith("rtsp") else time.time()
         h, w = frame.shape[:2]
         if f_big is None:
             f_big, f_small = font(max(16, min(w, h) // 30)), font(max(12, min(w, h) // 48))
 
-        res = model.track(frame, persist=True, classes=[0], conf=0.35, verbose=False, tracker="bytetrack.yaml")[0]
+        res = model.track(frame, persist=True, conf=0.35, verbose=False, tracker="bytetrack.yaml")[0]
         people = []
         if res.boxes is not None and res.boxes.id is not None:
-            for box, tid in zip(res.boxes.xyxy.tolist(), res.boxes.id.int().tolist()):
+            for box, tid, kp in zip(res.boxes.xyxy.tolist(), res.boxes.id.int().tolist(), res.keypoints.data.tolist()):
                 seen[tid] = seen.get(tid, 0) + 1
                 if seen[tid] == a.min_frames and tid not in counted:
                     counted.add(tid)
@@ -96,29 +144,47 @@ def main():
                         if a.sound:
                             play("welcome")
                 if tid in counted:
-                    people.append((box, sorted(counted).index(tid) + 1))
+                    hd = hands.setdefault(tid, Hands())
+                    if hd.update(kp, now):
+                        alerts += 1
+                        alert_banner = now + ALERT_SEC
+                        print("%s ПОДОЗРЕНИЕ: взял с полки и спрятал руку" % time.strftime("%H:%M:%S"), flush=True)
+                        os.makedirs(os.path.join(HERE, "alerts"), exist_ok=True)
+                        cv2.imwrite(os.path.join(HERE, "alerts", time.strftime("%Y%m%d_%H%M%S") + "_%d.jpg" % alerts), frame)
+                        if a.sound:
+                            play("pay")
+                    people.append((box, sorted(counted).index(tid) + 1, hd.state, kp))
 
         img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         d = ImageDraw.Draw(img, "RGBA")
         t = max(2, h // 300)
-        for (x1, y1, x2, y2), num in people:
-            d.rectangle([x1, y1, x2, y2], outline=GREEN, width=t)
-            label = "Человек %d · под наблюдением" % num
+        for (x1, y1, x2, y2), num, st, kp in people:
+            col = {"ok": GREEN, "reach": YELLOW, "alert": RED}[st]
+            d.rectangle([x1, y1, x2, y2], outline=col, width=t * (2 if st == "alert" else 1))
+            for sh, el, wr in ((5, 7, 9), (6, 8, 10)):   # руки
+                pts = [(kp[i][0], kp[i][1]) for i in (sh, el, wr) if kp[i][2] > 0.5]
+                if len(pts) > 1:
+                    d.line(pts, fill=col, width=t)
+                if kp[wr][2] > 0.5:
+                    r = t * 3
+                    d.ellipse([kp[wr][0] - r, kp[wr][1] - r, kp[wr][0] + r, kp[wr][1] + r], outline=col, width=t)
+            label = {"ok": "Человек %d · под наблюдением", "reach": "Человек %d · берёт товар с полки",
+                     "alert": "Человек %d · ПОДОЗРЕНИЕ: спрятал товар"}[st] % num
             tw = d.textlength(label, font=f_small)
             th = f_small.size + 8
             lx = max(0, min(x1, w - tw - 12))
-            d.rectangle([lx, y1 - th, lx + tw + 12, y1], fill=GREEN)
-            d.text((lx + 6, y1 - th + 3), label, font=f_small, fill=(0, 0, 0))
+            d.rectangle([lx, y1 - th, lx + tw + 12, y1], fill=col)
+            d.text((lx + 6, y1 - th + 3), label, font=f_small, fill=WHITE if st == "alert" else (0, 0, 0))
         # верхняя полоса
         bar = f_big.size + 20
         d.rectangle([0, 0, w, bar], fill=(0, 0, 0, 170))
         blink = int(now * 2) % 2 == 0
         d.ellipse([14, bar / 2 - 9, 32, bar / 2 + 9], fill=RED if blink else (120, 0, 0))
         d.text((44, 9), "УМНАЯ КАМЕРА · ЗАПИСЬ", font=f_big, fill=WHITE)
-        right = "В зале: %d" % len(people)
+        right = "В зале: %d · Тревог: %d" % (len(people), alerts)
         d.text((w - d.textlength(right, font=f_big) - 16, 9), right, font=f_big, fill=WHITE)
-        if now < banner_until:
-            msg = "Вы под видеонаблюдением"
+        if now < alert_banner or now < banner_until:
+            msg = "ВНИМАНИЕ! Оплатите товар на кассе" if now < alert_banner else "Вы под видеонаблюдением"
             tw = d.textlength(msg, font=f_big)
             d.rectangle([0, h - bar, w, h], fill=(200, 30, 30, 220))
             d.text(((w - tw) / 2, h - bar + 9), msg, font=f_big, fill=WHITE)
@@ -126,7 +192,7 @@ def main():
 
         if a.save:
             if out is None:
-                out = cv2.VideoWriter(a.save, cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+                out = cv2.VideoWriter(a.save, cv2.VideoWriter_fourcc(*"mp4v"), fps / a.skip, (w, h))
             out.write(frame)
         if a.show:
             cv2.imshow("Security камера", frame)
@@ -136,7 +202,7 @@ def main():
     cap.release()
     if out:
         out.release()
-    print("Готово. Людей за всё время: %d" % len(counted))
+    print("Готово. Людей за всё время: %d, тревог: %d" % (len(counted), alerts))
 
 
 if __name__ == "__main__":
