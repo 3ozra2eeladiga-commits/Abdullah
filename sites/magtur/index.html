@@ -466,10 +466,44 @@ dialog::backdrop{background:rgba(230,233,238,.65)}
 .lens .lcap{font-size:1.02rem;color:rgba(255,255,255,.88);max-width:44ch}
 .lens .lhint{font:500 .62rem/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;opacity:.7}
 @media(max-width:700px){.lens{cursor:pointer}.lens .lt{right:var(--gutr)}}
+
+/* ===== фон из фото, меняется по разделам ===== */
+#fx{display:none}
+#bgs{position:fixed;inset:0;z-index:-10;overflow:hidden;background:var(--pearl)}
+#bgs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.14);transition:opacity 1.6s ease,transform 12s cubic-bezier(.2,.6,.2,1)}
+#bgs img.on{opacity:1;transform:scale(1)}
+#bgs::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(240,242,245,.8),rgba(240,242,245,.66) 45%,rgba(240,242,245,.84));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+/* ===== гиды: журнальная сетка ===== */
+.guides{grid-template-columns:repeat(4,1fr);gap:34px 18px}
+@media(max-width:900px){.guides{grid-template-columns:repeat(2,1fr);gap:26px 12px}}
+.guide{background:none!important;padding:0;box-shadow:none;border-radius:0;gap:10px;transform:none;transition:opacity .9s var(--d,0ms),transform 1s cubic-bezier(.2,.85,.2,1) var(--d,0ms)}
+.guide.wait{opacity:0;transform:translateY(50px)}
+.guide:hover{transform:none}
+.guide .im{aspect-ratio:3/4;border-radius:6px;position:relative;overflow:hidden;background:#cfd3da;box-shadow:0 30px 60px -36px rgba(11,12,16,.55)}
+.guide img{filter:grayscale(1) contrast(1.08);transition:filter .8s,transform 1.4s cubic-bezier(.2,.8,.2,1)}
+.guide:hover img,.guide:focus-within img{filter:none;transform:scale(1.05)}
+.guide .im::after{content:attr(data-n);position:absolute;left:14px;top:14px;font:600 .62rem/1 var(--f-mono);letter-spacing:.22em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.guide small{color:var(--dim)!important;padding:0!important;margin-top:4px;font:600 .6rem/1.3 var(--f-mono);letter-spacing:.18em}
+.guide h3{padding:0!important;font-size:1.65rem}
+.guide p{padding:0!important;color:var(--mist)!important;font-size:.9rem}
+/* ===== Эльбрус в 3D ===== */
+.lens{background:linear-gradient(180deg,#141A3E 0%,#3E3870 32%,#B9708A 62%,#F6B796 82%,#FFE3C6 100%);cursor:grab;touch-action:pan-y}
+.lens:active{cursor:grabbing}
+.lens #elbC{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
+.lens::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(14,16,40,.55),transparent 50%)}
+.lens .lt{z-index:3}
+.elb-l{position:absolute;inset:0;z-index:2;pointer-events:none}
+.elb-l span{position:absolute;left:0;top:0;display:flex;align-items:center;gap:8px;white-space:nowrap;font:600 .6rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#fff;transition:opacity .4s;will-change:transform}
+.elb-l span i{width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.25),0 0 14px #fff;flex:none}
+.elb-l span b{font-weight:700;opacity:.75;margin-left:2px}
+.elb-l span.pk{font-size:.7rem}
+.elb-l span.lf{flex-direction:row-reverse}
+.elb-l span.pk i{background:#FFD9B0;box-shadow:0 0 0 5px rgba(255,217,176,.3),0 0 18px #FFD9B0}
+@media(max-width:700px){.lens .lt{top:auto}.lens::before{background:linear-gradient(0deg,rgba(14,16,40,.7),transparent 60%)}.elb-l span{font-size:.52rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
-<canvas id="fx" aria-hidden="true"></canvas><div id="bar" aria-hidden="true"></div>
+<div id="bgs" aria-hidden="true"><img data-s="top" src="img/t8.jpg" alt="" class="on"><img data-s="intro" src="img/t8.jpg" alt=""><img data-s="tours" src="img/t8.jpg" alt=""><img data-s="lens" src="img/t7.jpg" alt=""><img data-s="kv" src="img/t9.jpg" alt=""><img data-s="season" src="img/t11.jpg" alt=""><img data-s="how" src="img/t4.jpg" alt=""><img data-s="guides" src="img/t12.jpg" alt=""><img data-s="faq" src="img/t2.jpg" alt=""><img data-s="book" src="img/t7.jpg" alt=""></div><div id="bar" aria-hidden="true"></div>
 <header class="top" id="hdr"><div class="wrap">
   <a class="logo" href="#top">МАГТУР</a>
   <nav aria-label="Разделы">
@@ -541,16 +575,15 @@ dialog::backdrop{background:rgba(230,233,238,.65)}
   </div>
 </section>
 
-<section class="lens" id="lens" aria-label="Эльбрус">
-  <img class="lb" src="img/t7.jpg" alt="">
-  <div class="lc" id="lc"><img src="img/t7.jpg" alt="Эльбрус в облаках над заснеженным плато"></div>
-  <span class="ring2" id="ring2" aria-hidden="true"></span>
+<section class="lens" id="lens" aria-label="Эльбрус в 3D">
+  <canvas id="elbC" aria-hidden="true"></canvas>
+  <div class="elb-l" id="elbL" aria-hidden="true"></div>
   <div class="lt" data-r="up">
     <p class="eyebrow">✦ Высшая точка России и Европы</p>
     <p class="ln"><span data-count="5642">5642</span><small>метров · Эльбрус</small></p>
-    <p class="lcap">В ясную погоду его видно прямо из Пятигорска, где начинаются наши туры. В хайкинге «Притяжение Эльбруса» вы подойдёте к нему вплотную.</p>
-    <div><button class="btn btn-main" type="button" data-open="7">Смотреть тур</button></div>
-    <p class="lhint">Нажмите на фото, чтобы открыть гору целиком</p>
+    <p class="lcap">Две вершины, ледники и путь, по которому поднимаются от Азау до Западной вершины. Покрутите гору, чтобы рассмотреть маршрут со всех сторон.</p>
+    <div><button class="btn btn-main" type="button" data-open="7">Смотреть тур к Эльбрусу</button></div>
+    <p class="lhint">Крутите гору пальцем или мышкой</p>
   </div>
 </section>
 
@@ -1063,34 +1096,102 @@ $('guidesGrid').innerHTML=[
  ['g_chek','Эдуард Чеккуев','Гид-экскурсовод','Историк. С 2006 года участвует в археологических раскопках.'],
  ['g_mag','Абдула Магомедов','Гид по Дагестану','Водит группы по Дагестану с 2016 года.'],
  ['g_ilis','Абдула Илистубегов','Гид по Дагестану','Ведёт группы по горному Дагестану.']
-].map((g,i)=>`<div class="guide" style="--rot:${ROT[i]}deg;--d:${(i%4)*120}ms"><div class="im"><img src="img/${g[0]}.jpg" alt="${g[1]}" loading="lazy"></div><small>${g[2]}</small><h3>${g[1]}</h3><p>${g[3]}</p></div>`).join('');
+].map((g,i)=>`<div class="guide" style="--d:${(i%4)*120}ms"><div class="im" data-n="${String(i+1).padStart(2,'0')}"><img src="img/${g[0]}_pro.jpg" alt="${g[1]}" loading="lazy"></div><small>${g[2]}</small><h3>${g[1]}</h3><p>${g[3]}</p></div>`).join('');
 $('guidesGrid').querySelectorAll('.guide').forEach(arm);
 $('said').innerHTML=[['Софья К.','«Курортный роман»','Рамазан'],['Екатерина У.','«Домбай и его окрестности»','Азнаур и Мурадин'],['Иван','«Путешествие в страну гор»','Магомед'],['Михаил','«Выходные в седле»','Казбек'],['Галина','«Приключения в стране гор»','Ахмед'],['Наталья','«Калейдоскоп времён»','Сеит'],['Елена','«Курортный роман»','Эдуард'],['Сергей','«Горнолыжка для чайников»','Абдуррахман']]
  .map(s=>`<li><b>${s[0]}</b> · ${s[1]} · гид ${s[2]}</li>`).join('');
 
 /* ---------- иллюминатор и галерея вбок ---------- */
 const clamp=v=>Math.max(0,Math.min(1,v));
-/* Эльбрус: линза идёт за курсором, сама гуляет, по нажатию раскрывается */
-const LZ={x:.72,y:.45,tx:.72,ty:.45,r:20,open:false,idle:9,vis:false};
-new IntersectionObserver(es=>{LZ.vis=es[0].isIntersecting}).observe($('lens'));
-$('lens').addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const b=$('lens').getBoundingClientRect();LZ.tx=(e.clientX-b.left)/b.width;LZ.ty=(e.clientY-b.top)/b.height;LZ.idle=0});
-$('lens').addEventListener('click',e=>{if(e.target.closest('button'))return;LZ.open=!LZ.open});
-function lens(dt){
-  if(!LZ.vis)return;
-  LZ.idle+=dt;
-  if(LZ.idle>2&&!LZ.open&&!STILL){const t=performance.now()/1000;const m=innerWidth<700;LZ.tx=(m?.5:.72)+Math.sin(t*.45)*(m?.22:.13);LZ.ty=(m?.3:.45)+Math.sin(t*.7)*(m?.1:.16)}
-  const k=STILL?1:.08,tr=LZ.open?150:(innerWidth<700?32:21);
-  LZ.x+=(LZ.tx-LZ.x)*k;LZ.y+=(LZ.ty-LZ.y)*k;LZ.r+=(tr-LZ.r)*(STILL?1:.07);
-  $('lc').style.clipPath=`circle(${LZ.r.toFixed(2)}% at ${(LZ.x*100).toFixed(2)}% ${(LZ.y*100).toFixed(2)}%)`;
-  const b=$('lens').getBoundingClientRect(),d=LZ.r/100*Math.hypot(b.width,b.height)/Math.SQRT2*2;
-  const rg=$('ring2');rg.style.left=LZ.x*100+'%';rg.style.top=LZ.y*100+'%';rg.style.setProperty('--d',d+'px');rg.style.opacity=LZ.open?0:1;
-}
+/* Эльбрус в 3D: две вершины, море облаков, маршрут восхождения */
+let lens=()=>{};
+(function(){
+  if(!window.THREE)return;
+  const host=$('lens'),cv=$('elbC');let r;
+  try{r=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true})}catch(e){return}
+  const phone=innerWidth<700;r.setPixelRatio(Math.min(devicePixelRatio||1,phone?1.5:1.75));
+  const scene=new THREE.Scene();scene.fog=new THREE.Fog(0xF4B596,10,24);
+  const cam=new THREE.PerspectiveCamera(34,1,.1,100);
+  const P=new Uint8Array(512);{const p=[...Array(256).keys()];let sd=11;for(let i=255;i>0;i--){sd=(sd*16807)%2147483647;const j=sd%(i+1);[p[i],p[j]]=[p[j],p[i]]}for(let i=0;i<512;i++)P[i]=p[i&255]}
+  const fade=t=>t*t*(3-2*t),hs=(x,y,q)=>{if(q){x=((x%q)+q)%q;y=((y%q)+q)%q}return P[(P[x&255]+(y&255))&511]/255};
+  const vn=(x,y,q)=>{const xi=Math.floor(x),yi=Math.floor(y),u=fade(x-xi),v=fade(y-yi);const a=hs(xi,yi,q),b=hs(xi+1,yi,q),c=hs(xi,yi+1,q),d=hs(xi+1,yi+1,q);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v};
+  const fbm=(x,y,q)=>{let s=0,a=.5,f=1;for(let i=0;i<5;i++){s+=a*vn(x*f,y*f,q?q*f:0);f*=2;a*=.5}return s};
+  const W=[-.62,0],E=[.64,-.14];
+  function H(x,z){
+    const dw=Math.hypot(x-W[0],z-W[1]),de=Math.hypot(x-E[0],z-E[1]),dc=Math.hypot(x,z+.05);
+    const cone=(d,h,s)=>h*Math.exp(-Math.pow(d/s,1.35));
+    let h=Math.max(cone(dw,2.3,1.15),cone(de,2.27,1.1),cone(dc,1.92,1.55));
+    h+=1.05*Math.exp(-Math.pow(Math.hypot(x,z)/3.4,2));
+    const ang=Math.atan2(z,x),n=fbm(x*.9+5,z*.9+5);
+    h+=(n-.5)*.5*Math.min(1,dc/1.2);
+    h+=Math.sin(ang*17+n*6)*.1*Math.min(1,dc/1.5)*Math.max(0,1-dc/5.5);
+    h-=.1*Math.exp(-Math.pow(dw/.16,2))+.1*Math.exp(-Math.pow(de/.16,2));
+    return h;
+  }
+  const N=phone?150:220,S=12,g=new THREE.PlaneGeometry(S,S,N,N);g.rotateX(-Math.PI/2);
+  const pos=g.attributes.position;let hmax=0;
+  for(let i=0;i<pos.count;i++){const h=H(pos.getX(i),pos.getZ(i));pos.setY(i,h);if(h>hmax)hmax=h}
+  g.computeVertexNormals();
+  const nor=g.attributes.normal,cols=new Float32Array(pos.count*3),tmp=new THREE.Color();
+  const snow=new THREE.Color(0xF6F8FF),shade=new THREE.Color(0xAFC1E4),rock=new THREE.Color(0x3E3A47),grass=new THREE.Color(0x5F6B52);
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),t=pos.getY(i)/hmax,ny=nor.getY(i);
+    const line=.42+(fbm(x*1.6,z*1.6)-.5)*.16,sw=Math.min(1,Math.max(0,(t-line+.07)/.14)),sm=sw*sw*(3-2*sw);
+    const gnd=new THREE.Color().copy(grass).lerp(rock,Math.min(1,Math.max(0,.86-ny)*1.8+.25));
+    const sn=new THREE.Color().copy(snow).lerp(shade,Math.max(0,.92-ny)*.85).lerp(rock,Math.min(1,Math.max(0,(.66-ny)/.2))*.55);
+    const c=tmp.copy(gnd).lerp(sn,sm);
+    cols[i*3]=c.r;cols[i*3+1]=c.g;cols[i*3+2]=c.b}
+  g.setAttribute('color',new THREE.BufferAttribute(cols,3));
+  scene.add(new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,metalness:0})));
+  scene.add(new THREE.HemisphereLight(0xC3D6FF,0x5A4660,.8));
+  const sun=new THREE.DirectionalLight(0xFFD6B8,1.55);sun.position.set(6,3,2.5);scene.add(sun);
+  // море облаков (бесшовная текстура)
+  const cc=document.createElement('canvas');cc.width=cc.height=256;const cx=cc.getContext('2d'),im=cx.createImageData(256,256);
+  for(let y=0;y<256;y++)for(let x=0;x<256;x++){const v=fbm(x/32,y/32,8),a=Math.max(0,Math.min(1,(v-.4)*3)),k=(y*256+x)*4;im.data[k]=255;im.data[k+1]=250;im.data[k+2]=246;im.data[k+3]=a*240}
+  cx.putImageData(im,0,0);
+  const mk=(rep,y,op)=>{const t=new THREE.CanvasTexture(cc);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rep,rep);
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(40,40),new THREE.MeshBasicMaterial({map:t,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=y;scene.add(m);return t};
+  const c1=mk(4,.72,.95),c2=mk(2.6,1.02,.55);
+  // маршрут и точки
+  const y0=H(4.4,0),yW=H(W[0],W[1]),toY=e=>y0+(e-2000)/(5642-2000)*(yW-y0);
+  const path=[[.5,4.6],[.2,2.6],[-.05,1.1],[.02,.15],[W[0],W[1]]],pts=[];
+  for(let s2=0;s2<path.length-1;s2++)for(let k=0;k<40;k++){const t=k/40,x=path[s2][0]+(path[s2+1][0]-path[s2][0])*t,z=path[s2][1]+(path[s2+1][1]-path[s2][1])*t;pts.push(new THREE.Vector3(x,H(x,z)+.03,z))}
+  pts.push(new THREE.Vector3(W[0],yW+.03,W[1]));
+  const curve=new THREE.CatmullRomCurve3(pts);
+  scene.add(new THREE.Mesh(new THREE.TubeGeometry(curve,300,.012,6,false),new THREE.MeshBasicMaterial({color:0xFFFFFF,fog:false})));
+  const ST=[['Азау',2350],['Гара-Баши',3847],['Скалы Пастухова',4700],['Седловина',5300]];
+  const marks=ST.map(([n,e])=>{const ty=toY(e);let v=pts.find(p=>p.y>=ty)||pts[pts.length-1];return{n,e,v:v.clone(),pk:false}});
+  marks.push({n:'Западная вершина',e:5642,v:new THREE.Vector3(W[0],yW+.05,W[1]),pk:true});
+  marks.push({n:'Восточная вершина',e:5621,v:new THREE.Vector3(E[0],H(E[0],E[1])+.05,E[1]),pk:true});
+  $('elbL').innerHTML=marks.map(m=>`<span class="${m.pk?'pk':''}${m.n.startsWith('Запад')?' lf':''}"><i></i>${m.n}<b>${m.e}</b></span>`).join('');
+  const labs=[...$('elbL').children];
+  let W0=1,H0=1;
+  function size(){W0=host.clientWidth;H0=host.clientHeight;r.setSize(W0,H0,false);cam.aspect=W0/H0;
+    if(innerWidth>700)cam.setViewOffset(W0,H0,-W0*.17,0,W0,H0);else cam.setViewOffset(W0,H0,0,H0*.24,W0,H0);cam.updateProjectionMatrix()}
+  size();addEventListener('resize',size);
+  let yaw=.6,vy=0,drag=null,vis=false,t=0;
+  new IntersectionObserver(es=>{vis=es[0].isIntersecting}).observe(host);
+  host.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;drag={x:e.clientX,id:e.pointerId};vy=0});
+  addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x;drag.x=e.clientX;yaw-=dx*.006;vy=-dx*.006});
+  addEventListener('pointerup',()=>{drag=null});addEventListener('pointercancel',()=>{drag=null});
+  const v=new THREE.Vector3();
+  lens=dt=>{
+    if(!vis)return;t+=dt;
+    if(!drag){yaw+=vy;vy*=.94;if(!STILL)yaw+=dt*.07}
+    const R=phone?17:9.6;cam.position.set(Math.sin(yaw)*R,3.6,Math.cos(yaw)*R);cam.lookAt(0,phone?1.7:1.35,0);
+    c1.offset.x=t*.006;c1.offset.y=t*.003;c2.offset.x=-t*.004;
+    r.render(scene,cam);
+    marks.forEach((m,k)=>{v.copy(m.v).project(cam);const x=(v.x+1)/2*W0,y=(1-v.y)/2*H0;
+      const toCam=cam.position.clone().sub(m.v).normalize(),front=toCam.dot(new THREE.Vector3(m.v.x,0,m.v.z).normalize())>-.25||m.pk;
+      const lf=labs[k].classList.contains('lf');labs[k].style.transform=lf?`translate(calc(${x+5}px - 100%),${y-26}px)`:(m.pk?`translate(${x-5}px,${y-26}px)`:`translate(${x-5}px,${y-5}px)`);labs[k].style.opacity=front?1:.15});
+  };
+})();
 /* ---------- «Кавказ.»: фото уезжает, выходят кадры ---------- */
 $('strips').innerHTML=[['К',5],['А',8],['В',9],['К',14],['А',11],['З',18]].map(([l,id],i)=>{const t=T.find(x=>x.id===id);
   return`<button class="strip" type="button" data-open="${id}" style="--d:${i*130}ms" aria-label="${t.name}"><span class="ph"><img src="${t.img}" alt="" loading="lazy"><span class="cap">${short(t.name)}<br><small style="opacity:.7">${t.reg}</small></span></span><span class="lt">${l}</span></button>`}).join('');
 arm($('strips'));
 
 /* ---------- высотомер ---------- */
+const BGSEC=['top','intro','tours','lens','kv','season','how','guides','faq','book'];let bgCur='top';
 const stations=[...document.querySelectorAll('[data-alt]')].map(el=>({el,alt:+el.dataset.alt,place:el.dataset.place}));
 const LO=512,HI=5642;
 function altitude(){
@@ -1100,6 +1201,8 @@ function altitude(){
     alt=i===stations.length-1?HI:stations[i].alt+(stations[i+1].alt-stations[i].alt)*Math.min(1,(y-tops[i])/(tops[i+1]-tops[i]));}
   $('altNum').textContent=Math.round(alt).toLocaleString('ru-RU')+' м';$('altPlace').textContent=place;
   $('hdr').classList.toggle('solid',scrollY>40);
+  {const mid=innerHeight*.5;let cur='top';for(const sec of BGSEC){const el=$(sec);if(!el)continue;const b=el.getBoundingClientRect();if(b.top<=mid&&b.bottom>mid){cur=sec;break}}
+   if(cur!==bgCur){bgCur=cur;document.querySelectorAll('#bgs img').forEach(im=>im.classList.toggle('on',im.dataset.s===cur))}}
   $('bar').style.transform=`scaleX(${(scrollY/Math.max(1,document.documentElement.scrollHeight-innerHeight)).toFixed(4)})`;
 }
 
@@ -1147,7 +1250,7 @@ document.querySelectorAll('.scene > canvas.cl').forEach(cv=>makeClouds(cv,cv.par
 /* ---------- перламутровый фон с линиями высот ---------- */
 let fx=()=>{};
 (function(){
-  const c=$('fx'),gl=c.getContext('webgl',{antialias:false});if(!gl)return;
+  const c=$('fx');if(!c)return;const gl=c.getContext('webgl',{antialias:false});if(!gl)return;
   const fs=`precision highp float;uniform vec2 r;uniform float t;uniform vec2 m;uniform float s;
   float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
   float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
