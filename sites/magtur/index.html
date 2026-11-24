@@ -4,11 +4,11 @@
 <style>
 /* Идея: каждый раздел — кадр из фильма о Кавказе. Фото на весь экран, матовое стекло, облака, крупный текст прямо на фото. Цвета берутся из самих гор: глубокий тёмный, кремовый снег, золото заката. Один тёмный мир намеренно. */
 :root{
-  color-scheme:dark;
-  --ink:#0B0F14; --ink2:#121820; --cream:#F3ECE0; --mist:rgba(243,236,224,.74); --dim:rgba(243,236,224,.55);
-  --gold:#FFD23F; --gold2:#FFE57A; --sun:#FFD23F;
-  --c-hike:#12B862; --c-bus:#2F7BFF; --c-horse:#FF7417; --c-ski:#8B5CF6; --c-rest:#FF3D8B; --c-all:#2E3BFF; --line:rgba(243,236,224,.2);
-  --glass:rgba(12,17,22,.36); --glass-strong:rgba(12,17,22,.62);
+  color-scheme:light;
+  --ink:#0B0C10; --ink2:#1A1D24; --cream:#0B0C10; --mist:#474D59; --dim:#737985; --pearl:#EEF0F3;
+  --gold:#0B0C10; --gold2:#5A606C; --sun:#0B0C10;
+  --c-hike:#12B862; --c-bus:#2F7BFF; --c-horse:#FF7417; --c-ski:#8B5CF6; --c-rest:#FF3D8B; --c-all:#2E3BFF; --line:rgba(11,12,16,.14);
+  --glass:rgba(255,255,255,.55); --glass-strong:rgba(12,17,22,.62);
   --f-display:"Cormorant Garamond","Times New Roman",Georgia,serif;
   --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -376,9 +376,100 @@ dialog::backdrop{background:rgba(5,7,10,.7);backdrop-filter:blur(10px)}
 .dl-b .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .x{position:absolute;right:14px;top:14px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(11,15,20,.7);color:var(--cream);font-size:1.4rem;cursor:pointer;z-index:2}
 
+
+/* ===== светлый перламутровый мир ===== */
+body{background:var(--pearl);color:var(--ink)}
+body::before{background:var(--pearl)}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:-10;display:block;background:radial-gradient(120% 90% at 70% 20%,#fff,#e4e6ea 70%)}
+#bar{position:fixed;top:0;left:0;height:2px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,#0b0c10,#8a909c);z-index:20}
+.hero,.intro,.lens{--cream:#F7F3EC;--mist:rgba(255,255,255,.84);--dim:rgba(255,255,255,.62);--line:rgba(255,255,255,.28);--gold:#fff;--gold2:#fff;--glass:rgba(12,17,22,.3);color:#F7F3EC}
+.btn-main{background:var(--ink);color:#fff}
+.btn-main:hover{background:#2A2E36;transform:translateY(-2px)}
+.btn-sky,.btn-ghost{background:rgba(255,255,255,.45);color:var(--ink);border-color:rgba(11,12,16,.55)}
+.btn-sky:hover,.btn-ghost:hover{background:var(--ink);color:#fff}
+.hero .btn-main,.intro .btn-main,.lens .btn-main,header.top:not(.solid) .btn-main{background:#fff;color:var(--ink)}
+.hero .btn-sky,.lens .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.6)}
+.hero .btn-sky:hover,.lens .btn-ghost:hover{background:#fff;color:var(--ink)}
+.spaced i{background:linear-gradient(90deg,#0b0c10,#8a909c);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
+.intro .spaced i{background:none;color:rgba(255,255,255,.85)}
+header.top{--hd:#fff}
+header.top.solid{background:rgba(255,255,255,.62);border-color:rgba(11,12,16,.1);--hd:#0B0C10}
+header .logo,header nav a,header .alt-pill{color:var(--hd)}
+header .alt-pill i{color:var(--hd)}
+header .alt-pill small{color:var(--hd);opacity:.6}
+header.top.solid .btn-main{background:var(--ink);color:#fff}
+.frost{background:rgba(255,255,255,.55);border-color:rgba(255,255,255,.85);box-shadow:0 24px 60px -34px rgba(11,12,16,.4)}
+.plain{position:relative;padding-block:clamp(80px,10vw,130px)}
+/* подбор */
+.tours{background:transparent;color:var(--ink)}
+.tours::before{display:none}
+.tours .eyebrow{color:var(--mist)}.tours .eyebrow b{color:var(--ink)}.tours .lead{color:var(--mist)}
+.fm{background:rgba(255,255,255,.55);border-color:rgba(11,12,16,.12);color:var(--ink);backdrop-filter:blur(14px)}
+.fm:hover{border-color:var(--ink)}
+.fm[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.bar{box-shadow:0 24px 60px -34px rgba(11,12,16,.45);border:1px solid rgba(11,12,16,.08)}
+.cnt button{color:#fff}
+.rarr{border-color:rgba(11,12,16,.5);background:rgba(255,255,255,.5);color:var(--ink)}
+.rarr:hover{background:var(--ink);color:#fff}
+.rtext .btn-ghost{border-color:rgba(11,12,16,.55)}
+.rtext .btn-ghost:hover{color:#fff}
+.rc .lab em{background:rgba(255,255,255,.92);color:var(--ink)}
+.rc.new::before{background:#fff;color:var(--ink)}
+.empty{color:var(--ink)}
+/* календарь */
+.cal .nm{background:rgba(255,255,255,.94);color:var(--ink)}
+.cal .mh.now{background:var(--ink);color:#fff}
+.cal .c i{background:var(--ink)}
+.cal .c.col-now{background:rgba(11,12,16,.06)}
+.pay b{color:var(--ink)}
+/* гиды */
+.guides-sec{background:transparent}
+.guides-sec::before{display:none}
+.guide{background:#fff}
+/* формы */
+input,select,textarea{background:rgba(255,255,255,.78);color:var(--ink);border-color:rgba(11,12,16,.14)}
+input::placeholder,textarea::placeholder{color:#8A909C}
+select option{background:#fff;color:var(--ink)}
+input:focus,select:focus,textarea:focus{border-color:var(--ink);background:#fff;box-shadow:0 0 0 4px rgba(11,12,16,.06)}
+.stepper button{background:rgba(255,255,255,.78);color:var(--ink);border-color:rgba(11,12,16,.14)}
+.stepper button:hover{background:var(--ink);color:#fff}
+.err{color:#B3261E}
+.done{border-color:var(--ink)}
+.ticket header{background:var(--ink);color:#fff}
+/* подвал и окно тура */
+footer{background:transparent;color:var(--mist);border-top:1px solid var(--line)}
+.fcols h3,.tel,footer a{color:var(--ink)}
+.copy{color:var(--mist);border-color:var(--line)}
+dialog{background:#fff;color:var(--ink);border-color:rgba(11,12,16,.1)}
+dialog::backdrop{background:rgba(230,233,238,.65)}
+.x{background:rgba(255,255,255,.92);color:var(--ink)}
+.specs .peaks i{background:rgba(11,12,16,.15)}.specs .peaks i.on{background:var(--ink)}
+/* «Кавказ.» без прилипания */
+.kv2 .head{text-align:center;justify-items:center;margin-bottom:0}
+.kv2 .head .eyebrow{justify-content:center}
+.kv2 .bigw{font:500 clamp(4rem,13vw,11rem)/.85 var(--f-display);letter-spacing:-.02em}
+.kv2 .strips{height:clamp(300px,44vw,470px);margin-top:clamp(30px,5vw,56px)}
+.kv2 .kv-hint{margin-top:22px;color:var(--dim)}
+.strip{color:var(--ink)}
+@media(hover:hover){.strip:hover .lt{color:var(--mist)}}
+/* Эльбрус: линза */
+.lens{position:relative;height:88vh;height:88svh;min-height:560px;overflow:hidden;isolation:isolate;cursor:crosshair}
+.lens .lb,.lens .lc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.lens .lb{filter:grayscale(1) blur(5px) brightness(.62);transform:scale(1.06);z-index:-2}
+.lens .lc{position:absolute;inset:0;z-index:-1;clip-path:circle(20% at 50% 50%)}
+.lens .lc::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,10,14,.45),transparent 55%)}
+.lens .ring2{position:absolute;z-index:1;width:var(--d,40vmin);height:var(--d,40vmin);border-radius:50%;border:1px solid rgba(255,255,255,.7);transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 0 60px rgba(255,255,255,.18)}
+.lens .lt{position:absolute;z-index:2;left:var(--lx);bottom:clamp(30px,8vh,80px);display:grid;gap:16px;max-width:520px;pointer-events:none}
+.lens .lt .btn{pointer-events:auto}
+.lens .ln{font:500 clamp(4.5rem,13vw,10rem)/.85 var(--f-display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.lens .ln small{display:block;font:500 .72rem/1 var(--f-mono);letter-spacing:.28em;text-transform:uppercase;margin-top:16px;opacity:.85}
+.lens .lcap{font-size:1.02rem;color:rgba(255,255,255,.88);max-width:44ch}
+.lens .lhint{font:500 .62rem/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;opacity:.7}
+@media(max-width:700px){.lens{cursor:pointer}.lens .lt{right:var(--gutr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
+<canvas id="fx" aria-hidden="true"></canvas><div id="bar" aria-hidden="true"></div>
 <header class="top" id="hdr"><div class="wrap">
   <a class="logo" href="#top">МАГТУР</a>
   <nav aria-label="Разделы">
@@ -430,7 +521,7 @@ dialog::backdrop{background:rgba(5,7,10,.7);backdrop-filter:blur(10px)}
     <div class="head">
       <p class="eyebrow" data-r="up"><b>1450 м</b> Архыз · девятнадцать маршрутов</p>
       <h2 class="spaced" data-r="words">Выберите <i>свой</i> маршрут</h2>
-      <p class="lead" data-r="up" style="--d:200ms">Выберите, как хотите двигаться, куда и когда. Туры встанут в кольцо: крутите его, а цвет блока подскажет формат тура спереди.</p>
+      <p class="lead" data-r="up" style="--d:200ms">Выберите, как хотите двигаться, куда и когда. Туры встанут в кольцо: крутите его пальцем или мышкой и открывайте тот, что спереди.</p>
     </div>
     <div class="fmt" id="fmt" data-r="up" style="--d:250ms"></div>
     <div class="bar" data-r="up" style="--d:320ms">
@@ -450,27 +541,28 @@ dialog::backdrop{background:rgba(5,7,10,.7);backdrop-filter:blur(10px)}
   </div>
 </section>
 
-<section class="kv" id="kv" aria-label="Кавказ в шести кадрах">
-  <div class="kv-stick">
-    <div class="kv-photo"><img src="img/t9.jpg" alt="Скалистые вершины Дигорского ущелья"><div class="kv-title"><p class="eyebrow">✦ шесть кадров · шесть туров ✦</p><h2>Кавказ.</h2></div></div>
-    <div class="kv-low"><div class="strips wait" id="strips"></div><p class="kv-hint">Нажмите на кадр, чтобы открыть тур</p></div>
+<section class="lens" id="lens" aria-label="Эльбрус">
+  <img class="lb" src="img/t7.jpg" alt="">
+  <div class="lc" id="lc"><img src="img/t7.jpg" alt="Эльбрус в облаках над заснеженным плато"></div>
+  <span class="ring2" id="ring2" aria-hidden="true"></span>
+  <div class="lt" data-r="up">
+    <p class="eyebrow">✦ Высшая точка России и Европы</p>
+    <p class="ln"><span data-count="5642">5642</span><small>метров · Эльбрус</small></p>
+    <p class="lcap">В ясную погоду его видно прямо из Пятигорска, где начинаются наши туры. В хайкинге «Притяжение Эльбруса» вы подойдёте к нему вплотную.</p>
+    <div><button class="btn btn-main" type="button" data-open="7">Смотреть тур</button></div>
+    <p class="lhint">Нажмите на фото, чтобы открыть гору целиком</p>
   </div>
 </section>
 
-<section class="port" id="port" aria-label="Эльбрус">
-  <div class="port-stick">
-    <div class="port-img" id="portImg"><img src="img/t7.jpg" alt="Эльбрус в облаках над заснеженным плато"></div>
-    <div class="port-num" id="portNum">5642<small>метра над морем</small></div>
-    <div class="port-cap wrap" id="portCap">
-      <p>Эльбрус — самая высокая вершина России и Европы</p>
-      <p>В ясную погоду его видно прямо из Пятигорска, где начинаются наши туры. В хайкинге «Притяжение Эльбруса» вы подойдёте к нему вплотную.</p>
-      <button class="btn btn-main" type="button" data-open="7">Смотреть тур</button>
-    </div>
+<section class="plain kv2" id="kv" aria-label="Кавказ в шести кадрах">
+  <div class="wrap">
+    <div class="head"><p class="eyebrow" data-r="up">✦ шесть кадров · шесть туров ✦</p><h2 class="bigw" data-r="words">Кавказ.</h2></div>
+    <div class="strips wait" id="strips"></div>
+    <p class="kv-hint">Нажмите на кадр, чтобы открыть тур</p>
   </div>
 </section>
 
-<section class="scene" id="season" data-alt="3050" data-place="Чегет">
-  <img class="bg" src="img/t13.jpg" alt="">
+<section class="plain" id="season" data-alt="3050" data-place="Чегет">
   <div class="wrap">
     <div class="head">
       <p class="eyebrow" data-r="up"><b>3050 м</b> Чегет · сезоны</p>
@@ -478,25 +570,17 @@ dialog::backdrop{background:rgba(5,7,10,.7);backdrop-filter:blur(10px)}
       <p class="lead" data-r="up" style="--d:200ms">Полоса показывает месяцы, когда тур проводится. Нажмите на месяц, чтобы оставить в каталоге только его туры, или на название, чтобы открыть тур.</p>
     </div>
     <div class="frost cal-panel" data-r="up" style="--d:300ms"><div class="cal-scroll"><div class="cal" id="cal"></div></div>
-    <p class="cal-note">Цвет полосы — формат тура, подсвеченный столбец — текущий месяц. Период «Кавказского калейдоскопа» уточняйте у менеджера.</p></div>
+    <p class="cal-note">Подсвеченный столбец — текущий месяц. Период «Кавказского калейдоскопа» уточняйте у менеджера.</p></div>
   </div>
 </section>
 
-<section class="scene say">
-  <img class="bg" src="img/t15.jpg" alt="Лошади на закате в горах">
-  <div class="wrap">
-    <p class="eyebrow">✦ Наше правило ✦</p>
-    <p class="big" data-r="words">Поедем, даже если вы <i>один</i></p>
-    <p class="small" data-r="up" style="--d:400ms">Тур проводится при любом составе группы. Мы не отменяем поездку из-за того, что не набрались люди.</p>
-  </div>
-</section>
 
-<section class="scene" id="how" data-alt="3847" data-place="Гара-Баши">
-  <img class="bg" src="img/t4.jpg" alt="">
+<section class="plain" id="how" data-alt="3847" data-place="Гара-Баши">
   <div class="wrap">
     <div class="head">
       <p class="eyebrow" data-r="up"><b>3847 м</b> Гара-Баши · как всё устроено</p>
       <h2 class="spaced" data-r="words">Пять шагов <i>до гор</i></h2>
+      <p class="lead" data-r="up" style="--d:200ms">И одно правило: тур состоится при любом составе группы. Поедем, даже если вы один.</p>
     </div>
     <ol class="steps">
       <li class="frost" data-r="up" style="--d:0ms"><h3>Заявка</h3><p>Вы пишете, какой тур и когда. Менеджер проверяет места и подтверждает.</p></li>
@@ -529,8 +613,7 @@ dialog::backdrop{background:rgba(5,7,10,.7);backdrop-filter:blur(10px)}
   </div>
 </section>
 
-<section class="scene" id="faq" data-alt="5300" data-place="Седловина">
-  <img class="bg" src="img/t18.jpg" alt="">
+<section class="plain" id="faq" data-alt="5300" data-place="Седловина">
   <div class="wrap">
     <div class="head">
       <p class="eyebrow" data-r="up"><b>5300 м</b> Седловина · перед выходом</p>
@@ -553,9 +636,7 @@ dialog::backdrop{background:rgba(5,7,10,.7);backdrop-filter:blur(10px)}
   </div>
 </section>
 
-<section class="scene" id="book" data-alt="5642" data-place="Эльбрус, вершина">
-  <img class="bg" src="img/t7.jpg" alt="">
-  <canvas class="cl" data-cov=".56" aria-hidden="true"></canvas>
+<section class="plain" id="book" data-alt="5642" data-place="Эльбрус, вершина">
   <div class="wrap">
     <div class="head">
       <p class="eyebrow" data-r="up"><b>5642 м</b> Вершина · заявка</p>
@@ -905,7 +986,7 @@ if(document.fonts)document.fonts.ready.then(layoutWord);
       const col=m===NOW?' col-now':'';
       if(!t.m){h+=`<div class="c q${col}">${m===6?'?':''}</div>`;continue}
       const on=t.m.includes(m),prev=m>1&&t.m.includes(m-1),next=m<12&&t.m.includes(m+1);
-      h+=`<div class="c${col}${on&&!prev?' s':''}${on&&!next?' e':''}">${on?`<i style="--d:${row*45+m*25}ms;background:${TC[t.type]}"></i>`:''}</div>`;
+      h+=`<div class="c${col}${on&&!prev?' s':''}${on&&!next?' e':''}">${on?`<i style="--d:${row*45+m*25}ms"></i>`:''}</div>`;
     }
   });
   $('cal').innerHTML=h;if($('cal').getBoundingClientRect().top>innerHeight*.9)arm($('cal'));
@@ -989,24 +1070,25 @@ $('said').innerHTML=[['Софья К.','«Курортный роман»','Ра
 
 /* ---------- иллюминатор и галерея вбок ---------- */
 const clamp=v=>Math.max(0,Math.min(1,v));
-function porthole(){
-  const b=$('port').getBoundingClientRect();if(b.bottom<0||b.top>innerHeight)return;
-  const p=clamp(-b.top/(b.height-innerHeight));
-  $('portImg').style.setProperty('--r',(9+Math.pow(p,1.3)*85)+'%');
-  $('portImg').style.setProperty('--s',(1.35-.35*p).toFixed(3));
-  $('portNum').style.opacity=clamp(1-p*2.4);$('portNum').style.transform=`scale(${1+p*.6})`;
-  const q=clamp((p-.55)*3);
-  $('portCap').style.opacity=q;$('portCap').style.transform=`translateY(${(1-q)*30}px)`;$('portCap').style.pointerEvents=q>.3?'auto':'none';
+/* Эльбрус: линза идёт за курсором, сама гуляет, по нажатию раскрывается */
+const LZ={x:.72,y:.45,tx:.72,ty:.45,r:20,open:false,idle:9,vis:false};
+new IntersectionObserver(es=>{LZ.vis=es[0].isIntersecting}).observe($('lens'));
+$('lens').addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const b=$('lens').getBoundingClientRect();LZ.tx=(e.clientX-b.left)/b.width;LZ.ty=(e.clientY-b.top)/b.height;LZ.idle=0});
+$('lens').addEventListener('click',e=>{if(e.target.closest('button'))return;LZ.open=!LZ.open});
+function lens(dt){
+  if(!LZ.vis)return;
+  LZ.idle+=dt;
+  if(LZ.idle>2&&!LZ.open&&!STILL){const t=performance.now()/1000;const m=innerWidth<700;LZ.tx=(m?.5:.72)+Math.sin(t*.45)*(m?.22:.13);LZ.ty=(m?.3:.45)+Math.sin(t*.7)*(m?.1:.16)}
+  const k=STILL?1:.08,tr=LZ.open?150:(innerWidth<700?32:21);
+  LZ.x+=(LZ.tx-LZ.x)*k;LZ.y+=(LZ.ty-LZ.y)*k;LZ.r+=(tr-LZ.r)*(STILL?1:.07);
+  $('lc').style.clipPath=`circle(${LZ.r.toFixed(2)}% at ${(LZ.x*100).toFixed(2)}% ${(LZ.y*100).toFixed(2)}%)`;
+  const b=$('lens').getBoundingClientRect(),d=LZ.r/100*Math.hypot(b.width,b.height)/Math.SQRT2*2;
+  const rg=$('ring2');rg.style.left=LZ.x*100+'%';rg.style.top=LZ.y*100+'%';rg.style.setProperty('--d',d+'px');rg.style.opacity=LZ.open?0:1;
 }
 /* ---------- «Кавказ.»: фото уезжает, выходят кадры ---------- */
 $('strips').innerHTML=[['К',5],['А',8],['В',9],['К',14],['А',11],['З',18]].map(([l,id],i)=>{const t=T.find(x=>x.id===id);
   return`<button class="strip" type="button" data-open="${id}" style="--d:${i*130}ms" aria-label="${t.name}"><span class="ph"><img src="${t.img}" alt="" loading="lazy"><span class="cap">${short(t.name)}<br><small style="opacity:.7">${t.reg}</small></span></span><span class="lt">${l}</span></button>`}).join('');
-function kv(){
-  const b=$('kv').getBoundingClientRect();if(b.bottom<0||b.top>innerHeight)return;
-  const p=clamp(-b.top/(b.height-innerHeight)),a=STILL?(p>.2?1:0):clamp(p*1.7);
-  $('kv').style.setProperty('--a',a.toFixed(3));
-  $('strips').classList.toggle('wait',a<.55);
-}
+arm($('strips'));
 
 /* ---------- высотомер ---------- */
 const stations=[...document.querySelectorAll('[data-alt]')].map(el=>({el,alt:+el.dataset.alt,place:el.dataset.place}));
@@ -1018,6 +1100,7 @@ function altitude(){
     alt=i===stations.length-1?HI:stations[i].alt+(stations[i+1].alt-stations[i].alt)*Math.min(1,(y-tops[i])/(tops[i+1]-tops[i]));}
   $('altNum').textContent=Math.round(alt).toLocaleString('ru-RU')+' м';$('altPlace').textContent=place;
   $('hdr').classList.toggle('solid',scrollY>40);
+  $('bar').style.transform=`scaleX(${(scrollY/Math.max(1,document.documentElement.scrollHeight-innerHeight)).toFixed(4)})`;
 }
 
 /* ---------- живые облака ---------- */
@@ -1061,6 +1144,36 @@ function makeClouds(canvas,host,cov){
 makeClouds($('clouds'),$('top'),.6);
 document.querySelectorAll('.scene > canvas.cl').forEach(cv=>makeClouds(cv,cv.parentElement,+cv.dataset.cov||.55));
 
+/* ---------- перламутровый фон с линиями высот ---------- */
+let fx=()=>{};
+(function(){
+  const c=$('fx'),gl=c.getContext('webgl',{antialias:false});if(!gl)return;
+  const fs=`precision highp float;uniform vec2 r;uniform float t;uniform vec2 m;uniform float s;
+  float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+  float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+  float fbm(vec2 p){float a=.5,v=0.;for(int i=0;i<4;i++){v+=a*n(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
+  void main(){
+    vec2 p=(gl_FragCoord.xy*2.-r)/min(r.x,r.y);p+=(m-.5)*.45;p.y+=s*.6;
+    float q=fbm(p*1.1+vec2(0.,t*.05));
+    vec2 w=p+1.6*vec2(fbm(p+q+t*.06),fbm(p-q-t*.045));
+    float f=fbm(w*1.05);
+    vec3 col=vec3(.89+.08*(.5+.5*sin(f*9.+t*.12)));
+    col=mix(col,vec3(.64,.67,.72),smoothstep(.55,.88,f)*.5);
+    float l=abs(sin(f*26.+t*.25));
+    col*=.95+.05*smoothstep(0.,.25,l);
+    col+=vec3(1.)*pow(max(0.,1.-l*3.),6.)*.3*f;
+    col*=1.-.05*dot(p*.55,p*.55);
+    gl_FragColor=vec4(col,1.);}`;
+  const sh=(ty,src)=>{const o=gl.createShader(ty);gl.shaderSource(o,src);gl.compileShader(o);return o};
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const a=gl.getAttribLocation(pr,'a');gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);
+  const U=k=>gl.getUniformLocation(pr,k),ur=U('r'),ut=U('t'),um=U('m'),us=U('s');
+  const size=()=>{const k=innerWidth<800?.3:.42;c.width=innerWidth*k;c.height=innerHeight*k;gl.viewport(0,0,c.width,c.height)};size();addEventListener('resize',size);
+  let mx=.5,my=.5,tx=.5,ty=.5;addEventListener('pointermove',e=>{tx=e.clientX/innerWidth;ty=1-e.clientY/innerHeight});
+  fx=now=>{mx+=(tx-mx)*.03;my+=(ty-my)*.03;gl.uniform2f(ur,c.width,c.height);gl.uniform1f(ut,STILL?20:now/1000+20);gl.uniform2f(um,mx,my);gl.uniform1f(us,scrollY/innerHeight*.5);gl.drawArrays(gl.TRIANGLES,0,3)};
+})();
+
 /* ---------- параллакс фото ---------- */
 const BGS=[...document.querySelectorAll('.scene > .bg')];
 function parallax(){
@@ -1072,7 +1185,7 @@ function parallax(){
 let t0=performance.now(),vis=true;
 function frame(now){
   const dt=Math.min(.05,(now-t0)/1000);t0=now;
-  porthole();kv();ring();if(!STILL)parallax();
+  lens(dt);ring();fx(now);if(!STILL)parallax();
   CLOUDS.forEach(c=>c.vis&&c.render(dt));
   if(vis)requestAnimationFrame(frame);
 }
