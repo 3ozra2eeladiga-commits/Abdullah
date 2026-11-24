@@ -290,7 +290,6 @@ ol.steps{margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap
 /* ===== гиды ===== */
 .guides-sec{background:var(--sun);color:var(--ink);padding-block:clamp(90px,11vw,140px);position:relative;isolation:isolate}
 .guides-sec::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 50% 50% at 100% 0%,rgba(255,61,139,.35),transparent 70%),radial-gradient(ellipse 50% 50% at 0% 100%,rgba(255,116,23,.35),transparent 70%)}
-.guides-sec .eyebrow{color:rgba(11,15,20,.7)}.guides-sec .eyebrow b{color:#D9151F}.guides-sec .spaced i{color:#E0136A}.guides-sec .lead{color:rgba(11,15,20,.75)}
 .guides-sec .said{border-color:rgba(11,15,20,.2)}.guides-sec .said li{border-color:rgba(11,15,20,.25);color:rgba(11,15,20,.75)}.guides-sec .said li b{color:var(--ink)}.guides-sec a{color:#1D2BE0}
 .guides{display:grid;grid-template-columns:repeat(4,1fr);gap:36px 24px}
 @media(max-width:900px){.guides{grid-template-columns:repeat(2,1fr);gap:26px 14px}}
@@ -494,6 +493,9 @@ dialog::backdrop{background:rgba(230,233,238,.65)}
 .elb-l span.lf{flex-direction:row-reverse}
 .elb-l span.pk i{background:#FFD9B0;box-shadow:0 0 0 5px rgba(255,217,176,.3),0 0 18px #FFD9B0}
 @media(max-width:700px){.lens .lt{top:auto}.lens::before{background:linear-gradient(0deg,rgba(14,16,40,.7),transparent 60%)}.elb-l span{font-size:.52rem}}
+.guide .gst{display:flex;align-items:baseline;gap:10px;padding:8px 0 2px!important;border-top:1px solid var(--line);margin-top:2px}
+.guide .gst b{font:500 1.9rem/1 var(--f-display);color:var(--ink);font-variant-numeric:tabular-nums}
+.guide .gst span{font:600 .58rem/1.3 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)!important}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -629,7 +631,7 @@ dialog::backdrop{background:rgba(230,233,238,.65)}
     <div class="head">
       <p class="eyebrow" data-r="up"><b>4700 м</b> Скалы Пастухова · кто ведёт</p>
       <h2 class="spaced" data-r="words">Гиды, которые <i>здесь</i> выросли</h2>
-      <p class="lead" data-r="up" style="--d:200ms">Маршруты составляют альпинисты и историки, а ведут люди, для которых эти ущелья — дом.</p>
+      <p class="lead" data-r="up" style="--d:200ms">Маршруты составляют альпинисты и историки. Ведут люди, которые знают каждое ущелье по имени.</p>
     </div>
     <div class="guides" id="guidesGrid"></div>
     <div class="said">
@@ -1083,14 +1085,14 @@ document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>copy(b.dataset.copy,
 /* ---------- гиды ---------- */
 const ROT=[-3,2,-1.5,3,-2.5,1.5,-1];
 $('guidesGrid').innerHTML=[
- ['g_umar','Умар Айдинов','Основатель, автор туров','Более 20 лет в туризме. Председатель Регионального союза туриндустрии СКФО.'],
- ['g_greb','Александр Гребенюк','Эксперт по маршрутам','Около 200 восхождений за 30 лет. Руководит научно-спортивным центром СКФО.'],
- ['g_ush','Мария Ушакова','Эксперт по маршрутам','Альпинистка и спортивный скалолаз, больше 20 восхождений.'],
- ['g_hub','Абдуррахман Хубиев','Гид, инструктор','В команде с основания. Горный туризм и горные лыжи, поднимался на Эльбрус.'],
- ['g_chek','Эдуард Чеккуев','Гид-экскурсовод','Историк. С 2006 года участвует в археологических раскопках.'],
- ['g_mag','Абдула Магомедов','Гид по Дагестану','Водит группы по Дагестану с 2016 года.'],
- ['g_ilis','Абдула Илистубегов','Гид по Дагестану','Ведёт группы по горному Дагестану.']
-].map((g,i)=>`<div class="guide" style="--d:${(i%4)*120}ms"><div class="im" data-n="${String(i+1).padStart(2,'0')}"><img src="img/${g[0]}_pro.jpg" alt="${g[1]}" loading="lazy"></div><small>${g[2]}</small><h3>${g[1]}</h3><p>${g[3]}</p></div>`).join('');
+ ['g_umar','Умар Айдинов','Основатель МАГТУР','20+','лет в туризме','Собрал команду в 2013 году и сам придумывает маршруты. Возглавляет Региональный союз туриндустрии СКФО.'],
+ ['g_greb','Александр Гребенюк','Эксперт по маршрутам','≈200','восхождений за 30 лет','Руководит Региональным научно-спортивным центром СКФО. Проверяет каждый маршрут на безопасность.'],
+ ['g_ush','Мария Ушакова','Эксперт по маршрутам','20+','восхождений','Альпинистка и спортивный скалолаз. Отвечает за то, чтобы маршрут был по силам вашей группе.'],
+ ['g_hub','Абдуррахман Хубиев','Гид-инструктор','5642','метра — его Эльбрус','В команде с первого дня. Инструктор по горному туризму и горным лыжам, сам стоял на вершине Эльбруса.'],
+ ['g_chek','Эдуард Чеккуев','Гид-историк','2006','год первой экспедиции','Археолог: с 2006 года участвует в раскопках. На экскурсии рассказывает о том, что сам держал в руках.'],
+ ['g_mag','Абдула Магомедов','Гид по Дагестану','2016','водит группы с этого года','Знает Дагестан изнутри: аулы, каньоны и дороги, по которым ездят местные.'],
+ ['g_ilis','Абдула Илистубегов','Гид по Дагестану','Дагестан','его родные горы','Ведёт группы по горному Дагестану: к Сулакскому каньону, Гамсутлю и древним крепостям.']
+].map((g,i)=>`<div class="guide" style="--d:${(i%4)*120}ms"><div class="im" data-n="${String(i+1).padStart(2,'0')}"><img src="img/${g[0]}_pro.jpg" alt="${g[1]}" loading="lazy"></div><small>${g[2]}</small><h3>${g[1]}</h3><p class="gst"><b>${g[3]}</b><span>${g[4]}</span></p><p>${g[5]}</p></div>`).join('');
 $('guidesGrid').querySelectorAll('.guide').forEach(arm);
 $('said').innerHTML=[['Софья К.','«Курортный роман»','Рамазан'],['Екатерина У.','«Домбай и его окрестности»','Азнаур и Мурадин'],['Иван','«Путешествие в страну гор»','Магомед'],['Михаил','«Выходные в седле»','Казбек'],['Галина','«Приключения в стране гор»','Ахмед'],['Наталья','«Калейдоскоп времён»','Сеит'],['Елена','«Курортный роман»','Эдуард'],['Сергей','«Горнолыжка для чайников»','Абдуррахман']]
  .map(s=>`<li><b>${s[0]}</b> · ${s[1]} · гид ${s[2]}</li>`).join('');
