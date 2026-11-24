@@ -4,6 +4,7 @@
 при появлении нового человека включает голосовое предупреждение из колонки.
 Следит за руками: потянулся к полке (жёлтая рамка) -> та же рука спрятана/убрана к телу
 (красная рамка «ПОДОЗРЕНИЕ», кадр сохраняется в alerts/, голос «не забудьте оплатить»).
+При тревоге в углу экрана появляется окошко с сильным приближением лица этого человека.
 
 Запуск:
   python watch.py --source видео.mov --save demo.mp4          # проверка на записи, без окна
@@ -29,6 +30,34 @@ REACH_SEC = 0.3     # сколько секунд подряд
 HIDE_SEC = 0.5      # сколько секунд рука спрятана
 WINDOW_SEC = 5.0    # сколько секунд после полки следим за рукой
 ALERT_SEC = 6.0     # сколько секунд держим красную рамку
+ZOOM_PART = 0.45    # размер окошка с лицом (доля от меньшей стороны кадра)
+ZOOM_GROW = 0.4     # за сколько секунд окошко «вырастает»
+
+
+def head_square(kp, box):
+    """Квадрат вокруг головы: по точкам лица, а если лица не видно — верх фигуры."""
+    x1, y1, x2, y2 = box
+    face = [k for k in kp[:5] if k[2] > 0.5]
+    sw = abs(kp[5][0] - kp[6][0]) if min(kp[5][2], kp[6][2]) > 0.5 else (x2 - x1) * 0.5
+    size = max(sw * 1.5, (x2 - x1) * 0.55, 60.0)
+    if face:
+        cx = sum(k[0] for k in face) / len(face)
+        cy = sum(k[1] for k in face) / len(face)
+    else:
+        cx, cy = (x1 + x2) / 2, y1 + size * 0.45
+    return cx, cy, size
+
+
+def zoom_crop(frame, cx, cy, size, out_px):
+    """Вырезать квадрат и увеличить до out_px с лёгкой резкостью."""
+    h, w = frame.shape[:2]
+    size = int(min(size, w, h))
+    x = int(min(max(cx - size / 2, 0), w - size))
+    y = int(min(max(cy - size / 2, 0), h - size))
+    crop = cv2.resize(frame[y:y + size, x:x + size], (out_px, out_px), interpolation=cv2.INTER_CUBIC)
+    blur = cv2.GaussianBlur(crop, (0, 0), 2)
+    crop = cv2.addWeighted(crop, 1.5, blur, -0.5, 0)
+    return Image.fromarray(cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)), (x, y, x + size, y + size)
 
 
 class Hands:
@@ -40,6 +69,8 @@ class Hands:
         self.hide = 0.0
         self.hand = None                 # какая рука брала
         self.last = None
+        self.alert_at = 0.0
+        self.head = None                 # сглаженный квадрат головы для окошка
 
     def update(self, k, now):
         dt = 0.0 if self.last is None else min(0.5, max(0.0, now - self.last))
@@ -61,6 +92,7 @@ class Hands:
             self.hide = self.hide + dt if hidden else 0.0
             if self.hide >= HIDE_SEC:
                 self.state, self.until, new_alert = "alert", now + ALERT_SEC, True
+                self.alert_at = now
         if self.state != "ok" and now > self.until:
             self.state = "ok"
         return new_alert
@@ -153,12 +185,17 @@ def main():
                         cv2.imwrite(os.path.join(HERE, "alerts", time.strftime("%Y%m%d_%H%M%S") + "_%d.jpg" % alerts), frame)
                         if a.sound:
                             play("pay")
-                    people.append((box, sorted(counted).index(tid) + 1, hd.state, kp))
+                    cx, cy, sz = head_square(kp, box)
+                    if hd.head is None:
+                        hd.head = (cx, cy, sz)
+                    else:   # плавно, чтобы окошко не дёргалось
+                        hd.head = tuple(0.7 * o + 0.3 * v for o, v in zip(hd.head, (cx, cy, sz)))
+                    people.append((box, sorted(counted).index(tid) + 1, hd.state, kp, hd))
 
         img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         d = ImageDraw.Draw(img, "RGBA")
         t = max(2, h // 300)
-        for (x1, y1, x2, y2), num, st, kp in people:
+        for (x1, y1, x2, y2), num, st, kp, _ in people:
             col = {"ok": GREEN, "reach": YELLOW, "alert": RED}[st]
             d.rectangle([x1, y1, x2, y2], outline=col, width=t * (2 if st == "alert" else 1))
             for sh, el, wr in ((5, 7, 9), (6, 8, 10)):   # руки
@@ -183,6 +220,30 @@ def main():
         d.text((44, 9), "УМНАЯ КАМЕРА · ЗАПИСЬ", font=f_big, fill=WHITE)
         right = "В зале: %d · Тревог: %d" % (len(people), alerts)
         d.text((w - d.textlength(right, font=f_big) - 16, 9), right, font=f_big, fill=WHITE)
+        # окошко с приближением лица того, на ком тревога
+        suspects = [p for p in people if p[2] == "alert"]
+        if suspects:
+            hd = max(suspects, key=lambda p: p[4].alert_at)[4]
+            grow = min(1.0, max(0.0, (now - hd.alert_at) / ZOOM_GROW))
+            grow = 1 - (1 - grow) ** 3
+            full = int(min(w, h) * ZOOM_PART)
+            sz = max(40, int(full * (0.25 + 0.75 * grow)))
+            face, (fx1, fy1, fx2, fy2) = zoom_crop(frame, hd.head[0], hd.head[1], hd.head[2], sz)
+            px, py = w - full - 16, bar + 16
+            px, py = px + (full - sz), py
+            d.rectangle([fx1, fy1, fx2, fy2], outline=RED, width=t)          # что увеличиваем
+            d.line([(fx2, fy1), (px, py + sz)], fill=RED, width=t)
+            img.paste(face, (px, py))
+            d = ImageDraw.Draw(img, "RGBA")
+            bw = t * 3
+            d.rectangle([px - bw, py - bw, px + sz + bw, py + sz + bw], outline=RED if blink else WHITE, width=bw)
+            if grow >= 1:
+                cap_txt = "ВАШЕ ЛИЦО ЗАПИСАНО"
+                tw = d.textlength(cap_txt, font=f_small)
+                d.rectangle([px - bw, py + sz + bw, px + sz + bw, py + sz + bw + f_small.size + 14], fill=RED)
+                d.text((px + (sz - tw) / 2, py + sz + bw + 6), cap_txt, font=f_small, fill=WHITE)
+                rec = "● REC  ZOOM x%d" % max(2, round(min(w, h) * ZOOM_PART / max(1, fx2 - fx1)))
+                d.text((px + 10, py + 8), rec, font=f_small, fill=RED if blink else WHITE)
         if now < alert_banner or now < banner_until:
             msg = "ВНИМАНИЕ! Оплатите товар на кассе" if now < alert_banner else "Вы под видеонаблюдением"
             tw = d.textlength(msg, font=f_big)
