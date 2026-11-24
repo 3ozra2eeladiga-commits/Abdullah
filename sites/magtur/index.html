@@ -499,13 +499,15 @@ dialog::backdrop{background:rgba(230,233,238,.65)}
 
 /* ===== страница тура ===== */
 body.tp-on{overflow:hidden}
-.tp{position:fixed;inset:0;z-index:40;overflow-y:auto;overscroll-behavior:contain;background:#F2F3F6;color:var(--ink);animation:tpIn .55s cubic-bezier(.2,.85,.2,1)}
-@keyframes tpIn{from{opacity:0;transform:translateY(40px)}}
+.tp{position:fixed;inset:0;z-index:40;overflow-y:auto;overscroll-behavior:contain;background:#F2F3F6;color:var(--ink);animation:tpIn .32s cubic-bezier(.2,.85,.2,1)}
+@keyframes tpIn{from{transform:translateX(100%)}}
+.tp.out{animation:tpOut .28s cubic-bezier(.6,0,.8,.2) forwards}
+@keyframes tpOut{to{transform:translateX(100%)}}
 .tp-hero{position:relative;height:78vh;height:78svh;min-height:480px;overflow:hidden;color:#fff}
 .tp-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:tpZoom 9s cubic-bezier(.2,.6,.2,1) both}
 @keyframes tpZoom{from{transform:scale(1.15)}}
 .tp-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,14,.45) 0%,transparent 30%,rgba(8,10,14,.25) 55%,rgba(8,10,14,.85) 100%)}
-.tp-back{position:absolute;z-index:2;top:calc(env(safe-area-inset-top,0px) + 18px);left:var(--lx);font:600 .7rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.55);backdrop-filter:blur(10px);padding:1em 1.3em;cursor:pointer;min-height:44px}
+.tp-back{position:fixed;z-index:45;top:calc(env(safe-area-inset-top,0px) + 14px);left:var(--lx);font:600 .7rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#fff;background:rgba(11,12,16,.82);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(10px);padding:1em 1.3em;cursor:pointer;min-height:44px;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
 .tp-back:hover{background:#fff;color:var(--ink)}
 .tp-hin{position:absolute;z-index:1;left:0;right:0;bottom:clamp(26px,6vh,56px);display:grid;gap:18px}
 .tp-hin .eyebrow{color:rgba(255,255,255,.85)}.tp-hin .eyebrow b{color:#fff;background:none;-webkit-text-fill-color:#fff}
@@ -810,7 +812,7 @@ body.tp-on{overflow:hidden}
 
 <div class="tp" id="tp" role="dialog" aria-modal="true" aria-labelledby="tpName" hidden>
   <div class="tp-hero"><img id="tpImg" alt="">
-    <button class="tp-back" id="tpBack" type="button">← Все туры</button>
+    <button class="tp-back" id="tpBack" type="button">← Назад</button>
     <div class="wrap tp-hin"><p class="eyebrow" id="tpType"></p><h1 id="tpName"></h1>
       <div class="tp-specs" id="tpSpecs"></div></div></div>
   <div class="wrap tp-body">
@@ -829,7 +831,7 @@ body.tp-on{overflow:hidden}
     <aside class="tp-side"><div class="tp-card">
       <p class="eyebrow">Ваш тур</p><h3 id="tpSideName"></h3><dl id="tpSide"></dl>
       <button class="btn btn-main" id="tpBook" type="button">Забронировать</button>
-      <a class="btn btn-ghost" id="tpMore" target="_blank" rel="noopener">Программа по дням ↗</a>
+      <a class="btn btn-ghost" id="tpMore" target="_blank" rel="noopener">Программа на старом сайте ↗</a>
       <small>Стоимость и свободные даты пришлёт менеджер после заявки.</small></div></aside>
   </div>
 </div>
@@ -1094,6 +1096,7 @@ if(document.fonts)document.fonts.ready.then(layoutWord);
 
 /* ---------- страница тура ---------- */
 let cur=null,tpFrom=0;
+addEventListener('load',()=>setTimeout(()=>[...new Set(T.map(t=>t.img))].forEach(src=>{const i=new Image();i.src=src}),1500));
 const MG=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const DIFFTXT=[['Базовая','Прогулки и экскурсии, подойдёт без подготовки'],['Средняя','Пешие переходы до 5–6 часов в день'],['Продвинутая','Длинные переходы и набор высоты'],['Сложная','Нужны опыт походов и хорошая форма']];
 function openTour(id,noHash){
@@ -1112,16 +1115,15 @@ function openTour(id,noHash){
   $('tpSide').innerHTML=sp.slice(0,3).map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
   $('tpMore').href=t.url;
   $('tp').hidden=false;$('tp').scrollTop=0;document.body.classList.add('tp-on');
-  if(!noHash&&location.hash!=='#tour-'+id)location.hash='tour-'+id;
 }
-function closeTour(){if($('tp').hidden)return;$('tp').hidden=true;document.body.classList.remove('tp-on');if(location.hash.startsWith('#tour-'))history.replaceState(null,'',location.pathname+location.search);scrollTo(0,tpFrom)}
+function closeTour(){if($('tp').hidden||$('tp').classList.contains('out'))return;$('tp').classList.add('out');document.body.classList.remove('tp-on');setTimeout(()=>{$('tp').hidden=true;$('tp').classList.remove('out')},STILL?0:280);scrollTo(0,tpFrom)}
 $('tpBack').onclick=closeTour;
+{let sx=null,sy=0;$('tp').addEventListener('touchstart',e=>{const t=e.touches[0];sx=t.clientX<40?t.clientX:null;sy=t.clientY},{passive:true});
+ $('tp').addEventListener('touchend',e=>{if(sx===null)return;const t=e.changedTouches[0];if(t.clientX-sx>80&&Math.abs(t.clientY-sy)<60)closeTour();sx=null},{passive:true});}
 addEventListener('keydown',e=>{if(e.key==='Escape')closeTour()});
 $('tpLike').onclick=e=>{const b=e.target.closest('[data-tp]');if(b)openTour(+b.dataset.tp)};
 $('tpBook').onclick=()=>{const id=cur.id;closeTour();$('bTour').value=id;fillMonths();ticket();$('book').scrollIntoView()};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-open]');if(b){e.preventDefault();openTour(+b.dataset.open)}});
-addEventListener('hashchange',()=>{const m=location.hash.match(/^#tour-(\d+)$/);if(m)openTour(+m[1],true);else closeTour()});
-{const m=location.hash.match(/^#tour-(\d+)$/);if(m)setTimeout(()=>openTour(+m[1],true),0)}
 
 /* ---------- заявка ---------- */
 $('bTour').innerHTML=T.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
