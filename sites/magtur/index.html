@@ -136,15 +136,9 @@ header.top.solid{background:rgba(11,15,20,.55);backdrop-filter:blur(18px);border
 .profile .me{fill:var(--gold);filter:drop-shadow(0 0 10px rgba(227,176,98,.9))}
 .dots button[aria-current="true"]{background:var(--cream)}
 
-/* ленты */
-.ribbons{position:relative;height:clamp(140px,18vw,210px);overflow:hidden;background:var(--ink)}
-.rb{position:absolute;left:-10%;right:-10%;top:50%;white-space:nowrap;padding-block:.4em;font:italic 500 clamp(1.8rem,4.4vw,3.6rem)/1 var(--f-display)}
-.rb span{display:inline-block;will-change:transform}
-.rb1{background:var(--cream);color:var(--ink);transform:translateY(-50%) rotate(-2.5deg);z-index:2}
-.rb2{background:var(--ink2);border-block:1px solid var(--line);color:var(--gold2);transform:translateY(-50%) rotate(2deg);font-style:normal;font-family:var(--f-mono);font-size:clamp(.8rem,1.4vw,1.05rem);letter-spacing:.24em;text-transform:uppercase;padding-block:1.1em}
-
 /* ===== «сердце Кавказа» — облака над каньоном ===== */
-.intro{display:grid;place-items:center;text-align:center;--shade:radial-gradient(ellipse at 50% 45%,rgba(11,15,20,.15),rgba(11,15,20,.55) 70%),linear-gradient(180deg,rgba(11,15,20,.6),transparent 30%,transparent 70%,rgba(11,15,20,.9))}
+.intro{display:grid;place-items:center;text-align:center;--shade:linear-gradient(180deg,var(--ink) 0%,rgba(11,15,20,0) 22%),radial-gradient(ellipse at 50% 50%,rgba(11,15,20,.12),rgba(11,15,20,.5) 70%),linear-gradient(180deg,transparent 70%,rgba(11,15,20,.9))}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:16%;z-index:5;pointer-events:none;background:linear-gradient(180deg,transparent,var(--ink))}
 .intro .wrap{display:grid;gap:24px;justify-items:center}
 .intro .spaced{font-size:clamp(2.3rem,6.6vw,6rem);text-shadow:0 4px 40px rgba(0,0,0,.35)}
 .intro .lead{color:var(--cream);text-shadow:0 1px 20px rgba(0,0,0,.6)}
@@ -394,11 +388,6 @@ dialog::backdrop{background:rgba(5,7,10,.7);backdrop-filter:blur(10px)}
   <div class="arrows"><button type="button" id="prev" aria-label="Предыдущее направление">←</button><button type="button" id="next" aria-label="Следующее направление">→</button></div>
   <svg class="profile" id="profile" aria-label="Направления на горном профиле"></svg>
 </section>
-
-<div class="ribbons" aria-hidden="true">
-  <div class="rb rb2"><span id="rb2">Пятигорск 512 · Архыз 1450 · Домбай 1650 · Чегет 3050 · Гара-Баши 3847 · Скалы Пастухова 4700 · Седловина 5300 · Эльбрус 5642 · Пятигорск 512 · Архыз 1450 · Домбай 1650 · Чегет 3050 · Гара-Баши 3847 · Скалы Пастухова 4700 · Седловина 5300 · Эльбрус 5642 · </span></div>
-  <div class="rb rb1"><span id="rb1">Домбай ✦ Архыз ✦ Эльбрус ✦ Чегет ✦ Дигория ✦ Гамсутль ✦ Сулакский каньон ✦ Дербент ✦ Кисловодск ✦ Теберда ✦ Домбай ✦ Архыз ✦ Эльбрус ✦ Чегет ✦ Дигория ✦ Гамсутль ✦ Сулакский каньон ✦ Дербент ✦ Кисловодск ✦ Теберда ✦ </span></div>
-</div>
 
 <section class="scene intro" id="intro">
   <img class="bg" src="img/t11.jpg" alt="Сулакский каньон с высоты">
@@ -948,16 +937,6 @@ function porthole(){
   const q=clamp((p-.55)*3);
   $('portCap').style.opacity=q;$('portCap').style.transform=`translateY(${(1-q)*30}px)`;$('portCap').style.pointerEvents=q>.3?'auto':'none';
 }
-/* ---------- бегущие ленты ---------- */
-let rx1=0,rx2=0,lastY=scrollY,vel=0;
-function ribbons(dt){
-  vel+=((scrollY-lastY)-vel)*.15;lastY=scrollY;
-  const w1=$('rb1').offsetWidth/2,w2=$('rb2').offsetWidth/2,base=STILL?0:40*dt;
-  rx1-=base+vel*.8;rx2+=base*.7+vel*.5;
-  if(w1)rx1=((rx1%w1)-w1)%w1;if(w2)rx2=((rx2%w2)-w2)%w2;
-  $('rb1').style.transform=`translate3d(${rx1.toFixed(1)}px,0,0)`;$('rb2').style.transform=`translate3d(${rx2.toFixed(1)}px,0,0)`;
-}
-
 /* ---------- «Кавказ.»: фото уезжает, выходят кадры ---------- */
 $('strips').innerHTML=[['К',5],['А',8],['В',9],['К',14],['А',11],['З',18]].map(([l,id],i)=>{const t=T.find(x=>x.id===id);
   return`<button class="strip" type="button" data-open="${id}" style="--d:${i*130}ms" aria-label="${t.name}"><span class="ph"><img src="${t.img}" alt="" loading="lazy"><span class="cap">${short(t.name)}<br><small style="opacity:.7">${t.reg}</small></span></span><span class="lt">${l}</span></button>`}).join('');
@@ -1032,7 +1011,7 @@ function parallax(){
 let t0=performance.now(),vis=true;
 function frame(now){
   const dt=Math.min(.05,(now-t0)/1000);t0=now;
-  porthole();kv();ribbons(dt);if(!STILL)parallax();
+  porthole();kv();if(!STILL)parallax();
   CLOUDS.forEach(c=>c.vis&&c.render(dt));
   if(vis)requestAnimationFrame(frame);
 }
