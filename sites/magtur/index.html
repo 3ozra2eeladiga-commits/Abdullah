@@ -496,6 +496,60 @@ dialog::backdrop{background:rgba(230,233,238,.65)}
 .guide .gst{display:flex;align-items:baseline;gap:10px;padding:8px 0 2px!important;border-top:1px solid var(--line);margin-top:2px}
 .guide .gst b{font:500 1.9rem/1 var(--f-display);color:var(--ink);font-variant-numeric:tabular-nums}
 .guide .gst span{font:600 .58rem/1.3 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)!important}
+
+/* ===== страница тура ===== */
+body.tp-on{overflow:hidden}
+.tp{position:fixed;inset:0;z-index:40;overflow-y:auto;overscroll-behavior:contain;background:#F2F3F6;color:var(--ink);animation:tpIn .55s cubic-bezier(.2,.85,.2,1)}
+@keyframes tpIn{from{opacity:0;transform:translateY(40px)}}
+.tp-hero{position:relative;height:78vh;height:78svh;min-height:480px;overflow:hidden;color:#fff}
+.tp-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:tpZoom 9s cubic-bezier(.2,.6,.2,1) both}
+@keyframes tpZoom{from{transform:scale(1.15)}}
+.tp-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,14,.45) 0%,transparent 30%,rgba(8,10,14,.25) 55%,rgba(8,10,14,.85) 100%)}
+.tp-back{position:absolute;z-index:2;top:calc(env(safe-area-inset-top,0px) + 18px);left:var(--lx);font:600 .7rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.55);backdrop-filter:blur(10px);padding:1em 1.3em;cursor:pointer;min-height:44px}
+.tp-back:hover{background:#fff;color:var(--ink)}
+.tp-hin{position:absolute;z-index:1;left:0;right:0;bottom:clamp(26px,6vh,56px);display:grid;gap:18px}
+.tp-hin .eyebrow{color:rgba(255,255,255,.85)}.tp-hin .eyebrow b{color:#fff;background:none;-webkit-text-fill-color:#fff}
+.tp-hin h1{font:500 clamp(2.2rem,6vw,5.2rem)/1 var(--f-display);max-width:20ch}
+.tp-specs{display:flex;flex-wrap:wrap;gap:10px 34px;padding-top:18px;border-top:1px solid rgba(255,255,255,.3)}
+.tp-specs div{display:grid;gap:4px}.tp-specs small{font:600 .58rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;opacity:.75}.tp-specs b{font:500 1.35rem/1.1 var(--f-display)}
+.tp-specs .peaks i{background:rgba(255,255,255,.35)}.tp-specs .peaks i.on{background:#fff}
+.tp-body{display:grid;grid-template-columns:1fr 340px;gap:clamp(24px,4vw,60px);padding-block:clamp(40px,6vw,80px) 90px;align-items:start}
+@media(max-width:900px){.tp-body{grid-template-columns:1fr}}
+.tp-main{display:grid;gap:clamp(34px,5vw,56px);min-width:0}
+.tp-sec{display:grid;gap:16px}
+.tp-lead{font:500 clamp(1.4rem,2.6vw,2rem)/1.3 var(--f-display);max-width:34ch}
+.tp-diff{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tp-diff div{padding:16px;border:1px solid var(--line);background:rgba(255,255,255,.6);display:grid;gap:6px;font-size:.86rem;color:var(--mist)}
+.tp-diff div b{font:500 1.2rem/1 var(--f-display);color:var(--ink)}
+.tp-diff div.on{background:var(--ink);color:rgba(255,255,255,.8);border-color:var(--ink)}.tp-diff div.on b{color:#fff}
+@media(max-width:600px){.tp-diff{grid-template-columns:1fr 1fr}}
+.tp-two{grid-template-columns:1fr 1fr;gap:28px}
+@media(max-width:600px){.tp-two{grid-template-columns:1fr}}
+.tp-two > div{display:grid;gap:14px;align-content:start}
+.tp-list{margin:0;padding:0;list-style:none;display:grid}
+.tp-list li{padding:12px 0 12px 28px;border-top:1px solid var(--line);position:relative}
+.tp-list li::before{content:"✓";position:absolute;left:2px;top:12px;font-weight:700}
+.tp-minus li{color:var(--mist)}.tp-minus li::before{content:"—"}
+.tp-steps{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;counter-reset:s}
+.tp-steps li{padding:18px;background:rgba(255,255,255,.6);border:1px solid var(--line);display:grid;gap:6px;font-size:.9rem;color:var(--mist)}
+.tp-steps li::before{counter-increment:s;content:"0" counter(s);font:600 .62rem/1 var(--f-mono);letter-spacing:.2em;color:var(--ink)}
+.tp-steps b{font:500 1.25rem/1.1 var(--f-display);color:var(--ink)}
+@media(max-width:600px){.tp-steps{grid-template-columns:1fr}}
+.tp-note{font-size:.92rem;color:var(--mist)}
+.tp-like{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:600px){.tp-like{grid-template-columns:1fr}}
+.tp-like button{position:relative;aspect-ratio:4/5;border:0;padding:0;overflow:hidden;cursor:pointer;color:#fff;text-align:left;font:inherit;border-radius:4px}
+.tp-like img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+.tp-like button:hover img{transform:scale(1.07)}
+.tp-like button::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.8))}
+.tp-like span{position:absolute;z-index:1;left:14px;right:14px;bottom:14px;font:500 1.25rem/1.1 var(--f-display)}
+.tp-like small{display:block;font:600 .56rem/1.4 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;opacity:.8;margin-bottom:6px}
+.tp-side{position:sticky;top:24px}
+.tp-card{background:#fff;border:1px solid var(--line);padding:24px;display:grid;gap:14px;box-shadow:0 30px 60px -40px rgba(11,12,16,.5)}
+.tp-card h3{font-size:1.6rem}
+.tp-card dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:.9rem}
+.tp-card dt{color:var(--dim)}.tp-card dd{margin:0;text-align:right;font-weight:600}
+.tp-card small{color:var(--dim);font-size:.8rem}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -754,19 +808,31 @@ dialog::backdrop{background:rgba(230,233,238,.65)}
   </div>
 </div></footer>
 
-<dialog id="dlg" aria-labelledby="dTitle">
-  <button class="x" id="dClose" aria-label="Закрыть">×</button>
-  <img class="dl-img" id="dImg" alt="">
-  <div class="dl-b">
-    <p class="eyebrow" id="dType"></p>
-    <h3 id="dTitle"></h3>
-    <div class="specs" id="dSpecs"></div>
-    <div class="row">
-      <button class="btn btn-main" id="dBook" type="button">Забронировать этот тур</button>
-      <a class="btn btn-ghost" id="dMore" target="_blank" rel="noopener">Программа по дням</a>
+<div class="tp" id="tp" role="dialog" aria-modal="true" aria-labelledby="tpName" hidden>
+  <div class="tp-hero"><img id="tpImg" alt="">
+    <button class="tp-back" id="tpBack" type="button">← Все туры</button>
+    <div class="wrap tp-hin"><p class="eyebrow" id="tpType"></p><h1 id="tpName"></h1>
+      <div class="tp-specs" id="tpSpecs"></div></div></div>
+  <div class="wrap tp-body">
+    <div class="tp-main">
+      <section class="tp-sec"><p class="eyebrow">Коротко</p><p class="tp-lead" id="tpLead"></p></section>
+      <section class="tp-sec"><p class="eyebrow">Нагрузка</p><div class="tp-diff" id="tpDiff"></div></section>
+      <section class="tp-sec tp-two">
+        <div><p class="eyebrow">Входит в тур</p><ul class="tp-list"><li>Трансфер от аэропорта или вокзала</li><li>Проживание в гостиницах и гостевых домах</li><li>Питание по программе</li><li>Транспорт на маршруте</li><li>Работа гида</li></ul></div>
+        <div><p class="eyebrow">Оплачивается отдельно</p><ul class="tp-list tp-minus"><li>Дорога до Кавказа</li><li>Экскурсии вне программы</li><li>Входные билеты</li><li>Индивидуальный трансфер</li><li>Одноместное размещение</li></ul></div>
+      </section>
+      <section class="tp-sec"><p class="eyebrow">Как поехать</p>
+        <ol class="tp-steps"><li><b>Заявка</b>Менеджер проверит места на выбранные даты.</li><li><b>Договор и 30%</b>Остаток оплачиваете до начала тура.</li><li><b>Встреча</b>Забираем в Минеральных Водах, дальше всё по программе.</li></ol>
+        <p class="tp-note">Передумали за 72 часа до старта — перенесём тур или вернём 100%.</p></section>
+      <section class="tp-sec"><p class="eyebrow">Похожие туры</p><div class="tp-like" id="tpLike"></div></section>
     </div>
+    <aside class="tp-side"><div class="tp-card">
+      <p class="eyebrow">Ваш тур</p><h3 id="tpSideName"></h3><dl id="tpSide"></dl>
+      <button class="btn btn-main" id="tpBook" type="button">Забронировать</button>
+      <a class="btn btn-ghost" id="tpMore" target="_blank" rel="noopener">Программа по дням ↗</a>
+      <small>Стоимость и свободные даты пришлёт менеджер после заявки.</small></div></aside>
   </div>
-</dialog>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -1026,19 +1092,36 @@ if(document.fonts)document.fonts.ready.then(layoutWord);
   };
 })();
 
-/* ---------- окно тура ---------- */
-let cur=null;
-function openTour(id){
-  const t=cur=T.find(x=>x.id===id);
-  $('dImg').src=t.img;$('dType').innerHTML=`<b>●</b> ${TYPES[t.type]} · ${t.reg}`;$('dTitle').textContent=t.name;
-  const sp=[['Длительность',`${t.d} дней / ${t.n} ночей`],['Сезон',period(t)],['Возраст',`от ${t.age} лет`]];
-  if(t.diff)sp.push(['Нагрузка',peaks(t.diff)]);if(t.comfort)sp.push(['Комфорт',t.comfort]);
-  $('dSpecs').innerHTML=sp.map(([a,b])=>`<div><small>${a}</small><span>${b}</span></div>`).join('');
-  $('dMore').href=t.url;$('dlg').showModal();
+/* ---------- страница тура ---------- */
+let cur=null,tpFrom=0;
+const MG=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const DIFFTXT=[['Базовая','Прогулки и экскурсии, подойдёт без подготовки'],['Средняя','Пешие переходы до 5–6 часов в день'],['Продвинутая','Длинные переходы и набор высоты'],['Сложная','Нужны опыт походов и хорошая форма']];
+function openTour(id,noHash){
+  const t=cur=T.find(x=>x.id===id);if(!t)return;
+  if($('tp').hidden)tpFrom=scrollY;
+  $('tpImg').src=t.img;$('tpImg').alt=t.name;$('tpType').innerHTML=`<b>●</b> ${TYPES[t.type]} · ${t.reg}`;$('tpName').textContent=t.name;
+  const sp=[['Длительность',`${t.d} дн. / ${t.n} ноч.`],['Сезон',period(t)],['Возраст',`от ${t.age} лет`]];if(t.diff)sp.push(['Нагрузка',peaks(t.diff)]);if(t.comfort)sp.push(['Комфорт',t.comfort]);
+  $('tpSpecs').innerHTML=sp.map(([a,b])=>`<div><small>${a}</small><b>${b}</b></div>`).join('');
+  const mon=!t.m?'даты уточняйте у менеджера':t.m.length===12?'круглый год':`с ${MG[t.m[0]-1]} по ${MF[t.m[t.m.length-1]-1]}`;
+  $('tpLead').textContent=`${t.d} дней и ${t.n} ночей: ${t.reg}. Тур идёт ${mon}, подходит для участников от ${t.age} лет. Встречаем группу в Минеральных Водах и везём по маршруту на своём транспорте.`;
+  $('tpDiff').innerHTML=DIFFTXT.map(([a,b],i)=>`<div class="${t.diff===i+1?'on':''}"><b>${a}</b>${b}</div>`).join('')+(t.diff?'':'');
+  $('tpDiff').parentElement.hidden=!t.diff;
+  const like=T.filter(x=>x.id!==t.id&&(x.type===t.type||x.rg.some(r=>t.rg.includes(r)))).slice(0,3);
+  $('tpLike').innerHTML=like.map(x=>`<button type="button" data-tp="${x.id}"><img src="${x.img}" alt="" loading="lazy"><span><small>${TYPES[x.type]} · ${x.d} дней</small>${short(x.name)}</span></button>`).join('');
+  $('tpSideName').textContent=short(t.name);
+  $('tpSide').innerHTML=sp.slice(0,3).map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
+  $('tpMore').href=t.url;
+  $('tp').hidden=false;$('tp').scrollTop=0;document.body.classList.add('tp-on');
+  if(!noHash&&location.hash!=='#tour-'+id)location.hash='tour-'+id;
 }
-$('dClose').onclick=()=>$('dlg').close();
-$('dlg').onclick=e=>{if(e.target===$('dlg'))$('dlg').close()};
-$('dBook').onclick=()=>{$('bTour').value=cur.id;fillMonths();ticket();$('dlg').close();$('book').scrollIntoView()};
+function closeTour(){if($('tp').hidden)return;$('tp').hidden=true;document.body.classList.remove('tp-on');if(location.hash.startsWith('#tour-'))history.replaceState(null,'',location.pathname+location.search);scrollTo(0,tpFrom)}
+$('tpBack').onclick=closeTour;
+addEventListener('keydown',e=>{if(e.key==='Escape')closeTour()});
+$('tpLike').onclick=e=>{const b=e.target.closest('[data-tp]');if(b)openTour(+b.dataset.tp)};
+$('tpBook').onclick=()=>{const id=cur.id;closeTour();$('bTour').value=id;fillMonths();ticket();$('book').scrollIntoView()};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-open]');if(b){e.preventDefault();openTour(+b.dataset.open)}});
+addEventListener('hashchange',()=>{const m=location.hash.match(/^#tour-(\d+)$/);if(m)openTour(+m[1],true);else closeTour()});
+{const m=location.hash.match(/^#tour-(\d+)$/);if(m)setTimeout(()=>openTour(+m[1],true),0)}
 
 /* ---------- заявка ---------- */
 $('bTour').innerHTML=T.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
