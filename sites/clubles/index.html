@@ -702,7 +702,8 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
 /* ——— Вход ——— */
 (()=>{
   const gate=document.getElementById('gate');
-  const go=sound=>{if(sound)Sound.set(true);window.bgWarm&&bgWarm();gate.classList.add('leave');document.documentElement.classList.remove('gated');scrollTo(0,0);setTimeout(()=>gate.remove(),1300)};
+  const chirp=new Audio('enter.mp3');chirp.preload='auto';chirp.volume=.6;
+  const go=sound=>{if(sound){try{chirp.currentTime=0;const pr=chirp.play();pr&&pr.catch(()=>{})}catch(e){}Sound.set(true)}window.bgWarm&&bgWarm();gate.classList.add('leave');document.documentElement.classList.remove('gated');scrollTo(0,0);setTimeout(()=>gate.remove(),1300)};
   document.getElementById('enter').addEventListener('click',()=>go(true));
   document.getElementById('enterQuiet').addEventListener('click',()=>go(false));
 })();
