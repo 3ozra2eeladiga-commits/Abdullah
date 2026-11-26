@@ -30,7 +30,7 @@
     if (geo.index) geo = geo.toNonIndexed();
     if (ry) geo.rotateY(ry);
     geo.translate(x || 0, y || 0, z || 0);
-    var n = geo.attributes.position.count, c = new Float32Array(n * 3), k = color.isColor ? color : lin(color);
+    var n = geo.attributes.position.count, c = new Float32Array(n * 3), k = (color.isColor ? color.clone() : lin(color)).multiplyScalar(bucket === 'glow' ? 1 : 0.55);   // свет в сцене яркий — цвета приглушаем
     for (var i = 0; i < n; i++) { c[i * 3] = k.r; c[i * 3 + 1] = k.g; c[i * 3 + 2] = k.b; }
     geo.setAttribute('color', new T.BufferAttribute(c, 3));
     (buckets[bucket] = buckets[bucket] || []).push(geo);
@@ -47,17 +47,18 @@
   clearRect(Q.x0 - 4, Q.x1 + 4, Q.z0 - 4, Q.z1 + 4, false);
   clearRect(Q.x0 + 13, Q.x1 - 13, Q.z0 + 13, Q.z1 - 13, true);          // деревья оставляем только по краю сквера
   var paveTex = ctx.ctex(256, 256, function (g) {
-    g.fillStyle = '#b9aa98'; g.fillRect(0, 0, 256, 256);
+    g.fillStyle = '#9f9486'; g.fillRect(0, 0, 256, 256);
     for (var y = 0; y < 16; y++) for (var x = -1; x < 9; x++) { var v = rnd(); g.fillStyle = v < 0.33 ? 'rgba(150,110,90,.35)' : v < 0.66 ? 'rgba(255,245,230,.18)' : 'rgba(60,50,45,.16)'; g.fillRect(x * 32 + (y % 2) * 16 + 1, y * 16 + 1, 30, 14); }
   }, 1 / 4);
-  var mPave = ctx.M({ map: paveTex, roughness: 0.9 }), mLawn = ctx.M({ map: ctx.ctex(256, 256, function (g) { g.fillStyle = '#4c7a3a'; g.fillRect(0, 0, 256, 256); for (var i = 0; i < 2400; i++) { g.fillStyle = 'rgba(' + (rnd() < 0.5 ? '35,70,28,' : '150,185,105,') + (0.05 + rnd() * 0.1) + ')'; g.fillRect(rnd() * 256, rnd() * 256, 2 + rnd() * 4, 2 + rnd() * 4); } }, 1 / 8), roughness: 1 });
+  var mPave = ctx.M({ map: paveTex, roughness: 0.9 }), mLawn = ctx.M({ map: ctx.ctex(256, 256, function (g) { g.fillStyle = '#3d672f'; g.fillRect(0, 0, 256, 256); for (var i = 0; i < 2400; i++) { g.fillStyle = 'rgba(' + (rnd() < 0.5 ? '35,70,28,' : '150,185,105,') + (0.05 + rnd() * 0.1) + ')'; g.fillRect(rnd() * 256, rnd() * 256, 2 + rnd() * 4, 2 + rnd() * 4); } }, 1 / 8), roughness: 1 });
+  mPave.color.setScalar(0.72); mLawn.color.setScalar(0.6);
   var flat = function (mat, geo, y) { geo.rotateX(-Math.PI / 2); var uv = geo.attributes.uv, p = geo.attributes.position; for (var i = 0; i < uv.count; i++) uv.setXY(i, p.getX(i), p.getZ(i)); var m = new T.Mesh(geo, mat); m.position.set(QX, y, QZ); m.receiveShadow = true; root.add(m); return m; };
   flat(mLawn, new T.PlaneGeometry(QH * 2, QH * 2), 0.17);
   flat(mPave, new T.CircleGeometry(15, 48), 0.2);                          // круглая площадь у фонтана
   [0, Math.PI / 2, Math.PI / 4, -Math.PI / 4].forEach(function (a, i) {    // аллеи: крест и диагонали
     var g = new T.PlaneGeometry(i < 2 ? 6 : 4, (i < 2 ? QH * 2 : QH * 2.75)); g.rotateZ(a); flat(mPave, g, 0.19 + i * 0.002);
   });
-  var gran = 0xcfc8bd, granD = 0x8f8a82, hedge = 0x35602c, iron = 0x1c1d20, wood = 0x7a5536;
+  var gran = 0xb3aba0, granD = 0x7d776f, hedge = 0x294a22, iron = 0x1c1d20, wood = 0x7a5536;
   // фонтан: гранитная чаша, вода, верхняя чаша на ножке
   put('solid', new T.CylinderGeometry(6.2, 6.4, 0.75, 48, 1, true), gran, QX, 0.57, QZ);
   put('solid', new T.RingGeometry(5.5, 6.3, 48).rotateX(-Math.PI / 2), gran, QX, 0.95, QZ);
@@ -81,12 +82,24 @@
   }
   for (a = 0; a < 4; a++) for (var s = 20; s < QH - 3; s += 11) { var ca = Math.cos(a * Math.PI / 2), sa = Math.sin(a * Math.PI / 2); lampPos.push([QX + ca * s - sa * 3.6, QZ + sa * s + ca * 3.6]); lampPos.push([QX + ca * s + sa * 3.6, QZ + sa * s - ca * 3.6]); }
   lampPos.forEach(function (p) { cyl('solid', iron, p[0], 0.2, 0.5, p[1], 0.16, 0.1, 10); cyl('solid', iron, p[0], 0.5, 3.5, p[1], 0.05, 0.04, 8); cyl('solid', iron, p[0], 3.5, 3.6, p[1], 0.05, 0.22, 10); put('glow', new T.SphereGeometry(0.26, 12, 10), 0xffffff, p[0], 3.85, p[1]); cyl('solid', iron, p[0], 4.08, 4.2, p[1], 0.2, 0.03, 10); });
-  var flowers = [0xa8322c, 0xd9a93a, 0xe9e4d6, 0x8f3f74];
+  var flowers = [0xa8322c, 0xd9a93a, 0xe9e4d6, 0x8f3f74], bedGeos = [];
+  var blob = function () { var g = new T.SphereGeometry(1, 12, 9), p = g.attributes.position; for (var i = 0; i < p.count; i++) { var k = 1 + Math.sin(p.getX(i) * 7.1 + p.getY(i) * 5.3) * Math.cos(p.getZ(i) * 6.7) * 0.12; p.setXYZ(i, p.getX(i) * k, p.getY(i) * k, p.getZ(i) * k); } g.computeVertexNormals(); return g; };
+  function tree(x, z, r) {                                   // липа: ствол и крона из нескольких комков
+    var th = 3 + rnd() * 0.8; cyl('solid', 0x4b3a2c, x, 0.15, th + 0.6, z, 0.22, 0.13, 7);
+    for (var j = 0; j < 5; j++) { var rr = r * (j ? 0.5 + rnd() * 0.25 : 0.85), g = blob().scale(rr, rr * 0.85, rr), c = new T.Color().setHSL(0.28 + rnd() * 0.04, 0.42, 0.13 + rnd() * 0.06);
+      put('solid', g, c, x + (j ? (rnd() - 0.5) * r * 1.2 : 0), th + r * 0.7 + (j ? (rnd() - 0.3) * r * 0.6 : 0), z + (j ? (rnd() - 0.5) * r * 1.2 : 0), rnd() * 6); }
+  }
+  function thuja(x, z) { var h = 3.4 + rnd() * 0.8, g = blob().scale(0.75, h / 2, 0.75); put('solid', g, new T.Color().setHSL(0.31, 0.4, 0.1 + rnd() * 0.03), x, h / 2 + 0.2, z, rnd() * 6); }
   for (a = 0; a < 4; a++) {                                                // четыре партера между аллеями
     var qa = a * Math.PI / 2 + Math.PI / 4 + 0.39, r0 = 19, r1 = 33, n = 14;
     for (var k = 0; k < n; k++) { var aa = qa - 0.3 + 0.6 * k / (n - 1); [r0, r1].forEach(function (r) { put('solid', new T.BoxGeometry(r * 0.6 / (n - 1) + 0.3, 0.75, 0.8), hedge, QX + Math.cos(aa) * r, 0.55, QZ + Math.sin(aa) * r, -aa + Math.PI / 2); }); }
-    for (k = 0; k < 3; k++) { var fr = 22.5 + k * 3.6, seg = new T.RingGeometry(fr - 0.55, fr + 0.55, 24, 1, qa - 0.22, 0.44).rotateX(-Math.PI / 2); put('solid', seg, flowers[(a + k) % 4], QX, 0.24, QZ); }
-    cyl('solid', gran, QX + Math.cos(qa) * 26, 0.2, 0.9, QZ + Math.sin(qa) * 26, 0.9, 1.2, 20); put('solid', new T.SphereGeometry(1.25, 14, 10).scale(1, 0.75, 1), flowers[(a + 1) % 4], QX + Math.cos(qa) * 26, 1.4, QZ + Math.sin(qa) * 26);
+    for (k = 0; k < 2; k++) { var fr = 23 + k * 5.2, seg = new T.RingGeometry(fr - 1.5, fr + 1.5, 28, 2, qa - 0.2, 0.4).rotateX(-Math.PI / 2), fu = seg.attributes.uv, fp = seg.attributes.position;
+      for (var fi = 0; fi < fu.count; fi++) fu.setXY(fi, fp.getX(fi) / 5 + k * 0.37, fp.getZ(fi) / 5 + a * 0.21);
+      seg.translate(QX, 0.26, QZ); bedGeos.push(seg);
+      var rim = new T.RingGeometry(fr - 1.68, fr + 1.68, 28, 1, qa - 0.207, 0.414).rotateX(-Math.PI / 2); put('solid', rim, granD, QX, 0.23, QZ); }
+    [-0.52, 0.52].forEach(function (da, ti) { tree(QX + Math.cos(qa + da) * 35, QZ + Math.sin(qa + da) * 35, 2.6 + rnd() * 0.6); });
+    [-0.27, 0.27].forEach(function (da) { thuja(QX + Math.cos(qa + da) * 17.2, QZ + Math.sin(qa + da) * 17.2); });
+    cyl('solid', gran, QX + Math.cos(qa) * 26, 0.2, 0.9, QZ + Math.sin(qa) * 26, 0.9, 1.2, 20); put('solid', blob().scale(1.25, 0.8, 1.25), [0x7a2a26, 0xa8822e, 0xb9b4a6, 0x6e3260][(a + 1) % 4], QX + Math.cos(qa) * 26, 1.4, QZ + Math.sin(qa) * 26);
   }
   // низкая кованая ограда по краю с воротами на аллеях
   [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (sd) {
@@ -193,6 +206,12 @@
   var beaconMat = new T.SpriteMaterial({ color: 0xff3b2f, transparent: true, opacity: 0, depthWrite: false, fog: false, blending: T.AdditiveBlending,
     map: ctx.ctex(64, 64, function (g) { var r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.3, 'rgba(255,120,100,.6)'); r.addColorStop(1, 'rgba(255,60,40,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); }) });
   [26, 52, 74].forEach(function (y) { var sp = new T.Sprite(beaconMat); sp.position.set(MX, y, MZ); sp.scale.set(7, 7, 1); root.add(sp); });
+
+  var bedTex = ctx.ctex(256, 256, function (g) { g.fillStyle = '#2f5226'; g.fillRect(0, 0, 256, 256); var cs = ['#c23a33', '#e3b23a', '#f1ede0', '#a2478a', '#d9603a'];
+    for (var i = 0; i < 1500; i++) { var band = Math.floor(rnd() * 3), x = rnd() * 256, y = rnd() * 256; g.fillStyle = cs[(band + Math.floor(x / 86)) % cs.length]; g.beginPath(); g.arc(x, y, 1.6 + rnd() * 2.6, 0, 7); g.fill(); }
+    for (i = 0; i < 500; i++) { g.fillStyle = 'rgba(20,45,18,.5)'; g.fillRect(rnd() * 256, rnd() * 256, 3, 3); } }, 1);
+  bedTex.wrapS = bedTex.wrapT = T.RepeatWrapping;
+  if (bedGeos.length) { var beds = new T.Mesh(U.mergeBufferGeometries(bedGeos), ctx.M({ map: bedTex, roughness: 1, color: 0xb0b0b0 })); beds.receiveShadow = true; root.add(beds); }
 
   /* ---------- сборка сеток ---------- */
   var mSolid = ctx.M({ vertexColors: true, roughness: 0.85 }), mRoofs = ctx.M({ vertexColors: true, roughness: 0.55, metalness: 0.35 });
