@@ -18,6 +18,22 @@
     brass: lin(0xc9a063), steel: lin(0x9a9c9e), mirror: lin(0xd9dde0), pot: lin(0x3b3c3e), potL: lin(0xd9d2c4), trunk: lin(0x4a3a2c),
     leaf: lin(0x44623d), leaf2: lin(0x5a7a48), warm: lin(0xffd9a0), shade: lin(0xfff1d8), sheer: lin(0xf7f3ea), frame: lin(0x26282b), tile: lin(0xd8d3c8)
   };
+  /* Оформление меняется по этажам: планировка та же, отделка и мебель — в другой гамме */
+  var C0 = {}; Object.keys(C).forEach(function (k) { C0[k] = C[k].clone(); });
+  var THEMES = [
+    { name: 'светлый дуб', floor: 0xffffff },
+    { name: 'орех и графит', floor: 0x9c7c60, wall: 0xdedad2, wallWarm: 0xd2cdc3, accent: 0x4a4d52, accent2: 0x6b7378, boucle: 0x8d9093, boucleL: 0xa8abae, cream: 0xcfcac0, creamL: 0xdcd8cf,
+      taupe: 0x6f665b, oak: 0xb08a68, oakD: 0x8a6a50, walnut: 0x5c4433, terra: 0x8f5a3c, olive: 0x55604f, stone: 0xd4d0c8 },
+    { name: 'тёплый беж', floor: 0xf0d9b5, wall: 0xefe4d2, wallWarm: 0xe7d8c0, accent: 0xa98f73, accent2: 0xb7a58c, boucle: 0xe2cfb3, boucleL: 0xeedfc8, cream: 0xf0e2cb, creamL: 0xf6ecd9,
+      taupe: 0xb39a7c, oak: 0xf2dfc2, oakD: 0xd9bf98, terra: 0xc98a5b, olive: 0x9a8f63 },
+    { name: 'северный серый', floor: 0xd6cfc2, wall: 0xe4e6e6, wallWarm: 0xd9dcdc, accent: 0x5f6b70, accent2: 0x7f8f93, boucle: 0xcfd3d4, boucleL: 0xdfe2e3, cream: 0xe3e5e4, creamL: 0xeceeed,
+      taupe: 0x8d9698, oak: 0xe9e4da, oakD: 0xc9c2b4, terra: 0x6f8a91, olive: 0x6f7f78 }
+  ];
+  function themeOf(floorN) { return ((floorN - 2) % THEMES.length + THEMES.length) % THEMES.length; }
+  function applyTheme(i) {
+    var th = THEMES[i]; Object.keys(C).forEach(function (k) { if (th[k] != null && k !== 'floor') C[k].copy(lin(th[k])); else C[k].copy(C0[k]); });
+    materials().floor.color.copy(lin(th.floor));
+  }
   var seed = 1234;
   function rnd() { seed = (seed * 1664525 + 1013904223) | 0; return ((seed >>> 0) % 100000) / 100000; }
   var ctex = ctx.ctex || function (w, h, draw, rep) { var c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); var t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 8; if (rep) { t.wrapS = t.wrapT = T.RepeatWrapping; } return t; };
@@ -599,6 +615,9 @@
     '.gki-zoom.is-on{opacity:1;pointer-events:auto}.gki-zoom img{max-width:min(86%,820px);max-height:82%;background:#fbf8f2;border-radius:18px;padding:18px;box-shadow:0 30px 90px rgba(0,0,0,.5);transform:scale(.96);transition:transform .35s ease}.gki-zoom.is-on img{transform:none}' +
     '.gki-zoom button{position:absolute;right:26px;top:24px;width:48px;height:48px;border-radius:24px;color:#efe7da;font-size:24px;line-height:1;cursor:pointer}' +
     '@media (max-width:820px){.gki-title{top:82px}.gki-title b{font-size:21px}.gki>.gki-bar{left:12px;right:12px;bottom:12px}.gki-plan{bottom:112px;width:118px;left:12px}.gki-plan img{height:92px}.gki-hint{display:none}.gki-back{left:12px;top:14px}.gki-modes{right:12px;top:14px}.gki-note{font-size:11px;white-space:normal;text-align:center}}';
+  css += '.gki-row{display:flex;align-items:center;justify-content:center;gap:10px;max-width:100%;pointer-events:none}.gki-row .gki-chips{min-width:0}' +
+    '.gki-tour{flex:none;pointer-events:auto;min-height:58px;padding:0 24px;border:1px solid transparent;border-radius:29px;font:600 15px/1 "Onest",sans-serif;color:#1a1410;background:linear-gradient(180deg,#e2a878,#c98a5b);box-shadow:0 14px 40px rgba(0,0,0,.35);cursor:pointer;white-space:nowrap;transition:transform .2s}.gki-tour:active{transform:scale(.96)}' +
+    '.gki-tour.is-on{background:rgba(15,18,27,.78);color:#efe7da;border-color:rgba(239,231,218,.3)}@media (max-width:820px){.gki-row{flex-direction:column}.gki-tour{min-height:48px}}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   var hud = document.createElement('div'); hud.className = 'gki'; hud.hidden = true;
   hud.innerHTML = '<button type="button" class="gki-back gki-glass"><i>←</i>Вернуться к дому</button>' +
@@ -606,7 +625,7 @@
     '<div class="gki-modes gki-glass" role="group" aria-label="Время суток"><button type="button" data-m="day">День</button><button type="button" data-m="night">Вечер</button></div>' +
     '<button type="button" class="gki-plan gki-glass" aria-label="Открыть планировку"><img alt="Планировка квартиры"><span>Планировка</span></button>' +
     '<div class="gki-bar"><div class="gki-hint gki-glass"><b>Осмотритесь</b>ведите пальцем по экрану · метки на полу переносят в другую комнату</div>' +
-    '<div class="gki-chips gki-glass" role="group" aria-label="Комнаты"></div>' +
+    '<div class="gki-row"><button type="button" class="gki-tour">▶ Тур по квартире</button><div class="gki-chips gki-glass" role="group" aria-label="Комнаты"></div></div>' +
     '<div class="gki-note">Пример оформления. Квартира сдаётся без отделки.</div></div>' +
     '<div class="gki-zoom"><img alt="Планировка квартиры крупно"><button type="button" class="gki-glass" aria-label="Закрыть">×</button></div>';
   ctx.app.appendChild(hud);
@@ -617,7 +636,8 @@
   $('.gki-plan').addEventListener('click', function () { elZoom.classList.add('is-on'); });
   elZoom.addEventListener('click', function () { elZoom.classList.remove('is-on'); });
   elModes.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b && GKScene.setMode) GKScene.setMode(b.dataset.m); });
-  elChips.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) go(+b.dataset.i); });
+  elChips.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { tourStop(); go(+b.dataset.i); } });
+  var elTour = $('.gki-tour'); elTour.addEventListener('click', function () { if (S.tour) tourStop(); else tourStart(); });
 
   /* ================= состояние, камера ================= */
   var S = { active: false, busy: false, apt: null, fly: null, spot: 0, saved: null, sun: null, floor: 0, flat: null };
@@ -656,7 +676,28 @@
     if (f.t >= 1) S.fly = null;
     return true;
   });
-  ctx.controls.addEventListener('start', function () { if (S.active) { S.fly = null; elHint.classList.add('is-off'); } });
+  ctx.controls.addEventListener('start', function () { if (S.active) { tourStop(); S.fly = null; elHint.classList.add('is-off'); } });
+
+  /* «Тур по квартире»: камера сама проходит комнаты и в каждой плавно осматривается; касание останавливает */
+  var WALK = ['hall', 'kitchen', 'studio', 'living', 'bed', 'study', 'loggia'];
+  function tourStart() {
+    if (!S.active || !S.apt) return;
+    var order = S.apt.spots.map(function (sp, i) { return i; }).sort(function (a, b) { var ka = WALK.indexOf(S.apt.spots[a].key), kb = WALK.indexOf(S.apt.spots[b].key); return (ka < 0 ? 99 : ka) - (kb < 0 ? 99 : kb); });
+    S.tour = { order: order, n: 0, t: 0, base: null, dwell: 6.5 }; elTour.classList.add('is-on'); elTour.textContent = '■ Остановить тур'; elHint.classList.add('is-off');
+    go(order[0]);
+  }
+  function tourStop() { if (!S.tour) return; S.tour = null; elTour.classList.remove('is-on'); elTour.textContent = '▶ Тур по квартире'; }
+  ctx.onFrame(function (dt) {
+    if (!S.active || !S.tour || !S.apt) return false;
+    if (S.fly) return true;
+    var tr = S.tour, sp = S.apt.spots[tr.order[tr.n]];
+    if (!tr.base) { var p = world(sp.eye), a = angles(p, world(sp.look)); tr.base = { p: p, y: a[0], q: a[1] }; tr.t = 0; tr.last = performance.now(); }
+    var now = performance.now(); tr.t += Math.min(0.25, (now - tr.last) / 1000); tr.last = now;
+    var k = tr.t / tr.dwell, sw = Math.sin(k * Math.PI * 2) * 0.44 * Math.min(1, tr.t / 1.4) * Math.min(1, (tr.dwell - tr.t) / 1.2);
+    setView(tr.base.p, tr.base.y + sw, tr.base.q);
+    if (tr.t >= tr.dwell) { tr.n++; tr.base = null; if (tr.n >= tr.order.length) { var first = tr.order[0]; tourStop(); go(first); } else go(tr.order[tr.n]); }
+    return true;
+  });
 
   /* нажатие на метку на полу */
   var ray = new T.Raycaster(), ndc = new T.Vector2(), dn = null;
@@ -718,7 +759,8 @@
   }
 
   function doEnter(floorN, fl) {
-    if (!S.apt || S.apt.id !== fl.id) { disposeApt(); S.apt = build(fl); }
+    var th = themeOf(floorN);
+    if (!S.apt || S.apt.id !== fl.id || S.apt.theme !== th) { disposeApt(); applyTheme(th); seed = 1234; S.apt = build(fl); S.apt.theme = th; }
     var a = S.apt, cam = ctx.camera;
     a.group.position.set(clamp(9 - a.W / 2, -11, 26 - a.W), ctx.dims.GH + (floorN - 2) * ctx.dims.FH + 0.12, ZS);
     a.group.visible = true; ctx.scene.add(a.group); a.group.updateMatrixWorld(true);
@@ -729,7 +771,7 @@
     if (GKScene.autoRotate) GKScene.autoRotate(false);
     ctx.limits({ minDistance: 0.1, maxDistance: 0.1, minPolarAngle: Math.PI / 2 - 1.0, maxPolarAngle: Math.PI / 2 + 0.85, enableZoom: false, enableRotate: true, rotateSpeed: -0.22 });
     S.active = true; S.floor = floorN; S.flat = fl;
-    $('.gki-title small').textContent = floorN + ' этаж · вид на город';
+    $('.gki-title small').textContent = floorN + ' этаж · оформление «' + THEMES[th].name + '»';
     $('.gki-title b').textContent = fl.name || 'Квартира';
     $('.gki-title span').textContent = fl.area ? String(fl.area.toFixed(2)).replace('.', ',') + ' м²' : '';
     var im = $('.gki-plan img'), zi = elZoom.querySelector('img'); $('.gki-plan').style.display = fl.img ? '' : 'none'; if (fl.img) { im.src = fl.img; zi.src = fl.img; }
@@ -741,6 +783,7 @@
     applyLight(); sunFocus(true); go(0, true, 1.5); ctx.shadows(); ctx.dirty(); emit('interior');
   }
   function doExit() {
+    tourStop();
     var cam = ctx.camera, sv = S.saved || { fov: 30, near: 1, house: true };
     S.active = false; S.fly = null; S.saved = null; sunFocus(false);
     if (S.apt) { S.apt.group.visible = false; ctx.scene.remove(S.apt.group); }
