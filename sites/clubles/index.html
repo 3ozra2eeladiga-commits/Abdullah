@@ -169,72 +169,79 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 @media(max-width:480px){.tent{grid-template-columns:auto 1fr}.tent .p{grid-column:2}}
 
 /* ——— Автодом ——— */
-/* ——— Автодом: история одних суток, точки на фото, цифры, маршруты ——— */
+/* ——— Автодом: один блок — рисованный человечек показывает день в кемпере, рядом фото и факты ——— */
 .cmp{padding-top:0}
-.cmp-head{margin-bottom:34px}.cmp-head h2{margin-block:18px 14px}
-.story{position:relative;height:calc(6 * 75svh + 100svh)}
-.st-stage{position:sticky;top:0;height:100svh;overflow:hidden}
-.st-imgs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.08);transition:opacity 1.1s var(--ease),transform 7s linear}
-.st-imgs img.on{opacity:1;transform:scale(1)}
-.st-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,32,22,.88) 0,rgba(13,32,22,.45) 42%,rgba(13,32,22,.05) 70%),linear-gradient(0deg,rgba(13,32,22,.6),transparent 40%)}
-.st-panel{position:absolute;left:max(24px,env(safe-area-inset-left,0px));left:max(24px,calc((100vw - 1280px)/2 + 20px));bottom:12svh;max-width:min(520px,calc(100vw - 48px));transition:opacity .45s var(--ease),transform .45s var(--ease)}
-.st-panel.swap{opacity:0;transform:translateY(14px)}
-.st-time{font:300 clamp(56px,8vw,112px)/1 var(--f-display);color:var(--brass-hi);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
-.st-panel h3{font:400 clamp(22px,2.6vw,34px)/1.15 var(--f-display);margin:14px 0 12px;letter-spacing:-.01em}
-.st-panel p{margin:0;color:var(--fog);opacity:.88;font-size:clamp(15px,1.2vw,17px);max-width:46ch}
-.st-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.st-chips span{padding:8px 14px;border-radius:999px;font-size:13.5px;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.26);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.st-route{position:absolute;right:max(24px,calc((100vw - 1280px)/2 + 20px));top:50%;transform:translateY(-50%);list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:26px}
-.st-route::before{content:"";position:absolute;right:6px;top:6px;bottom:6px;width:1px;background:rgba(238,240,232,.25)}
-.st-route li{position:relative;display:flex;align-items:center;justify-content:flex-end;gap:12px;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(238,240,232,.55);transition:color .4s}
-.st-route i{width:13px;height:13px;border-radius:50%;border:1px solid rgba(238,240,232,.5);background:var(--night);transition:all .4s var(--ease);z-index:1}
-.st-route li.done i{background:var(--brass);border-color:var(--brass)}
-.st-route li.on{color:var(--fog)}.st-route li.on i{background:var(--brass-hi);border-color:var(--brass-hi);box-shadow:0 0 0 6px rgba(220,195,154,.2)}
-.st-hint{position:absolute;left:50%;bottom:3svh;transform:translateX(-50%);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--mist);display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .5s}
-.st-hint i{width:1px;height:26px;background:linear-gradient(var(--brass-hi),transparent);animation:hintd 1.8s ease-in-out infinite}
-@keyframes hintd{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
-@media(max-width:760px){
-  .st-shade{background:linear-gradient(0deg,rgba(13,32,22,.95) 10%,rgba(13,32,22,.55) 50%,rgba(13,32,22,.15))}
-  .st-panel{left:20px;right:20px;bottom:calc(84px + env(safe-area-inset-bottom,0px))}
-  .st-hint{display:none}
-  .st-route{right:auto;left:20px;top:calc(env(safe-area-inset-top,0px) + 92px);transform:none;flex-direction:row;gap:0;width:calc(100% - 40px);justify-content:space-between}
-  .st-route::before{left:6px;right:6px;top:6px;bottom:auto;width:auto;height:1px}
-  .st-route span{display:none}
-}
-.cmp-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:clamp(24px,4vw,56px);align-items:center;margin-top:clamp(56px,8vw,100px)}
-.hot{position:relative;border-radius:26px;overflow:hidden;aspect-ratio:1536/857;max-width:100%}
-.hot>img{width:100%;height:100%;object-fit:cover}
-.hot .pin{position:absolute;width:34px;height:34px;transform:translate(-50%,-50%);border-radius:50%;background:rgba(13,32,22,.55);border:1px solid var(--brass-hi);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;color:var(--brass-hi);font:500 13px/1 var(--f-body);transition:transform .35s var(--ease),background .3s}
-.hot .pin::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--brass-hi);opacity:0;animation:orb 2.6s ease-out infinite}
-.hot .pin:hover,.hot .pin[aria-pressed="true"]{transform:translate(-50%,-50%) scale(1.15);background:var(--brass-hi);color:var(--night)}
-.hot-card{position:absolute;left:14px;right:14px;bottom:14px;display:flex;gap:14px;align-items:center;padding:12px;border-radius:18px;background:rgba(13,32,22,.72);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:opacity .35s,transform .35s var(--ease)}
-.hot-card.swap{opacity:0;transform:translateY(8px)}
-.hot-card img{width:clamp(80px,12vw,140px);aspect-ratio:16/10;object-fit:cover;border-radius:12px;flex:none}
-.hot-card b{font-weight:500;font-size:16px}.hot-card p{margin:4px 0 0;font-size:13.5px;color:var(--mist);line-height:1.45}
-.cmp-h3{font:300 clamp(24px,2.8vw,36px)/1.12 var(--f-display);margin:14px 0 22px;letter-spacing:-.02em}
-.specs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-radius:20px;overflow:hidden;border:1px solid var(--line)}
-.specs div{background:rgba(13,32,22,.6);padding:16px 18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.specs b{display:block;font:300 clamp(26px,2.6vw,34px)/1 var(--f-display);color:var(--brass-hi);font-variant-numeric:tabular-nums}
-.specs span{font-size:12.5px;color:var(--mist)}
-.cmp-note{font-size:13.5px;color:var(--mist);margin:16px 0 0}
-@media(max-width:900px){.cmp-grid{grid-template-columns:1fr}}
-@media(max-width:520px){.hot-card{position:static;margin-top:10px}.hot{overflow:visible;aspect-ratio:auto}.hot>img{border-radius:22px;aspect-ratio:1536/857}.hot .pin{width:30px;height:30px}}
-.routes2{margin-top:clamp(56px,8vw,100px)}
-.r2-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:18px}
-.r2-chips{display:flex;flex-wrap:wrap;gap:8px}
-.r2-card{margin-top:22px;display:grid;grid-template-columns:auto 1fr auto;gap:clamp(16px,3vw,40px);align-items:center;padding:clamp(18px,3vw,28px);border-radius:24px;background:rgba(13,32,22,.55);border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.r2-line{width:clamp(120px,22vw,280px);height:70px}
-.r2-line path{fill:none;stroke:var(--brass-hi);stroke-width:2;stroke-dasharray:4 6}
-.r2-line circle{fill:var(--brass-hi)}
-.r2-card h4{margin:0;font:400 22px/1.2 var(--f-display)}.r2-card p{margin:6px 0 0;color:var(--mist);font-size:14.5px}
-.r2-km{text-align:right;font-variant-numeric:tabular-nums}.r2-km b{display:block;font:300 30px/1 var(--f-display);color:var(--brass-hi)}.r2-km span{font-size:12.5px;color:var(--mist)}
-@media(max-width:700px){.r2-card{grid-template-columns:1fr}.r2-km{text-align:left}.r2-line{display:none}}
-.book3{margin-top:clamp(40px,6vw,70px);display:grid;grid-template-columns:repeat(3,1fr) auto;gap:14px;align-items:stretch}
-.b3{padding:20px;border-radius:22px;border:1px solid var(--line);background:rgba(13,32,22,.45)}
-.b3 span{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid var(--brass);color:var(--brass-hi);font-size:13px}
-.b3 b{display:block;margin:12px 0 6px;font-weight:500}.b3 p{margin:0;font-size:14px;color:var(--mist)}
-.book3 .btn{align-self:center}
-@media(max-width:1000px){.book3{grid-template-columns:1fr}.book3 .btn{justify-self:start}}
+.cmp-card{border-radius:32px;padding:clamp(16px,3vw,36px);background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.03)),rgba(13,32,22,.6);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.cmp-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px 40px;margin-bottom:24px}
+.cmp-top h2{font-size:clamp(26px,3.4vw,44px);margin-top:14px}
+.cmp-top .lead{max-width:40ch;font-size:15px;margin:0}
+.cmp-main{display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(16px,2.5vw,32px)}
+.cmp-l,.cmp-r{min-width:0;display:flex;flex-direction:column;gap:12px}
+.doodle{border-radius:22px;background:radial-gradient(ellipse at 50% 100%,rgba(35,92,64,.55),rgba(13,32,22,.75));border:1px solid var(--line);overflow:hidden;flex:1;display:flex;align-items:center}
+.doodle svg{display:block;width:100%;height:auto;overflow:visible}
+.dd path,.dd circle,.dd rect{fill:none;stroke:var(--fog);stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+.dd .a{stroke:var(--brass-hi)}.dd .f{fill:var(--brass-hi);stroke:none}.dd .dim{opacity:.38}.dd .thick{stroke-width:4}
+.dd .dash{stroke-dasharray:5 6}.dd .glow{fill:rgba(220,195,154,.3)}
+.dd text{font:italic 15px var(--f-accent);fill:var(--brass-hi);stroke:none}
+.dd .spin{animation:dspin .9s linear infinite}
+.dd .bounce{animation:dbounce .28s ease-in-out infinite alternate}
+.dd .roll{animation:droll 5s linear infinite}
+.dd .road{stroke-dasharray:14 12;animation:droad .45s linear infinite}
+.dd .spd{animation:dspd .7s ease-in infinite}
+.dd .steam{animation:dsteam 2.2s ease-out infinite}.dd .s2{animation-delay:1.1s}
+.dd .flow{stroke-dasharray:5 7;animation:dflow .7s linear infinite}
+.dd .charge{transform-box:fill-box;transform-origin:left center;animation:dcharge 3.2s ease-in-out infinite}
+.dd .rays{animation:dspin 14s linear infinite}
+.dd .tw{animation:tw 1.8s ease-in-out infinite alternate}
+.dd .zz{animation:dzz 2.8s ease-out infinite}.dd .z2{animation-delay:.9s}.dd .z3{animation-delay:1.8s}
+.dd .drops{stroke-dasharray:4 6;animation:ddrop .4s linear infinite}
+.dd .walkin{animation:dwalk 5s ease-out infinite}
+.dd .wk1{animation:dleg .32s ease-in-out infinite alternate}.dd .wk2{animation:dleg .32s ease-in-out infinite alternate-reverse}
+.dd .fly{animation:dfly 8s linear infinite}
+.dd .wave{animation:dwave .5s ease-in-out infinite alternate}
+@keyframes dspin{to{transform:rotate(360deg)}}
+@keyframes dbounce{to{transform:translateY(-1.6px)}}
+@keyframes droll{to{transform:translateX(-400px)}}
+@keyframes droad{to{stroke-dashoffset:26}}
+@keyframes dspd{0%{opacity:0;transform:translateX(14px)}40%{opacity:1}100%{opacity:0;transform:translateX(-14px)}}
+@keyframes dsteam{0%{opacity:0;transform:translateY(4px)}30%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
+@keyframes dflow{to{stroke-dashoffset:-12}}
+@keyframes dcharge{0%{transform:scaleX(.08)}80%,100%{transform:scaleX(1)}}
+@keyframes dzz{0%{opacity:0;transform:translate(0,6px)}30%{opacity:1}100%{opacity:0;transform:translate(10px,-18px)}}
+@keyframes ddrop{to{stroke-dashoffset:-10}}
+@keyframes dwalk{0%{transform:translateX(-90px);opacity:0}8%{opacity:1}62%,100%{transform:translateX(0);opacity:1}}
+@keyframes dleg{from{transform:rotate(-20deg)}to{transform:rotate(20deg)}}
+@keyframes dfly{from{transform:translate(-50px,52px)}to{transform:translate(440px,-6px)}}
+@keyframes dwave{from{transform:rotate(-14deg)}to{transform:rotate(16deg)}}
+.cmp-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.cmp-tabs .chip{height:auto;padding:9px 4px;border-radius:14px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px;line-height:1.1;position:relative;overflow:hidden;color:var(--fog);background:rgba(13,32,22,.5)}
+.cmp-tabs .chip small{font:400 10.5px/1 var(--f-display);color:var(--brass-hi);font-variant-numeric:tabular-nums}
+.cmp-tabs .chip[aria-pressed="true"]{background:var(--fog);color:var(--night);border-color:var(--fog)}
+.cmp-tabs .chip[aria-pressed="true"] small{color:#6b5a3c}
+.cmp-tabs .chip.auto::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:100%;background:var(--brass);transform-origin:left;animation:tabbar 6s linear forwards}
+@keyframes tabbar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.cmp-photo{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:16/9}
+.cmp-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .7s var(--ease)}
+.cmp-photo img.on{opacity:1}
+.cmp-txt{transition:opacity .25s}.cmp-txt.swap{opacity:0}
+.cmp-txt h3{font:400 clamp(19px,2vw,25px)/1.2 var(--f-display);margin:4px 0 8px;letter-spacing:-.01em}
+.cmp-txt p{margin:0;color:var(--mist);font-size:15px;line-height:1.5}
+.cmp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.cmp-chips span{padding:6px 12px;border-radius:999px;font-size:13px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22)}
+.cmp-specs{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-top:clamp(16px,2.5vw,28px)}
+.cmp-specs div{background:rgba(13,32,22,.7);padding:14px 12px;text-align:center;min-width:0}
+.cmp-specs b{display:block;font:300 clamp(20px,2.2vw,28px)/1 var(--f-display);color:var(--brass-hi);font-variant-numeric:tabular-nums}
+.cmp-specs span{font-size:12px;color:var(--mist)}
+.cmp-foot{display:grid;grid-template-columns:1fr auto;gap:18px 32px;align-items:end;margin-top:clamp(16px,2.5vw,26px)}
+.cmp-routes{min-width:0}.cmp-routes>b{display:block;font-weight:500;margin-bottom:10px}
+.r2-chips{display:flex;flex-wrap:wrap;gap:6px}
+.r2-chips .chip{height:36px;padding:0 14px;font-size:13.5px;color:var(--fog)}
+.r2-chips .chip[aria-pressed="true"]{color:var(--night)}
+.r2-res{margin:12px 0 0;font-size:14.5px;color:var(--mist)}.r2-res b{color:var(--brass-hi);font-weight:500;font-variant-numeric:tabular-nums}
+.cmp-cta{display:flex;flex-direction:column;align-items:flex-end;gap:10px}.cmp-cta p{margin:0;font-size:13px;color:var(--mist)}
+@media(max-width:900px){.cmp-main{grid-template-columns:1fr}.cmp-foot{grid-template-columns:1fr}.cmp-cta{align-items:flex-start}.cmp-specs{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:520px){.cmp-tabs{grid-template-columns:repeat(3,1fr)}}
+@media(prefers-reduced-motion:reduce){.dd *{animation:none!important}}
 
 /* ——— Дорога ——— */
 .way-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:clamp(28px,5vw,72px)}
@@ -361,17 +368,29 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 @media(max-width:860px){.scene{display:none}}
 .gated .scene{opacity:0;visibility:hidden}
 
-/* ——— Подбор дома ——— */
-.pick{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:22px;padding:14px;border-radius:24px;background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-.pick-q{display:flex;flex-direction:column;gap:10px;padding:6px 8px;min-width:0}
-.pick-q>b{font:400 17px/1.2 var(--f-display);color:var(--brass-hi)}
+/* ——— Подбор дома: фото дома — главное ——— */
+.pick{position:relative;border-radius:30px;overflow:hidden;overflow:clip;min-height:clamp(480px,68vh,640px);margin-bottom:22px;padding:18px;isolation:isolate;border:1px solid rgba(255,255,255,.2)}
+.pick-view{position:absolute;inset:0;z-index:-1}
+.pick-ph{position:absolute;inset:0;overflow:hidden;overflow:clip}
+.pick-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.1);transition:opacity 1s var(--ease),transform 9s linear}
+.pick-ph img.on{opacity:1;transform:scale(1)}
+.pick-view::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(13,32,22,.88) 0,rgba(13,32,22,.25) 42%,transparent 60%);pointer-events:none}
+.pick-q{display:inline-flex;flex-direction:column;gap:10px;padding:16px 18px;border-radius:22px;max-width:min(430px,100%);background:rgba(13,32,22,.6);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.pick-q>b{font:400 16px/1.2 var(--f-display);color:var(--brass-hi)}
 .pick-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-.pick-row span{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mist);width:118px}
-.pick-res{display:flex;gap:14px;align-items:center;padding:10px;border-radius:18px;background:rgba(13,32,22,.55);border:1px solid var(--line);min-width:0;transition:opacity .3s}
-.pick-res.swap{opacity:0}
-.pick-res img{width:110px;aspect-ratio:4/3;object-fit:cover;border-radius:12px;flex:none}
-.pick-res strong{display:block;font:400 19px/1.15 var(--f-display)}.pick-res small{display:block;color:var(--mist);font-size:13px;margin:4px 0 10px}
-@media(max-width:900px){.pick{grid-template-columns:1fr}.pick-row span{width:100%}}
+.pick-row span{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);width:100%}
+.pick-row .chip{color:var(--fog);background:rgba(255,255,255,.08)}.pick-row .chip[aria-pressed="true"]{color:var(--night);background:var(--fog)}
+.pick-res{position:absolute;z-index:1;left:clamp(18px,3vw,36px);right:clamp(18px,3vw,36px);bottom:clamp(18px,3vw,32px);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px;transition:opacity .35s,transform .5s var(--ease)}
+.pick-res.swap{opacity:0;transform:translateY(10px)}
+.pick-res small.k{display:block;font:500 11.5px/1 var(--f-body);letter-spacing:.2em;text-transform:uppercase;color:var(--brass-hi);margin-bottom:10px}
+.pick-res strong{display:block;font:300 clamp(36px,6vw,76px)/1 var(--f-display);letter-spacing:-.03em;text-shadow:0 4px 30px rgba(0,0,0,.4)}
+.pick-res p{margin:10px 0 0;font-size:clamp(15px,1.3vw,18px);color:var(--fog);opacity:.9}
+.pick-res .pk-r{display:flex;align-items:center;gap:18px}
+@media(max-width:760px){
+  .pick{overflow:visible;min-height:0;padding:0;border:0;border-radius:0}
+  .pick-q{display:flex;max-width:none;margin-bottom:10px}
+  .pick-view{position:relative;inset:auto;z-index:0;aspect-ratio:4/5;border-radius:26px;overflow:hidden}
+}
 
 /* ——— Новогоднее ——— */
 #heroLights{position:absolute;left:0;top:0;width:100%;z-index:1;pointer-events:none;overflow:visible}
@@ -491,7 +510,10 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
         <div class="pick-row" data-q="who"><span>С кем едете</span><button class="chip" data-v="2" aria-pressed="true">Вдвоём</button><button class="chip" data-v="4" aria-pressed="false">Семьёй</button><button class="chip" data-v="2x2" aria-pressed="false">Две пары</button></div>
         <div class="pick-row" data-q="want"><span>Что важнее</span><button class="chip" data-v="sky" aria-pressed="true">Небо над кроватью</button><button class="chip" data-v="jac" aria-pressed="false">Джакузи</button><button class="chip" data-v="chan" aria-pressed="false">Чан</button></div>
       </div>
-      <div class="pick-res" id="pickRes" aria-live="polite"></div>
+      <div class="pick-view">
+        <div class="pick-ph"><img id="pkA" class="on" alt=""><img id="pkB" alt=""></div>
+        <div class="pick-res" id="pickRes" aria-live="polite"></div>
+      </div>
     </div>
     <div class="slats rv" id="slats"></div>
     <p class="count" id="count" aria-live="polite"></p>
@@ -544,71 +566,51 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 </section>
 
 <section id="camper" class="cmp">
-  <div class="wrap cmp-head rv">
-    <div class="eyebrow">Автодом · MAXUS T90 Explorer</div>
-    <h2>Дом, который едет <em>за вами</em></h2>
-    <p class="lead">Внедорожник с жилым модулем: кровать, кухня, душ и солнечные панели. Пролистайте одни сутки путешествия по Кавказу.</p>
-  </div>
-
-  <div class="story" id="story">
-    <div class="st-stage">
-      <div class="st-imgs" aria-hidden="true">
-        <img src="img/cam-airport.webp" alt="" class="on"><img src="img/cam-mount.webp" alt="" loading="lazy"><img src="img/cam-kitchen.webp" alt="" loading="lazy">
-        <img src="img/cam-sunset.webp" alt="" loading="lazy"><img src="img/cam-bed.webp" alt="" loading="lazy"><img src="img/cam-lounge.webp" alt="" loading="lazy">
-      </div>
-      <div class="st-shade"></div>
-      <ol class="st-route" aria-hidden="true"><li class="on"><i></i><span>Аэропорт</span></li><li><i></i><span>Дорога</span></li><li><i></i><span>Обед</span></li><li><i></i><span>Закат</span></li><li><i></i><span>Ночь</span></li><li><i></i><span>Утро</span></li></ol>
-      <div class="st-panel" aria-live="polite">
-        <div class="st-time" id="stTime">08:00</div>
-        <h3 id="stTitle">Прилетели — машина уже ждёт</h3>
-        <p id="stText">Подадим кемпер прямо к терминалу аэропорта Минеральные Воды. Без такси и пересадок: вещи в багажник — и в путь.</p>
-        <div class="st-chips" id="stChips"><span>аэропорт Минводы</span><span>полностью укомплектован</span></div>
-      </div>
-      <div class="st-hint" id="stHint">Листайте дальше <i></i></div>
-    </div>
-  </div>
-
   <div class="wrap">
-    <div class="cmp-grid">
-      <div class="hot rv" id="hot">
-        <img src="img/cam-mount.webp" alt="Кемпер MAXUS T90 Explorer в горах" loading="lazy">
-        <button class="pin" style="left:52%;top:33%" data-k="bed" aria-label="Спальня наверху"><b>1</b></button>
-        <button class="pin" style="left:22%;top:31%" data-k="awning" aria-label="Маркиза"><b>2</b></button>
-        <button class="pin" style="left:34%;top:54%" data-k="kitchen" aria-label="Кухня"><b>3</b></button>
-        <button class="pin" style="left:66%;top:21%" data-k="solar" aria-label="Энергия"><b>4</b></button>
-        <button class="pin" style="left:61%;top:82%" data-k="drive" aria-label="Полный привод"><b>5</b></button>
-        <button class="pin" style="left:56%;top:52%" data-k="cabin" aria-label="Салон"><b>6</b></button>
-        <div class="hot-card" id="hotCard"><img id="hcImg" src="img/cam-bed.webp" alt=""><div><b id="hcT">Спальня наверху</b><p id="hcP">Двуспальная кровать 2100×1300 над кабиной, панорамные окна с москитной сеткой.</p></div></div>
+    <div class="cmp-card rv">
+      <div class="cmp-top">
+        <div><div class="eyebrow">Автодом · MAXUS T90 Explorer</div><h2>Дом, который едет <em>за вами</em></h2></div>
+        <p class="lead">Внедорожник с кроватью, кухней и душем. Нажимайте на моменты дня — человечек покажет, как тут живётся.</p>
       </div>
-      <div class="cmp-side rv">
-        <div class="eyebrow">Нажмите на точки на фото</div>
-        <h3 class="cmp-h3">Всё для жизни <em>внутри</em></h3>
-        <div class="specs" id="specs">
-          <div><b data-n="218">0</b><span>л.с., дизель 2,0 л</span></div>
-          <div><b data-n="500">0</b><span>Н·м крутящий момент</span></div>
-          <div><b data-t="4×4">4×4</b><span>блокировка заднего диф.</span></div>
-          <div><b data-n="7.2" data-d="1">0</b><span>кВт·ч литиевая батарея</span></div>
-          <div><b data-n="600">0</b><span>Вт солнечные панели</span></div>
-          <div><b data-n="98">0</b><span>л холодильник с морозилкой</span></div>
+      <div class="cmp-main">
+        <div class="cmp-l">
+          <div class="doodle" id="cmpDoodle" aria-hidden="true"></div>
+          <div class="cmp-tabs" id="cmpTabs" role="group" aria-label="Моменты дня">
+            <button class="chip" data-i="0" aria-pressed="true"><small>08:00</small>Забрали</button>
+            <button class="chip" data-i="1" aria-pressed="false"><small>10:30</small>Едем</button>
+            <button class="chip" data-i="2" aria-pressed="false"><small>13:00</small>Обедаем</button>
+            <button class="chip" data-i="3" aria-pressed="false"><small>17:00</small>Отдыхаем</button>
+            <button class="chip" data-i="4" aria-pressed="false"><small>23:00</small>Спим</button>
+            <button class="chip" data-i="5" aria-pressed="false"><small>08:00</small>Утро</button>
+          </div>
         </div>
-        <p class="cmp-note">Категория B, до 3,5 т. Длина 5,99 м, высота 2,91 м — маршрут подберём с учётом габаритов.</p>
+        <div class="cmp-r">
+          <div class="cmp-photo"><img id="cpA" class="on" src="img/cam-airport.webp" alt="Кемпер у аэропорта Минеральные Воды"><img id="cpB" alt=""></div>
+          <div class="cmp-txt" id="cmpTxt" aria-live="polite"><h3 id="cmpT">Прилетели — машина уже ждёт</h3><p id="cmpP">Подадим кемпер прямо к терминалу аэропорта Минеральные Воды. Вещи в багажник — и в путь.</p><div class="cmp-chips" id="cmpC"><span>аэропорт Минводы</span><span>бельё и посуда внутри</span></div></div>
+        </div>
       </div>
-    </div>
-
-    <div class="routes2 rv">
-      <div class="r2-head"><div><div class="eyebrow">Куда поехать</div><h3 class="cmp-h3">Маршрут <em>соберём бесплатно</em></h3></div>
-        <div class="r2-chips" role="group" aria-label="Маршруты">
-          <button class="chip" data-r="0" aria-pressed="true">Медовые водопады</button><button class="chip" data-r="1" aria-pressed="false">Чегемские водопады</button>
-          <button class="chip" data-r="2" aria-pressed="false">Приэльбрусье</button><button class="chip" data-r="3" aria-pressed="false">Домбай</button><button class="chip" data-r="4" aria-pressed="false">Архыз</button>
-        </div></div>
-      <div class="r2-card" id="r2card"></div>
-    </div>
-
-    <div class="book3 rv">
-      <div class="b3"><span>1</span><b>Даты и гости</b><p>Напишите период поездки и сколько вас — проверим свободные даты.</p></div>
-      <div class="b3"><span>2</span><b>Маршрут</b><p>Подскажем перевалы, ночёвки с видом и источники, которых нет в путеводителях.</p></div>
-      <div class="b3"><span>3</span><b>Забираете</b><p>В клубе или у терминала аэропорта Минводы. Бельё, посуда и полотенца уже внутри.</p></div>
-      <a class="btn solid" href="https://clubles.ru/arenda-mashiny/" target="_blank" rel="noopener">Узнать цену на мои даты<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></a>
+      <div class="cmp-specs" id="specs">
+        <div><b data-n="218">218</b><span>л.с., дизель</span></div>
+        <div><b>4×4</b><span>с блокировкой</span></div>
+        <div><b data-n="4">4</b><span>гостя, 2 спальни</span></div>
+        <div><b data-n="7.2" data-d="1">7,2</b><span>кВт·ч батарея</span></div>
+        <div><b data-n="600">600</b><span>Вт солнца</span></div>
+        <div><b data-n="98">98</b><span>л холодильник</span></div>
+      </div>
+      <div class="cmp-foot">
+        <div class="cmp-routes">
+          <b>Куда поехать? Маршрут соберём бесплатно</b>
+          <div class="r2-chips" role="group" aria-label="Маршруты">
+            <button class="chip" data-r="0" aria-pressed="true">Медовые водопады</button><button class="chip" data-r="1" aria-pressed="false">Чегем</button>
+            <button class="chip" data-r="2" aria-pressed="false">Приэльбрусье</button><button class="chip" data-r="3" aria-pressed="false">Домбай</button><button class="chip" data-r="4" aria-pressed="false">Архыз</button>
+          </div>
+          <p class="r2-res" id="r2card"></p>
+        </div>
+        <div class="cmp-cta">
+          <p>Права категории B. Забираете в клубе или у аэропорта.</p>
+          <a class="btn solid" href="https://clubles.ru/arenda-mashiny/" target="_blank" rel="noopener">Узнать цену на мои даты<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -754,7 +756,7 @@ function filter(f){
   const min=Math.min(...vis.map(s=>HOMES[all.indexOf(s)].p));
   count.textContent=`${vis.length} ${plural(vis.length)} · от ${fmt(min)} ₽ за сутки. Наведите или нажмите на створку, чтобы раскрыть дом.`;
 }
-document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));filter(c.dataset.f)}));
+document.querySelectorAll('.chips .chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.chips .chip').forEach(x=>x.setAttribute('aria-pressed',x===c));filter(c.dataset.f)}));
 filter('all');
 
 /* ——— Новогоднее: гирлянды, венок, шары ——— */
@@ -889,62 +891,83 @@ XM.wreath();XM.hero();
   new IntersectionObserver(e=>{const was=vis;vis=e[0].isIntersecting;if(vis&&!was){measure();XM.letters(wrap,prof,x0,x1,parseFloat(getComputedStyle(gi).fontSize));last=performance.now();requestAnimationFrame(tick)}}).observe(wrap);
 })();
 
-/* ——— Автодом: сутки путешествия по прокрутке ——— */
+/* ——— Автодом: человечек показывает день в кемпере ——— */
 (()=>{
-  const story=document.getElementById('story');if(!story)return;
-  const imgs=[...story.querySelectorAll('.st-imgs img')],dots=[...story.querySelectorAll('.st-route li')];
-  const panel=story.querySelector('.st-panel'),T=document.getElementById('stTime'),H=document.getElementById('stTitle'),P=document.getElementById('stText'),C=document.getElementById('stChips'),hint=document.getElementById('stHint');
-  const S=[
-    ['08:00','Прилетели — машина уже ждёт','Подадим кемпер прямо к терминалу аэропорта Минеральные Воды. Без такси и пересадок: вещи в багажник — и в путь.',['аэропорт Минводы','полностью укомплектован']],
-    ['10:30','Дорога в горы','Настоящий внедорожник: полный привод с блокировкой, 218 л.с. и резина AT. Проезжает там, где обычные автодома застревают.',['4×4','500 Н·м','автомат Aisin, 8 ступеней']],
-    ['13:00','Обед с видом на вершины','Раскрыли маркизу, достали стол. Внутри мойка, холодильник на 98 л с морозилкой и микроволновка.',['кухня','холодильник 98 л','маркиза']],
-    ['19:40','Закат, проектор и тишина','Батарея 7,2 кВт·ч и солнечные панели 600 Вт — можно сутками жить без розетки. Кондиционер летом, отопитель в холод.',['7,2 кВт·ч','600 Вт солнца','климат']],
-    ['23:00','Ночь под звёздами','Двуспальная кровать 2100×1300 над кабиной и вторая спальная зона внизу — до четырёх гостей. Бельё и полотенца уже внутри.',['до 4 гостей','2 спальные зоны']],
-    ['08:00','Утро у реки','Кофе за столиком у окна, горячий душ и туалет прямо в кемпере — и дальше по маршруту. А вернувшись, можно сразу в баню клуба.',['душ и туалет','горячая вода','столик у окна']]];
-  let cur=0;
-  function set(i){if(i===cur)return;const prev=cur;cur=i;
-    imgs.forEach((im,k)=>{im.classList.toggle('on',k===i);if(k===i+1)im.loading='eager'});
-    dots.forEach((d,k)=>{d.classList.toggle('on',k===i);d.classList.toggle('done',k<i)});
-    panel.classList.add('swap');setTimeout(()=>{const s=S[i];T.textContent=s[0];H.textContent=s[1];P.textContent=s[2];C.innerHTML=s[3].map(x=>`<span>${x}</span>`).join('');panel.classList.remove('swap')},280);
-    hint.style.opacity=i===S.length-1?0:1}
-  function onScroll(){const r=story.getBoundingClientRect(),total=story.offsetHeight-innerHeight;
-    if(r.top>innerHeight||r.bottom<0)return;const p=Math.min(1,Math.max(0,-r.top/total));set(Math.min(S.length-1,Math.floor(p*S.length*0.999)))}
-  addEventListener('scroll',onScroll,{passive:true});onScroll();
-  imgs.slice(1).forEach(im=>{const i=new Image();i.src=im.src}); // подгрузить заранее
-})();
-
-/* ——— Автодом: точки на фото ——— */
-(()=>{
-  const hot=document.getElementById('hot');if(!hot)return;
-  const D={bed:['Спальня наверху','cam-bed','Двуспальная кровать 2100×1300 над кабиной, окна с москитной сеткой. Вторая спальная зона — внизу.'],
-    awning:['Маркиза и стол','cam-awning','Выдвижной навес от солнца и дождя. Стол и стулья — ужин на свежем воздухе.'],
-    kitchen:['Кухня','cam-kitchen','Мойка, холодильник 98 л с морозилкой, микроволновка и выдвижной стол.'],
-    solar:['Энергия','cam-solar','Литиевая батарея 7,2 кВт·ч, солнечные панели 600 Вт и инвертор 3000 Вт — сутками без внешнего питания.'],
-    drive:['Полный привод','cam-mount','4×4 с блокировкой заднего дифференциала, усиленная подвеска и внедорожная резина AT.'],
-    cabin:['Салон как у премиум-авто','cam-proj','Кресла с подогревом и электрорегулировкой, экран 12″, круговой обзор 360° и система помощи водителю.']};
-  const card=document.getElementById('hotCard'),im=document.getElementById('hcImg'),t=document.getElementById('hcT'),p=document.getElementById('hcP');
-  const pins=[...hot.querySelectorAll('.pin')];
-  function show(k){pins.forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));card.classList.add('swap');
-    setTimeout(()=>{const d=D[k];im.src='img/'+d[1]+'.webp';t.textContent=d[0];p.textContent=d[2];card.classList.remove('swap')},200)}
-  pins.forEach(b=>b.addEventListener('click',()=>show(b.dataset.k)));pins[0].setAttribute('aria-pressed','true');
+  const root=document.getElementById('cmpDoodle');if(!root)return;
+  const P=(d,c)=>`<path d="${d}"${c?` class="${c}"`:''}/>`;
+  const wheel=(cx,spin)=>`<g class="${spin?'spin':''}" style="transform-origin:${cx}px 162px"><circle cx="${cx}" cy="162" r="18"/><circle cx="${cx}" cy="162" r="5"/>${P(`M${cx-18} 162h36M${cx} 144v36`,'dim')}</g>`;
+  const man=(x,y,o={})=>`<circle cx="${x}" cy="${y-41}" r="6.5"/>${P(`M${x} ${y-34}V${y-15}`)}`+
+    `<path d="M${x} ${y-15}L${x-6} ${y}" ${o.walk?`class="wk1" style="transform-origin:${x}px ${y-15}px"`:''}/><path d="M${x} ${y-15}L${x+6} ${y}" ${o.walk?`class="wk2" style="transform-origin:${x}px ${y-15}px"`:''}/>`+
+    P(o.arms||`M${x} ${y-29}L${x-8} ${y-19}M${x} ${y-29}L${x+8} ${y-19}`);
+  const camper=(o={})=>`<g class="${o.drive?'bounce':''}">`+
+    P('M62 158V74M212 74V158M288 74V84M212 84H276L302 114L352 122Q360 124 360 134V158')+
+    P('M62 158H98a22 22 0 0 1 44 0H268a22 22 0 0 1 44 0H360')+
+    `<rect x="60" y="62" width="230" height="12" rx="4"/>`+P('M222 92h50l20 22h-70z')+P('M346 130h9','a')+
+    (o.cut?'':`<rect x="76" y="92" width="32" height="64" rx="3"/>${P('M102 124v7')}`)+
+    `<rect x="126" y="92" width="56" height="26" rx="4"${o.glow?' class="glow"':''}/>`+
+    (o.up?`<rect x="60" y="28" width="230" height="10" rx="4"/>${P('M68 62V38M282 62V38M84 62L112 38M112 62L84 38M240 62L268 38M268 62L240 38')}<rect x="138" y="43" width="76" height="14" rx="3" class="dim dash"/>`:'')+
+    (o.awn?P('M60 68L6 80M8 80V180M6 80q5 6 10-1q5 6 10-1q5 6 10-2q5 6 10-2q5 5 10-2'):'')+
+    (o.inner||'')+`</g>${wheel(120,o.drive)}${wheel(290,o.drive)}`;
+  const ground=P('M0 180H400','dim');
+  const rays=(cx,cy,r)=>{let d='';for(let i=0;i<8;i++){const a=i*Math.PI/4;d+=`M${(cx+Math.cos(a)*(r+5)).toFixed(1)} ${(cy+Math.sin(a)*(r+5)).toFixed(1)}L${(cx+Math.cos(a)*(r+12)).toFixed(1)} ${(cy+Math.sin(a)*(r+12)).toFixed(1)}`}return d};
+  const SC=[
+    // 0 забрали у аэропорта
+    ()=>[ground+camper()+`<g class="walkin">${man(34,180,{walk:1,arms:'M34 151L26 160M34 151L44 160'})}<rect x="42" y="160" width="12" height="15" rx="2" class="a"/>${P('M48 160v-5','a')}</g>`+
+      `<g class="fly">${P('M28 8L0 0L7 8L0 16Z','a')}${P('M-6 8h-26','dim dash')}</g>`,`<text x="236" y="40">подадим к терминалу</text>`],
+    // 1 едем
+    ()=>[`<g class="roll dim">${P('M0 152L50 98L90 134L150 72L210 142L260 106L320 152L400 152L450 98L490 134L550 72L610 142L660 106L720 152L800 152')}</g>`+P('M0 191H400','road dim')+
+      camper({drive:1,inner:`<circle cx="250" cy="103" r="6"/>${P('M242 114q8-7 16 0')}`})+P('M20 100h26M6 126h36M22 150h22','a spd'),`<text x="70" y="36">4×4 · 218 л.с.</text>`],
+    // 2 обед
+    ()=>[ground+camper({awn:1})+P('M14 152H48M18 152V180M44 152V180')+P('M24 152v-10h14v10M21 142h20')+P('M27 136q-4-6 0-12','a steam')+P('M35 136q4-6 0-12','a steam s2')+
+      man(66,180,{arms:'M66 151L45 146M66 151L74 162'})+`<circle cx="352" cy="34" r="10" class="a dim"/>`,`<text x="6" y="60">маркиза</text><text x="134" y="140">кухня</text>`],
+    // 3 отдых и энергия
+    ()=>[ground+`<circle cx="352" cy="34" r="11" class="a"/><g class="rays" style="transform-origin:352px 34px">${P(rays(352,34,11),'a')}</g>`+P('M336 41L212 57','a flow')+
+      camper({awn:1,inner:P('M92 58H206','a thick')+P('M112 54v8M134 54v8M156 54v8M178 54v8','a')+`<rect x="130" y="127" width="46" height="22" rx="3"/>${P('M176 134v8')}<rect x="134" y="131" width="38" height="14" rx="1.5" class="f charge"/>`+P('M196 62V138H180','a flow')})+
+      P('M27 142L31 161H52M31 161V180M52 161V180','dim')+`<circle cx="33" cy="128" r="6.5"/>`+P('M33 135L36 156H51V180')+P('M34 143L47 147')+P('M47 147v-7h7v7z','a')+P('M50 136q-3-5 0-9','a steam'),
+      `<text x="100" y="46">600 Вт солнца</text><text x="150" y="176">7,2 кВт·ч</text>`],
+    // 4 ночь
+    ()=>[ground+P('M348 20a15 15 0 1 0 14 24a12 12 0 0 1-14-24z','a')+[[30,30],[80,54],[120,18],[306,60],[384,84],[20,90],[330,96]].map((s,i)=>`<circle cx="${s[0]}" cy="${s[1]}" r="1.8" class="f tw" style="animation-delay:${(i*.37).toFixed(2)}s"/>`).join('')+
+      camper({up:1,glow:1,inner:`<circle cx="234" cy="53" r="5.5" class="a"/>`+P('M227 57H184','a')+P('M224 51q-18-8-40 3','a')}),
+      `<text x="252" y="24" class="zz">z</text><text x="262" y="16" class="zz z2" style="font-size:19px">z</text><text x="274" y="8" class="zz z3" style="font-size:23px">Z</text><text x="64" y="20">кровать 2,1 × 1,3 м</text>`],
+    // 5 утро
+    ()=>[ground+`<circle cx="36" cy="38" r="11" class="a"/>${P(rays(36,38,11),'a dim')}`+P('M92 26q5-6 10 0q5-6 10 0M124 44q4-5 8 0q4-5 8 0','dim')+
+      camper({cut:1,inner:P('M118 76V158','dash dim')+P('M68 84h18M86 84v6','a')+P('M80 94v10M88 96v10M96 94v10','a drops')+man(92,156,{arms:'M92 127L84 114M92 127L100 114'})})+
+      P('M14 160H46M18 160V180M42 160V180')+P('M24 160v-9h11v9M35 153h4v5h-4','a')+P('M29 146q-3-5 0-10','a steam'),`<text x="128" y="140">горячий душ</text><text x="0" y="122">кофе</text>`]];
+  const S=[['airport','Прилетели — машина уже ждёт','Подадим кемпер прямо к терминалу аэропорта Минеральные Воды. Вещи в багажник — и в путь.',['аэропорт Минводы','бельё и посуда внутри']],
+    ['mount','Дорога в горы','Настоящий внедорожник: полный привод с блокировкой, автомат и резина AT. Проедет там, где обычные автодома застревают.',['4×4','218 л.с.','автомат, 8 ступеней']],
+    ['kitchen','Обед с видом на вершины','Раскрыли маркизу, достали стол. Внутри мойка, холодильник на 98 л с морозилкой и микроволновка.',['кухня','холодильник 98 л','маркиза']],
+    ['sunset','Отдых без розетки','Солнечные панели заряжают батарею — света, холодильника и проектора хватает на сутки. Кондиционер летом, отопитель в холод.',['600 Вт солнца','7,2 кВт·ч','климат']],
+    ['bed','Ночь под звёздами','Крыша поднимается: наверху двуспальная кровать с окнами в сетке, внизу вторая спальная зона. Всего до четырёх гостей.',['до 4 гостей','кровать 2,1 × 1,3 м']],
+    ['lounge','Утро у реки','Горячий душ и туалет прямо в кемпере, кофе за столиком у окна. А вернувшись в клуб, можно сразу в баню.',['душ и туалет','горячая вода']]];
+  const tabs=[...document.querySelectorAll('#cmpTabs .chip')],A=document.getElementById('cpA'),B=document.getElementById('cpB'),txt=document.getElementById('cmpTxt'),T=document.getElementById('cmpT'),Pp=document.getElementById('cmpP'),C=document.getElementById('cmpC');
+  let cur=-1,img=A,auto=true,timer=0,vis=false;
+  function show(i,user){if(user){auto=false;clearTimeout(timer)}if(i===cur)return;cur=i;const[s,t]=SC[i](),d=S[i];
+    root.innerHTML=`<svg class="dd" viewBox="-4 0 408 200"><defs><filter id="sk" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.4"/></filter></defs><g filter="url(#sk)">${s}</g>${t}</svg>`;
+    tabs.forEach((b,k)=>{b.setAttribute('aria-pressed',k===i);b.classList.toggle('auto',auto&&k===i&&vis)});
+    const nx=img===A?B:A,src='img/cam-'+d[0]+'.webp';let done=false;const sw=()=>{if(done)return;done=true;nx.classList.add('on');img.classList.remove('on');img=nx};
+    nx.onload=sw;nx.src=src;nx.alt=d[1];if(nx.complete&&nx.naturalWidth)sw();
+    txt.classList.add('swap');setTimeout(()=>{T.textContent=d[1];Pp.textContent=d[2];C.innerHTML=d[3].map(x=>`<span>${x}</span>`).join('');txt.classList.remove('swap')},220);
+    if(auto&&vis)timer=setTimeout(()=>show((cur+1)%SC.length),6000)}
+  tabs.forEach((b,k)=>b.addEventListener('click',()=>show(k,true)));
+  cur=-1;img=A;show(0);
+  const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!still)new IntersectionObserver(e=>{vis=e[0].isIntersecting;clearTimeout(timer);if(vis&&auto){tabs[cur].classList.add('auto');timer=setTimeout(()=>show((cur+1)%SC.length),6000)}else tabs.forEach(b=>b.classList.remove('auto'))},{threshold:.35}).observe(root);
+  S.forEach(d=>{const i=new Image();i.src='img/cam-'+d[0]+'.webp'});
 })();
 
 /* ——— Автодом: цифры и маршруты ——— */
 (()=>{
   const sp=document.getElementById('specs');
-  if(sp){const run=()=>sp.querySelectorAll('b[data-n]').forEach(b=>{const n=+b.dataset.n,d=+(b.dataset.d||0),t0=performance.now();
-      const st=now=>{const k=Math.min(1,(now-t0)/1400),v=n*(1-Math.pow(1-k,3));b.textContent=v.toFixed(d).replace('.',',');if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)});
-    if(matchMedia('(prefers-reduced-motion:reduce)').matches)sp.querySelectorAll('b[data-n]').forEach(b=>b.textContent=(+b.dataset.n).toFixed(+(b.dataset.d||0)).replace('.',','));
-    else new IntersectionObserver((e,o)=>{if(e[0].isIntersecting){run();o.disconnect()}},{threshold:.4}).observe(sp)}
-  const R=[['Медовые водопады','Каскад водопадов в ущелье реки Аликоновки, скала «Замок коварства и любви» по пути.','≈ 60 км','1 ч 10 мин'],
-    ['Чегемские водопады','Узкое ущелье с отвесными стенами, «плачущие» водопады и горный рынок.','≈ 140 км','2 ч 30 мин'],
-    ['Приэльбрусье','Поляна Азау, канатка на Эльбрус, Чегет и ночёвка с видом на двуглавую вершину.','≈ 170 км','3 ч'],
-    ['Домбай','Перевалы, гора Муса-Ачитара, бирюзовые озёра и хвойные леса заповедника.','≈ 200 км','3 ч 30 мин'],
-    ['Архыз','Обсерватория, лик Христа на скале, Софийские озёра и самые тёмные звёздные ночи.','≈ 230 км','4 ч']];
+  if(sp&&!matchMedia('(prefers-reduced-motion:reduce)').matches){const run=()=>sp.querySelectorAll('b[data-n]').forEach(b=>{const n=+b.dataset.n,d=+(b.dataset.d||0),t0=performance.now();
+      const st=now=>{const k=Math.min(1,(now-t0)/1300),v=n*(1-Math.pow(1-k,3));b.textContent=v.toFixed(d).replace('.',',');if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)});
+    new IntersectionObserver((e,o)=>{if(e[0].isIntersecting){run();o.disconnect()}},{threshold:.5}).observe(sp)}
+  const R=[['≈ 60 км · 1 ч 10 мин','каскад водопадов в ущелье Аликоновки и «Замок коварства и любви» по пути.'],
+    ['≈ 140 км · 2 ч 30 мин','узкое ущелье с отвесными стенами и «плачущими» водопадами.'],
+    ['≈ 170 км · 3 ч','поляна Азау, канатка на Эльбрус и ночёвка с видом на вершину.'],
+    ['≈ 200 км · 3 ч 30 мин','перевалы, Муса-Ачитара, бирюзовые озёра и хвойные леса.'],
+    ['≈ 230 км · 4 ч','обсерватория, Софийские озёра и самые тёмные звёздные ночи.']];
   const rc=document.getElementById('r2card');if(!rc)return;
-  function show(i){const r=R[i],c=(i*37)%30;rc.innerHTML=`<svg class="r2-line" viewBox="0 0 280 70" aria-hidden="true"><path d="M10 55 C 70 ${10+c}, 140 ${70-c}, 200 ${25+c/2} S 260 15, 270 15"/><circle cx="10" cy="55" r="5"/><circle cx="270" cy="15" r="6"/></svg>
-    <div><h4>Клуб «Лес» → ${r[0]}</h4><p>${r[1]}</p></div><div class="r2-km"><b>${r[2]}</b><span>${r[3]} в пути, примерно</span></div>`;
-    document.querySelectorAll('.r2-chips .chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r==i))}
+  const show=i=>{rc.innerHTML=`<b>${R[i][0]}</b> от клуба, примерно — ${R[i][1]}`;document.querySelectorAll('.r2-chips .chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r==i))};
   document.querySelectorAll('.r2-chips .chip').forEach(b=>b.addEventListener('click',()=>show(+b.dataset.r)));show(0);
 })();
 
@@ -960,14 +983,19 @@ XM.wreath();XM.hero();
 /* Подбор дома за 30 секунд */
 (()=>{
   const res=document.getElementById('pickRes');if(!res)return;
+  const A=document.getElementById('pkA'),B=document.getElementById('pkB');let img=A,first=true;
   const MAP={'2-sky':2,'2-jac':1,'2-chan':2,'4-sky':6,'4-jac':5,'4-chan':4,'2x2-sky':8,'2x2-jac':8,'2x2-chan':7};
-  const WHY={'2-sky':'стеклянная крыша над кроватью и чан у воды','2-jac':'зеркальный дом, тёплая джакузи на террасе','2-chan':'терраса у воды с чаном',
-    '4-sky':'50 м², проектор и панорамные окна','4-jac':'зеркальный дом у реки на четверых','4-chan':'в глубине леса, чан с тёплой водой',
-    '2x2-sky':'два дома, у каждого стекло над кроватью','2x2-jac':'два дома, джакузи у каждой пары','2x2-chan':'50 м², большая терраса и кухня'};
+  const WHY={'2-sky':'Стеклянная крыша над кроватью и чан у воды','2-jac':'Зеркальный дом и тёплая джакузи на террасе','2-chan':'Терраса у воды с чаном, звёзды над кроватью',
+    '4-sky':'50 м², проектор и панорамные окна в лес','4-jac':'Зеркальный дом у реки на четверых','4-chan':'В глубине леса, чан с тёплой водой',
+    '2x2-sky':'Два дома рядом, у каждого стекло над кроватью','2x2-jac':'Два дома рядом, джакузи у каждой пары','2x2-chan':'50 м², большая терраса и кухня'};
   const q={who:'2',want:'sky'};
-  function upd(){const key=q.who+'-'+q.want,i=MAP[key],h=HOMES[i];res.classList.add('swap');
-    setTimeout(()=>{res.innerHTML=`<img src="img/${h.img}.webp" alt="Дом «${h.n}»"><div><strong>${h.n}</strong><small>${WHY[key]} · от ${fmt(h.p)} ₽ за ночь</small><button class="btn small" id="pickGo">Показать дом${arrow}</button></div>`;
-      res.classList.remove('swap');document.getElementById('pickGo').addEventListener('click',()=>{document.getElementById('f-all').click();activate(all[i]);all[i].scrollIntoView({behavior:'smooth',block:'center',inline:'center'})})},200)}
+  function upd(){const key=q.who+'-'+q.want,i=MAP[key],h=HOMES[i],src=`img/${h.img}.webp`;
+    if(first){A.src=src;A.alt=`Дом «${h.n}»`;first=false}
+    else if(!img.src.endsWith(src)){const nx=img===A?B:A;let done=false;const sw=()=>{if(done)return;done=true;nx.classList.add('on');img.classList.remove('on');img=nx};
+      nx.onload=sw;nx.src=src;nx.alt=`Дом «${h.n}»`;if(nx.complete&&nx.naturalWidth)sw()}
+    res.classList.add('swap');
+    setTimeout(()=>{res.innerHTML=`<div><small class="k">Вам подойдёт</small><strong>${h.n}</strong><p>${WHY[key]}</p></div><div class="pk-r"><div class="price">от ${fmt(h.p)} ₽<small>за ночь</small></div><button class="btn solid small" id="pickGo">Смотреть дом${arrow}</button></div>`;
+      res.classList.remove('swap');document.getElementById('pickGo').addEventListener('click',()=>{document.getElementById('f-all').click();activate(all[i]);all[i].scrollIntoView({behavior:'smooth',block:'center',inline:'center'})})},250)}
   document.querySelectorAll('.pick-row').forEach(r=>r.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;r.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));q[r.dataset.q]=b.dataset.v;upd()}));
   upd();
 })();
