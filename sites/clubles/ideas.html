@@ -1,0 +1,277 @@
+<title>Идеи для сайта «Лес»</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400&family=Cormorant+Garamond:ital@1&family=Onest:wght@400;500;600&display=swap">
+<style>
+/* Раскладка: лента карточек-идей; у каждой — короткое объяснение и живой пример на фото клуба. Тот же мир, что у сайта: тёмный лес + латунь. */
+:root{color-scheme:dark;--night:#11281c;--moss:#17422d;--pine:#235c40;--brass:#b99d75;--brass-hi:#dcc39a;--fog:#eef0e8;--mist:#cbd5c7;--line:rgba(238,240,232,.18);
+  --f-d:"Unbounded","Arial Black",system-ui,sans-serif;--f-a:"Cormorant Garamond","Times New Roman",serif;--f-b:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;--ease:cubic-bezier(.2,.8,.2,1)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse 80% 50% at 85% 0%,rgba(220,195,154,.12),transparent 60%),var(--night);color:var(--fog);font:400 16px/1.6 var(--f-b)}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--brass-hi);outline-offset:3px;border-radius:8px}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+header{padding-block:56px 30px}
+.eyebrow{font:500 12px/1 var(--f-b);letter-spacing:.22em;text-transform:uppercase;color:var(--brass);display:flex;align-items:center;gap:12px}
+.eyebrow::before{content:"";width:28px;height:1px;background:var(--brass)}
+h1,h2{font-family:var(--f-d);font-weight:300;margin:0;letter-spacing:-.02em;text-wrap:balance}
+h1{font-size:clamp(32px,5vw,58px);line-height:1.05;margin-top:18px}
+h2{font-size:clamp(22px,2.4vw,30px);line-height:1.15}
+em{font-family:var(--f-a);font-style:italic;color:var(--brass-hi);font-size:1.15em}
+.lead{color:var(--mist);max-width:60ch;margin:18px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;color:var(--mist)}
+.tag b{width:7px;height:7px;border-radius:50%;background:var(--brass-hi)}
+.tag.live b{background:#7ed39a}
+.grid{display:grid;gap:18px;padding-bottom:70px}
+.idea{display:grid;grid-template-columns:1fr 1.15fr;gap:clamp(18px,3vw,40px);align-items:center;padding:clamp(18px,3vw,32px);border-radius:28px;background:rgba(23,66,45,.42);border:1px solid var(--line)}
+.idea:nth-child(even) .demo{order:-1}
+.num{font:400 13px/1 var(--f-d);color:var(--brass);font-variant-numeric:tabular-nums}
+.idea h2{margin:12px 0 10px}
+.idea p{margin:0;color:var(--mist);font-size:15.5px}
+.why{margin-top:14px;font-size:14px;color:var(--fog);padding-left:14px;border-left:1px solid var(--brass)}
+.idea .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.demo{position:relative;border-radius:22px;overflow:hidden;min-height:300px;background:#0d1f16;min-width:0}
+.demo>img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,32,22,.15),rgba(13,32,22,.75))}
+.chip{height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:rgba(13,32,22,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:13.5px;transition:all .3s var(--ease)}
+.chip:hover{border-color:var(--brass)}
+.chip[aria-pressed="true"]{background:var(--fog);color:var(--night);border-color:var(--fog)}
+.glass{background:rgba(13,32,22,.62);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:18px}
+.btn{display:inline-flex;align-items:center;gap:10px;height:42px;padding:0 18px;border-radius:999px;background:var(--brass);color:var(--night);font-weight:500;font-size:14px}
+@media(max-width:860px){.idea{grid-template-columns:1fr}.idea:nth-child(even) .demo{order:0}}
+
+/* 1 квиз */
+.quiz{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:18px;gap:12px}
+.q-step b{display:block;font-size:13px;color:var(--brass-hi);margin-bottom:8px;letter-spacing:.04em}
+.q-row{display:flex;flex-wrap:wrap;gap:6px}
+.q-res{padding:14px 16px;display:flex;align-items:center;gap:14px}
+.q-res img{width:84px;height:64px;object-fit:cover;border-radius:12px;flex:none}
+.q-res strong{font:400 17px/1.2 var(--f-d)}.q-res small{display:block;color:var(--mist);font-size:12.5px;margin-top:4px}
+/* 2 день/ночь */
+.dn{position:absolute;inset:0;--p:50%}
+.dn img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.dn .night{clip-path:inset(0 0 0 var(--p))}
+.dn .bar{position:absolute;top:0;bottom:0;left:var(--p);width:2px;background:var(--brass-hi);transform:translateX(-1px)}
+.dn .knob{position:absolute;top:50%;left:var(--p);width:44px;height:44px;border-radius:50%;transform:translate(-50%,-50%);background:var(--brass-hi);color:var(--night);display:grid;place-items:center;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.dn input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize}
+.dn .lbl{position:absolute;top:14px;padding:6px 12px;font-size:12.5px}
+/* 3 карта */
+.map .pin{position:absolute;width:30px;height:30px;border-radius:50%;transform:translate(-50%,-50%);background:var(--brass-hi);color:var(--night);font:600 12px/30px var(--f-b);text-align:center;box-shadow:0 0 0 6px rgba(220,195,154,.25);transition:transform .3s var(--ease)}
+.map .pin:hover,.map .pin[aria-pressed="true"]{transform:translate(-50%,-50%) scale(1.15);box-shadow:0 0 0 10px rgba(220,195,154,.3)}
+.map .card{position:absolute;left:14px;right:14px;bottom:14px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.map .card img{width:70px;height:54px;border-radius:10px;object-fit:cover}
+/* 4 календарь */
+.cal{position:absolute;inset:0;padding:18px;display:flex;flex-direction:column;gap:12px;justify-content:flex-end}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.day{aspect-ratio:1;border-radius:10px;border:1px solid var(--line);background:rgba(13,32,22,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;line-height:1.1}
+.day small{font-size:9.5px;color:var(--mist)}
+.day.busy{opacity:.35;text-decoration:line-through;cursor:not-allowed}
+.day.sel{background:var(--brass);color:var(--night);border-color:var(--brass)}.day.sel small{color:#3b3426}
+.day.mid{background:rgba(220,195,154,.28)}
+.sum{padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-variant-numeric:tabular-nums}
+.sum b{font:400 18px/1 var(--f-d)}
+/* 5 баня по часам */
+.slots{position:absolute;inset:0;padding:18px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px}
+.slot-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.slot{height:44px;border-radius:12px;font-size:13.5px;border:1px solid var(--line);background:rgba(13,32,22,.6);font-variant-numeric:tabular-nums}
+.slot.busy{opacity:.35;cursor:not-allowed}
+.slot[aria-pressed="true"]{background:var(--brass);color:var(--night);border-color:var(--brass)}
+/* 6 консьерж */
+.chat{position:absolute;inset:0;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px}
+.msg{max-width:82%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.4;animation:pop .5s var(--ease) both}
+.msg.me{align-self:flex-end;background:var(--fog);color:var(--night);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;border-bottom-left-radius:4px}
+.msg.bot img{width:100%;height:90px;object-fit:cover;border-radius:10px;margin-top:8px}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}}
+/* 7 сторис */
+.stories{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:16px}
+.circles{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+.circ{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px}
+.circ span{width:62px;height:62px;border-radius:50%;padding:3px;background:conic-gradient(var(--brass-hi),#7ed39a,var(--brass-hi))}
+.circ img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid var(--night)}
+.quote{padding:14px 16px;font-size:14.5px}
+.quote small{display:block;margin-top:6px;color:var(--brass-hi)}
+/* 8 сертификат */
+.gift{position:absolute;inset:0;padding:18px;display:flex;flex-direction:column;justify-content:center;gap:14px;align-items:center}
+.cert{width:min(360px,100%);aspect-ratio:1.6;border-radius:18px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#1e5a3e,#0f2a1d);border:1px solid rgba(220,195,154,.6);box-shadow:0 20px 50px rgba(0,0,0,.45);position:relative;overflow:hidden}
+.cert::after{content:"";position:absolute;right:-30px;bottom:-30px;width:170px;height:170px;background:url(img/logo-tree.webp) center/contain no-repeat;opacity:.13}
+.cert .top{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass-hi)}
+.cert .amt{font:300 34px/1 var(--f-d)}
+.cert .to{font:italic 20px/1.1 var(--f-a)}
+.gift-ctl{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.gift input{height:38px;border-radius:999px;border:1px solid var(--line);background:rgba(13,32,22,.6);color:var(--fog);padding:0 14px;font:inherit;font-size:13.5px;width:160px}
+/* 9 сезон */
+.season{position:absolute;inset:0}
+.season img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s}
+.season img.on{opacity:1}
+.season .bar2{position:absolute;left:14px;right:14px;bottom:14px;display:flex;gap:6px;flex-wrap:wrap}
+.season .info{position:absolute;left:14px;top:14px;padding:10px 14px;font-size:13.5px}
+/* 10 звуки */
+.sounds{position:absolute;inset:0;padding:18px;display:flex;flex-direction:column;justify-content:flex-end;gap:10px}
+.mix{padding:14px 16px;display:grid;gap:10px}
+.mix label{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center;font-size:13.5px}
+.mix input{accent-color:var(--brass-hi);width:100%}
+footer{padding-block:0 60px;color:var(--mist);font-size:14px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="wrap">
+  <div class="eyebrow">Загородный клуб «Лес» · что ещё можно добавить</div>
+  <h1>Десять идей, <em>чтобы сайт</em> хотелось листать</h1>
+  <p class="lead">Каждая идея на фото самого клуба. Где написано «можно нажать» — пример уже работает прямо здесь, попробуйте.</p>
+  <div class="legend"><span class="tag live"><b></b>можно нажать</span><span class="tag"><b></b>как это будет выглядеть</span></div>
+</header>
+
+<main class="wrap grid">
+
+<section class="idea">
+  <div><div class="num">01</div><h2>Подбор дома за 30 секунд</h2>
+    <p>Три вопроса вместо списка из девяти домов: с кем едете, что важнее всего, какой бюджет. Сайт сам показывает подходящий дом и цену.</p>
+    <div class="why">Человеку не нужно разбираться в «Вулкане», «Угольке» и «Луне» — сразу ответ и кнопка брони.</div>
+    <div class="tags"><span class="tag live"><b></b>можно нажать</span></div></div>
+  <div class="demo"><img class="bg" src="img/ugolek.webp" alt="Дом Уголёк"><div class="shade"></div>
+    <div class="quiz">
+      <div class="q-step"><b>С кем едете?</b><div class="q-row" data-q="who"><button class="chip" data-v="2" aria-pressed="true">Вдвоём</button><button class="chip" data-v="4" aria-pressed="false">Семьёй</button><button class="chip" data-v="2x2" aria-pressed="false">Две пары</button></div></div>
+      <div class="q-step"><b>Что важнее?</b><div class="q-row" data-q="want"><button class="chip" data-v="sky" aria-pressed="true">Небо над кроватью</button><button class="chip" data-v="jac" aria-pressed="false">Джакузи</button><button class="chip" data-v="chan" aria-pressed="false">Чан</button></div></div>
+      <div class="q-res glass" id="qres"></div>
+    </div></div>
+</section>
+
+<section class="idea">
+  <div><div class="num">02</div><h2>Днём и вечером</h2>
+    <p>Ползунок поверх фото: тянешь — и тот же домик из дневного превращается в вечерний, с огнями и подсветкой террасы.</p>
+    <div class="why">Вечерние кадры продают романтику лучше любых слов. Тут для примера два разных дома, на сайте — один ракурс в два времени.</div>
+    <div class="tags"><span class="tag live"><b></b>можно нажать</span></div></div>
+  <div class="demo"><div class="dn" id="dn"><img src="img/luna.webp" alt="Днём"><img class="night" src="img/duplex.webp" alt="Вечером">
+    <span class="lbl glass" style="left:14px">День</span><span class="lbl glass" style="right:14px">Вечер</span>
+    <div class="bar"></div><div class="knob">⟷</div><input type="range" id="dnr" min="0" max="100" value="50" aria-label="День или вечер"></div></div>
+</section>
+
+<section class="idea">
+  <div><div class="num">03</div><h2>Живая карта территории</h2>
+    <p>Вид сверху с точками: дома, баня, сферы, мангалы, выход к реке. Нажимаешь точку — открывается карточка с фото и ценой.</p>
+    <div class="why">Сразу видно, что дома далеко друг от друга — главный плюс клуба из отзывов.</div>
+    <div class="tags"><span class="tag live"><b></b>можно нажать</span></div></div>
+  <div class="demo map" id="map"><img class="bg" src="img/bath2.webp" alt="Территория сверху">
+    <button class="pin" style="left:30%;top:42%" data-i="0" aria-pressed="true">1</button>
+    <button class="pin" style="left:58%;top:30%" data-i="1" aria-pressed="false">2</button>
+    <button class="pin" style="left:74%;top:60%" data-i="2" aria-pressed="false">3</button>
+    <div class="card glass" id="mapcard"></div></div>
+</section>
+
+<section class="idea">
+  <div><div class="num">04</div><h2>Календарь с ценой сразу</h2>
+    <p>Выбираешь даты — сайт показывает занятые дни, цену каждой ночи и итог. Выходные дороже, будни дешевле — видно сразу.</p>
+    <div class="why">Меньше звонков «а свободно ли на субботу?». Данные можно брать из их системы бронирования Bnovo.</div>
+    <div class="tags"><span class="tag live"><b></b>можно нажать</span></div></div>
+  <div class="demo"><img class="bg" src="img/first.webp" alt="Дом Первый"><div class="shade"></div>
+    <div class="cal"><div class="days" id="days"></div><div class="sum glass" id="sum"></div></div></div>
+</section>
+
+<section class="idea">
+  <div><div class="num">05</div><h2>Баня по часам</h2>
+    <p>Сетка свободного времени на сегодня и завтра. Нажал на время — забронировал 3 часа фиджитал-бани.</p>
+    <div class="why">Баню часто берут спонтанно. Свободные слоты на виду — меньше упущенных гостей.</div>
+    <div class="tags"><span class="tag live"><b></b>можно нажать</span></div></div>
+  <div class="demo"><img class="bg" src="img/bath1.webp" alt="Баня"><div class="shade"></div>
+    <div class="slots"><div class="glass" style="padding:12px 14px;font-size:14px" id="slotTxt">Сегодня, свободно: выберите время</div>
+      <div class="slot-row" id="slots"></div></div></div>
+</section>
+
+<section class="idea">
+  <div><div class="num">06</div><h2>ИИ-администратор в чате</h2>
+    <p>Как бот цветочного магазина, только для клуба: отвечает днём и ночью, подбирает дом, показывает фото, считает цену и передаёт бронь администратору.</p>
+    <div class="why">У нас уже есть готовый движок бота — его можно перенести на клуб.</div>
+    <div class="tags"><span class="tag"><b></b>как это будет выглядеть</span></div></div>
+  <div class="demo"><img class="bg" src="img/kedr.webp" alt="Дом Кедр"><div class="shade" style="background:rgba(13,32,22,.6)"></div>
+    <div class="chat" id="chat"></div></div>
+</section>
+
+<section class="idea">
+  <div><div class="num">07</div><h2>Истории гостей</h2>
+    <p>Кружочки как в Instagram: короткие видео гостей — утро на террасе, баня, ужин у мангала. Внизу — живая цитата из отзыва.</p>
+    <div class="why">Настоящие люди убеждают сильнее красивых слов. Видео гости часто снимают сами.</div>
+    <div class="tags"><span class="tag"><b></b>как это будет выглядеть</span></div></div>
+  <div class="demo"><img class="bg" src="img/family.webp" alt="Семейный дом"><div class="shade"></div>
+    <div class="stories"><div class="circles">
+      <div class="circ"><span><img src="img/luna.webp" alt=""></span>Утро</div><div class="circ"><span><img src="img/bath1.webp" alt=""></span>Баня</div>
+      <div class="circ"><span><img src="img/sfera1.webp" alt=""></span>Праздник</div><div class="circ"><span><img src="img/oblako.webp" alt=""></span>Облако</div><div class="circ"><span><img src="img/camper1.webp" alt=""></span>Горы</div></div>
+      <div class="quote glass">«Соседей мы ни разу не встретили и не слышали. Было ощущение, что приехали к родственникам.»<small>Ирина, отдыхали с собаками</small></div></div></div>
+</section>
+
+<section class="idea">
+  <div><div class="num">08</div><h2>Подарочный сертификат</h2>
+    <p>Выбираешь сумму, пишешь имя — сертификат собирается на глазах, его можно оплатить и отправить в мессенджер.</p>
+    <div class="why">Отдых в лесу — частый подарок на годовщину и день рождения. Это продажи без свободных дат.</div>
+    <div class="tags"><span class="tag live"><b></b>можно нажать</span></div></div>
+  <div class="demo"><img class="bg" src="img/les.webp" alt="Коттедж Лес"><div class="shade" style="background:rgba(13,32,22,.55)"></div>
+    <div class="gift"><div class="cert"><div class="top"><span>Подарок</span><span>Лес · загородный клуб</span></div>
+      <div><div class="to" id="gTo">Для Алины</div><div class="amt" id="gAmt">15 000 ₽</div></div></div>
+      <div class="gift-ctl"><input id="gName" value="Алины" aria-label="Для кого" maxlength="18"><button class="chip" data-a="10000" aria-pressed="false">10 000</button><button class="chip" data-a="15000" aria-pressed="true">15 000</button><button class="chip" data-a="25000" aria-pressed="false">25 000</button></div></div></div>
+</section>
+
+<section class="idea">
+  <div><div class="num">09</div><h2>Сайт по сезону</h2>
+    <p>Зимой на главной снежный лес и тёплая джакузи на морозе, летом — зелень и река, осенью — туман. Сайт сам меняется по дате.</p>
+    <div class="why">Человек сразу видит, каково здесь именно сейчас. Плюс подсказки: «зимой не забудьте шапку для джакузи».</div>
+    <div class="tags"><span class="tag live"><b></b>можно нажать</span></div></div>
+  <div class="demo"><div class="season" id="season">
+    <img class="on" src="img/family.webp" alt="Зима" data-s="0"><img src="img/luna.webp" alt="Лето" data-s="1"><img src="img/hero-poster.webp" alt="Осень" data-s="2">
+    <div class="info glass" id="sInfo"></div>
+    <div class="bar2"><button class="chip" data-s="0" aria-pressed="true">Зима</button><button class="chip" data-s="1" aria-pressed="false">Лето</button><button class="chip" data-s="2" aria-pressed="false">Осень</button></div></div></div>
+</section>
+
+<section class="idea">
+  <div><div class="num">10</div><h2>Свой звук леса</h2>
+    <p>Маленький микшер: река, птицы, дождь по крыше, костёр. Гость сам собирает свою атмосферу, пока выбирает дом.</p>
+    <div class="why">Запоминается — такого нет ни у кого из баз отдыха на КМВ. Звуки берём из бесплатных записей природы.</div>
+    <div class="tags"><span class="tag"><b></b>как это будет выглядеть</span></div></div>
+  <div class="demo"><img class="bg" src="img/vulkan.webp" alt="Дом Вулкан"><div class="shade"></div>
+    <div class="sounds"><div class="mix glass">
+      <label for="s1">🌊 Река<input id="s1" type="range" value="80"></label><label for="s2">🐦 Птицы<input id="s2" type="range" value="55"></label>
+      <label for="s3">🌧 Дождь<input id="s3" type="range" value="0"></label><label for="s4">🔥 Костёр<input id="s4" type="range" value="30"></label></div></div></div>
+</section>
+
+</main>
+<footer class="wrap">Скажите номера идей, которые нравятся, — добавлю их на сайт.</footer>
+
+<script>
+const fmt=n=>n.toLocaleString('ru-RU').replace(/ |,/g,' ');
+// 1 квиз
+const HOUSES={'2-sky':['Уголёк','ugolek',16000,'стеклянная крыша над кроватью и чан'],'2-jac':['Вулкан','vulkan',16000,'зеркальный дом, джакузи на террасе'],'2-chan':['Уголёк','ugolek',16000,'терраса у воды с чаном'],
+ '4-sky':['Облако','oblako',20000,'50 м², проектор, джакузи'],'4-jac':['Семейный','family',20000,'зеркальный дом у реки на 4 гостей'],'4-chan':['Кедр','kedr',18000,'в глубине леса, чан с тёплой водой'],
+ '2x2-sky':['Дуплекс Луна','duplex',25000,'два дома, небо над кроватью у каждого'],'2x2-jac':['Дуплекс Луна','duplex',25000,'джакузи у каждой пары'],'2x2-chan':['Коттедж Лес','les',25000,'50 м², кухня, большая терраса']};
+const qs={who:'2',want:'sky'},qres=document.getElementById('qres');
+function quiz(){const h=HOUSES[qs.who+'-'+qs.want];qres.innerHTML=`<img src="img/${h[1]}.webp" alt=""><div><strong>${h[0]}</strong><small>${h[3]} · от ${fmt(h[2])} ₽ за ночь</small></div>`}
+document.querySelectorAll('.q-row').forEach(r=>r.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;r.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));qs[r.dataset.q]=b.dataset.v;quiz()}));quiz();
+// 2 день/ночь
+const dn=document.getElementById('dn');document.getElementById('dnr').addEventListener('input',e=>dn.style.setProperty('--p',e.target.value+'%'));
+// 3 карта
+const PTS=[['Дом «Первый»','first','зеркальный дом у реки · от 14 000 ₽'],['Фиджитал-баня','bath1','голосовое управление · 23 000 ₽ / 3 ч'],['Купольная сфера','sfera1','до 35 гостей · от 25 000 ₽']];
+const mc=document.getElementById('mapcard');function pin(i){const p=PTS[i];mc.innerHTML=`<img src="img/${p[1]}.webp" alt=""><div><b style="font-weight:500">${p[0]}</b><div style="font-size:12.5px;color:var(--mist)">${p[2]}</div></div>`;
+ document.querySelectorAll('.pin').forEach(x=>x.setAttribute('aria-pressed',x.dataset.i==i))}
+document.querySelectorAll('.pin').forEach(b=>b.addEventListener('click',()=>pin(+b.dataset.i)));pin(0);
+// 4 календарь
+const D=document.getElementById('days'),S=document.getElementById('sum');const busy=[3,4,11,12];let a=6,z=8;
+const price=d=>(d%7===5||d%7===6)?17000:14000;
+function cal(){D.innerHTML='';for(let d=1;d<=14;d++){const b=document.createElement('button');b.className='day'+(busy.includes(d)?' busy':'')+(d===a||d===z?' sel':'')+(d>a&&d<z?' mid':'');
+  b.innerHTML=`${d}<small>${busy.includes(d)?'занято':fmt(price(d)/1000)+'к'}</small>`;b.addEventListener('click',()=>{if(busy.includes(d))return;if(a&&z||d<=a){a=d;z=0}else{if(busy.some(x=>x>a&&x<d))return;z=d}cal()});D.appendChild(b)}
+  let n=0,t=0;if(a&&z)for(let d=a;d<z;d++){n++;t+=price(d)}S.innerHTML=n?`<span>${n} ${n===1?'ночь':n<5?'ночи':'ночей'} · ${a}–${z} декабря</span><b>${fmt(t)} ₽</b>`:`<span>Выберите дату выезда</span><b>—</b>`}cal();
+// 5 баня
+const SL=['10:00','12:00','14:00','16:00','18:00','20:00','22:00','00:00'],SB=['12:00','18:00','20:00'];const st=document.getElementById('slots'),stx=document.getElementById('slotTxt');
+SL.forEach(t=>{const b=document.createElement('button');b.className='slot'+(SB.includes(t)?' busy':'');b.textContent=t;b.setAttribute('aria-pressed','false');
+ b.addEventListener('click',()=>{if(SB.includes(t))return;st.querySelectorAll('.slot').forEach(x=>x.setAttribute('aria-pressed',x===b));const e=(parseInt(t)+3)%24;stx.textContent=`Сегодня ${t}–${String(e).padStart(2,'0')}:00 · до 6 человек · 23 000 ₽`});st.appendChild(b)});
+// 6 чат
+const C=document.getElementById('chat');const M=[['me','Здравствуйте! Хотим вдвоём на выходные, чтобы было романтично'],['bot','Посоветую «Уголёк»: стеклянная крыша прямо над кроватью и чан на террасе у воды. На эту субботу свободно, 16 000 ₽ за ночь.<img src="img/ugolek.webp" alt="">'],['me','А баню можно добавить?'],['bot','Да, в субботу свободно с 16:00 до 19:00. Записать вас на дом и баню?']];
+let mi=0;function nextMsg(){if(mi>=M.length){setTimeout(()=>{C.innerHTML='';mi=0;nextMsg()},4000);return}const[w,t]=M[mi++];const d=document.createElement('div');d.className='msg '+w+(w==='bot'?' glass':'');d.innerHTML=t;C.appendChild(d);setTimeout(nextMsg,w==='me'?1300:2600)}
+nextMsg();
+// 8 сертификат
+const gTo=document.getElementById('gTo'),gAmt=document.getElementById('gAmt'),gName=document.getElementById('gName');
+gName.addEventListener('input',()=>gTo.textContent='Для '+(gName.value.trim()||'…'));
+document.querySelectorAll('[data-a]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-a]').forEach(x=>x.setAttribute('aria-pressed',x===b));gAmt.textContent=fmt(+b.dataset.a)+' ₽'}));
+// 9 сезон
+const SI=['Зима · −4° · джакузи +40°, чай с травами на террасе','Лето · +27° · купание в реке, ужин у мангала','Осень · +12° · туман над лесом, баня и плед'];
+const si=document.getElementById('sInfo');function season(i){document.querySelectorAll('#season img').forEach(x=>x.classList.toggle('on',x.dataset.s==i));document.querySelectorAll('#season .chip').forEach(x=>x.setAttribute('aria-pressed',x.dataset.s==i));si.textContent=SI[i]}
+document.querySelectorAll('#season .chip').forEach(b=>b.addEventListener('click',()=>season(+b.dataset.s)));season(0);
+</script>
