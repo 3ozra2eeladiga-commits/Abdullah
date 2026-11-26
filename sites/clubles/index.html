@@ -274,6 +274,11 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 .orb-word{width:46%;height:auto}
 .orb-ring{position:absolute;inset:-1px;border-radius:50%;border:1px solid var(--brass-hi);opacity:0;animation:orb 3.2s ease-out infinite;pointer-events:none}
 .orb-ring.r2{animation-delay:1.6s}
+.orb-load{position:absolute;inset:-7px;width:calc(100% + 14px);height:calc(100% + 14px);transform:rotate(-90deg);pointer-events:none;overflow:visible}
+.orb-load circle{fill:none;stroke-width:.9;vector-effect:non-scaling-stroke}
+.orb-load circle:first-child{stroke:rgba(238,240,232,.14)}
+.orb-load circle:last-child{stroke:var(--brass-hi);stroke-linecap:round;stroke-dasharray:339.3;stroke-dashoffset:339.3;transition:stroke-dashoffset .4s ease-out,opacity .8s .6s}
+.orb.ready .orb-load{opacity:0;transition:opacity 1s .5s}
 @keyframes orb{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.32);opacity:0}}
 .gate-hint{margin:34px 0 0;font:400 13px/1 var(--f-body);letter-spacing:.28em;text-transform:uppercase;color:var(--fog);display:flex;flex-direction:column;align-items:center;gap:10px}
 .gate-hint span{font:italic 400 17px/1 var(--f-accent);letter-spacing:.02em;text-transform:none;color:var(--brass-hi)}
@@ -312,10 +317,10 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 <script>document.documentElement.classList.add('js','gated')</script>
 <div class="bg" aria-hidden="true">
   <video id="v-mist" class="on" data-n="bg-mist" muted playsinline loop preload="auto"></video>
-  <video id="v-pines" data-n="bg-pines" muted playsinline loop preload="auto"></video>
-  <video id="v-sun" data-n="bg-sun" muted playsinline loop preload="auto"></video>
-  <video id="v-river" data-n="bg-river" muted playsinline loop preload="auto"></video>
-  <video id="v-stream" data-n="bg-stream" muted playsinline loop preload="auto"></video>
+  <video id="v-pines" data-n="bg-pines" muted playsinline loop preload="none"></video>
+  <video id="v-sun" data-n="bg-sun" muted playsinline loop preload="none"></video>
+  <video id="v-river" data-n="bg-river" muted playsinline loop preload="none"></video>
+  <video id="v-stream" data-n="bg-stream" muted playsinline loop preload="none"></video>
   <div class="tint"></div>
   <div class="leak"></div><div class="leak two"></div>
 </div>
@@ -325,6 +330,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
     <button class="orb" id="enter" aria-label="Войти на сайт со звуком природы">
       <span class="orb-ring" aria-hidden="true"></span>
       <span class="orb-ring r2" aria-hidden="true"></span>
+      <svg class="orb-load" viewBox="0 0 110 110" aria-hidden="true"><circle cx="55" cy="55" r="54"/><circle id="orbProg" cx="55" cy="55" r="54"/></svg>
       <img class="orb-tree" src="img/logo-tree.webp" alt="">
       <img class="orb-word" src="img/logo-word.webp" alt="ЛЕС загородный клуб">
     </button>
@@ -682,8 +688,9 @@ const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
   const MAP={gate:'mist',hero:'mist',homes:'mist',bath:'pines',sfera:'sun',camper:'sun',way:'river',reviews:'stream',faq:'stream',book:'river'};
   const portrait=matchMedia('(max-aspect-ratio: 1/1)');
   let cur='mist';
+  let all=false;
   function setSrc(){const sfx=portrait.matches?'-v':'';
-    ORDER.forEach(k=>{const v=V[k],n=v.dataset.n+sfx,want=n+'.mp4';if(v.dataset.src===want)return;
+    ORDER.forEach(k=>{if(!all&&k!=='mist')return;if(all)V[k].preload='auto';const v=V[k],n=v.dataset.n+sfx,want=n+'.mp4';if(v.dataset.src===want)return;
       v.dataset.src=want;v.poster='img/'+n+'.webp';v.src=want;v.load()});
     warm()}
   const play=v=>{if(still)return;const pr=v.play();pr&&pr.catch(()=>{})};
@@ -694,6 +701,7 @@ const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
   function show(k){if(k===cur)return;V[k].classList.add('on');V[cur].classList.remove('on');cur=k;warm();
     sc.classList.add('swap');setTimeout(()=>{sn.textContent=NAMES[k];sc.classList.remove('swap')},800)}
   setSrc();portrait.addEventListener?portrait.addEventListener('change',setSrc):portrait.addListener(setSrc);
+  window.bgStart=()=>{if(all)return;all=true;setSrc()};setTimeout(()=>window.bgStart(),15000);
   const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&MAP[e.target.id])show(MAP[e.target.id])})},{rootMargin:'-45% 0px -45% 0px'});
   Object.keys(MAP).forEach(id=>{const el=document.getElementById(id);el&&io.observe(el)});
   const move=()=>{const y=Math.min(scrollY*.03,40);for(const v of Object.values(V))v.style.transform=`translate3d(0,${-y}px,0) scale(1.02)`};
@@ -732,8 +740,17 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
   const chirp=new Audio('enter.mp3');chirp.preload='auto';chirp.volume=.6;
   // ролик на первом экране: своя версия для вертикального экрана
   const hv=document.getElementById('heroV'),vert=matchMedia('(max-aspect-ratio: 1/1)').matches;
-  hv.poster=vert?'img/hero-poster-v.webp':'img/hero-poster.webp';hv.src=vert?'intro-v.mp4':'intro.mp4';
-  const playHero=()=>{if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;const pr=hv.play();pr&&pr.catch(()=>{})};playHero();
+  hv.poster=vert?'img/hero-poster-v.webp':'img/hero-poster.webp';
+  const heroSrc=vert?'intro-v.mp4':'intro.mp4',prog=document.getElementById('orbProg'),orb=document.getElementById('enter');
+  const setProg=k=>{prog.style.strokeDashoffset=(1-k)*339.3};
+  const playHero=()=>{if(matchMedia('(prefers-reduced-motion:reduce)').matches||!hv.src)return;const pr=hv.play();pr&&pr.catch(()=>{})};
+  const ready=url=>{hv.src=url;setProg(1);orb.classList.add('ready');hv.addEventListener('loadeddata',playHero,{once:true});playHero();window.bgStart&&bgStart()};
+  (async()=>{try{
+      const r=await fetch(heroSrc);if(!r.ok||!r.body)throw 0;
+      const total=+r.headers.get('content-length')||0,rd=r.body.getReader(),parts=[];let got=0;
+      for(;;){const{done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;if(total)setProg(got/total*.98)}
+      ready(URL.createObjectURL(new Blob(parts,{type:'video/mp4'})));
+    }catch(e){ready(heroSrc)}})();
   function openSite(){document.documentElement.classList.remove('gated');scrollTo(0,0);window.bgWarm&&bgWarm();try{hv.currentTime=0}catch(e){}playHero()}
   const go=sound=>{if(sound){try{chirp.currentTime=0;const pr=chirp.play();pr&&pr.catch(()=>{})}catch(e){}Sound.set(true)}
     gate.classList.add('leave');setTimeout(()=>gate.remove(),1300);openSite()};
