@@ -232,7 +232,7 @@
     var mCol = S({ map: colT, roughness: 0.8, metalness: 0, envMapIntensity: 0.12 });
     var mCeil = S({ color: 0x25272b, vertexColors: true, roughness: 0.95, metalness: 0, envMapIntensity: 0 });
     var mDuct = S({ color: 0xaeb4ba, roughness: 0.42, metalness: 0.55, envMapIntensity: 0.9 });
-    var mPipe = S({ color: 0xa3261d, roughness: 0.45, metalness: 0.2, envMapIntensity: 0.4 });
+    var mPipe = S({ color: 0x8a1a13, roughness: 0.5, metalness: 0.15, envMapIntensity: 0.25 });
     var mLine = S({ vertexColors: true, roughness: 0.55, metalness: 0, envMapIntensity: 0.2, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -3 });
     var mNum = S({ map: numT, transparent: true, depthWrite: false, roughness: 0.6, envMapIntensity: 0.1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -3 });
     var mTrim = S({ vertexColors: true, roughness: 0.5, metalness: 0.35, envMapIntensity: 0.5 });
@@ -281,7 +281,7 @@
     bC.box(25.5, 25.9, CY - 0.45, CY, -17.0, -6.0, null, 1, 1, 7);
     ROWZ.forEach(function (z) { bC.box(-13.3, z < -19 || z > -12 ? 25.7 : 30.7, CY - 0.45, CY, z - 0.2, z + 0.2, null, 26, 1, 1); });
     bC.box(-13.55, -13.05, CY - 0.6, CY, -26.75, 8.0, null, 1, 1, 22); bC.box(-13.3, 25.7, CY - 0.6, CY, 11.5, 12.0, null, 26, 1, 1);
-    var ceil = bC.mesh(mCeil, null, function (x, y, z, nx, ny) { var L = 0.34 + 0.8 * Math.min(1.6, lightAt(x, z, 1.1)) + (ny < -0.5 && y < CY - 0.1 ? 0.12 : 0); return [L, L, L * 1.03]; });
+    var ceil = bC.mesh(mCeil, null, function (x, y, z, nx, ny) { var L = 0.32 + 0.6 * Math.min(1.6, lightAt(x, z, 1.1)) + (ny < -0.5 && y < CY - 0.1 ? 0.05 : 0); return [L, L, L * 1.03]; });
     ceilG.add(ceil);
 
     /* --- светильники-линии (и их отражение в полу) --- */
@@ -352,7 +352,7 @@
     var sign = new T.Group(), sb = new T.Mesh(new T.BoxGeometry(1.9, 0.44, 0.06), S({ color: 0x0c0d10, roughness: 0.5, envMapIntensity: 0.3 })), sf = new T.Mesh(new T.PlaneGeometry(1.84, 0.4), mSelf(signT));
     sf.rotation.y = PI; sf.position.z = -0.032; sign.add(sb, sf);
     [-0.8, 0.8].forEach(function (dx) { var r = new T.Mesh(new T.BoxGeometry(0.02, 0.5, 0.02), sb.material); r.position.set(dx, 0.47, 0); sign.add(r); });
-    sign.position.set(5.0, CY - 0.72, 11.2); sign.rotation.y = -PI / 4; ceilG.add(sign);
+    sign.position.set(8.8, CY - 0.72, 10.6); sign.rotation.y = -PI / 4; ceilG.add(sign);
     // двери выходов и таблички «ВЫХОД»
     var door = function (x, z, ry, noSign) { bT.add(new T.BoxGeometry(1.12, 2.2, 0.04), mat4(x, FY + 1.1, z, ry), [0.3, 0.31, 0.33]); var c = Math.sin(ry), s = Math.cos(ry); bT.add(new T.BoxGeometry(0.95, 2.08, 0.05), mat4(x + c * 0.02, FY + 1.04, z + s * 0.02, ry), [0.16, 0.19, 0.24]);
       bT.add(new T.BoxGeometry(0.03, 0.16, 0.05), mat4(x + c * 0.05 + s * 0.36, FY + 1.05, z + s * 0.05 - c * 0.36, ry), [0.7, 0.7, 0.72]);
@@ -449,7 +449,8 @@
       var w = new T.CylinderGeometry(0.34, 0.34, 0.24, 20); w.rotateZ(PI / 2); w.translate(x, 0.34, z); trim.add(w, null, [0.025, 0.025, 0.028]);
       var hgeo = new T.CylinderGeometry(0.21, 0.21, 0.25, 14); hgeo.rotateZ(PI / 2); hgeo.translate(x, 0.34, z); trim.add(hgeo, null, [0.5, 0.51, 0.53]); }); });
     trim.box(-0.26, 0.26, 0.42, 0.54, 2.25, 2.275, [0.85, 0.85, 0.83]); trim.box(-0.26, 0.26, 0.5, 0.62, -2.29, -2.265, [0.85, 0.85, 0.83]);
-    [-0.6, 0.6].forEach(function (x) { trim.box(x - 0.2, x + 0.2, 0.7, 0.82, 2.17, 2.215, [0.9, 0.93, 0.97]); trim.box(x - 0.2, x + 0.2, 0.8, 0.93, -2.26, -2.215, [0.5, 0.02, 0.02]); });
+    [-0.6, 0.6].forEach(function (x) { trim.box(x - 0.2, x + 0.2, 0.7, 0.82, 2.17, 2.215, [0.9, 0.93, 0.97]); trim.box(x - 0.17, x + 0.17, 0.84, 0.93, -2.265, -2.215, [0.42, 0.015, 0.015]); });
+    trim.box(-0.8, 0.8, 0.3, 0.46, -2.3, -2.2, [0.04, 0.04, 0.045]); trim.box(-0.8, 0.8, 0.3, 0.44, 2.19, 2.27, [0.04, 0.04, 0.045]); trim.box(-0.62, 0.62, 1.06, 1.36, -1.47, -1.445, [0.02, 0.022, 0.026]);
     var mBody = new T.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.5, roughness: 0.36, clearcoat: 1, clearcoatRoughness: 0.07, envMapIntensity: 1.1 });
     var mGl = new T.MeshStandardMaterial({ color: 0x0b0e12, roughness: 0.05, metalness: 0.9, envMapIntensity: 1.3 });
     var mTr = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.4, envMapIntensity: 0.6 });
@@ -521,7 +522,7 @@
     if (!st.taken) return;
     var inside = st.cur === 'inside', f = scene.fog, i;
     hideOutdoor();
-    if (f && f.color) { f.color.setHex(inside ? 0x0a0b0e : 0x0d0f13); if ('near' in f) { f.near = inside ? 30 : 500; f.far = inside ? 150 : 4000; } }
+    if (f && f.color) { f.color.setHex(inside ? 0x0a0b0e : 0x0d0f13); if ('near' in f) { f.near = inside ? 14 : 500; f.far = inside ? 125 : 4000; } }
     scene.background = inside ? bgInside : bgScheme; scene.environment = envTex;
     renderer.toneMappingExposure = inside ? 1.05 : 1.08;
     for (i = 0; i < carMats.length; i++) carMats[i].envMapIntensity = carMats[i].userData.gkpE;

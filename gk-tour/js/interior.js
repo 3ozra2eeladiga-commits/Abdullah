@@ -381,7 +381,7 @@
   function dining(x, z, n) {
     cyl('wood', x, 0.72, z, 0.52, 0.52, 0.035, C.oak, 32); cyl('matte', x, 0, z, 0.24, 0.07, 0.72, C.graph, 18); cyl('matte', x, 0, z, 0.3, 0.3, 0.02, C.graph, 20);
     for (var i = 0; i < n; i++) { var a = i * Math.PI * 2 / n + 0.5; chair(x + Math.sin(a) * 0.72, z + Math.cos(a) * 0.72, a + Math.PI, i % 2 ? C.cream : C.boucle); }
-    cyl('satin', x, 0.755, z, 0.07, 0.13, 0.06, C.creamL, 16); pendant(x, z, 1.62); blob(x, z, 2.2, 2.2);
+    cyl('satin', x, 0.755, z, 0.07, 0.13, 0.06, C.creamL, 16); pendant(x, z, 1.8); blob(x, z, 2.2, 2.2);
   }
   function bedroom(r) {
     var zc = (r.z0 + r.z1) / 2 + 0.25, x1 = r.x1, i;
@@ -586,27 +586,28 @@
     '.gki-title b{font:400 25px/1.05 "Forum",Georgia,serif;letter-spacing:.02em;color:#f6efe3}.gki-title span{display:inline-block;margin-left:14px;padding-left:14px;border-left:1px solid rgba(226,168,120,.55);font:400 15px/1 "Onest",sans-serif;color:rgba(239,231,218,.86)}' +
     '.gki-modes{position:absolute;right:24px;top:22px;display:flex;padding:4px;border-radius:24px}.gki-modes button{min-width:74px;min-height:40px;border:0;border-radius:20px;background:none;color:rgba(239,231,218,.72);font:500 14px/1 "Onest",sans-serif;cursor:pointer;transition:background .3s,color .3s}' +
     '.gki-modes button.is-on{background:linear-gradient(180deg,#e2a878,#c98a5b);color:#1a1410}' +
-    '.gki-chips{position:absolute;left:50%;bottom:54px;transform:translateX(-50%);display:flex;gap:6px;padding:6px;border-radius:30px;max-width:calc(100% - 420px);overflow-x:auto;scrollbar-width:none}.gki-chips::-webkit-scrollbar{display:none}' +
-    '.gki-chips button{flex:none;min-height:46px;padding:0 20px;border:1px solid transparent;border-radius:23px;background:none;color:rgba(239,231,218,.82);font:500 14.5px/1 "Onest",sans-serif;white-space:nowrap;cursor:pointer;transition:background .3s,color .3s,border-color .3s}' +
+    '.gki>.gki-bar{position:absolute;left:214px;right:22px;bottom:16px;display:flex;flex-direction:column;align-items:center;gap:11px;pointer-events:none}' +
+    '.gki-chips{display:flex;gap:4px;padding:6px;border-radius:30px;max-width:100%;overflow-x:auto;scrollbar-width:none;pointer-events:auto}.gki-chips::-webkit-scrollbar{display:none}' +
+    '.gki-chips button{flex:none;min-height:46px;padding:0 17px;border:1px solid transparent;border-radius:23px;background:none;color:rgba(239,231,218,.82);font:500 14.5px/1 "Onest",sans-serif;white-space:nowrap;cursor:pointer;transition:background .3s,color .3s,border-color .3s}' +
     '.gki-chips button:hover{border-color:rgba(239,231,218,.22)}.gki-chips button.is-on{background:linear-gradient(180deg,#e2a878,#c98a5b);color:#1a1410}' +
-    '.gki-note{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);font:400 12.5px/1.2 "Onest",sans-serif;letter-spacing:.03em;color:rgba(239,231,218,.86);text-shadow:0 1px 8px rgba(0,0,0,.75);white-space:nowrap;pointer-events:none}' +
+    '.gki-note{font:400 12.5px/1.2 "Onest",sans-serif;letter-spacing:.03em;color:rgba(239,231,218,.86);text-shadow:0 1px 8px rgba(0,0,0,.75);white-space:nowrap;pointer-events:none}' +
     '.gki-note:before{content:"";display:inline-block;width:22px;height:1px;background:#c98a5b;vertical-align:middle;margin-right:10px}' +
     '.gki-plan{position:absolute;left:24px;bottom:22px;width:168px;padding:8px 8px 0;border-radius:18px;cursor:pointer;color:#efe7da;transition:border-color .25s,transform .25s}.gki-plan:hover{border-color:rgba(226,168,120,.6)}' +
     '.gki-plan img{display:block;width:100%;height:132px;object-fit:contain;background:#fbf8f2;border-radius:11px}.gki-plan span{display:block;padding:9px 0 10px;font:500 11px/1 "Onest",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:rgba(239,231,218,.8)}' +
-    '.gki-hint{position:absolute;right:24px;bottom:22px;max-width:200px;padding:13px 18px;border-radius:18px;font:400 12.5px/1.45 "Onest",sans-serif;color:rgba(239,231,218,.8);transition:opacity .8s ease}.gki-hint.is-off{opacity:0;pointer-events:none}.gki-hint b{display:block;font:400 17px/1.2 "Forum",Georgia,serif;color:#f6efe3;margin-bottom:4px}' +
+    '.gki-hint{padding:10px 20px;border-radius:20px;font:400 12.5px/1.3 "Onest",sans-serif;color:rgba(239,231,218,.86);white-space:nowrap;pointer-events:none;transition:opacity .8s ease}.gki-hint.is-off{opacity:0}.gki-hint b{font:400 16px/1 "Forum",Georgia,serif;color:#e2a878;margin-right:10px;letter-spacing:.03em}' +
     '.gki-zoom{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(7,9,13,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .35s ease}' +
     '.gki-zoom.is-on{opacity:1;pointer-events:auto}.gki-zoom img{max-width:min(86%,820px);max-height:82%;background:#fbf8f2;border-radius:18px;padding:18px;box-shadow:0 30px 90px rgba(0,0,0,.5);transform:scale(.96);transition:transform .35s ease}.gki-zoom.is-on img{transform:none}' +
     '.gki-zoom button{position:absolute;right:26px;top:24px;width:48px;height:48px;border-radius:24px;color:#efe7da;font-size:24px;line-height:1;cursor:pointer}' +
-    '@media (max-width:820px){.gki-title{top:82px}.gki-title b{font-size:21px}.gki-chips{max-width:calc(100% - 24px);bottom:48px}.gki-plan{bottom:118px;width:118px;left:12px}.gki-plan img{height:92px}.gki-hint{display:none}.gki-back{left:12px;top:14px}.gki-modes{right:12px;top:14px}.gki-note{font-size:11px;bottom:16px}}';
+    '@media (max-width:820px){.gki-title{top:82px}.gki-title b{font-size:21px}.gki>.gki-bar{left:12px;right:12px;bottom:12px}.gki-plan{bottom:112px;width:118px;left:12px}.gki-plan img{height:92px}.gki-hint{display:none}.gki-back{left:12px;top:14px}.gki-modes{right:12px;top:14px}.gki-note{font-size:11px;white-space:normal;text-align:center}}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   var hud = document.createElement('div'); hud.className = 'gki'; hud.hidden = true;
   hud.innerHTML = '<button type="button" class="gki-back gki-glass"><i>←</i>Вернуться к дому</button>' +
     '<div class="gki-title gki-glass"><small></small><b></b><span></span></div>' +
     '<div class="gki-modes gki-glass" role="group" aria-label="Время суток"><button type="button" data-m="day">День</button><button type="button" data-m="night">Вечер</button></div>' +
-    '<div class="gki-chips gki-glass" role="group" aria-label="Комнаты"></div>' +
     '<button type="button" class="gki-plan gki-glass" aria-label="Открыть планировку"><img alt="Планировка квартиры"><span>Планировка</span></button>' +
-    '<div class="gki-hint gki-glass"><b>Осмотритесь</b>Ведите пальцем по экрану. Комнаты — кнопки внизу или метки на полу.</div>' +
-    '<div class="gki-note">Пример оформления. Квартира сдаётся без отделки.</div>' +
+    '<div class="gki-bar"><div class="gki-hint gki-glass"><b>Осмотритесь</b>ведите пальцем по экрану · метки на полу переносят в другую комнату</div>' +
+    '<div class="gki-chips gki-glass" role="group" aria-label="Комнаты"></div>' +
+    '<div class="gki-note">Пример оформления. Квартира сдаётся без отделки.</div></div>' +
     '<div class="gki-zoom"><img alt="Планировка квартиры крупно"><button type="button" class="gki-glass" aria-label="Закрыть">×</button></div>';
   ctx.app.appendChild(hud);
   var fade = document.createElement('div'); fade.className = 'gki-fade'; ctx.app.appendChild(fade);
@@ -649,7 +650,7 @@
   }
   ctx.onFrame(function (dt) {
     if (!S.active || !S.fly) return false;
-    var f = S.fly; f.t = Math.min(1, f.t + dt / f.dur);
+    var f = S.fly, now = performance.now(); f.t = Math.min(1, f.t + Math.min(0.25, f.last ? (now - f.last) / 1000 : dt) / f.dur); f.last = now;
     var k = f.t * f.t * f.t * (f.t * (6 * f.t - 15) + 10);
     vE.lerpVectors(f.p0, f.p1, k); setView(vE, f.y0 + f.dy * k, f.q0 + (f.q1 - f.q0) * k);
     if (f.t >= 1) S.fly = null;
@@ -772,6 +773,6 @@
 
   window.GKInterior = {
     enter: enter, exit: exit, active: function () { return S.active; },
-    go: function (k) { go(k); }, spots: function () { return S.apt ? S.apt.spots.map(function (s) { return s.key; }) : []; }
+    go: function (k, instant) { go(k, !!instant); }, spots: function () { return S.apt ? S.apt.spots.map(function (s) { return s.key; }) : []; }
   };
 })();

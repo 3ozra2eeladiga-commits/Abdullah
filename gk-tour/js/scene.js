@@ -493,13 +493,13 @@ window.GKScene = (function () {
   var clouds = new T.Group(), cloudMats = [], deckMat; scene.add(clouds);
   (function () {
     for (var v = 0; v < 3; v++) {
-      var t = ctex(256, 256, function (g) { for (var i = 0; i < 22; i++) { var x = 56 + rnd() * 144, y = 92 + rnd() * 76, r = 30 + rnd() * 50, gr = g.createRadialGradient(x, y - r * 0.25, 0, x, y, r);
-        var sh = y > 140 ? '214,224,240' : '255,255,255'; gr.addColorStop(0, 'rgba(' + sh + ',.7)'); gr.addColorStop(0.5, 'rgba(' + sh + ',.3)'); gr.addColorStop(1, 'rgba(' + sh + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); } });
+      var t = ctex(256, 256, function (g) { for (var i = 0; i < 15; i++) { var x = 56 + rnd() * 144, y = 92 + rnd() * 76, r = 30 + rnd() * 50, gr = g.createRadialGradient(x, y - r * 0.25, 0, x, y, r);
+        var sh = y > 140 ? '214,224,240' : '255,255,255'; gr.addColorStop(0, 'rgba(' + sh + ',.6)'); gr.addColorStop(0.5, 'rgba(' + sh + ',.24)'); gr.addColorStop(1, 'rgba(' + sh + ',0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); } });
       cloudMats.push(new T.SpriteMaterial({ map: t, transparent: true, opacity: 0, depthWrite: false, fog: false }));
     }
-    var add = function (rad, y, size, a) { var s = new T.Sprite(cloudMats[(rnd() * 3) | 0]); s.position.set(Math.cos(a) * rad, y, Math.sin(a) * rad); s.scale.set(size, size * 0.62, 1); s.userData = { y: y, ph: rnd() * 6.3 }; clouds.add(s); };
-    for (var i = 0; i < 70; i++) add(105 + rnd() * 420, 6 + rnd() * 10, 130 + rnd() * 140, i / 70 * 6.283 * 3 + rnd() * 0.3);   // «море облаков» вокруг дома
-    for (i = 0; i < 20; i++) add(76 + rnd() * 18, 3 + rnd() * 5, 46 + rnd() * 24, i / 20 * 6.283 + rnd() * 0.2);
+    var add = function (rad, y, size, a, fl) { var s = new T.Sprite(cloudMats[(rnd() * 3) | 0]); s.position.set(Math.cos(a) * rad, y, Math.sin(a) * rad); s.scale.set(size, size * (fl || 0.62), 1); s.userData = { y: y, ph: rnd() * 6.3 }; clouds.add(s); };
+    for (var i = 0; i < 70; i++) add(110 + rnd() * 420, 2 + rnd() * 6, 130 + rnd() * 140, i / 70 * 6.283 * 3 + rnd() * 0.3, 0.26);   // «море облаков» вокруг дома
+    for (i = 0; i < 20; i++) add(78 + rnd() * 18, 2 + rnd() * 4, 46 + rnd() * 24, i / 20 * 6.283 + rnd() * 0.2, 0.4);
     for (i = 0; i < 8; i++) add(70 + rnd() * 60, 10 + rnd() * 26, 30 + rnd() * 26, rnd() * 6.283);                             // облака, плывущие мимо этажей
     deckMat = new T.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, fog: false, map: ctex(512, 512, function (g) { g.clearRect(0, 0, 512, 512); var gr = g.createRadialGradient(256, 256, 0, 256, 256, 256);
       gr.addColorStop(0, 'rgba(240,244,250,0)'); gr.addColorStop(0.035, 'rgba(240,244,250,0)'); gr.addColorStop(0.085, 'rgba(240,244,250,0.96)'); gr.addColorStop(1, 'rgba(246,248,252,1)'); g.fillStyle = gr; g.fillRect(0, 0, 512, 512); }) });
@@ -533,7 +533,7 @@ window.GKScene = (function () {
     shopL[0].intensity = shopL[1].intensity = cur.lamp * 1.3;
     glowMat.opacity = cur.lamp; poolMat.opacity = cur.lamp * 0.3; lampMat.color.setRGB(0.5 + cur.lamp * 1.3, 0.51 + cur.lamp * 0.95, 0.53 + cur.lamp * 0.35);
     stars.material.opacity = cur.stars; stars.visible = cur.stars > 0.01;
-    clouds.visible = cur.cloud > 0.01; cloudMats.forEach(function (m) { m.opacity = cur.cloud * 0.95; }); deckMat.opacity = cur.cloud;
+    clouds.visible = cur.cloud > 0.01; cloudMats.forEach(function (m) { m.opacity = cur.cloud * 0.9; }); deckMat.opacity = cur.cloud;
     envMats.forEach(function (m) { m.envMapIntensity = m.userData.env * cur.env; });
     modeHooks.forEach(function (f) { f(cur, mode); });
     renderer.shadowMap.needsUpdate = true; dirty = true;

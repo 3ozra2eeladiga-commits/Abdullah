@@ -131,7 +131,7 @@
     if (startOn) { if (tall) ib = h * 0.4; else ir = w * 0.46; }
     else if (panel.classList.contains('is-open') && !S.sub) { var r = panel.getBoundingClientRect(); if (!tall) { ir = r.width + 14; pr = ir; } else ib = r.height; }
     else if (card.classList.contains('is-on') && !tour.on && !S.sub) { var c = card.getBoundingClientRect(); if (!tall) ir = c.width * 0.9; else ib = c.height * 0.9; }
-    app.style.setProperty('--ir', pr + 'px'); SC.setInset(ir, ib);
+    app.style.setProperty('--ir', pr + 'px'); app.style.setProperty('--cr', (!pr && !tall && !startOn ? Math.round(ir) : 0) + 'px'); SC.setInset(ir, ib);
   }
 
   /* ---------- всплывающая строка ---------- */
@@ -158,7 +158,7 @@
   /* ---------- меню: графика, полный экран, начальный экран, контакты ---------- */
   var de = D.documentElement, canFs = de.requestFullscreen || de.webkitRequestFullscreen;
   var Q_T = { high: 'Высокая', low: 'Экономная', off: 'Без эффектов' }, Q_ORDER = ['high', 'low', 'off'];
-  function qLabel() { var F = window.GKFx; if (!F) return ''; var l = typeof F.label === 'function' ? safe(function () { return F.label(); }) : null; if (l) return String(l); var q = typeof F.quality === 'function' ? safe(function () { return F.quality(); }) : null; return Q_T[q] || ''; }
+  function qLabel() { var F = window.GKFx; if (!F) return ''; var l = typeof F.label === 'function' ? safe(function () { return F.label(); }) : null; if (l) { l = String(l).replace(/^[^:]{0,14}:\s*/, ''); return l.charAt(0).toUpperCase() + l.slice(1); } var q = typeof F.quality === 'function' ? safe(function () { return F.quality(); }) : null; return Q_T[q] || ''; }
   function buildMenu() {
     var fs = D.fullscreenElement || D.webkitFullscreenElement, h = '';
     if (mod('GKFx', 'setQuality')) h += '<button type="button" data-m="q">' + ic('spark') + 'Графика<em>' + esc(qLabel()) + '</em></button>';
@@ -319,7 +319,7 @@
     var h = '<p class="eyebrow">' + (S.catFloor != null ? S.catFloor + ' этаж<button type="button" data-act="allfloors">Все этажи</button>' : 'Каталог') + '</p><h2>Квартиры</h2>' +
       '<p class="sub">' + n + ' ' + plural(n, 'планировка', 'планировки', 'планировок') + ' · от ' + area(mn) + ' до ' + area(mx) + ' м²</p>';
     h += '<div class="lbl"><span>Комнат</span></div><div class="chips"><button type="button" data-f="0"' + (S.rooms ? '' : ' class="is-on"') + '>Все</button>';
-    rooms.forEach(function (r) { h += '<button type="button" data-f="' + r + '"' + (S.rooms === r ? ' class="is-on"' : '') + '>' + r + '-комнатные</button>'; });
+    rooms.forEach(function (r) { h += '<button type="button" data-f="' + r + '"' + (S.rooms === r ? ' class="is-on"' : '') + '>' + r + '-комн.</button>'; });
     h += '</div><div class="lbl"><span>Площадь</span><output id="oArea"></output></div>' +
       '<div class="dual" id="dual"><i class="dual__t"></i><input type="range" id="aLo" min="' + A_LO + '" max="' + A_HI + '" step="1" value="' + S.aMin + '" aria-label="Площадь от"><input type="range" id="aHi" min="' + A_LO + '" max="' + A_HI + '" step="1" value="' + S.aMax + '" aria-label="Площадь до"></div>' +
       '<div class="lbl"><span>Сортировка · площадь и цена</span></div><div class="seg"><button type="button" data-sort="asc"' + (S.sort === 'asc' ? ' class="is-on"' : '') + '>Сначала компактные</button><button type="button" data-sort="desc"' + (S.sort === 'desc' ? ' class="is-on"' : '') + '>Сначала просторные</button></div>' +
@@ -345,11 +345,11 @@
     if (!(S.floor >= FLOOR_MIN && S.floor <= FLOOR_MAX)) S.floor = FLOOR_DEF;
     var fl = '', n, canIn = !!mod('GKInterior', 'enter');
     for (n = FLOOR_MIN; n <= FLOOR_MAX; n++) fl += '<button type="button" data-fl="' + n + '"' + (n === S.floor ? ' class="is-on"' : '') + (floorOk(n, id) ? '' : ' disabled') + '>' + n + '</button>';
-    var h = '<p class="eyebrow" id="fEye">Планировка · ' + S.floor + ' этаж</p><h2>' + esc(f.name) + '<small>' + area(f.area) + '<i>м²</i></small></h2>' +
+    var h = '<p class="eyebrow" id="fEye">Планировка · ' + S.floor + ' этаж</p><div class="fhead"><h2>' + esc(f.name) + '<small>' + area(f.area) + '<i>м²</i></small></h2>' +
+      '<div class="fprice"><span>При полной оплате</span><b>' + rub(f.area * FULL) + '</b><small>' + rub(FULL) + ' за м²</small></div></div>' +
       '<button type="button" class="plan" data-zoom="' + f.img + '"><img src="' + f.img + '" alt="Планировка"><span class="plan__z">' + ic('zoom') + 'Увеличить</span></button>' +
       (f.note ? '<p class="note">' + esc(f.note) + '</p>' : '') +
       '<div class="lbl"><span>Этаж</span><em id="fFloor">' + S.floor + ' из ' + FLOOR_MAX + '</em></div><div class="chips chips--fl">' + fl + '</div>' +
-      '<div class="price"><span>Цена при полной оплате</span><b>' + rub(f.area * FULL) + '</b><small>' + rub(FULL) + ' за м²</small></div>' +
       '<div class="acts">' + (canIn ? '<button type="button" class="btn btn--gold" data-act="enter">' + ic('door') + 'Зайти в квартиру</button>' : '') +
       '<button type="button" class="btn btn--line" data-act="show">' + ic('pin') + 'Показать на доме</button><button type="button" class="btn btn--line" data-act="fav" id="bFav"></button></div>' +
       '<section class="calc"><h3>Рассрочка от застройщика</h3><p class="sub">Без банков и ипотеки. Взнос от 10%, срок до 5 лет.</p>' +
@@ -451,7 +451,7 @@
     if (v === S.sub) return; var was = S.sub; S.sub = v;
     if (v) { cam = null; clearTimeout(relaxT); curLim = false; menuShow(false); cmpShow(false); zoom.hidden = true; tip.hidden = true; hideCard(); if (panel.classList.contains('is-open')) closePanel(true); hint.classList.add('is-off'); layout(); return; }
     buildModes();
-    if (tour.on) { layout(); return; }
+    if (tour.on || startOn) { layout(); return; }
     if (was === 'interior' && resume) backToFlat();
     else if (was === 'parking') { S.stop = 'parking'; markStop('parking'); mark(null); if (stopIdx.parking != null) showCard(stopIdx.parking); }
     else { S.stop = 'overview'; markStop('overview'); }
