@@ -73,7 +73,8 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 
 /* ——— Герой: фонарь в ночном лесу ——— */
 .hero{position:relative;min-height:min(900px,96svh);display:flex;align-items:flex-end;padding-block:150px 0;overflow:hidden;--mx:68%;--my:42%}
-.hero .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.82) saturate(1.02)}
+.hero .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero::before{content:"";position:absolute;inset:0;background:rgba(13,32,22,.18);z-index:0;pointer-events:none}
 .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,32,22,.55) 0,transparent 30%,transparent 45%,var(--night) 100%);pointer-events:none}
 .hero-in{position:relative;z-index:2;width:100%}
 .hero h1{font-size:clamp(38px,7.4vw,112px);line-height:.98;margin-block:22px 26px;max-width:12ch}
@@ -396,6 +397,12 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
   .occ span{background:rgba(34,66,48,.9)}
   .btn:not(.solid){background:rgba(13,32,22,.55)}
   .bg .leak,.bg::after{display:none}
+  .dd g[filter]{filter:none}
+  .squirrel .bd,.squirrel .hl,.squirrel .fl,.squirrel .tl{filter:none}
+  .squirrel,.wreath{filter:none}
+  .swag{animation:none}
+  .bulb:not(:nth-child(3n)) .glow{animation:none;opacity:.6}
+  .giant{filter:none}
 }
 .off .dd *,.off .bulb *,.off .swag,.off .bauble{animation-play-state:paused!important}
 
@@ -536,7 +543,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
           </div>
         </div>
         <div class="cmp-r">
-          <div class="cmp-photo bz-photo" id="bzPhoto"><img id="bzA" class="on" src="img/ban-steam.webp" alt="Парная"><img id="bzB" alt="">
+          <div class="cmp-photo bz-photo" id="bzPhoto"><img id="bzA" class="on" loading="lazy" decoding="async" src="img/ban-steam.webp" alt="Парная"><img id="bzB" alt="">
             <div class="bz-cap"><b id="bzT">Парная</b><span id="bzS">Стены из глины держат тепло, пар мягкий и ровный</span></div>
             <button class="bz-nav prev" id="bzPrev" aria-label="Предыдущее фото">‹</button><button class="bz-nav next" id="bzNext" aria-label="Следующее фото">›</button>
           </div>
@@ -579,7 +586,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
           <div class="sf-stats" id="sfStats"></div>
         </div>
         <div class="cmp-r">
-          <div class="cmp-photo"><img id="sfA" class="on" src="img/sf-small.webp" alt="Купол Малый"><img id="sfB" alt="" loading="lazy"></div>
+          <div class="cmp-photo"><img id="sfA" class="on" loading="lazy" decoding="async" src="img/sf-small.webp" alt="Купол Малый"><img id="sfB" alt="" loading="lazy"></div>
           <div class="cmp-txt" id="sfTxt" aria-live="polite"><h3 id="sfT"></h3><p id="sfP"></p>
             <div class="sf-lbl">Подходит для</div><div class="occ" id="sfFor"></div>
             <div class="sf-lbl">Особенное</div><div class="cmp-chips" id="sfX" style="margin-top:0"></div></div>
@@ -614,7 +621,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
           </div>
         </div>
         <div class="cmp-r">
-          <div class="cmp-photo"><img id="cpA" class="on" src="img/cam-airport.webp" alt="Кемпер у аэропорта Минеральные Воды"><img id="cpB" alt=""></div>
+          <div class="cmp-photo"><img id="cpA" class="on" loading="lazy" decoding="async" src="img/cam-airport.webp" alt="Кемпер у аэропорта Минеральные Воды"><img id="cpB" alt=""></div>
           <div class="cmp-txt" id="cmpTxt" aria-live="polite"><h3 id="cmpT">Прилетели — машина уже ждёт</h3><p id="cmpP">Подадим кемпер прямо к терминалу аэропорта Минеральные Воды. Вещи в багажник — и в путь.</p><div class="cmp-chips" id="cmpC"><span>аэропорт Минводы</span><span>бельё и посуда внутри</span></div></div>
         </div>
       </div>
@@ -770,7 +777,7 @@ const HOMES=[
 const fmt=n=>n.toLocaleString('ru-RU').replace(/,/g,' ');
 const slats=document.getElementById('slats'),count=document.getElementById('count');
 slats.innerHTML=HOMES.map((h,i)=>`<article class="slat${i===0?' on':''}" tabindex="0" data-t="${h.t.join(' ')}">
- <img src="img/${h.img}.webp" alt="Дом «${h.n}»" loading="${i<4?'eager':'lazy'}">
+ <img src="img/${h.img}.webp" alt="Дом «${h.n}»" loading="${i<1?'eager':'lazy'}" decoding="async">
  <span class="num">${String(i+1).padStart(2,'0')}</span>
  <div class="tag"><span>${h.n}</span></div>
  <div class="info"><h3>${h.n}</h3><p>${h.d}</p><div class="meta">${h.m.map(x=>`<span>${x}</span>`).join('')}</div>
@@ -988,12 +995,12 @@ XM.wreath();XM.hero();
     const nx=img===A?B:A,src='img/cam-'+d[0]+'.webp';let done=false;const sw=()=>{if(done)return;done=true;nx.classList.add('on');img.classList.remove('on');img=nx};
     nx.onload=sw;nx.src=src;nx.alt=d[1];if(nx.complete&&nx.naturalWidth)sw();
     txt.classList.add('swap');setTimeout(()=>{T.textContent=d[1];Pp.textContent=d[2];C.innerHTML=d[3].map(x=>`<span>${x}</span>`).join('');txt.classList.remove('swap')},220);
+    if(vis){const pi=new Image();pi.src='img/cam-'+S[(i+1)%S.length][0]+'.webp'}
     if(auto&&vis)timer=setTimeout(()=>show((cur+1)%SC.length),6000)}
   tabs.forEach((b,k)=>b.addEventListener('click',()=>show(k,true)));
   cur=-1;img=A;show(0);
   const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
   if(!still)new IntersectionObserver(e=>{vis=e[0].isIntersecting;clearTimeout(timer);if(vis&&auto){tabs[cur].classList.add('auto');timer=setTimeout(()=>show((cur+1)%SC.length),6000)}else tabs.forEach(b=>b.classList.remove('auto'))},{threshold:.35}).observe(root);
-  S.forEach(d=>{const i=new Image();i.src='img/cam-'+d[0]+'.webp'});
 })();
 
 /* ——— Автодом: цифры и маршруты ——— */
@@ -1133,7 +1140,7 @@ const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
   window.bgStart=()=>{if(all)return;all=true;setSrc()};setTimeout(()=>window.bgStart(),15000);
   const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&MAP[e.target.id])show(MAP[e.target.id])})},{rootMargin:'-45% 0px -45% 0px'});
   Object.keys(MAP).forEach(id=>{const el=document.getElementById(id);el&&io.observe(el)});
-  const move=()=>{const y=Math.min(scrollY*.03,40);for(const v of Object.values(V))v.style.transform=`translate3d(0,${-y}px,0) scale(1.02)`};
+  const move=()=>{if(matchMedia('(hover:none),(max-width:900px)').matches)return;const y=Math.min(scrollY*.03,40);for(const v of Object.values(V))v.style.transform=`translate3d(0,${-y}px,0) scale(1.02)`};
   move();addEventListener('scroll',move,{passive:true});
   document.addEventListener('visibilitychange',()=>{document.hidden?ORDER.forEach(k=>V[k].pause()):warm()});
   portrait.addEventListener&&portrait.addEventListener('change',()=>{ORDER.forEach(drop);warm()});
@@ -1170,14 +1177,14 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
   const gTxt=document.getElementById('gateTxt'),gSub=document.getElementById('gateSub');let pct=0;
   const setProg=k=>{prog.style.strokeDashoffset=(1-k)*339.3;pct=Math.round(k*100);if(k<1){gTxt.textContent='Готовим лес для вас · '+pct+'%';const hl=document.getElementById('heroLoad');hl&&(hl.lastChild.textContent='Загружаем видео · '+pct+'%')}};
   const playHero=()=>{if(matchMedia('(prefers-reduced-motion:reduce)').matches||!hv.src||document.documentElement.classList.contains('gated'))return;const r=hv.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;const pr=hv.play();pr&&pr.catch(()=>{})};
-  const ready=url=>{hv.src=url;setProg(1);orb.classList.add('ready');gTxt.textContent='Нажмите, чтобы войти';gSub.textContent='со звуком реки и леса';hv.addEventListener('loadeddata',playHero,{once:true});playHero();window.bgStart&&bgStart()};
+  const ready=url=>{hv.src=url;setProg(1);orb.classList.add('ready');gTxt.textContent='Нажмите, чтобы войти';gSub.textContent='со звуком реки и леса';hv.addEventListener('loadeddata',playHero,{once:true});playHero();if(!document.documentElement.classList.contains('gated'))window.bgStart&&bgStart()};
   (async()=>{try{
       const r=await fetch(heroSrc);if(!r.ok||!r.body)throw 0;
       const total=+r.headers.get('content-length')||0,rd=r.body.getReader(),parts=[];let got=0;
       for(;;){const{done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;if(total)setProg(got/total*.98)}
       ready(URL.createObjectURL(new Blob(parts,{type:'video/mp4'})));
     }catch(e){ready(heroSrc)}})();
-  function openSite(){document.documentElement.classList.remove('gated');scrollTo(0,0);window.bgWarm&&bgWarm();try{hv.currentTime=0}catch(e){}playHero();XM.hero();
+  function openSite(){document.documentElement.classList.remove('gated');scrollTo(0,0);if(orb.classList.contains('ready'))window.bgStart&&bgStart();window.bgWarm&&bgWarm();try{hv.currentTime=0}catch(e){}playHero();XM.hero();
     if(!orb.classList.contains('ready')){ // нажали раньше, чем видео загрузилось — честно показываем, что оно грузится
       const hl=document.createElement('div');hl.className='hero-load';hl.id='heroLoad';hl.innerHTML='<i></i><span>Загружаем видео · '+pct+'%</span>';document.getElementById('hero').appendChild(hl);
       hv.addEventListener('playing',()=>{hl.style.opacity=0;setTimeout(()=>hl.remove(),700)},{once:true})}}
@@ -1192,7 +1199,7 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
   document.getElementById('enter').addEventListener('click',()=>SS.set('les-in','1'));document.getElementById('enterQuiet').addEventListener('click',()=>SS.set('les-in','1'));
   let st=0;addEventListener('scroll',()=>{if(st)return;st=setTimeout(()=>{st=0;SS.set('les-y',String(Math.round(scrollY)))},400)},{passive:true});
   if(SS.get('les-in')==='1'||hd.in){const y=+(hd.y!=null?hd.y:SS.get('les-y'))||0;
-    gate.remove();document.documentElement.classList.remove('gated');XM.hero();window.bgWarm&&bgWarm();playHero();
+    gate.remove();document.documentElement.classList.remove('gated');XM.hero();window.bgStart&&bgStart();window.bgWarm&&bgWarm();playHero();
     const back=()=>scrollTo(0,y);requestAnimationFrame(back);setTimeout(back,300);addEventListener('load',back,{once:true})}
 })();
 
