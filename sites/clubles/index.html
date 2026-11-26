@@ -250,18 +250,24 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 .gated body{overflow:hidden}
 .gated main,.gated .nav,.gated .snd{opacity:0;visibility:hidden;filter:blur(12px)}
 .gate.leave{opacity:0;transform:scale(1.12);pointer-events:none}
-.gate-in{display:flex;flex-direction:column;align-items:center;gap:0;animation:rise 1.4s var(--ease) both}
-@keyframes rise{from{opacity:0;transform:translateY(24px)}}
-.emblem{width:clamp(96px,14vw,132px);height:auto;color:var(--brass-hi);margin-bottom:26px;overflow:visible}
-.emblem .ring{stroke-dasharray:365;stroke-dashoffset:365;animation:ring 2.4s .3s var(--ease) forwards}
-.emblem .ring2{opacity:.35;transform-origin:60px 60px;animation:spin 40s linear infinite}
-@keyframes ring{to{stroke-dashoffset:0}}@keyframes spin{to{transform:rotate(360deg)}}
-.gate-logo{font:400 clamp(64px,13vw,150px)/.9 var(--f-display);letter-spacing:.18em;margin-right:-.18em;text-shadow:0 10px 60px rgba(13,32,22,.6)}
-.gate-sub{font:400 clamp(11px,1.3vw,14px)/1 var(--f-body);letter-spacing:.52em;margin-right:-.52em;text-transform:uppercase;color:var(--brass-hi);margin-top:18px}
-.gate p{font:italic 400 clamp(20px,2.4vw,28px)/1.3 var(--f-accent);margin:26px 0 30px;color:var(--fog)}
-.quiet{margin-top:18px;font-size:14px;color:var(--mist);text-decoration:underline;text-underline-offset:5px;text-decoration-color:rgba(238,240,232,.35);padding:8px 12px}
+.gate-in{display:flex;flex-direction:column;align-items:center;animation:rise 1.4s var(--ease) both}
+@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.96)}}
+.orb{position:relative;width:min(300px,68vw);aspect-ratio:1;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6%;
+  background:radial-gradient(circle at 50% 38%,rgba(35,92,64,.72),rgba(13,32,22,.86) 70%);border:1px solid rgba(220,195,154,.55);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 30px 80px rgba(0,0,0,.35),inset 0 0 60px rgba(220,195,154,.08);
+  transition:transform .6s var(--ease),box-shadow .6s var(--ease),border-color .6s}
+.orb:hover,.orb:focus-visible{transform:scale(1.04);border-color:var(--brass-hi);box-shadow:0 30px 90px rgba(0,0,0,.4),0 0 0 10px rgba(220,195,154,.08),inset 0 0 70px rgba(220,195,154,.14)}
+.orb:active{transform:scale(.97)}
+.orb-tree{width:34%;height:auto;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35));animation:sway 7s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes sway{50%{transform:rotate(1.2deg)}}
+.orb-word{width:46%;height:auto}
+.orb-ring{position:absolute;inset:-1px;border-radius:50%;border:1px solid var(--brass-hi);opacity:0;animation:orb 3.2s ease-out infinite;pointer-events:none}
+.orb-ring.r2{animation-delay:1.6s}
+@keyframes orb{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.32);opacity:0}}
+.gate-hint{margin:34px 0 0;font:400 13px/1 var(--f-body);letter-spacing:.28em;text-transform:uppercase;color:var(--fog);display:flex;flex-direction:column;align-items:center;gap:10px}
+.gate-hint span{font:italic 400 17px/1 var(--f-accent);letter-spacing:.02em;text-transform:none;color:var(--brass-hi)}
+.quiet{margin-top:14px;font-size:13.5px;color:var(--mist);text-decoration:underline;text-underline-offset:5px;text-decoration-color:rgba(238,240,232,.35);padding:8px 12px}
 .quiet:hover{color:var(--fog)}
-.gate small{margin-top:6px;font-size:12.5px;color:var(--mist);letter-spacing:.04em}
 
 /* ——— Свет и титр сцены поверх видеофона ——— */
 .bg .leak{position:absolute;inset:-20%;mix-blend-mode:screen;opacity:.55;pointer-events:none;
@@ -315,16 +321,13 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 
 <div class="gate" id="gate" role="dialog" aria-modal="true" aria-label="Загородный клуб Лес">
   <div class="gate-in">
-    <svg class="emblem" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-      <circle class="ring2" cx="60" cy="60" r="58" stroke="currentColor" stroke-width=".8" stroke-dasharray="2 7"/>
-      <circle class="ring" cx="60" cy="60" r="52" stroke="currentColor" stroke-width="1.2" transform="rotate(-90 60 60)"/>
-      <path d="M60 24 73 45h-6l12 18h-7l13 20H65v13h-10V83H35l13-20h-7l12-18h-6Z" fill="currentColor"/>
-    </svg>
-    <div class="gate-logo">ЛЕС</div>
-    <div class="gate-sub">загородный клуб</div>
-    <p>Зеркальные дома у реки, рядом с Пятигорском</p>
-    <button class="btn solid" id="enter">Войти в лес<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></button>
-    <small style="margin-top:14px">под шум реки и пение птиц</small>
+    <button class="orb" id="enter" aria-label="Войти на сайт со звуком природы">
+      <span class="orb-ring" aria-hidden="true"></span>
+      <span class="orb-ring r2" aria-hidden="true"></span>
+      <img class="orb-tree" src="img/logo-tree.webp" alt="">
+      <img class="orb-word" src="img/logo-word.webp" alt="ЛЕС загородный клуб">
+    </button>
+    <p class="gate-hint">Нажмите, чтобы войти<span>со звуком реки и леса</span></p>
     <button class="quiet" id="enterQuiet">Войти без звука</button>
   </div>
 </div>
