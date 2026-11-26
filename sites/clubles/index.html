@@ -223,7 +223,7 @@ details p{margin:0 0 24px;color:var(--mist);max-width:60ch}
 .contacts{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 34px;margin-top:40px;color:var(--mist);font-size:15px}
 .contacts b{color:var(--fog);font-weight:500;user-select:all}
 .giant-wrap{position:relative;margin-top:60px}
-.giant{font:500 clamp(120px,29vw,460px)/.74 var(--f-display);letter-spacing:.02em;background:url(img/river.webp) center/cover;-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none;transform:translateY(8%)}
+.giant{font:500 clamp(120px,29vw,460px)/.74 var(--f-display);letter-spacing:.02em;background:url(img/moss.webp) center/cover;-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 14px 26px rgba(0,0,0,.45));color:transparent;user-select:none;transform:translateY(8%)}
 .giant .bl{display:inline-block;width:0;height:0}
 .squirrel{position:absolute;left:0;top:0;width:var(--sq,56px);height:auto;pointer-events:none;overflow:visible;filter:drop-shadow(0 5px 6px rgba(0,0,0,.4));will-change:transform}
 .squirrel .bd,.squirrel .hl,.squirrel .fl{fill:url(#sqFur);filter:url(#sqSoft)}
@@ -275,13 +275,13 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 .orb-word{width:46%;height:auto}
 .orb-ring{position:absolute;inset:-1px;border-radius:50%;border:1px solid var(--brass-hi);opacity:0;animation:orb 3.2s ease-out infinite;pointer-events:none}
 .orb-ring.r2{animation-delay:1.6s}
-.orb-load{position:absolute;inset:-7px;width:calc(100% + 14px);height:calc(100% + 14px);transform:rotate(-90deg);pointer-events:none;overflow:visible}
+.orb-load{position:absolute;inset:-22%;width:144%;height:144%;transform:rotate(-90deg);pointer-events:none;overflow:visible}
 .orb-load circle{fill:none;stroke-width:.9;vector-effect:non-scaling-stroke}
 .orb-load circle:first-child{stroke:rgba(238,240,232,.14)}
 .orb-load circle:last-child{stroke:var(--brass-hi);stroke-linecap:round;stroke-dasharray:339.3;stroke-dashoffset:339.3;transition:stroke-dashoffset .4s ease-out,opacity .8s .6s}
 .orb.ready .orb-load{opacity:0;transition:opacity 1s .5s}
 @keyframes orb{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.32);opacity:0}}
-.gate-hint{margin:34px 0 0;font:400 13px/1 var(--f-body);letter-spacing:.28em;text-transform:uppercase;color:var(--fog);display:flex;flex-direction:column;align-items:center;gap:10px}
+.gate-hint{margin:64px 0 0;font:400 13px/1 var(--f-body);letter-spacing:.28em;text-transform:uppercase;color:var(--fog);display:flex;flex-direction:column;align-items:center;gap:10px}
 .gate-hint span{font:italic 400 17px/1 var(--f-accent);letter-spacing:.02em;text-transform:none;color:var(--brass-hi)}
 .quiet{margin-top:14px;font-size:13.5px;color:var(--mist);text-decoration:underline;text-underline-offset:5px;text-decoration-color:rgba(238,240,232,.35);padding:8px 12px}
 .quiet:hover{color:var(--fog)}
@@ -301,6 +301,25 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 .scene.swap{opacity:0}
 @media(max-width:860px){.scene{display:none}}
 .gated .scene{opacity:0;visibility:hidden}
+
+/* ——— Новогоднее ——— */
+#heroLights{position:absolute;left:0;top:0;width:100%;z-index:1;pointer-events:none;overflow:visible}
+.swag{animation:swag 7s ease-in-out infinite alternate}
+@keyframes swag{from{transform:rotate(-.6deg)}to{transform:rotate(.6deg)}}
+.bulb .glow{opacity:.45;filter:blur(3px);animation:tw 2.6s ease-in-out infinite alternate;animation-delay:var(--d)}
+.bulb .glass{filter:drop-shadow(0 0 2px var(--c))}
+@keyframes tw{0%{opacity:.25}60%{opacity:.6}100%{opacity:.9}}
+.wreath{position:absolute;inset:-17%;width:134%;height:134%;pointer-events:none;overflow:visible;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+.wreath .bulb .glow{filter:blur(1.2px)}
+.glights{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.glights .bulb .glow{filter:blur(4px)}
+.bauble{animation:bsw 4.5s ease-in-out infinite alternate}
+@keyframes bsw{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+.gate-hint b{font-weight:400;font-variant-numeric:tabular-nums}
+.hero-load{position:absolute;z-index:3;left:50%;top:calc(env(safe-area-inset-top,0px) + 108px);transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:10px 18px;border-radius:999px;background:rgba(13,32,22,.6);border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:13.5px;transition:opacity .6s}
+.hero-load i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(220,195,154,.3);border-top-color:var(--brass-hi);animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.swag,.bauble,.bulb .glow{animation:none}}
 
 /* ——— Кнопка звука ——— */
 .snd{position:fixed;z-index:60;right:calc(max(18px,env(safe-area-inset-right,0px)));bottom:calc(18px + env(safe-area-inset-bottom,0px));height:52px;padding:0 20px 0 16px;border-radius:999px;display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font-size:13.5px;transition:border-color .3s,opacity 1s,transform .3s var(--ease)}
@@ -335,7 +354,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
       <img class="orb-tree" src="img/logo-tree.webp" alt="">
       <img class="orb-word" src="img/logo-word.webp" alt="ЛЕС загородный клуб">
     </button>
-    <p class="gate-hint">Нажмите, чтобы войти<span>со звуком реки и леса</span></p>
+    <p class="gate-hint" id="gateHint"><b id="gateTxt">Готовим лес для вас · 0%</b><span id="gateSub">загружаем видео, это пара секунд</span></p>
     <button class="quiet" id="enterQuiet">Войти без звука</button>
   </div>
 </div>
@@ -605,6 +624,80 @@ function filter(f){
 document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));filter(c.dataset.f)}));
 filter('all');
 
+/* ——— Новогоднее: гирлянды, венок, шары ——— */
+const XM=(()=>{
+  const NS='http://www.w3.org/2000/svg';
+  const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e};
+  const COL=['#ffd27a','#ff6a4d','#7fe39a','#ffd27a','#7fbfff','#fff1c9'];
+  const R=(a,b)=>a+Math.random()*(b-a);
+  // одна лампочка: свечение + стеклянная колба + цоколь
+  function bulb(g,x,y,s,col,ang){
+    const b=el('g',{transform:`translate(${x} ${y}) rotate(${ang||0})`,class:'bulb',style:`--d:${R(0,3).toFixed(2)}s;--c:${col}`},g);
+    el('circle',{cx:0,cy:s*1.4,r:s*3.2,class:'glow',fill:col},b);
+    el('rect',{x:-s*.45,y:-s*.2,width:s*.9,height:s*.7,rx:s*.15,fill:'#2b3a2c'},b);
+    el('ellipse',{cx:0,cy:s*1.45,rx:s*.75,ry:s*1.1,fill:col,class:'glass'},b);
+    el('ellipse',{cx:-s*.25,cy:s*1.1,rx:s*.18,ry:s*.38,fill:'#fff',opacity:.7},b);
+    return b}
+  // гирлянда-провисы по ширине первого экрана
+  function hero(){
+    const h=document.getElementById('hero');if(!h)return;let svg=document.getElementById('heroLights');
+    if(!svg){svg=el('svg',{id:'heroLights','aria-hidden':'true'});h.insertBefore(svg,h.querySelector('.hero-in'))}
+    svg.innerHTML='';const W=h.clientWidth,n=W<700?2:4,seg=W/n,sag=W<700?40:58,s=W<700?3.2:3.8,top=W<700?74:92;
+    svg.setAttribute('viewBox',`0 0 ${W} ${top+sag+60}`);svg.style.height=(top+sag+60)+'px';
+    for(let i=0;i<n;i++){const x0=i*seg-6,x1=(i+1)*seg+6,y0=top,sg=sag*R(.8,1.05);
+      const g=el('g',{class:'swag',style:`transform-origin:${(x0+x1)/2}px ${y0}px;animation-delay:${R(0,4).toFixed(2)}s`},svg);
+      const P=t=>[x0+(x1-x0)*t,y0+sg*4*t*(1-t)];
+      let d='';for(let t=0;t<=1.0001;t+=.02){const[x,y]=P(t);d+=(t?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)}
+      el('path',{d,fill:'none',stroke:'#1d2a1f','stroke-width':1.6},g);
+      const cnt=Math.round((x1-x0)/34);for(let k=1;k<cnt;k++){const t=k/cnt,[x,y]=P(t),slope=Math.atan2(sg*4*(1-2*t),(x1-x0))*57.3;bulb(g,x,y,s,k%5===2?'#ff6a4d':'#ffd9a0',slope*.5+R(-12,12))}}
+  }
+  // венок вокруг круга входа
+  function wreath(){
+    const o=document.getElementById('enter');if(!o||o.querySelector('.wreath'))return;
+    const svg=el('svg',{class:'wreath',viewBox:'0 0 100 100','aria-hidden':'true'});o.insertBefore(svg,o.firstChild);
+    const G=['#1c4a2a','#245b33','#2f6d3d','#163f23','#3b7d47'],r0=40.5;
+    const back=el('g',{},svg),front=el('g',{},svg);
+    for(let i=0;i<620;i++){const a=R(0,Math.PI*2),rr=r0+R(-4.5,4.5),x=50+rr*Math.cos(a),y=50+rr*Math.sin(a),dir=a+Math.PI/2+R(-1.1,1.1),L=R(2.6,5.4);
+      el('line',{x1:x.toFixed(2),y1:y.toFixed(2),x2:(x+L*Math.cos(dir)).toFixed(2),y2:(y+L*Math.sin(dir)).toFixed(2),stroke:G[i%5],'stroke-width':R(.35,.7).toFixed(2),'stroke-linecap':'round'},i<300?back:front)}
+    for(let i=0;i<9;i++){const a=i/9*Math.PI*2+.3,x=50+r0*Math.cos(a),y=50+r0*Math.sin(a); // шишки
+      const c=el('g',{transform:`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(a*57.3+R(-30,30)).toFixed(0)})`},front);
+      el('ellipse',{cx:0,cy:0,rx:1.5,ry:2.4,fill:'#5a3a1e'},c);for(let k=-1;k<=1;k++)el('path',{d:`M-1.4 ${k*.8}Q0 ${k*.8+.7} 1.4 ${k*.8}`,stroke:'#3a2410','stroke-width':.3,fill:'none'},c)}
+    for(let i=0;i<14;i++){const a=R(0,Math.PI*2),rr=r0+R(-3,3),x=50+rr*Math.cos(a),y=50+rr*Math.sin(a); // ягоды
+      for(let k=0;k<3;k++)el('circle',{cx:(x+R(-1.2,1.2)).toFixed(2),cy:(y+R(-1.2,1.2)).toFixed(2),r:R(.7,1),fill:'#b3202a'},front)}
+    const lg=el('g',{},front);for(let i=0;i<20;i++){const a=i/20*Math.PI*2+R(-.08,.08),rr=r0+R(-2.5,2.5);bulb(lg,50+rr*Math.cos(a),50+rr*Math.sin(a),.9,i%4===0?'#ff6a4d':'#ffd9a0',a*57.3+90)}
+    const bow=el('g',{transform:'translate(50 91)'},front); // бант внизу
+    el('path',{d:'M0 0C-4-4-10-5-11-1C-12 3-6 4 0 0Z',fill:'#a11d27'},bow);el('path',{d:'M0 0C4-4 10-5 11-1C12 3 6 4 0 0Z',fill:'#a11d27'},bow);
+    el('path',{d:'M-1 0L-5 8L-3 8L0 2Z',fill:'#8a1620'},bow);el('path',{d:'M1 0L5 8L3 8L0 2Z',fill:'#8a1620'},bow);el('circle',{cx:0,cy:0,r:1.8,fill:'#c42a35'},bow);
+    el('path',{d:'M-9-1.5C-6-3-3-2.5-1-1',stroke:'#e2525c','stroke-width':.5,fill:'none',opacity:.7},bow);
+  }
+  // гирлянда и шары на буквах «ЛЕС»: идёт по лицевой стороне букв чуть ниже верха
+  function letters(wrap,prof,x0,x1,fs){
+    let svg=wrap.querySelector('.glights');if(!svg){svg=el('svg',{class:'glights','aria-hidden':'true'});wrap.insertBefore(svg,wrap.querySelector('.squirrel'))}
+    const W=wrap.clientWidth,H=wrap.clientHeight;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.innerHTML='';
+    const top=x=>{let a=Math.round(x),b=a;while(a>0&&prof[a]<0)a--;while(b<prof.length-1&&prof[b]<0)b++;
+      if(prof[Math.round(x)]>=0)return prof[Math.round(x)];return Math.min(prof[a],prof[b])};
+    const drop=fs*.14,span=fs*.42,sag=fs*.07,pts=[];
+    for(let x=x0+fs*.04;x<=x1-fs*.04;x+=4){const k=((x-x0)%span)/span;pts.push([x,top(x)+drop+Math.sin(Math.PI*k)*sag])}
+    // сгладить
+    for(let it=0;it<3;it++)for(let i=1;i<pts.length-1;i++)pts[i][1]=(pts[i-1][1]+pts[i][1]*2+pts[i+1][1])/4;
+    el('path',{d:pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(''),fill:'none',stroke:'#14231a','stroke-width':Math.max(1.2,fs*.006)},svg);
+    const step=Math.max(18,fs*.085),s=Math.max(2.4,fs*.012);let acc=0,ci=0;
+    for(let i=1;i<pts.length;i++){acc+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);if(acc>=step){acc=0;bulb(svg,pts[i][0],pts[i][1],s,COL[ci++%COL.length],R(-15,15))}}
+    // шары в нижних точках провисов
+    const balls=[['#b3202a','#ff7b6e'],['#c99a3e','#ffe2a0'],['#1f5e8a','#8fd0ff']];let bi=0;
+    for(let x=x0+span*.5;x<x1-span*.3;x+=span*1.6){const i=Math.min(pts.length-1,Math.round((x-pts[0][0])/4));if(!pts[i])continue;const[px,py]=pts[i],len=fs*R(.1,.18),r=fs*.045,c=balls[bi++%3];
+      const id='bg'+bi;const gr=el('radialGradient',{id,cx:'35%',cy:'35%',r:'70%'},svg);el('stop',{offset:'0',['stop-color']:c[1]},gr);el('stop',{offset:'1',['stop-color']:c[0]},gr);
+      const g=el('g',{class:'bauble',style:`transform-origin:${px}px ${py}px;animation-delay:${R(0,3).toFixed(2)}s`},svg);
+      el('line',{x1:px,y1:py,x2:px,y2:py+len,stroke:'#d8c9a6','stroke-width':1},g);
+      el('rect',{x:px-r*.28,y:py+len-r*.1,width:r*.56,height:r*.32,rx:r*.06,fill:'#c9b27a'},g);
+      el('circle',{cx:px,cy:py+len+r*1.15,r,fill:`url(#${id})`},g);
+      el('ellipse',{cx:px-r*.35,cy:py+len+r*.8,rx:r*.22,ry:r*.32,fill:'#fff',opacity:.55},g)}
+  }
+  return{hero,wreath,letters};
+})();
+XM.wreath();XM.hero();
+{let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(XM.hero,200)})}
+
 /* ——— Белка на буквах «ЛЕС»: бегает по верхнему краю, перепрыгивает между буквами, присаживается ——— */
 (()=>{
   const wrap=document.getElementById('gwrap'),gi=document.getElementById('giant'),sq=document.getElementById('squirrel');
@@ -655,12 +748,12 @@ filter('all');
   function crumb(){const c=document.createElement('i');c.className='crumb';const lx=(dir>0?89/120:1-89/120)*size;
     c.style.left=(x-size/2+lx)+'px';c.style.top=(sq._y+36/90*size*.75)+'px';c.style.setProperty('--dx',(Math.random()*16-8)+'px');c.style.setProperty('--dy',(size*.45)+'px');
     wrap.appendChild(c);setTimeout(()=>c.remove(),1000)}
-  const start=()=>{measure();draw()};
+  const start=()=>{measure();draw();XM.letters(wrap,prof,x0,x1,parseFloat(getComputedStyle(gi).fontSize))};
   (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(start);
   let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(start,200)});
   sq.dataset.p='eat1';
   if(reduce)return;
-  new IntersectionObserver(e=>{const was=vis;vis=e[0].isIntersecting;if(vis&&!was){measure();last=performance.now();requestAnimationFrame(tick)}}).observe(wrap);
+  new IntersectionObserver(e=>{const was=vis;vis=e[0].isIntersecting;if(vis&&!was){measure();XM.letters(wrap,prof,x0,x1,parseFloat(getComputedStyle(gi).fontSize));last=performance.now();requestAnimationFrame(tick)}}).observe(wrap);
 })();
 
 /* Лёгкий параллакс фото внутри рамки */
@@ -743,16 +836,20 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
   const hv=document.getElementById('heroV'),vert=matchMedia('(max-aspect-ratio: 1/1)').matches;
   hv.poster=vert?'img/hero-poster-v.webp':'img/hero-poster.webp';
   const heroSrc=vert?'intro-v.mp4':'intro.mp4',prog=document.getElementById('orbProg'),orb=document.getElementById('enter');
-  const setProg=k=>{prog.style.strokeDashoffset=(1-k)*339.3};
+  const gTxt=document.getElementById('gateTxt'),gSub=document.getElementById('gateSub');let pct=0;
+  const setProg=k=>{prog.style.strokeDashoffset=(1-k)*339.3;pct=Math.round(k*100);if(k<1){gTxt.textContent='Готовим лес для вас · '+pct+'%';const hl=document.getElementById('heroLoad');hl&&(hl.lastChild.textContent='Загружаем видео · '+pct+'%')}};
   const playHero=()=>{if(matchMedia('(prefers-reduced-motion:reduce)').matches||!hv.src)return;const pr=hv.play();pr&&pr.catch(()=>{})};
-  const ready=url=>{hv.src=url;setProg(1);orb.classList.add('ready');hv.addEventListener('loadeddata',playHero,{once:true});playHero();window.bgStart&&bgStart()};
+  const ready=url=>{hv.src=url;setProg(1);orb.classList.add('ready');gTxt.textContent='Нажмите, чтобы войти';gSub.textContent='со звуком реки и леса';hv.addEventListener('loadeddata',playHero,{once:true});playHero();window.bgStart&&bgStart()};
   (async()=>{try{
       const r=await fetch(heroSrc);if(!r.ok||!r.body)throw 0;
       const total=+r.headers.get('content-length')||0,rd=r.body.getReader(),parts=[];let got=0;
       for(;;){const{done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;if(total)setProg(got/total*.98)}
       ready(URL.createObjectURL(new Blob(parts,{type:'video/mp4'})));
     }catch(e){ready(heroSrc)}})();
-  function openSite(){document.documentElement.classList.remove('gated');scrollTo(0,0);window.bgWarm&&bgWarm();try{hv.currentTime=0}catch(e){}playHero()}
+  function openSite(){document.documentElement.classList.remove('gated');scrollTo(0,0);window.bgWarm&&bgWarm();try{hv.currentTime=0}catch(e){}playHero();XM.hero();
+    if(!orb.classList.contains('ready')){ // нажали раньше, чем видео загрузилось — честно показываем, что оно грузится
+      const hl=document.createElement('div');hl.className='hero-load';hl.id='heroLoad';hl.innerHTML='<i></i><span>Загружаем видео · '+pct+'%</span>';document.getElementById('hero').appendChild(hl);
+      hv.addEventListener('playing',()=>{hl.style.opacity=0;setTimeout(()=>hl.remove(),700)},{once:true})}}
   const go=sound=>{if(sound){try{chirp.currentTime=0;const pr=chirp.play();pr&&pr.catch(()=>{})}catch(e){}Sound.set(true)}
     gate.classList.add('leave');setTimeout(()=>gate.remove(),1300);openSite()};
   document.getElementById('enter').addEventListener('click',()=>go(true));
