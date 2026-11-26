@@ -23,6 +23,7 @@ window.GKScene = (function () {
   var H = S.groundH + (S.floors - 1) * S.floorH;        // высота до кровли
   var HOME_T = new T.Vector3(0, H * 0.46, 0);
   var dirty = true, flying = null, lastT = 0, shadowKick = 4;
+  var frameHooks = [], modeHooks = [], resizeHooks = [], pickOn = true, ctx = null;   // точки подключения модулей (паркинг, машины, эффекты, интерьер)
 
   /* ---------- небо ---------- */
   var skyU = { top: { value: new T.Color() }, hor: { value: new T.Color() }, bot: { value: new T.Color() } };
@@ -75,7 +76,7 @@ window.GKScene = (function () {
       gr.addColorStop(0, 'rgba(' + c + ',.35)'); gr.addColorStop(1, 'rgba(' + c + ',0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); } }, 1 / 90);
   var GR = 1400;
   (function () {
-    var top = new T.Mesh(new T.CircleGeometry(GR, 64), M({ map: groundT, roughness: 1 })); top.rotation.x = -Math.PI / 2; top.receiveShadow = true;
+    var top = new T.Mesh(new T.CircleGeometry(GR, 64), M({ map: groundT, roughness: 1 })); top.rotation.x = -Math.PI / 2; top.receiveShadow = true; top.name = 'ground';
     var uv = top.geometry.attributes.uv; for (var i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) - 0.5) * 2 * GR, (uv.getY(i) - 0.5) * 2 * GR);
     site.add(top);
   })();
@@ -270,6 +271,7 @@ window.GKScene = (function () {
     stars.material.opacity = cur.stars; stars.visible = cur.stars > 0.01;
     clouds.visible = cur.cloud > 0.01; cloudMats.forEach(function (m) { m.opacity = cur.cloud * 0.95; });
     envMats.forEach(function (m) { m.envMapIntensity = m.userData.env * cur.env; });
+    modeHooks.forEach(function (f) { f(cur, mode); });
     renderer.shadowMap.needsUpdate = true; dirty = true;
   }
   function setMode(m) { if (!MODES[m]) return; mode = m; goal = MODES[m]; modeT = 2.6; document.body.className = document.body.className.replace(/mode-\w+/, 'mode-' + m); }
@@ -300,6 +302,7 @@ window.GKScene = (function () {
   function pick(cx, cy) {
     var r = canvas.getBoundingClientRect(); ndc.set((cx - r.left) / r.width * 2 - 1, -(cy - r.top) / r.height * 2 + 1);
     ray.setFromCamera(ndc, camera); scene.updateMatrixWorld();
+    if (!pickOn) return null;
     var hit = ray.intersectObjects(pickList, false); return hit.length ? hit[0].object.userData.key : null;
   }
   function zoneAnim(dt) {
@@ -318,11 +321,17 @@ window.GKScene = (function () {
   function resize() {
     vw = app.clientWidth || window.innerWidth; vh = app.clientHeight || window.innerHeight;
     renderer.setSize(vw, vh, false); camera.aspect = vw / vh; view(); dirty = true;
+    resizeHooks.forEach(function (f) { f(vw, vh, renderer.getPixelRatio()); });
   }
   function view() { if (inset.cr > 0.5 || inset.cb > 0.5) camera.setViewOffset(vw, vh, inset.cr / 2, inset.cb / 2, vw, vh); else camera.clearViewOffset(); camera.updateProjectionMatrix(); }
   function fly(target, dist, azim, polar) { flying = { t: target.clone(), d: dist, az: azim, po: polar }; }
   function flyStep(dt) {
     if (!flying) return false;
+    if (flying.pos) {                                   // свободный перелёт: позиция камеры + точка взгляда
+      var kp = 1 - Math.exp(-dt * (flying.speed || 2.6)); camera.position.lerp(flying.pos, kp); controls.target.lerp(flying.t, kp);
+      if (camera.position.distanceTo(flying.pos) < 0.08 && controls.target.distanceTo(flying.t) < 0.08) { camera.position.copy(flying.pos); controls.target.copy(flying.t); var cb = flying.cb; flying = null; if (cb) cb(); }
+      return true;
+    }
     var k = 1 - Math.exp(-dt * 3.2), off = camera.position.clone().sub(controls.target), sp = new T.Spherical().setFromVector3(off);
     controls.target.lerp(flying.t, k); sp.radius += (flying.d - sp.radius) * k;
     if (flying.po != null) sp.phi += (flying.po - sp.phi) * k;
@@ -386,13 +395,36 @@ window.GKScene = (function () {
     if (Math.abs(inset.r - inset.cr) > 0.5 || Math.abs(inset.b - inset.cb) > 0.5) { var ki = Math.min(1, dt * 7); inset.cr += (inset.r - inset.cr) * ki; inset.cb += (inset.b - inset.cb) * ki; view(); dirty = true; }
     else if (inset.cr !== inset.r || inset.cb !== inset.b) { inset.cr = inset.r; inset.cb = inset.b; view(); dirty = true; }
     if (flyStep(dt)) dirty = true;
+    for (var fh = 0; fh < frameHooks.length; fh++) if (frameHooks[fh](dt, t)) dirty = true;
     if (zoneAnim(dt)) dirty = true;
     controls.update();
     if (clouds.visible) { clouds.rotation.y += dt * 0.012; var ch = clouds.children; for (var i = 0; i < ch.length; i++) ch[i].position.y = ch[i].userData.y + Math.sin(t / 2600 + ch[i].userData.ph) * 0.9; dirty = true; }
     if (controls.autoRotate) dirty = true;
     if (shadowKick > 0) { shadowKick--; renderer.shadowMap.needsUpdate = true; dirty = true; }   // первые кадры: тени пересчитать наверняка
-    if (dirty) { dirty = false; renderer.render(scene, camera); }
+    if (dirty) { dirty = false; ctx.render(); }
   }
+
+  /* ---------- ctx: всё, что нужно модулям (js/cars.js, parking.js, interior.js, fx.js) ---------- */
+  var LIM0 = { minDistance: controls.minDistance, maxDistance: controls.maxDistance, minPolarAngle: controls.minPolarAngle, maxPolarAngle: controls.maxPolarAngle, enableZoom: true, enableRotate: true, rotateSpeed: controls.rotateSpeed };
+  var offList = ((location.search.match(/[?&]off=([^&]*)/) || [])[1] || '').split(',');
+  ctx = {
+    T: T, scene: scene, camera: camera, renderer: renderer, controls: controls, canvas: canvas, app: app,
+    house: house, houseRoot: houseRoot, site: site, sun: sun, hemi: hemi, sky: sky, clouds: clouds, zones: zones,
+    cur: cur, MODES: MODES, mode: function () { return mode; },
+    dims: { HX: HX, HZ: HZ, P0: P0, P1: P1, H: H, GH: S.groundH, FH: S.floorH, floors: S.floors, PX0: PX0, PX1: PX1, PZ0: PZ0, PZ1: PZ1, RW: RW, RS: RS, CX0: CX0, CX1: CX1, CZ0: CZ0, CZ1: CZ1 },
+    M: M, ctex: ctex, rnd: rnd,
+    enabled: function (name) { return offList.indexOf(name) < 0 && offList.indexOf('all') < 0; },
+    onFrame: function (f) { frameHooks.push(f); }, onMode: function (f) { modeHooks.push(f); f(cur, mode); }, onResize: function (f) { resizeHooks.push(f); f(vw, vh, renderer.getPixelRatio()); },
+    dirty: function () { dirty = true; }, shadows: function () { shadowKick = 3; dirty = true; },
+    render: function () { renderer.render(scene, camera); },                       // fx.js подменяет на рендер с эффектами
+    size: function () { return { w: vw, h: vh }; },
+    fly: fly, home: home, homeDist: homeDist,
+    flyTo: function (pos, target, cb, speed) { controls.autoRotate = false; flying = { pos: pos.clone(), t: target.clone(), cb: cb, speed: speed }; dirty = true; },
+    stopFly: function () { flying = null; },
+    limits: function (o) { var k; o = o || LIM0; for (k in LIM0) if (o[k] !== undefined) controls[k] = o[k]; else if (o === LIM0) controls[k] = LIM0[k]; dirty = true; },
+    picking: function (on) { pickOn = !!on; if (!on && hovered) { hovered = null; } dirty = true; },
+    select: select
+  };
 
   resize(); home(true); applyMode();
   loadModel(function () {
@@ -404,6 +436,6 @@ window.GKScene = (function () {
     setMode: setMode, mode: function () { return mode; }, select: select, home: home, setInset: setInset,
     autoRotate: function (on) { controls.autoRotate = !!on; dirty = true; },
     on: function (n, f) { listeners[n].push(f); },
-    floors: S.floors, _dbg: { scene: scene, renderer: renderer, camera: camera, sun: sun, hemi: hemi, render: function () { renderer.render(scene, camera); } }
+    floors: S.floors, ctx: ctx, _dbg: { scene: scene, renderer: renderer, camera: camera, sun: sun, hemi: hemi, render: function () { ctx.render(); } }
   };
 })();
