@@ -229,10 +229,20 @@ details p{margin:0 0 24px;color:var(--mist);max-width:60ch}
 .giant-wrap{position:relative;margin-top:60px}
 .giant{font:500 clamp(120px,29vw,460px)/.74 var(--f-display);letter-spacing:.02em;background:url(img/river.webp) center/cover;-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none;transform:translateY(8%)}
 .giant .bl{display:inline-block;width:0;height:0}
-.squirrel{position:absolute;left:0;top:0;width:var(--sq,56px);height:auto;fill:var(--brass-hi);pointer-events:none;overflow:visible;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));will-change:transform}
-.squirrel .eye{fill:var(--night)}
-.squirrel g{display:none}
-.squirrel[data-p="run1"] .p-run1,.squirrel[data-p="run2"] .p-run2,.squirrel[data-p="sit"] .p-sit{display:inline}
+.squirrel{position:absolute;left:0;top:0;width:var(--sq,56px);height:auto;pointer-events:none;overflow:visible;filter:drop-shadow(0 5px 6px rgba(0,0,0,.4));will-change:transform}
+.squirrel .bd,.squirrel .hl,.squirrel .fl{fill:url(#sqFur);filter:url(#sqSoft)}
+.squirrel .tl{fill:url(#sqTail);filter:url(#sqFuzz)}
+.squirrel .bl{fill:#f1dcb8}
+.squirrel .er{fill:#8c4519}.squirrel .tf{stroke:#8c4519;stroke-width:1.2;stroke-linecap:round;fill:none}
+.squirrel .ey,.squirrel .ns{fill:#1b120c}.squirrel .gl{fill:#fff}
+.squirrel .nt{fill:#7a4b25}.squirrel .nc{fill:#4f2f15}
+.squirrel g[class^="p-"]{display:none}
+.squirrel[data-p="run1"] .p-run1,.squirrel[data-p="run2"] .p-run2,.squirrel[data-p="eat1"] .p-eat,.squirrel[data-p="eat2"] .p-eat{display:inline}
+.squirrel .hd,.squirrel .pw{transition:transform .12s ease-out;transform-box:view-box}
+.squirrel[data-p="eat2"] .hd{transform:translate(0,1.6px) rotate(4deg);transform-origin:72px 40px}
+.squirrel[data-p="eat2"] .pw{transform:translate(-1.2px,1.8px)}
+.crumb{position:absolute;width:3px;height:3px;border-radius:50%;background:#c9a27a;pointer-events:none;animation:crumb .9s cubic-bezier(.4,0,1,1) forwards}
+@keyframes crumb{to{transform:translate(var(--dx),var(--dy));opacity:0}}
 .legal{position:relative;border-top:1px solid var(--line);padding-block:20px;font-size:12.5px;color:var(--mist);background:var(--night)}
 .legal .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
 
@@ -291,6 +301,19 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 @media(max-width:860px){.scene{display:none}}
 .gated .scene{opacity:0;visibility:hidden}
 
+/* ——— Вступительный ролик ——— */
+.film{position:fixed;inset:0;z-index:95;background:#0b1a12;opacity:0;transition:opacity 1s var(--ease)}
+.film.on{opacity:1}.film.leave{opacity:0;transform:scale(1.04);transition:opacity 1.3s var(--ease),transform 1.4s var(--ease);pointer-events:none}
+.film video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.film::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,26,18,.35),transparent 25%,transparent 70%,rgba(11,26,18,.55));pointer-events:none}
+.film-logo{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;opacity:0;transform:scale(.96);transition:opacity 1.4s var(--ease),transform 2.4s var(--ease);background:radial-gradient(circle at 50% 50%,rgba(11,26,18,.55),transparent 60%)}
+.film-logo img:first-child{width:clamp(70px,9vw,110px);height:auto}.film-logo img:last-child{width:clamp(150px,18vw,230px);height:auto}
+.film.logo .film-logo{opacity:1;transform:none}
+.film-skip{position:absolute;z-index:3;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));height:44px;padding:0 20px;border-radius:999px;background:rgba(13,32,22,.55);border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:13.5px;color:var(--fog);transition:border-color .3s}
+.film-skip:hover{border-color:var(--brass)}
+.film-bar{position:absolute;z-index:3;left:max(18px,env(safe-area-inset-left,0px));right:calc(max(18px,env(safe-area-inset-right,0px)) + 150px);bottom:calc(47px + env(safe-area-inset-bottom,0px));height:2px;background:rgba(238,240,232,.18);border-radius:2px;overflow:hidden}
+.film-bar i{display:block;height:100%;background:var(--brass-hi);transform-origin:0 50%;transform:scaleX(0)}
+
 /* ——— Кнопка звука ——— */
 .snd{position:fixed;z-index:60;right:calc(max(18px,env(safe-area-inset-right,0px)));bottom:calc(18px + env(safe-area-inset-bottom,0px));height:52px;padding:0 20px 0 16px;border-radius:999px;display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font-size:13.5px;transition:border-color .3s,opacity 1s,transform .3s var(--ease)}
 .snd:hover{border-color:var(--brass);transform:translateY(-2px)}
@@ -326,6 +349,13 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
     <p class="gate-hint">Нажмите, чтобы войти<span>со звуком реки и леса</span></p>
     <button class="quiet" id="enterQuiet">Войти без звука</button>
   </div>
+</div>
+
+<div class="film" id="film" hidden>
+  <video id="filmV" muted playsinline preload="auto"></video>
+  <div class="film-logo" aria-hidden="true"><img src="img/logo-tree.webp" alt=""><img src="img/logo-word.webp" alt=""></div>
+  <button class="film-skip" id="filmSkip">Пропустить</button>
+  <div class="film-bar"><i id="filmBar"></i></div>
 </div>
 
 <div class="scene" id="scene" aria-hidden="true"><span><b id="sceneName">Туман над лесом, рассвет</b><small>44°03′ с. ш. · 42°51′ в. д.</small></span></div>
@@ -514,27 +544,46 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
   </div>
   <div class="giant-wrap" id="gwrap" aria-hidden="true">
     <div class="giant" id="giant"><span>Л</span><span>Е</span><span>С</span><i class="bl"></i></div>
-    <svg class="squirrel" id="squirrel" viewBox="0 0 100 70">
+    <svg class="squirrel" id="squirrel" viewBox="0 0 120 90">
+      <defs>
+        <linearGradient id="sqFur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c26a2e"/><stop offset="1" stop-color="#8c4519"/></linearGradient>
+        <linearGradient id="sqTail" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d98e4f"/><stop offset=".55" stop-color="#b45d27"/><stop offset="1" stop-color="#7d3c16"/></linearGradient>
+        <filter id="sqFuzz" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="3.2"/></filter>
+        <filter id="sqSoft" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="5"/><feDisplacementMap in="SourceGraphic" scale="1.2"/></filter>
+      </defs>
       <g class="p-run1">
-        <path d="M30 44C14 46 4 36 6 22C8 10 20 4 30 9C24 12 21 19 24 27C27 35 34 38 33 44Z"/>
-        <ellipse cx="50" cy="46" rx="19" ry="9" transform="rotate(-6 50 46)"/>
-        <circle cx="72" cy="38" r="8"/><ellipse cx="79" cy="40" rx="5" ry="3.6"/><path d="M68 31L70 23L74 30Z"/>
-        <path d="M64 50L82 60L84 63L80 63L62 54Z"/><path d="M38 50C34 56 26 60 18 63L16 66L22 66C30 63 38 60 44 53Z"/>
-        <circle class="eye" cx="74" cy="36" r="1.3"/>
+        <path class="tl" d="M38 56C22 58 6 50 2 36C0 24 8 14 20 14C26 14 28 20 24 24C18 28 18 38 26 44C32 48 38 50 44 52Z"/>
+        <ellipse class="hl" cx="44" cy="58" rx="11" ry="8"/><path class="hl" d="M44 60C40 66 30 72 18 76C12 78 8 80 10 82L20 82C30 78 42 72 50 64Z"/>
+        <path class="bd" d="M34 60C40 50 60 46 78 48C86 49 92 52 94 56C90 62 76 64 60 64C48 64 38 64 34 60Z"/>
+        <path class="bl" d="M50 62C60 64 74 63 84 60C78 64 62 66 50 64Z"/>
+        <path class="fl" d="M84 56C90 62 98 68 104 72C108 74 110 76 108 78L100 78C94 74 86 68 80 62Z"/>
+        <path class="bd" d="M88 48C90 42 97 40 103 42C108 43 112 47 111 50C108 52 102 54 95 55Z"/>
+        <path class="er" d="M93 43L94 34L98 42Z"/><circle class="ey" cx="102" cy="45" r="1.6"/><circle class="ns" cx="111" cy="49" r="1.1"/>
       </g>
       <g class="p-run2">
-        <path d="M34 40C20 38 12 26 16 14C20 4 32 2 38 8C32 10 28 16 30 23C32 30 38 34 38 40Z"/>
-        <ellipse cx="50" cy="47" rx="16" ry="11" transform="rotate(-12 50 47)"/>
-        <circle cx="68" cy="37" r="8"/><ellipse cx="75" cy="39" rx="5" ry="3.6"/><path d="M64 30L66 22L70 29Z"/>
-        <path d="M58 52L60 66L64 68L66 66L64 52Z"/><path d="M42 50C44 58 52 64 58 66L60 68L54 68C46 66 40 60 38 54Z"/>
-        <circle class="eye" cx="70" cy="35" r="1.3"/>
+        <path class="tl" d="M42 58C26 54 18 40 22 26C26 14 38 8 48 12C54 15 52 22 46 24C40 26 36 34 40 42C42 48 46 52 48 56Z"/>
+        <path class="hl" d="M52 70C56 78 64 84 72 85L76 88L62 88C54 86 48 80 44 72Z"/>
+        <path class="bd" d="M40 66C38 54 48 42 64 42C78 42 88 50 88 60C88 66 82 70 74 70C62 70 48 72 40 66Z"/>
+        <path class="bl" d="M60 68C70 69 80 67 86 62C84 68 76 71 66 71Z"/><ellipse class="hl" cx="52" cy="64" rx="11" ry="9"/>
+        <path class="fl" d="M76 64C76 72 75 80 74 85L82 86C82 80 82 72 84 64Z"/>
+        <path class="bd" d="M84 50C86 44 92 42 98 44C102 45 105 48 104 51C101 53 96 55 90 56Z"/>
+        <path class="er" d="M88 45L89 36L93 44Z"/><circle class="ey" cx="97" cy="47" r="1.6"/><circle class="ns" cx="104" cy="50" r="1.1"/>
       </g>
-      <g class="p-sit">
-        <path d="M44 64C28 62 20 48 24 32C28 18 40 10 50 14C42 18 38 26 40 36C42 46 50 54 48 64Z"/>
-        <ellipse cx="56" cy="50" rx="11" ry="16" transform="rotate(10 56 50)"/>
-        <circle cx="62" cy="30" r="8"/><ellipse cx="69" cy="31" rx="4.5" ry="3.4"/><path d="M58 23L59 14L64 22Z"/>
-        <ellipse cx="66" cy="44" rx="4" ry="3"/><ellipse cx="57" cy="66" rx="10" ry="3"/>
-        <circle class="eye" cx="64" cy="28" r="1.3"/>
+      <g class="p-eat">
+        <path class="tl" d="M48 84C30 84 18 72 18 56C18 40 26 26 40 18C48 13 58 12 62 18C64 22 60 26 54 26C44 28 38 38 40 50C42 62 50 70 56 80Z"/>
+        <ellipse class="bd" cx="60" cy="74" rx="16" ry="13"/>
+        <path class="bd" d="M52 76C48 62 52 48 62 42C70 38 78 42 78 52C78 62 74 70 72 78Z"/>
+        <path class="bl" d="M66 46C74 46 76 56 74 66C72 72 68 74 66 72C64 62 62 52 66 46Z"/>
+        <path class="hl" d="M50 86C58 84 70 84 82 86C82 88 54 89 48 88Z"/>
+        <g class="hd">
+          <path class="bd" d="M64 40C61 32 65 24 73 22C80 21 86 25 90 30C92 33 90 36 86 37C82 39 77 42 72 43Z"/>
+          <path class="er" d="M70 25L71 14L76 23Z"/><path class="tf" d="M71 15L69 9M71 15L74 10"/>
+          <circle class="ey" cx="79" cy="29" r="1.7"/><circle class="gl" cx="79.6" cy="28.4" r=".5"/><circle class="ns" cx="90" cy="31" r="1.2"/>
+        </g>
+        <g class="pw">
+          <path class="fl" d="M74 50C80 46 84 42 86 38L89 39C88 44 82 50 76 54Z"/>
+          <ellipse class="nt" cx="89" cy="36" rx="4.2" ry="3.4"/><path class="nc" d="M86 33.6C88 32 91 32 92.6 34L91 35C89.6 34 88 34 87 35Z"/>
+        </g>
       </g>
     </svg>
   </div>
@@ -582,7 +631,7 @@ filter('all');
   const wrap=document.getElementById('gwrap'),gi=document.getElementById('giant'),sq=document.getElementById('squirrel');
   if(!wrap)return;
   const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  let prof=null,x0=0,x1=0,W=0,size=56,x=0,dir=1,mode='sit',until=0,target=0,last=0,frame=0,ft=0,vis=false;
+  let prof=null,x0=0,x1=0,W=0,size=56,x=0,dir=1,mode='eat',until=0,target=0,last=0,frame=0,ft=0,vis=false,chew=0,nextChew=0,crumbT=0;
   function measure(){
     const wr=wrap.getBoundingClientRect(),cs=getComputedStyle(gi),bl=gi.querySelector('.bl').getBoundingClientRect();
     W=Math.max(1,Math.ceil(wr.width));const H=Math.ceil(wr.height)+40,base=bl.top-wr.top;
@@ -605,26 +654,32 @@ filter('all');
     return{y,air:true};
   }
   function pickNext(now){
-    if(mode==='run'){mode='sit';until=now+1200+Math.random()*2600;if(Math.random()<.5)dir*=-1}
+    if(mode==='run'){mode='eat';until=now+3000+Math.random()*3500;nextChew=now+300}
     else{mode='run';let t,n=0;do{t=x0+size*.4+Math.random()*(x1-x0-size*.8);n++}while((Math.abs(t-x)<size*1.5||footY(t).air||footY(t+size*.3).air||footY(t-size*.3).air)&&n<60);target=t;dir=t>x?1:-1}
   }
   function draw(){
     if(!prof)return;
-    const f=footY(x),bob=mode==='run'&&!f.air?(frame?-size*.06:0):0;
-    sq.dataset.p=mode==='sit'?'sit':(f.air?'run1':(frame?'run2':'run1'));
-    const h=size*.7;sq.style.transform=`translate3d(${x-size/2}px,${f.y-h+size*.03+bob}px,0) scaleX(${dir})`;
+    const f=footY(x),bob=mode==='run'&&!f.air?(frame?-size*.05:0):0;
+    sq.dataset.p=mode==='eat'?(chew?'eat2':'eat1'):(f.air?'run1':(frame?'run2':'run1'));
+    const h=size*.75;sq._y=f.y-h+size*.02+bob;sq.style.transform=`translate3d(${x-size/2}px,${sq._y}px,0) scaleX(${dir})`;
   }
   function tick(now){
     if(!vis)return;const dt=Math.min(.05,(now-last)/1000);last=now;
     if(mode==='run'){x+=dir*size*3.4*dt;ft+=dt;if(ft>.085){ft=0;frame^=1}
       if((dir>0&&x>=target)||(dir<0&&x<=target)){x=target;pickNext(now)}}
-    else if(now>until)pickNext(now);
+    else{ // ест: грызёт орех короткими сериями, иногда замирает
+      if(now>nextChew){chew^=1;nextChew=now+(chew?120:110)+(Math.random()<.12?700:0)}
+      crumbT+=dt;if(crumbT>.7&&Math.random()<.05){crumbT=0;crumb()}
+      if(now>until){chew=0;pickNext(now)}}
     draw();requestAnimationFrame(tick);
   }
+  function crumb(){const c=document.createElement('i');c.className='crumb';const lx=(dir>0?89/120:1-89/120)*size;
+    c.style.left=(x-size/2+lx)+'px';c.style.top=(sq._y+36/90*size*.75)+'px';c.style.setProperty('--dx',(Math.random()*16-8)+'px');c.style.setProperty('--dy',(size*.45)+'px');
+    wrap.appendChild(c);setTimeout(()=>c.remove(),1000)}
   const start=()=>{measure();draw()};
   (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(start);
   let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(start,200)});
-  sq.dataset.p='sit';
+  sq.dataset.p='eat1';
   if(reduce)return;
   new IntersectionObserver(e=>{const was=vis;vis=e[0].isIntersecting;if(vis&&!was){measure();last=performance.now();requestAnimationFrame(tick)}}).observe(wrap);
 })();
@@ -703,7 +758,21 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
 (()=>{
   const gate=document.getElementById('gate');
   const chirp=new Audio('enter.mp3');chirp.preload='auto';chirp.volume=.6;
-  const go=sound=>{if(sound){try{chirp.currentTime=0;const pr=chirp.play();pr&&pr.catch(()=>{})}catch(e){}Sound.set(true)}window.bgWarm&&bgWarm();gate.classList.add('leave');document.documentElement.classList.remove('gated');scrollTo(0,0);setTimeout(()=>gate.remove(),1300)};
+  // вступительный ролик: дрон над лесом → моменты отдыха; своя версия для вертикального экрана
+  const film=document.getElementById('film'),fv=document.getElementById('filmV'),fbar=document.getElementById('filmBar');
+  const vert=matchMedia('(max-aspect-ratio: 1/1)').matches;fv.src=vert?'intro-v.mp4':'intro.mp4';fv.load();
+  let opened=false;
+  function openSite(){if(opened)return;opened=true;document.documentElement.classList.remove('gated');scrollTo(0,0);window.bgWarm&&bgWarm();
+    film.classList.add('leave');setTimeout(()=>{film.remove()},1400)}
+  function playFilm(){film.hidden=false;requestAnimationFrame(()=>film.classList.add('on'));
+    const pr=fv.play();pr&&pr.catch(openSite);
+    fv.addEventListener('timeupdate',()=>{const d=fv.duration||22;fbar.style.transform=`scaleX(${fv.currentTime/d})`;if(d-fv.currentTime<3.4)film.classList.add('logo')});
+    fv.addEventListener('ended',()=>setTimeout(openSite,900));fv.addEventListener('error',openSite);
+    setTimeout(()=>{if(fv.readyState<2)openSite()},6000)}
+  document.getElementById('filmSkip').addEventListener('click',openSite);
+  const go=sound=>{if(sound){try{chirp.currentTime=0;const pr=chirp.play();pr&&pr.catch(()=>{})}catch(e){}Sound.set(true)}
+    gate.classList.add('leave');setTimeout(()=>gate.remove(),1300);
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches){openSite();return}playFilm()};
   document.getElementById('enter').addEventListener('click',()=>go(true));
   document.getElementById('enterQuiet').addEventListener('click',()=>go(false));
 })();
