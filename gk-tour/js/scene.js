@@ -428,7 +428,7 @@ window.GKScene = (function () {
     for (i = 0; i < 7; i++) L.thuja.push({ x: 6.2 + i * 2, z: -22.6, y: 0.2, s: 0.8 + rnd() * 0.25 });
     for (i = 0; i < 9; i++) L.thuja.push({ x: FX + 0.75, z: -25 + i * 4, y: 0.2, s: 0.7 + rnd() * 0.2 });
     [[-7, -9.8], [-4, -9.9], [1.6, -22.5], [2, -6.2], [-1.5, 6.8], [1.8, 6.6], [6.2, 2.6], [9, 6.6], [12.4, 2.5], [15.4, 6.8], [18.4, 2.6], [22.5, -22.8], [26.6, -17], [22.4, -5.5], [26.8, 1], [22.6, 6.6], [6, -19], [11, -19.2], [17.8, -19], [-7, -15], [-7.2, 0.5], [2.2, -14]].forEach(function (q, n) { L[n % 3 === 1 ? 'rose' : 'shrub'].push({ x: q[0], z: q[1], y: 0.2, s: 0.8 + rnd() * 0.45 }); });
-    for (i = 0; i < 6; i++) L[i % 2 ? 'poplar' : 'birch'].push({ x: PX0 + 6 + i * 10.5, z: (PZ0 + FZ) / 2 - 0.3, y: 0.2, s: i % 2 ? 0.82 + rnd() * 0.15 : 0.9 });
+    for (i = 0; i < 6; i++) L[i % 2 ? 'broad' : 'birch'].push({ x: PX0 + 6 + i * 10.5, z: (PZ0 + FZ) / 2 - 0.3, y: 0.2, s: i % 2 ? 0.5 + rnd() * 0.1 : 0.85 });
     // крупные деревья вокруг участка — немного, но настоящие
     var free = function (x, z, r) { if (x > PX0 - r - 2 && x < DX1 + r + 2 && z > PZ0 - r - 2 && z < PZ1 + r) return false; if (x > RW[0] - r - 3 && x < RW[1] + r + 3) return false; if (z > RS[0] - r - 3 && z < RS[1] + r + 3) return false;
       if (x > sx0 + pitch - 9 || z < sz0 - pitch + 9) return false;
