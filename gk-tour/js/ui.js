@@ -128,7 +128,7 @@
   /* ---------- размещение: сцена сдвигается, чтобы дом не прятался под панелью ---------- */
   function layout() {
     var w = app.clientWidth, h = app.clientHeight, ir = 0, ib = 0, pr = 0, tall = w < 861 || w / h < 1;
-    if (startOn) { if (tall) ib = h * 0.4; else ir = w * 0.4; }
+    if (startOn) { if (tall) ib = h * 0.4; else ir = w * 0.46; }
     else if (panel.classList.contains('is-open') && !S.sub) { var r = panel.getBoundingClientRect(); if (!tall) { ir = r.width + 14; pr = ir; } else ib = r.height; }
     else if (card.classList.contains('is-on') && !tour.on && !S.sub) { var c = card.getBoundingClientRect(); if (!tall) ir = c.width * 0.9; else ib = c.height * 0.9; }
     app.style.setProperty('--ir', pr + 'px'); SC.setInset(ir, ib);

@@ -29,7 +29,7 @@ window.GKScene = (function () {
 
   /* ---------- небо: физическая атмосфера (THREE.Sky) + облака, луна, зарево города, дымка у горизонта ---------- */
   var SKY_DECL = [
-    'uniform float uGain; uniform float uMaxL; uniform float uNight; uniform float uCloud;',
+    'uniform float uGain; uniform float uMaxL; uniform float uNight; uniform float uCloud; uniform float uEnv; uniform vec3 uHorL;',
     'uniform vec3 uHor; uniform vec3 uBot; uniform vec3 uNTop; uniform vec3 uMoon; uniform vec3 uCloudLit; uniform vec3 uCloudDark; uniform vec3 uGlow;',
     'float gkH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
     'float gkN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(gkH(i), gkH(i + vec2(1.0, 0.0)), f.x), mix(gkH(i + vec2(0.0, 1.0)), gkH(i + vec2(1.0, 1.0)), f.x), f.y); }',
@@ -38,7 +38,7 @@ window.GKScene = (function () {
   var SKY_TAIL = [
     'vec3 col = min(retColor * uGain, vec3(uMaxL));',
     'float gh = direction.y, ghp = max(direction.y, 0.0);',
-    'vec3 nightC = mix(uHor, uNTop, pow(ghp, 0.45));',
+    'vec3 nightC = mix(uHorL, uNTop, pow(ghp, 0.45));',
     'float md = max(dot(direction, uMoon), 0.0);',
     'nightC += vec3(0.95, 0.93, 0.85) * (smoothstep(0.99986, 0.99991, md) * (1.3 + 0.5 * gkN(direction.xy * 160.0)) + pow(md, 900.0) * 0.2 + pow(md, 50.0) * 0.03);',
     'nightC += uGlow * exp(-ghp * 15.0);',
@@ -51,23 +51,24 @@ window.GKScene = (function () {
     '  vec3 cl = mix(uCloudLit, uCloudDark, smoothstep(0.58, 0.92, cn)) + uCloudLit * pow(sd, 10.0) * 0.45 * (1.0 - uNight);',
     '  col = mix(col, cl, cov);',
     '}',
-    'col = mix(col, uHor, exp(-ghp * 13.0));',
-    'col = mix(col, uBot, 1.0 - smoothstep(-0.05, 0.0, gh));',
+    'if (uEnv > 0.5) { col = mix(col, uHorL, exp(-ghp * 13.0)); col = mix(col, uBot, 1.0 - smoothstep(-0.05, 0.0, gh)); }',
     'gl_FragColor = vec4(col, 1.0);'
   ].join('\n');
+  // туман three.js смешивается уже после тонмаппинга — дымку у горизонта кладём так же, тогда земля и небо сходятся без шва
+  var SKY_POST = 'if (uEnv < 0.5) { float gkHz = max(exp(-max(direction.y, 0.0) * 13.0), 1.0 - smoothstep(-0.05, 0.0, direction.y)); gl_FragColor.rgb = mix(gl_FragColor.rgb, uHor, gkHz); }';
   function skyMaterial() {
     var sh = T.Sky.SkyShader, u = T.UniformsUtils.clone(sh.uniforms);
     u.uGain = { value: 0.55 }; u.uMaxL = { value: 30 }; u.uNight = { value: 0 }; u.uCloud = { value: 0.6 };
-    u.uHor = { value: new T.Color() }; u.uBot = { value: new T.Color() }; u.uNTop = { value: new T.Color() };
+    u.uEnv = { value: 0 }; u.uHorL = { value: new T.Color() }; u.uHor = { value: new T.Color() }; u.uBot = { value: new T.Color() }; u.uNTop = { value: new T.Color() };
     u.uMoon = { value: new T.Vector3(0.5, 0.2, -0.84).normalize() };
     u.uCloudLit = { value: new T.Color(1, 1, 1) }; u.uCloudDark = { value: new T.Color(0.6, 0.65, 0.7) }; u.uGlow = { value: new T.Color(0, 0, 0) };
-    var fs = sh.fragmentShader.replace('void main() {', SKY_DECL + '\nvoid main() {').replace('vWorldPosition - cameraPos', 'vWorldPosition - cameraPosition').replace('gl_FragColor = vec4( retColor, 1.0 );', SKY_TAIL);
+    var fs = sh.fragmentShader.replace('void main() {', SKY_DECL + '\nvoid main() {').replace('vWorldPosition - cameraPos', 'vWorldPosition - cameraPosition').replace('gl_FragColor = vec4( retColor, 1.0 );', SKY_TAIL).replace('#include <encodings_fragment>', '#include <encodings_fragment>\n' + SKY_POST);
     return new T.ShaderMaterial({ uniforms: u, vertexShader: sh.vertexShader, fragmentShader: fs, side: T.BackSide, depthWrite: false, fog: false });
   }
   function skySet(u, p, env) {                          // p — параметры режима (текущие или целевые)
     u.sunPosition.value.copy(p.sunP); u.turbidity.value = p.turb; u.rayleigh.value = p.ray; u.mieCoefficient.value = p.mie; u.mieDirectionalG.value = 0.8;
     u.uGain.value = p.skyG * 0.5 / p.exp; u.uMaxL.value = env ? 2.2 : 30; u.uNight.value = p.stars; u.uCloud.value = p.scl;
-    u.uHor.value.copy(p.hor); u.uBot.value.copy(env ? p.bot : p.hor); u.uNTop.value.copy(p.top);
+    u.uHor.value.copy(p.hor); u.uHorL.value.copy(p.hor).convertSRGBToLinear(); u.uEnv.value = env ? 1 : 0; u.uBot.value.copy(p.bot); u.uNTop.value.copy(p.top);
     u.uCloudLit.value.copy(p.cl); u.uCloudDark.value.copy(p.cd); u.uGlow.value.copy(p.glow);
   }
   var sky = new T.Mesh(new T.SphereGeometry(3000, 32, 16), skyMaterial()); sky.frustumCulled = false; sky.name = 'sky'; scene.add(sky);
@@ -509,13 +510,13 @@ window.GKScene = (function () {
   /* ---------- режимы ---------- */
   var C = function (h) { return new T.Color(h); }, K = function (r, g, b) { return new T.Color(r, g, b); }, V = function (x, y, z) { return new T.Vector3(x, y, z); };
   var MODES = {
-    day: { top: K(0.02, 0.05, 0.12), hor: K(0.52, 0.62, 0.76), bot: K(0.16, 0.17, 0.15), sunC: C(0xfff0dc), sun: 2.5, sunP: V(-120, 135, 150), hemiS: C(0xc4d8ff), hemiG: C(0x77705f), hemi: 0.42, exp: 0.9, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 0, env: 1, fogN: 150, fogF: 1150, sh: 0.2,
+    day: { top: K(0.02, 0.05, 0.12), hor: K(0.74, 0.82, 0.9), bot: K(0.16, 0.17, 0.15), sunC: C(0xfff0dc), sun: 2.5, sunP: V(-120, 135, 150), hemiS: C(0xc4d8ff), hemiG: C(0x77705f), hemi: 0.42, exp: 0.9, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 0, env: 1, fogN: 150, fogF: 1150, sh: 0.2,
       cl: K(0.95, 0.95, 0.95), cd: K(0.6, 0.65, 0.72), glow: K(0, 0, 0), mt: K(0.9, 0.94, 1), skyG: 1, scl: 0.8, turb: 2.5, ray: 1.1, mie: 0.004 },
-    sunset: { top: K(0.02, 0.03, 0.08), hor: K(0.8, 0.5, 0.36), bot: K(0.13, 0.1, 0.09), sunC: C(0xffb27a), sun: 2.3, sunP: V(-290, 44, 95), hemiS: C(0x9aa6d8), hemiG: C(0x6a5448), hemi: 0.4, exp: 0.95, win: 0.85, shop: 1.2, lamp: 0.55, stars: 0, cloud: 0, env: 1, fogN: 150, fogF: 1100, sh: 0.25,
+    sunset: { top: K(0.02, 0.03, 0.08), hor: K(0.93, 0.75, 0.63), bot: K(0.13, 0.1, 0.09), sunC: C(0xffb27a), sun: 2.3, sunP: V(-290, 44, 95), hemiS: C(0x9aa6d8), hemiG: C(0x6a5448), hemi: 0.4, exp: 0.95, win: 0.85, shop: 1.2, lamp: 0.55, stars: 0, cloud: 0, env: 1, fogN: 150, fogF: 1100, sh: 0.25,
       cl: K(1, 0.6, 0.4), cd: K(0.42, 0.33, 0.44), glow: K(0, 0, 0), mt: K(1, 0.74, 0.62), skyG: 1, scl: 0.9, turb: 6, ray: 2.6, mie: 0.006 },
-    night: { top: K(0.003, 0.006, 0.018), hor: K(0.014, 0.02, 0.045), bot: K(0.006, 0.007, 0.01), sunC: C(0x9db6ff), sun: 0.55, sunP: V(100, 180, 110), hemiS: C(0x4a5f98), hemiG: C(0x15171f), hemi: 0.3, exp: 1.0, win: 1.5, shop: 1.5, lamp: 1, stars: 1, cloud: 0, env: 0.9, fogN: 160, fogF: 1050, sh: 0.3,
+    night: { top: K(0.003, 0.006, 0.018), hor: K(0.085, 0.1, 0.17), bot: K(0.006, 0.007, 0.01), sunC: C(0x9db6ff), sun: 0.55, sunP: V(100, 180, 110), hemiS: C(0x4a5f98), hemiG: C(0x15171f), hemi: 0.3, exp: 1.0, win: 1.5, shop: 1.5, lamp: 1, stars: 1, cloud: 0, env: 0.9, fogN: 160, fogF: 1050, sh: 0.3,
       cl: K(0.05, 0.065, 0.11), cd: K(0.015, 0.02, 0.04), glow: K(0.1, 0.055, 0.022), mt: K(0.03, 0.045, 0.08), skyG: 1, scl: 0.55, turb: 2.5, ray: 1.1, mie: 0.004 },
-    clouds: { top: K(0.02, 0.05, 0.12), hor: K(0.78, 0.84, 0.92), bot: K(0.8, 0.84, 0.9), sunC: C(0xfff3df), sun: 1.9, sunP: V(-95, 175, 135), hemiS: C(0xe6eeff), hemiG: C(0xb9c0cc), hemi: 0.6, exp: 0.92, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 1, env: 1, fogN: 190, fogF: 700, sh: 0,
+    clouds: { top: K(0.02, 0.05, 0.12), hor: K(0.8, 0.87, 0.96), bot: K(0.8, 0.84, 0.9), sunC: C(0xfff3df), sun: 1.9, sunP: V(-95, 175, 135), hemiS: C(0xe6eeff), hemiG: C(0xb9c0cc), hemi: 0.6, exp: 0.92, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 1, env: 1, fogN: 190, fogF: 700, sh: 0,
       cl: K(1, 1, 1), cd: K(0.7, 0.75, 0.82), glow: K(0, 0, 0), mt: K(1, 1, 1), skyG: 1, scl: 0.3, turb: 2, ray: 1, mie: 0.003 }
   };
   var NUM = ['sun', 'hemi', 'exp', 'win', 'shop', 'lamp', 'stars', 'cloud', 'env', 'fogN', 'fogF', 'sh', 'skyG', 'scl', 'turb', 'ray', 'mie'], COL = ['top', 'hor', 'bot', 'sunC', 'hemiS', 'hemiG', 'cl', 'cd', 'glow', 'mt'];
@@ -537,7 +538,11 @@ window.GKScene = (function () {
     modeHooks.forEach(function (f) { f(cur, mode); });
     renderer.shadowMap.needsUpdate = true; dirty = true;
   }
-  function setMode(m) { if (!MODES[m]) return; mode = m; goal = MODES[m]; modeT = 2.6; envWant = m; document.body.className = document.body.className.replace(/mode-\w+/, 'mode-' + m); }
+  function setMode(m, instant) {                       // instant — без плавного перехода (например, при запуске)
+    if (!MODES[m]) return; mode = m; goal = MODES[m]; modeT = 2.6; envWant = m; document.body.className = document.body.className.replace(/mode-\w+/, 'mode-' + m);
+    if (instant) { modeT = 0; NUM.forEach(function (n) { cur[n] = goal[n]; }); COL.forEach(function (n) { cur[n].copy(goal[n]); }); cur.sunP.copy(goal.sunP);
+      try { scene.environment = envFor(m); } catch (e) {} envWant = null; applyMode(); shadowKick = 3; }
+  }
 
   /* ---------- этажи: зоны нажатия и подсветка (работают и с домом архитектора) ---------- */
   var zones = [], zoneByKey = {}, selected = null, hovered = null;

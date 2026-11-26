@@ -495,7 +495,7 @@
     fq(bRm, -23.85, -13.0, 7.6, 0.95, PI, [1, 1, 1], row(0), CY + 0.03); fq(bRm, -23.85, 1.5, 7.6, 0.95, PI, [1, 1, 1], row(1), CY + 0.03); fq(bRm, 6.0, 20.6, 9.6, 1.2, PI, [1, 1, 1], row(2), CY + 0.03); fq(bRm, 18.5, 24.2, 8.0, 1.0, PI, [1, 1, 1], row(3), CY + 0.03);
     var rm = bRm.mesh(new T.MeshBasicMaterial({ map: rt, transparent: true, depthWrite: false, toneMapped: false, fog: false })); rm.renderOrder = 6; schemeG.add(rm);
     var tag = new T.Sprite(new T.SpriteMaterial({ map: labelT('Лифт на ваш этаж', true), transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, toneMapped: false, fog: false }));
-    tag.position.set(2.1, H + 4.2, 19.4); tag.scale.set(0.2, 0.05, 1); tag.renderOrder = 12; schemeG.add(tag);
+    tag.position.set(2.1, H + 4.2, 19.4); tag.scale.set(0.13, 0.0325, 1); tag.renderOrder = 12; schemeG.add(tag);
   }
   function cabGlowTex() { return tex(128, 128, function (g) { var gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(0.3, 'rgba(255,255,255,.3)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }); }
 
@@ -538,11 +538,11 @@
       p = st.pose || START; place(p.ex, p.ez, p.yaw, p.pit); st.poseDirty = false;
     } else {
       ctx.limits({ minDistance: 80, maxDistance: 300, minPolarAngle: 0.3, maxPolarAngle: 1.3, enableZoom: true, enableRotate: true, rotateSpeed: 0.55 });
-      controls.target.set(1.5, 5.5, -3.5);
-      camera.position.copy(controls.target).add(v1.setFromSpherical(new T.Spherical(asp >= 1.25 ? 168 : Math.min(300, 168 * Math.pow(1.25 / asp, 0.85)), 0.97, 2.52)));
+      controls.target.set(7.5, 4.5, 0.8);
+      camera.position.copy(controls.target).add(v1.setFromSpherical(new T.Spherical(asp >= 1.25 ? 142 : Math.min(300, 142 * Math.pow(1.25 / asp, 0.85)), 0.97, 2.52)));
       followL.position.set(6, CY + 6, -8);
     }
-    for (i = 0; i < hot.length; i++) { hot[i].label.scale.set(inside ? 0.3 : 0.148, inside ? 0.075 : 0.037, 1); hot[i].label.position.y = inside ? FY + 1.02 : FY + 2.2; hot[i].label.material.depthTest = inside; }
+    for (i = 0; i < hot.length; i++) { hot[i].label.scale.set(inside ? 0.3 : 0.118, inside ? 0.075 : 0.0295, 1); hot[i].label.position.y = inside ? FY + 1.02 : FY + 2.2; hot[i].label.material.depthTest = inside; }
     controls.update(); applyLook(); hudSync();
   }
   function take() {

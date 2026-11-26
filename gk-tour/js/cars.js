@@ -279,7 +279,7 @@
   /* ================= улицы: припаркованные машины и движение ================= */
   (function () {
     var d = ctx.dims, RW = d.RW, RS = d.RS, cxW = (RW[0] + RW[1]) / 2, czS = (RS[0] + RS[1]) / 2, HALF = (RW[1] - RW[0]) / 2;
-    var LANE = 1.22, WRAP = 300, root = new T.Group(); root.name = 'cars';
+    var LANE = 1.12, WRAP = 300, root = new T.Group(); root.name = 'cars';
 
     // высота асфальта: луч сверху вниз по полосам (сцена окружения может меняться)
     var roadY = (function () {
@@ -300,19 +300,21 @@
     })();
 
     // --- припаркованные вдоль бордюров (во дворе машин нет: он закрыт для транспорта) ---
-    var parked = [], zeb0 = d.P1.x0 + 16 - 3, zeb1 = d.P1.x0 + 23.5 + 3;
-    function row(street, side, a, b, fill) {
-      for (var s = a + rnd() * 1.6; s < b - 2.4; s += 5.7 + rnd() * 0.5) {
-        var r = rnd(), tp = pickType(rnd()), col = pickPaint(rnd()), off = HALF - 1.07 - rnd() * 0.1, jit = (rnd() - 0.5) * 0.03;
-        if (r > fill) continue;
-        if (street === 1 && s > zeb0 && s < zeb1) continue;
-        if (street === 0) parked.push({ type: tp, color: col, x: cxW + side * off, y: roadY, z: s, ry: (side > 0 ? PI : 0) + jit });
-        else parked.push({ type: tp, color: col, x: s, y: roadY, z: czS + side * off, ry: (side > 0 ? PI / 2 : -PI / 2) + jit });
-      }
+    // у дома — в размеченных парковочных карманах (сетка разметки — как в scene.js), дальше — просто у бордюра;
+    // «зебры» у угла, перекрёсток и въезд к рампе паркинга остаются свободными
+    var parked = [];
+    function put(street, side, s, off) {
+      var tp = pickType(rnd()), col = pickPaint(rnd()), jit = (rnd() - 0.5) * 0.03;
+      if (street === 0) parked.push({ type: tp, color: col, x: cxW + side * off, y: roadY, z: s, ry: (side > 0 ? PI : 0) + jit });
+      else parked.push({ type: tp, color: col, x: s, y: roadY, z: czS + side * off, ry: (side > 0 ? PI / 2 : -PI / 2) + jit });
     }
-    row(0, 1, -64, RS[0] - 7, 0.55); row(0, -1, -64, RS[0] - 7, 0.5);
+    function row(street, side, a, b, fill) {
+      for (var s = a + rnd() * 1.6; s < b - 2.4; s += 5.7 + rnd() * 0.5) { var r = rnd(), off = HALF - 1.07 - rnd() * 0.1; if (r <= fill) put(street, side, s, off); }
+    }
+    function bays(street, side, a, pitch, n, fill) { for (var i = 0; i < n; i++) { var r = rnd(), sh = (rnd() - 0.5) * 0.5; if (r <= fill) put(street, side, a + (i + 0.5) * pitch + sh, HALF - 1.15); } }
+    bays(0, 1, -d.HZ + 1, 6.5, 7, 0.72); row(0, 1, -64, -d.HZ - 2, 0.5); row(0, -1, -64, d.PZ1 - 9, 0.5);
     row(0, 1, RS[1] + 8, RS[1] + 52, 0.4); row(0, -1, RS[1] + 8, RS[1] + 52, 0.4);
-    row(1, -1, RW[1] + 7, 60, 0.55); row(1, 1, RW[1] + 7, 60, 0.5);
+    bays(1, -1, -d.HX + 4, 6.3, 8, 0.72); row(1, -1, 41, 62, 0.5); row(1, 1, d.PX0 + 10.5, 62, 0.5);
     row(1, -1, RW[0] - 48, RW[0] - 8, 0.4); row(1, 1, RW[0] - 48, RW[0] - 8, 0.4);
     var parkedSet = makeInstanced(parked, { shadow: true }); parkedSet.name = 'cars-parked'; root.add(parkedSet);
 
@@ -333,7 +335,7 @@
     var blobMat = new T.MeshBasicMaterial({ map: blobTex, transparent: true, opacity: 0.74, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     var blobs = function (list) {
       var im = new T.InstancedMesh(flat(), blobMat, list.length); im.frustumCulled = false; im.renderOrder = 1;
-      list.forEach(function (c, i) { var sp = SPECS[c.type]; _o.position.set(c.x, roadY + 0.012, c.z); _o.rotation.set(0, c.ry, 0); _o.scale.set(sp.W + 0.95, 1, sp.L + 1.05); _o.updateMatrix(); im.setMatrixAt(i, _o.matrix); });
+      list.forEach(function (c, i) { var sp = SPECS[c.type]; _o.position.set(c.x, roadY + 0.03, c.z); _o.rotation.set(0, c.ry, 0); _o.scale.set(sp.W + 0.95, 1, sp.L + 1.05); _o.updateMatrix(); im.setMatrixAt(i, _o.matrix); });
       root.add(im); return im;
     };
     blobs(parked); var movBlobs = blobs(movers);
@@ -362,8 +364,8 @@
       for (var i = 0; i < movers.length; i++) {
         var m = movers[i], sp = SPECS[m.type], fx = Math.sin(m.ry), fz = Math.cos(m.ry), rx = fz, rz = -fx, hl = sp.L / 2, hw = sp.W / 2 - 0.22;
         movSet.userData.setTransform(i, m.x, roadY, m.z, m.ry, m.sc);
-        _o.position.set(m.x, roadY + 0.012, m.z); _o.rotation.set(0, m.ry, 0); _o.scale.set((sp.W + 0.95) * m.sc, 1, (sp.L + 1.05) * m.sc); _o.updateMatrix(); movBlobs.setMatrixAt(i, _o.matrix);
-        _o.position.set(m.x + fx * (hl - 0.4), roadY + 0.03, m.z + fz * (hl - 0.4)); _o.scale.set(6.2 * m.sc, 1, 14 * m.sc); _o.updateMatrix(); beams.setMatrixAt(i, _o.matrix);
+        _o.position.set(m.x, roadY + 0.03, m.z); _o.rotation.set(0, m.ry, 0); _o.scale.set((sp.W + 0.95) * m.sc, 1, (sp.L + 1.05) * m.sc); _o.updateMatrix(); movBlobs.setMatrixAt(i, _o.matrix);
+        _o.position.set(m.x + fx * (hl - 0.4), roadY + 0.036, m.z + fz * (hl - 0.4)); _o.scale.set(6.2 * m.sc, 1, 14 * m.sc); _o.updateMatrix(); beams.setMatrixAt(i, _o.matrix);
         var o = i * 12, yh = roadY + sp.belt[1] * 0.74, yt = roadY + sp.belt[0] * 0.84, kh = lampK * m.sc, kt = lampK * m.sc * 0.8;
         gPos[o] = m.x + fx * (hl - 0.05) + rx * hw; gPos[o + 1] = yh; gPos[o + 2] = m.z + fz * (hl - 0.05) + rz * hw;
         gPos[o + 3] = m.x + fx * (hl - 0.05) - rx * hw; gPos[o + 4] = yh; gPos[o + 5] = m.z + fz * (hl - 0.05) - rz * hw;
