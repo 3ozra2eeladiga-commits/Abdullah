@@ -218,6 +218,8 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 .dd .wk1{animation:dleg .32s ease-in-out infinite alternate}.dd .wk2{animation:dleg .32s ease-in-out infinite alternate-reverse}
 .dd .fly{animation:dfly 8s linear infinite}
 .dd .wave{animation:dwave .5s ease-in-out infinite alternate}
+.dd .jump{transform-box:fill-box;animation:djump .34s ease-out infinite alternate}
+@keyframes djump{to{transform:translateY(-7px)}}
 @keyframes dspin{to{transform:rotate(360deg)}}
 @keyframes dbounce{to{transform:translateY(-1.6px)}}
 @keyframes droll{to{transform:translateX(-400px)}}
@@ -609,7 +611,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
     <div class="cmp-card rv">
       <div class="cmp-top">
         <div><div class="eyebrow">Автодом · MAXUS T90 Explorer</div><h2>Дом, который едет <em>за вами</em></h2></div>
-        <p class="lead">Внедорожник с кроватью, кухней и душем. Нажимайте на моменты дня — человечек покажет, как тут живётся.</p>
+        <p class="lead">Внедорожник с кроватью, кухней и душем. Нажимайте на моменты дня — нарисованная семья покажет, как тут живётся.</p>
       </div>
       <div class="cmp-main">
         <div class="cmp-l">
@@ -935,9 +937,11 @@ XM.wreath();XM.hero();
   const root=document.getElementById('cmpDoodle');if(!root)return;
   const P=(d,c)=>`<path d="${d}"${c?` class="${c}"`:''}/>`;
   const wheel=(cx,spin)=>`<g class="${spin?'spin':''}" style="transform-origin:${cx}px 162px"><circle cx="${cx}" cy="162" r="18"/><circle cx="${cx}" cy="162" r="5"/>${P(`M${cx-18} 162h36M${cx} 144v36`,'dim')}</g>`;
-  const man=(x,y,o={})=>`<circle cx="${x}" cy="${y-41}" r="6.5"/>${P(`M${x} ${y-34}V${y-15}`)}`+
-    `<path d="M${x} ${y-15}L${x-6} ${y}" ${o.walk?`class="wk1" style="transform-origin:${x}px ${y-15}px"`:''}/><path d="M${x} ${y-15}L${x+6} ${y}" ${o.walk?`class="wk2" style="transform-origin:${x}px ${y-15}px"`:''}/>`+
-    P(o.arms||`M${x} ${y-29}L${x-8} ${y-19}M${x} ${y-29}L${x+8} ${y-19}`);
+  const man=(x,y,o={})=>{const k=o.k||1,r=o.k?5.4:6.5,hy=y-41*k,hip=y-15*k,sh=y-29*k;
+    const leg=(dx,c)=>`<path d="M${x} ${hip}L${x+dx*k} ${y}" ${o.walk?`class="${c}" style="transform-origin:${x}px ${hip}px"`:''}/>`;
+    return `<circle cx="${x}" cy="${hy}" r="${r}"/>`+(o.w?P(`M${x-r+1} ${hy-3}q-6 2-5 11`):'')+
+      (o.w?P(`M${x} ${y-34*k}L${x-8*k} ${hip+2}H${x+8*k}Z`):P(`M${x} ${y-34*k}V${hip}`))+leg(-6,'wk1')+leg(6,'wk2')+
+      P(o.arms||`M${x} ${sh}L${x-9*k} ${y-19*k}M${x} ${sh}L${x+9*k} ${y-19*k}`)};
   const camper=(o={})=>`<g class="${o.drive?'bounce':''}">`+
     P('M62 158V74M212 74V158M288 74V84M212 84H276L302 114L352 122Q360 124 360 134V158')+
     P('M62 158H98a22 22 0 0 1 44 0H268a22 22 0 0 1 44 0H360')+
@@ -950,33 +954,41 @@ XM.wreath();XM.hero();
   const ground=P('M0 180H400','dim');
   const rays=(cx,cy,r)=>{let d='';for(let i=0;i<8;i++){const a=i*Math.PI/4;d+=`M${(cx+Math.cos(a)*(r+5)).toFixed(1)} ${(cy+Math.sin(a)*(r+5)).toFixed(1)}L${(cx+Math.cos(a)*(r+12)).toFixed(1)} ${(cy+Math.sin(a)*(r+12)).toFixed(1)}`}return d};
   const SC=[
-    // 0 забрали у аэропорта
-    ()=>[ground+camper()+`<g class="walkin">${man(34,180,{walk:1,arms:'M34 151L26 160M34 151L44 160'})}<rect x="42" y="160" width="12" height="15" rx="2" class="a"/>${P('M48 160v-5','a')}</g>`+
+    // 0 забрали у аэропорта: ребёнок с шариком, мама, папа с чемоданом
+    ()=>[ground+camper()+`<g class="walkin">`+man(8,180,{walk:1,k:.66,arms:'M8 161L2 167M8 161L15 152'})+P('M15 152V135','a')+`<circle cx="15" cy="128" r="6.5" class="a"/>`+
+      man(26,180,{walk:1,w:1})+man(45,180,{walk:1,arms:'M45 151L37 160M45 151L53 160'})+`<rect x="49" y="161" width="11" height="14" rx="2" class="a"/>${P('M54.5 161v-5','a')}</g>`+
       `<g class="fly">${P('M28 8L0 0L7 8L0 16Z','a')}${P('M-6 8h-26','dim dash')}</g>`,`<text x="236" y="40">подадим к терминалу</text>`],
-    // 1 едем
+    // 1 едем: папа за рулём, мама рядом, ребёнок машет из окна
     ()=>[`<g class="roll dim">${P('M0 152L50 98L90 134L150 72L210 142L260 106L320 152L400 152L450 98L490 134L550 72L610 142L660 106L720 152L800 152')}</g>`+P('M0 191H400','road dim')+
-      camper({drive:1,inner:`<circle cx="250" cy="103" r="6"/>${P('M242 114q8-7 16 0')}`})+P('M20 100h26M6 126h36M22 150h22','a spd'),`<text x="70" y="36">4×4 · 218 л.с.</text>`],
-    // 2 обед
+      camper({drive:1,inner:`<circle cx="264" cy="103" r="6"/>${P('M256 114q8-7 16 0')}<circle cx="241" cy="104" r="5.4"/>${P('M236 101q-5 3-4 10')}${P('M234 114q7-6 14 0')}`+
+        `<circle cx="150" cy="107" r="5"/>${P('M150 112v6')}<path class="wave" style="transform-origin:155px 115px" d="M155 115l8-10"/>`})+P('M20 100h26M6 126h36M22 150h22','a spd'),`<text x="70" y="36">4×4 · 218 л.с.</text>`],
+    // 2 обед: папа готовит, мама несёт тарелку, ребёнок прыгает от радости
     ()=>[ground+camper({awn:1})+P('M14 152H48M18 152V180M44 152V180')+P('M24 152v-10h14v10M21 142h20')+P('M27 136q-4-6 0-12','a steam')+P('M35 136q4-6 0-12','a steam s2')+
-      man(66,180,{arms:'M66 151L45 146M66 151L74 162'})+`<circle cx="352" cy="34" r="10" class="a dim"/>`,`<text x="6" y="60">маркиза</text><text x="134" y="140">кухня</text>`],
-    // 3 отдых и энергия
+      man(66,180,{arms:'M66 151L45 146M66 151L74 162'})+man(98,180,{w:1,arms:'M98 151L89 158M98 151L109 149'})+P('M106 148h13','a')+
+      `<g class="jump">${man(128,180,{k:.66,arms:'M128 161L121 152M128 161L135 152'})}</g>`+`<circle cx="352" cy="34" r="10" class="a dim"/>`,`<text x="6" y="60">маркиза</text><text x="226" y="150">кухня внутри</text>`],
+    // 3 отдых: папа в кресле с чашкой, мама читает на ступеньке, ребёнок играет в мяч
     ()=>[ground+`<circle cx="352" cy="34" r="11" class="a"/><g class="rays" style="transform-origin:352px 34px">${P(rays(352,34,11),'a')}</g>`+P('M336 41L212 57','a flow')+
       camper({awn:1,inner:P('M92 58H206','a thick')+P('M112 54v8M134 54v8M156 54v8M178 54v8','a')+`<rect x="130" y="127" width="46" height="22" rx="3"/>${P('M176 134v8')}<rect x="134" y="131" width="38" height="14" rx="1.5" class="f charge"/>`+P('M196 62V138H180','a flow')})+
-      P('M27 142L31 161H52M31 161V180M52 161V180','dim')+`<circle cx="33" cy="128" r="6.5"/>`+P('M33 135L36 156H51V180')+P('M34 143L47 147')+P('M47 147v-7h7v7z','a')+P('M50 136q-3-5 0-9','a steam'),
+      P('M27 142L31 161H52M31 161V180M52 161V180','dim')+`<circle cx="33" cy="128" r="6.5"/>`+P('M33 135L36 156H51V180')+P('M34 143L47 147')+P('M47 147v-7h7v7z','a')+P('M50 136q-3-5 0-9','a steam')+
+      `<circle cx="92" cy="136" r="6"/>`+P('M87 133q-6 2-5 10')+P('M92 142V161H106V180')+P('M92 149L103 152')+P('M103 147l9 2v9l-9-2z','a')+
+      man(380,180,{k:.66,arms:'M380 161L373 156M380 161L388 153'})+`<circle cx="394" cy="148" r="4.5" class="a jump"/>`,
       `<text x="100" y="46">600 Вт солнца</text><text x="150" y="176">7,2 кВт·ч</text>`],
-    // 4 ночь
+    // 4 ночь: родители наверху, ребёнок спит внизу
     ()=>[ground+P('M348 20a15 15 0 1 0 14 24a12 12 0 0 1-14-24z','a')+[[30,30],[80,54],[120,18],[306,60],[384,84],[20,90],[330,96]].map((s,i)=>`<circle cx="${s[0]}" cy="${s[1]}" r="1.8" class="f tw" style="animation-delay:${(i*.37).toFixed(2)}s"/>`).join('')+
-      camper({up:1,glow:1,inner:`<circle cx="234" cy="53" r="5.5" class="a"/>`+P('M227 57H184','a')+P('M224 51q-18-8-40 3','a')}),
-      `<text x="252" y="24" class="zz">z</text><text x="262" y="16" class="zz z2" style="font-size:19px">z</text><text x="274" y="8" class="zz z3" style="font-size:23px">Z</text><text x="64" y="20">кровать 2,1 × 1,3 м</text>`],
-    // 5 утро
+      camper({up:1,glow:1,inner:`<circle cx="241" cy="53" r="5.2" class="a"/><circle cx="227" cy="54" r="4.8" class="a"/>`+P('M220 58H178','a')+P('M234 49q-24-9-54 5','a')+
+        `<circle cx="139" cy="108" r="4.4" class="a"/>`+P('M145 112h30','a')+P('M143 105q16-6 32 3','a')}),
+      `<text x="252" y="24" class="zz">z</text><text x="262" y="16" class="zz z2" style="font-size:19px">z</text><text x="274" y="8" class="zz z3" style="font-size:23px">Z</text><text x="150" y="88" class="zz z2" style="font-size:12px">z</text><text x="64" y="20">2 спальни — до 4 гостей</text>`],
+    // 5 утро: папа в душе, мама с кофе, ребёнок уже скачет
     ()=>[ground+`<circle cx="36" cy="38" r="11" class="a"/>${P(rays(36,38,11),'a dim')}`+P('M92 26q5-6 10 0q5-6 10 0M124 44q4-5 8 0q4-5 8 0','dim')+
       camper({cut:1,inner:P('M118 76V158','dash dim')+P('M68 84h18M86 84v6','a')+P('M80 94v10M88 96v10M96 94v10','a drops')+man(92,156,{arms:'M92 127L84 114M92 127L100 114'})})+
-      P('M14 160H46M18 160V180M42 160V180')+P('M24 160v-9h11v9M35 153h4v5h-4','a')+P('M29 146q-3-5 0-10','a steam'),`<text x="128" y="140">горячий душ</text><text x="0" y="122">кофе</text>`]];
+      P('M12 160H42M16 160V180M38 160V180')+P('M20 160v-9h11v9M31 153h4v5h-4','a')+P('M25 146q-3-5 0-10','a steam')+
+      man(54,180,{w:1,arms:'M54 151L46 149M54 151L62 160'})+P('M41 149v-7h7v7z','a')+
+      `<g class="jump">${man(384,180,{k:.66,arms:'M384 161L376 152M384 161L392 152'})}</g>`,`<text x="128" y="140">горячий душ</text><text x="0" y="122">кофе</text>`]];
   const S=[['airport','Прилетели — машина уже ждёт','Подадим кемпер прямо к терминалу аэропорта Минеральные Воды. Вещи в багажник — и в путь.',['аэропорт Минводы','бельё и посуда внутри']],
     ['mount','Дорога в горы','Настоящий внедорожник: полный привод с блокировкой, автомат и резина AT. Проедет там, где обычные автодома застревают.',['4×4','218 л.с.','автомат, 8 ступеней']],
     ['kitchen','Обед с видом на вершины','Раскрыли маркизу, достали стол. Внутри мойка, холодильник на 98 л с морозилкой и микроволновка.',['кухня','холодильник 98 л','маркиза']],
     ['sunset','Отдых без розетки','Солнечные панели заряжают батарею — света, холодильника и проектора хватает на сутки. Кондиционер летом, отопитель в холод.',['600 Вт солнца','7,2 кВт·ч','климат']],
-    ['bed','Ночь под звёздами','Крыша поднимается: наверху двуспальная кровать с окнами в сетке, внизу вторая спальная зона. Всего до четырёх гостей.',['до 4 гостей','кровать 2,1 × 1,3 м']],
+    ['bed','Ночь под звёздами','Крыша поднимается: наверху двуспальная кровать для родителей, внизу вторая спальная зона для детей. Всего до четырёх гостей.',['до 4 гостей','кровать 2,1 × 1,3 м']],
     ['lounge','Утро у реки','Горячий душ и туалет прямо в кемпере, кофе за столиком у окна. А вернувшись в клуб, можно сразу в баню.',['душ и туалет','горячая вода']]];
   const tabs=[...document.querySelectorAll('#cmpTabs .chip')],A=document.getElementById('cpA'),B=document.getElementById('cpB'),txt=document.getElementById('cmpTxt'),T=document.getElementById('cmpT'),Pp=document.getElementById('cmpP'),C=document.getElementById('cmpC');
   let cur=-1,img=A,auto=true,timer=0,vis=false;
