@@ -384,7 +384,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 .scene b{display:block;font:italic 400 17px/1.1 var(--f-accent);letter-spacing:.01em}
 .scene small{display:block;font:500 10.5px/1 var(--f-body);letter-spacing:.24em;text-transform:uppercase;color:var(--brass-hi);margin-top:4px;font-variant-numeric:tabular-nums}
 .scene.swap{opacity:0}
-@media(max-width:860px){.scene{display:none}}
+@media(max-width:1799px){.scene{display:none}}
 .gated .scene{opacity:0;visibility:hidden}
 
 /* ——— Подбор дома: фото дома — главное ——— */
@@ -405,6 +405,8 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 .pick-res strong{display:block;font:300 clamp(36px,6vw,76px)/1 var(--f-display);letter-spacing:-.03em;text-shadow:0 4px 30px rgba(0,0,0,.4)}
 .pick-res p{margin:10px 0 0;font-size:clamp(15px,1.3vw,18px);color:var(--fog);opacity:.9}
 .pick-res .pk-r{display:flex;align-items:center;gap:18px}
+.pick-res .price{white-space:nowrap}
+@media(max-width:760px){.pick-res .pk-r{width:100%;justify-content:space-between}.pick-res .price{font-size:19px}}
 @media(max-width:760px){
   .pick{overflow:visible;min-height:0;padding:0;border:0;border-radius:0}
   .pick-q{display:flex;max-width:none;margin-bottom:10px}
@@ -431,10 +433,13 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 @media(prefers-reduced-motion:reduce){.swag,.bauble,.bulb .glow{animation:none}}
 
 /* ——— Кнопка звука ——— */
-.snd{position:fixed;z-index:60;right:calc(max(18px,env(safe-area-inset-right,0px)));bottom:calc(18px + env(safe-area-inset-bottom,0px));height:52px;padding:0 20px 0 16px;border-radius:999px;display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font-size:13.5px;transition:border-color .3s,opacity 1s,transform .3s var(--ease)}
-.snd:hover{border-color:var(--brass);transform:translateY(-2px)}
+.snd{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:rgba(238,240,232,.06);border:1px solid var(--line);transition:border-color .3s,background .3s}
+.snd #sndText{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.snd .wave{gap:2.5px;height:18px}
+.snd:hover{border-color:var(--brass);background:rgba(238,240,232,.12)}
 .snd .wave i{background:var(--brass-hi)}
-.snd[aria-pressed="false"] .wave i{animation:none;height:3px}
+.snd[aria-pressed="false"] .wave i{animation:none;height:3px;opacity:.6}
+@media(max-width:560px){.nav{padding-left:16px;gap:8px}.nav-r{gap:8px}.snd{width:42px;height:42px}.logo b{font-size:19px}.logo span{font-size:8px;letter-spacing:.22em}.nav .btn.small{padding-left:14px;gap:8px;font-size:13px}}
 
 
 /* ——— Появление (из видимого состояния) ——— */
@@ -470,7 +475,6 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 
 <div class="scene" id="scene" aria-hidden="true"><span><b id="sceneName">Туман над лесом, рассвет</b><small>44°03′ с. ш. · 42°51′ в. д.</small></span></div>
 
-<button class="snd" id="snd" aria-pressed="false" aria-label="Звук леса"><span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span id="sndText">Звук выключен</span></button>
 
 <header class="nav">
   <a class="logo" href="#top" aria-label="Лес — загородный клуб"><b>ЛЕС</b><span>загородный клуб</span></a>
@@ -484,6 +488,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
   </ul>
   <div class="nav-r">
     <span class="tel">+7 918 799-38-88</span>
+    <button class="snd" id="snd" aria-pressed="false" aria-label="Звук леса" title="Звук леса"><span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span id="sndText">Звук выключен</span></button>
     <a class="btn solid small" href="https://clubles.ru/booking/" target="_blank" rel="noopener">Забронировать<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></a>
   </div>
 </header>
