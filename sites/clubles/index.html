@@ -8,15 +8,15 @@
    баня — живой пульт голосовых сценариев, сферы — купол. Один цветной акцент: тёплая латунь. */
 :root{
   color-scheme:dark;
-  --night:#0b120e;      /* земля под пологом */
-  --moss:#123524;       /* фирменный зелёный клуба */
-  --pine:#1a4630;       /* зелёный светлее — для поверхностей */
+  --night:#11281c;      /* земля под пологом */
+  --moss:#17422d;       /* фирменный зелёный клуба */
+  --pine:#235c40;       /* зелёный светлее — для поверхностей */
   --brass:#b99d75;      /* фирменная латунь */
   --brass-hi:#dcc39a;
   --fog:#eef0e8;        /* основной текст */
-  --mist:#a9b3a6;       /* второстепенный текст */
-  --line:rgba(238,240,232,.14);
-  --glass:rgba(11,18,14,.55);
+  --mist:#cbd5c7;       /* второстепенный текст */
+  --line:rgba(238,240,232,.2);
+  --glass:rgba(13,32,22,.5);
   --f-display:"Unbounded","Arial Black",system-ui,sans-serif;
   --f-accent:"Cormorant Garamond","Times New Roman",serif;
   --f-body:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -52,8 +52,8 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 .btn.solid{background:var(--brass);color:var(--night);border-color:var(--brass)}
 .btn.solid .dot{color:var(--brass-hi)}
 .btn.solid .dot::before{background:var(--night)}
-.btn.solid:hover{color:var(--fog);border-color:var(--pine)}
-.btn.solid:hover .dot::before{background:var(--moss)}
+.btn.solid:hover,.btn.solid:focus-visible{color:var(--fog);border-color:var(--pine)}
+.btn.solid:hover .dot::before,.btn.solid:focus-visible .dot::before{background:var(--moss)}
 .btn.small{height:46px;padding-left:20px;font-size:14px;gap:12px}
 .btn.small .dot{width:32px;height:32px}
 
@@ -73,9 +73,9 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 /* ——— Герой: фонарь в ночном лесу ——— */
 .hero{position:relative;min-height:min(900px,96svh);display:flex;align-items:flex-end;padding-block:150px 0;overflow:hidden;--mx:68%;--my:42%}
 .hero .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.hero .dark{filter:brightness(.3) saturate(.55) hue-rotate(8deg)}
+.hero .dark{filter:brightness(.55) saturate(.75)}
 .hero .light{-webkit-mask-image:radial-gradient(circle clamp(150px,22vw,330px) at var(--mx) var(--my),#000 0,rgba(0,0,0,.55) 45%,transparent 100%);mask-image:radial-gradient(circle clamp(150px,22vw,330px) at var(--mx) var(--my),#000 0,rgba(0,0,0,.55) 45%,transparent 100%)}
-.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,18,14,.55) 0,transparent 30%,transparent 45%,var(--night) 100%);pointer-events:none}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,32,22,.55) 0,transparent 30%,transparent 45%,var(--night) 100%);pointer-events:none}
 #flies{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
 .hero-in{position:relative;z-index:2;width:100%}
 .hero h1{font-size:clamp(38px,7.4vw,112px);line-height:.98;margin-block:22px 26px;max-width:12ch}
@@ -107,8 +107,8 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 .chip[aria-pressed="true"]{background:var(--fog);color:var(--night);border-color:var(--fog)}
 .slats{display:flex;gap:8px;height:clamp(460px,62vh,640px)}
 .slat{position:relative;flex:1 1 0;min-width:0;border-radius:22px;overflow:hidden;cursor:pointer;transition:flex-grow .7s var(--ease),opacity .4s,filter .4s;background:var(--moss)}
-.slat img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease),filter .6s;filter:brightness(.55) saturate(.8)}
-.slat::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(11,18,14,.92) 100%)}
+.slat img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease),filter .6s;filter:brightness(.82) saturate(.92)}
+.slat::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(13,32,22,.92) 100%)}
 .slat .tag{position:absolute;z-index:2;left:0;right:0;bottom:22px;display:flex;justify-content:center;transition:opacity .3s}
 .slat .tag span{writing-mode:vertical-rl;transform:rotate(180deg);font:400 14px/1 var(--f-display);letter-spacing:.08em;white-space:nowrap}
 .slat .num{position:absolute;z-index:2;top:18px;left:0;right:0;text-align:center;font:500 12px/1 var(--f-body);color:var(--brass);font-variant-numeric:tabular-nums}
@@ -138,7 +138,7 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 }
 
 /* ——— Баня: пульт голоса ——— */
-.bath{background:linear-gradient(180deg,var(--night),var(--moss) 30%,var(--moss) 70%,var(--night));--mood:var(--brass-hi)}
+.bath{background:linear-gradient(180deg,transparent,rgba(23,66,45,.86) 28%,rgba(23,66,45,.86) 72%,transparent);--mood:var(--brass-hi)}
 .bath-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:clamp(28px,5vw,72px);align-items:center}
 .stage{position:relative;border-radius:28px;overflow:hidden;aspect-ratio:4/3.3;background:#000}
 .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s;filter:saturate(.9)}
@@ -152,7 +152,7 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 @keyframes wave{50%{transform:scaleY(.35)}}
 .bath h2{margin-block:18px 20px}
 .modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-block:30px}
-.mode{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:18px;border:1px solid var(--line);text-align:left;transition:all .4s var(--ease);background:rgba(11,18,14,.35)}
+.mode{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:18px;border:1px solid var(--line);text-align:left;transition:all .4s var(--ease);background:rgba(13,32,22,.35)}
 .mode svg{width:26px;height:26px;flex:none;color:var(--brass)}
 .mode b{display:block;font-weight:500;font-size:15.5px}
 .mode small{color:var(--mist);font-size:12.5px}
@@ -182,11 +182,11 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 /* ——— Автодом ——— */
 .camper{position:relative;border-radius:32px;overflow:hidden;min-height:480px;display:flex;align-items:flex-end;isolation:isolate}
 .camper>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
-.camper::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,18,14,.9) 0,rgba(11,18,14,.35) 60%,transparent);z-index:-1}
+.camper::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,32,22,.9) 0,rgba(13,32,22,.35) 60%,transparent);z-index:-1}
 .camper-in{padding:clamp(24px,4vw,56px);max-width:620px}
 .camper h2{font-size:clamp(28px,3.8vw,48px);margin-block:16px}
 .camper .meta{margin-block:20px 26px}
-@media(max-width:700px){.camper::before{background:linear-gradient(0deg,rgba(11,18,14,.95) 30%,rgba(11,18,14,.2))}}
+@media(max-width:700px){.camper::before{background:linear-gradient(0deg,rgba(13,32,22,.95) 30%,rgba(13,32,22,.2))}}
 
 /* ——— Дорога ——— */
 .way-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:clamp(28px,5vw,72px)}
@@ -237,11 +237,65 @@ details p{margin:0 0 24px;color:var(--mist);max-width:60ch}
 .legal{position:relative;border-top:1px solid var(--line);padding-block:20px;font-size:12.5px;color:var(--mist);background:var(--night)}
 .legal .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
 
+
+/* ——— Живой фон: нарисованный лес ——— */
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s var(--ease)}
+.rev,.tent,.mode,.addr,.chip{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.rev,.tent,.addr{background:rgba(13,32,22,.46)}
+.route,details{border-color:rgba(238,240,232,.24)}
+
+/* ——— Вход ——— */
+.gate{position:fixed;inset:0;z-index:100;display:none;place-items:center;text-align:center;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px max(20px,env(safe-area-inset-left,0px));background:radial-gradient(ellipse at 50% 45%,rgba(13,32,22,.15),rgba(13,32,22,.72));transition:opacity 1s var(--ease),transform 1.2s var(--ease)}
+.gated .gate{display:grid}
+.gated body{overflow:hidden}
+.gated main,.gated .nav,.gated .snd{opacity:0;visibility:hidden;filter:blur(12px)}
+.gate.leave{opacity:0;transform:scale(1.12);pointer-events:none}
+.gate-in{display:flex;flex-direction:column;align-items:center;gap:0;animation:rise 1.4s var(--ease) both}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}}
+.emblem{width:clamp(96px,14vw,132px);height:auto;color:var(--brass-hi);margin-bottom:26px;overflow:visible}
+.emblem .ring{stroke-dasharray:365;stroke-dashoffset:365;animation:ring 2.4s .3s var(--ease) forwards}
+.emblem .ring2{opacity:.35;transform-origin:60px 60px;animation:spin 40s linear infinite}
+@keyframes ring{to{stroke-dashoffset:0}}@keyframes spin{to{transform:rotate(360deg)}}
+.gate-logo{font:400 clamp(64px,13vw,150px)/.9 var(--f-display);letter-spacing:.18em;margin-right:-.18em;text-shadow:0 10px 60px rgba(13,32,22,.6)}
+.gate-sub{font:400 clamp(11px,1.3vw,14px)/1 var(--f-body);letter-spacing:.52em;margin-right:-.52em;text-transform:uppercase;color:var(--brass-hi);margin-top:18px}
+.gate p{font:italic 400 clamp(20px,2.4vw,28px)/1.3 var(--f-accent);margin:26px 0 30px;color:var(--fog)}
+.quiet{margin-top:18px;font-size:14px;color:var(--mist);text-decoration:underline;text-underline-offset:5px;text-decoration-color:rgba(238,240,232,.35);padding:8px 12px}
+.quiet:hover{color:var(--fog)}
+.gate small{margin-top:6px;font-size:12.5px;color:var(--mist);letter-spacing:.04em}
+
+/* ——— Кнопка звука ——— */
+.snd{position:fixed;z-index:60;right:calc(max(18px,env(safe-area-inset-right,0px)));bottom:calc(18px + env(safe-area-inset-bottom,0px));height:52px;padding:0 20px 0 16px;border-radius:999px;display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font-size:13.5px;transition:border-color .3s,opacity 1s,transform .3s var(--ease)}
+.snd:hover{border-color:var(--brass);transform:translateY(-2px)}
+.snd .wave i{background:var(--brass-hi)}
+.snd[aria-pressed="false"] .wave i{animation:none;height:3px}
+
 /* ——— Появление (из видимого состояния) ——— */
 .js .rv{opacity:.25;transform:translateY(26px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
 .js .rv.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.js .rv{opacity:1;transform:none}html{scroll-behavior:auto}}
 </style>
+
+<script>document.documentElement.classList.add('js','gated')</script>
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-label="Загородный клуб Лес">
+  <div class="gate-in">
+    <svg class="emblem" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+      <circle class="ring2" cx="60" cy="60" r="58" stroke="currentColor" stroke-width=".8" stroke-dasharray="2 7"/>
+      <circle class="ring" cx="60" cy="60" r="52" stroke="currentColor" stroke-width="1.2" transform="rotate(-90 60 60)"/>
+      <path d="M60 24 73 45h-6l12 18h-7l13 20H65v13h-10V83H35l13-20h-7l12-18h-6Z" fill="currentColor"/>
+    </svg>
+    <div class="gate-logo">ЛЕС</div>
+    <div class="gate-sub">загородный клуб</div>
+    <p>Зеркальные дома у реки, рядом с Пятигорском</p>
+    <button class="btn solid" id="enter">Войти в лес<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></button>
+    <small style="margin-top:14px">со звуками реки, птиц и тихой музыкой</small>
+    <button class="quiet" id="enterQuiet">Войти без звука</button>
+  </div>
+</div>
+
+<button class="snd" id="snd" aria-pressed="false" aria-label="Звук леса"><span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span id="sndText">Звук выключен</span></button>
 
 <header class="nav">
   <a class="logo" href="#top" aria-label="Лес — загородный клуб"><b>ЛЕС</b><span>загородный клуб</span></a>
@@ -474,6 +528,124 @@ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.targ
 document.querySelectorAll('.rv').forEach(e=>io.observe(e));
 
 const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+
+/* ——— Живой фон: лес рисуется кодом, слои едут с разной скоростью при прокрутке ——— */
+(()=>{
+  const cv=document.getElementById('bg'),c=cv.getContext('2d');
+  let W,H,TW,L=[],seed=7,dust=[];
+  const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  const COL=['#3f8a68','#317558','#256246','#184a33','#0e2c1d'];
+  function pine(g,x,b,h){
+    const n=6+Math.floor(rnd()*3),w=h*(.3+rnd()*.14);
+    g.fillRect(x-h*.012,b-h*.22,h*.024,h*.22+6);
+    for(let i=0;i<n;i++){const t=i/n,y=b-h+t*h*.84,hw=w/2*(.16+t*.84)*(.85+rnd()*.3),th=h/n*1.75;
+      g.beginPath();g.moveTo(x,y-th*.35);g.lineTo(x+hw,y+th);g.lineTo(x+hw*.32,y+th*.8);g.lineTo(x,y+th*.95);g.lineTo(x-hw*.32,y+th*.8);g.lineTo(x-hw,y+th);g.closePath();g.fill()}
+  }
+  function build(){
+    const d=Math.min(devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0);
+    TW=Math.round(Math.max(W*1.6,1300));seed=7;L=[];
+    for(let i=0;i<5;i++){
+      const o=document.createElement('canvas');o.width=TW;o.height=H;const g=o.getContext('2d');g.fillStyle=COL[i];
+      const base=H*(.55+i*.1),amp=H*(.04-i*.005),ph=rnd()*6.28;
+      const by=x=>base+Math.sin(x/TW*12.566+ph)*amp+Math.sin(x/TW*31.416+ph*2)*amp*.4;
+      g.beginPath();g.moveTo(0,H);for(let x=0;x<=TW;x+=8)g.lineTo(x,by(x));g.lineTo(TW,H);g.fill();
+      const cnt=Math.round(TW/(30+i*18));
+      for(let k=0;k<cnt;k++){const x=rnd()*TW,h=H*(.12+i*.06)*(.55+rnd()*.75),b=by(x)+8,s0=seed;
+        for(const dx of[0,-TW,TW])if(x+dx>-260&&x+dx<TW+260){seed=s0;pine(g,x+dx,b,h)}}
+      L.push(o);
+    }
+    dust=[];for(let i=0;i<46;i++)dust.push({x:Math.random(),y:Math.random(),r:Math.random()*1.5+.5,v:Math.random()*.5+.2,p:Math.random()*6.28});
+  }
+  function frame(t){
+    const sy=scrollY;let g=c.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#3a8463');g.addColorStop(.5,'#2a6b4d');g.addColorStop(1,'#143523');c.fillStyle=g;c.fillRect(0,0,W,H);
+    const sx=W*.8,sY=H*.14,R=Math.max(W,H)*.75;g=c.createRadialGradient(sx,sY,0,sx,sY,R);
+    g.addColorStop(0,'rgba(255,230,175,.6)');g.addColorStop(.18,'rgba(245,214,150,.24)');g.addColorStop(1,'rgba(245,214,150,0)');c.fillStyle=g;c.fillRect(0,0,W,H);
+    for(let i=0;i<5;i++){
+      const off=((sy*(.05+i*.06)+t*.0035*(i+1))%TW+TW)%TW;
+      c.drawImage(L[i],-off,0);if(TW-off<W)c.drawImage(L[i],TW-off,0);
+      if(i===2){c.save();c.globalCompositeOperation='screen';
+        for(let r=0;r<5;r++){const a=.045+.03*Math.sin(t/2600+r*1.7),x0=sx-W*(.12+r*.17),wd=W*(.05+r*.012);
+          const rg=c.createLinearGradient(sx,sY,x0,H);rg.addColorStop(0,`rgba(255,232,180,${a*1.6})`);rg.addColorStop(1,'rgba(255,232,180,0)');c.fillStyle=rg;
+          c.beginPath();c.moveTo(sx-8,sY);c.lineTo(sx+8,sY);c.lineTo(x0+wd,H);c.lineTo(x0-wd,H);c.closePath();c.fill()}
+        c.restore()}
+      if(i<4){const y=H*(.55+i*.1),drift=Math.sin(t/5200+i)*.03;g=c.createLinearGradient(0,y-H*.04,0,y+H*.22);
+        g.addColorStop(0,'rgba(214,240,222,0)');g.addColorStop(.5,`rgba(214,240,222,${.15-i*.022+drift})`);g.addColorStop(1,'rgba(214,240,222,0)');c.fillStyle=g;c.fillRect(0,y-H*.04,W,H*.26)}
+      if(i===3){c.strokeStyle='rgba(190,235,225,.22)';c.lineWidth=1.4;
+        for(let k=0;k<4;k++){c.beginPath();const y0=H*(.93+k*.018);for(let x=0;x<=W;x+=14)c.lineTo(x,y0+Math.sin(x/90+t/900+k*1.9)*3+Math.sin(x/37-t/600+k)*1.5);c.stroke()}}
+    }
+    for(const p of dust){p.p+=.006*p.v;p.x+=Math.cos(p.p)*.0005;p.y-=.0003*p.v;if(p.y<-.02){p.y=1.02;p.x=Math.random()}
+      c.fillStyle=`rgba(255,236,190,${.25+.4*Math.abs(Math.sin(p.p*3))})`;c.beginPath();c.arc(p.x*W,p.y*H,p.r,0,6.28);c.fill()}
+  }
+  let run=true;const loop=t=>{if(run){frame(t);if(!still)requestAnimationFrame(loop)}};
+  build();requestAnimationFrame(loop);
+  let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{build();if(still)frame(0)},150)});
+  if(still)addEventListener('scroll',()=>frame(0),{passive:true});
+  document.addEventListener('visibilitychange',()=>{const was=run;run=!document.hidden;if(run&&!was)requestAnimationFrame(loop)});
+})();
+
+/* ——— Звук леса: река, ветер, птицы и тихая музыка — всё синтезируется в браузере ——— */
+const Sound=(()=>{
+  let ac,master,wet,on=false,timers=[];
+  const noiseBuf=brown=>{const n=ac.sampleRate*6,b=ac.createBuffer(1,n,ac.sampleRate),d=b.getChannelData(0);let l=0;
+    for(let i=0;i<n;i++){const w=Math.random()*2-1;if(brown){l=(l+.02*w)/1.02;d[i]=l*3.2}else d[i]=w;const e=Math.min(1,i/2000,(n-i)/2000);d[i]*=e}return b};
+  const src=b=>{const s=ac.createBufferSource();s.buffer=b;s.loop=true;s.start();return s};
+  const lfo=(f,depth,param)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.value=depth;o.connect(g);g.connect(param);o.start()};
+  function init(){
+    ac=new (window.AudioContext||window.webkitAudioContext)();
+    master=ac.createGain();master.gain.value=0;master.connect(ac.destination);
+    wet=ac.createDelay(1);wet.delayTime.value=.41;const fb=ac.createGain();fb.gain.value=.42;const lp=ac.createBiquadFilter();lp.frequency.value=2200;
+    wet.connect(lp);lp.connect(fb);fb.connect(wet);lp.connect(master);
+    const white=noiseBuf(false),brown=noiseBuf(true);
+    /* река: ровный поток + журчание */
+    const r1=ac.createBiquadFilter();r1.type='bandpass';r1.frequency.value=850;r1.Q.value=.45;const g1=ac.createGain();g1.gain.value=.085;src(white).connect(r1);r1.connect(g1);g1.connect(master);lfo(.13,220,r1.frequency);
+    const r2=ac.createBiquadFilter();r2.type='bandpass';r2.frequency.value=2600;r2.Q.value=1.4;const g2=ac.createGain();g2.gain.value=.03;src(white).connect(r2);r2.connect(g2);g2.connect(master);lfo(.31,.014,g2.gain);lfo(.53,.01,g2.gain);lfo(.21,600,r2.frequency);
+    /* ветер в кронах */
+    const w=ac.createBiquadFilter();w.type='lowpass';w.frequency.value=380;const gw=ac.createGain();gw.gain.value=.3;src(brown).connect(w);w.connect(gw);gw.connect(master);lfo(.06,.16,gw.gain);
+    bird();pad(0);bell();
+  }
+  const later=(f,ms)=>timers.push(setTimeout(f,ms));
+  function bird(){
+    if(on){const t=ac.currentTime+.05,p=ac.createStereoPanner?ac.createStereoPanner():ac.createGain();if(p.pan)p.pan.value=Math.random()*1.6-.8;
+      const g=ac.createGain();g.gain.value=0;const o=ac.createOscillator();o.connect(g);g.connect(p);p.connect(master);p.connect(wet);
+      const f0=2300+Math.random()*2500,n=2+Math.floor(Math.random()*5),vol=.018+Math.random()*.025;let tt=t;
+      for(let i=0;i<n;i++){const d=.05+Math.random()*.1;o.frequency.setValueAtTime(f0*(1+Math.random()*.25),tt);o.frequency.exponentialRampToValueAtTime(f0*(.78+Math.random()*.5),tt+d);
+        g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(vol,tt+d*.3);g.gain.linearRampToValueAtTime(0,tt+d);tt+=d+.03+Math.random()*.09}
+      o.start(t);o.stop(tt+.1)}
+    later(bird,1200+Math.random()*5200);
+  }
+  const CH=[[130.81,196,261.63,329.63,392],[110,164.81,220,261.63,329.63],[87.31,130.81,174.61,220,261.63],[98,146.83,196,246.94,293.66]];
+  function pad(i){
+    if(on){const t=ac.currentTime,g=ac.createGain(),f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=900;g.connect(f);f.connect(master);f.connect(wet);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05,t+4);g.gain.setValueAtTime(.05,t+9);g.gain.linearRampToValueAtTime(0,t+16);
+      CH[i%4].forEach((fr,k)=>{const o=ac.createOscillator();o.type=k%2?'triangle':'sine';o.frequency.value=fr;o.detune.value=Math.random()*10-5;const og=ac.createGain();og.gain.value=k?.5:.9;o.connect(og);og.connect(g);o.start(t);o.stop(t+16.2)})}
+    later(()=>pad(i+1),10000);
+  }
+  const PENTA=[392,440,523.25,587.33,659.25,783.99,880,1046.5];
+  function bell(){
+    if(on){const t=ac.currentTime+.02,fr=PENTA[Math.floor(Math.random()*PENTA.length)],g=ac.createGain();g.connect(master);g.connect(wet);
+      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05,t+.02);g.gain.exponentialRampToValueAtTime(.0005,t+3.2);
+      [[1,1],[2.01,.25],[3,.08]].forEach(([m,v])=>{const o=ac.createOscillator(),og=ac.createGain();o.frequency.value=fr*m;og.gain.value=v;o.connect(og);og.connect(g);o.start(t);o.stop(t+3.3)})}
+    later(bell,1800+Math.random()*4200);
+  }
+  function set(v){
+    on=v;if(v&&!ac){try{init()}catch(e){on=false}}
+    if(ac){if(v)ac.resume();const t=ac.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(master.gain.value,t);master.gain.linearRampToValueAtTime(v?.9:0,t+(v?2.5:.6));if(!v)setTimeout(()=>{if(!on)ac.suspend()},700)}
+    const b=document.getElementById('snd');b.setAttribute('aria-pressed',on);document.getElementById('sndText').textContent=on?'Звук леса':'Звук выключен';
+  }
+  document.addEventListener('visibilitychange',()=>{if(ac&&on)document.hidden?ac.suspend():ac.resume()});
+  return{set,get on(){return on}};
+})();
+document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on));
+
+/* ——— Вход ——— */
+(()=>{
+  const gate=document.getElementById('gate');
+  const go=sound=>{if(sound)Sound.set(true);gate.classList.add('leave');document.documentElement.classList.remove('gated');scrollTo(0,0);setTimeout(()=>gate.remove(),1300)};
+  document.getElementById('enter').addEventListener('click',()=>go(true));
+  document.getElementById('enterQuiet').addEventListener('click',()=>go(false));
+})();
 
 /* Герой: фонарь + светлячки */
 (()=>{
