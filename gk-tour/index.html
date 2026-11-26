@@ -4,18 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0f121b">
+<meta name="theme-color" content="#0c0f16">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Новый Квартал — 3D-модель дома</title>
+<title>Новый Квартал — тур по дому</title>
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/tour.css">
 </head>
 <body class="mode-day">
 <div class="app" id="app">
   <canvas id="gl" class="gl" aria-label="3D-модель дома. Вращайте пальцем или мышкой, нажмите на этаж."></canvas>
+  <div class="shade" aria-hidden="true"></div>
 
-  <header class="top">
+  <header class="top ui" id="top">
     <img class="top__logo" src="img/logo-sm.png" alt="" width="60" height="40">
     <div class="top__t">
       <b id="tName">Новый Квартал</b>
@@ -23,50 +24,116 @@
     </div>
   </header>
 
+  <!-- избранное · время суток · настройки -->
+  <div class="util ui" id="util">
+    <button type="button" class="favbtn" id="favBtn" hidden></button>
+    <div class="modes" id="modes" role="group" aria-label="Время суток"></div>
+    <button type="button" class="rbtn" id="menuBtn" aria-label="Настройки" aria-expanded="false"></button>
+  </div>
+  <div class="menu" id="menu" aria-hidden="true"></div>
+
   <!-- выбор этажа: дублирует нажатие на дом -->
-  <nav class="rail" id="rail" aria-label="Этажи"></nav>
+  <nav class="rail ui" id="rail" aria-label="Этажи"></nav>
 
-  <!-- День / Ночь / Облака -->
-  <div class="modes" role="group" aria-label="Время суток">
-    <button type="button" data-mode="day" class="is-on"><i class="ic ic-sun"></i>День</button>
-    <button type="button" data-mode="night"><i class="ic ic-moon"></i>Ночь</button>
-    <button type="button" data-mode="clouds"><i class="ic ic-cloud"></i>Облака</button>
-  </div>
+  <!-- тур по дому: автотур и остановки 01–06 -->
+  <nav class="dock ui" id="dock" aria-label="Тур по дому">
+    <button type="button" class="dock__auto" id="btnAuto"></button>
+    <i class="dock__sep"></i>
+    <div class="dock__stops" id="stops"></div>
+  </nav>
 
-  <div class="tools">
-    <button type="button" id="btnHome" title="Вернуть общий вид">Общий вид</button>
-    <button type="button" id="btnFull" title="На весь экран">На весь экран</button>
-  </div>
+  <!-- карточка остановки тура -->
+  <section class="scard ui" id="scard" aria-hidden="true"></section>
 
-  <div class="hint" id="hint"><i class="hint__hand"></i><span>Вращайте дом пальцем · нажмите на этаж</span></div>
+  <div class="hint ui is-off" id="hint"><i class="hint__hand"></i><span>Вращайте дом пальцем · нажмите на этаж</span></div>
   <div class="tip" id="tip" hidden></div>
+  <div class="toast" id="toast" role="status"></div>
 
-  <!-- панель: этаж → квартиры → планировка, цена, рассрочка -->
+  <!-- панель: каталог квартир → квартира (этаж, цена, рассрочка) -->
   <aside class="panel" id="panel" aria-hidden="true">
     <div class="panel__head">
-      <button type="button" class="panel__back" id="pBack" hidden>← Назад</button>
-      <button type="button" class="panel__x" id="pClose" aria-label="Закрыть">×</button>
+      <button type="button" class="panel__back" id="pBack" hidden></button>
+      <button type="button" class="panel__fav" id="pFav" hidden></button>
+      <button type="button" class="panel__x" id="pClose" aria-label="Закрыть"></button>
     </div>
     <div class="panel__body" id="pBody"></div>
   </aside>
 
-  <!-- планировка крупно -->
-  <div class="zoom" id="zoom" hidden><img id="zoomImg" alt="Планировка крупно"><button type="button" class="zoom__x" aria-label="Закрыть">×</button></div>
+  <!-- избранное: сравнение квартир -->
+  <section class="cmp" id="cmp" aria-hidden="true"></section>
 
-  <div class="load" id="load"><div class="load__in"><b>Новый Квартал</b><span id="loadT">Собираем дом…</span></div></div>
+  <!-- планировка крупно -->
+  <div class="zoom" id="zoom" hidden><img id="zoomImg" alt="Планировка крупно"><button type="button" class="zoom__x" aria-label="Закрыть"></button></div>
+
+  <!-- автотур: подпись и остановка по касанию -->
+  <div class="tourcatch" id="tourCatch" hidden></div>
+  <div class="caption" id="caption" aria-live="polite">
+    <div class="caption__n num" id="capN"></div>
+    <div class="caption__t"><b id="capT"></b><span id="capS"></span></div>
+    <div class="caption__s">Коснитесь экрана,<br>чтобы остановить</div>
+    <i class="caption__bar"></i>
+  </div>
+
+  <!-- начальный экран поверх живой 3D-сцены -->
+  <section class="start" id="start" hidden aria-label="Новый Квартал">
+    <div class="start__veil"></div>
+    <div class="start__in">
+      <div class="start__brand"><img src="img/logo-sm.png" alt="" width="66" height="44"><span id="stBrand">Градосфера</span></div>
+      <p class="start__eye">Жилой комплекс · Моздок</p>
+      <h1 class="start__h">Новый<br> Квартал</h1>
+      <i class="start__rule"></i>
+      <p class="start__lead" id="stLead">Дом бизнес-класса в центре Моздока</p>
+      <dl class="start__meta">
+        <div><dt>Адрес</dt><dd id="stAddr">Моздок, ул. Шевченко, 20</dd></div>
+        <div><dt>Сдача</dt><dd id="stDead">I квартал 2028</dd></div>
+        <div><dt>Дом</dt><dd id="stHouse">8 этажей · бизнес-класс</dd></div>
+      </dl>
+      <div class="start__cta">
+        <button type="button" class="btn btn--gold btn--xl" id="stGo">Начать тур</button>
+        <button type="button" class="btn btn--line btn--xl" id="stFlats">Выбрать квартиру</button>
+      </div>
+    </div>
+    <div class="start__tip">Интерактивный тур по дому</div>
+    <div class="start__foot">Отдел продаж<b id="stPhone">+7 (938) 815-33-33</b></div>
+  </section>
+
+  <!-- загрузка -->
+  <div class="boot" id="boot">
+    <div class="boot__in">
+      <img src="img/logo-sm.png" alt="" width="84" height="56">
+      <small>Жилой комплекс · Моздок</small>
+      <b>Новый Квартал</b>
+      <div class="boot__bar"><i id="bootBar"></i></div>
+      <span id="bootT">Открываем программу…</span>
+    </div>
+  </div>
+  <div class="load" id="load" hidden></div>
   <div class="nogl" id="nogl" hidden>На этом устройстве не включилась 3D-графика. Обновите браузер или откройте страницу на другом устройстве.</div>
 </div>
+<script>
+/* ход загрузки: каждый шаг отмечается по мере того, как браузер получает и выполняет части программы */
+window.__gkBoot = function (p, t) {
+  var b = document.getElementById('bootBar'), s = document.getElementById('bootT');
+  if (b) b.style.transform = 'scaleX(' + (p / 100) + ')'; if (s && t) s.textContent = t;
+};
+window.__gkBoot(8, 'Загружаем графику…');
+</script>
 <script src="js/vendor/three.min.js"></script>
+<script>window.__gkBoot(30, 'Загружаем графику…');</script>
 <script src="js/vendor/OrbitControls.js"></script>
 <script src="js/vendor/GLTFLoader.js"></script>
 <script src="js/vendor/three-extras.js"></script>
+<script>window.__gkBoot(46, 'Готовим планировки и цены…');</script>
 <script src="js/data.js"></script>
 <script src="js/house.js"></script>
+<script>window.__gkBoot(56, 'Строим дом…');</script>
 <script src="js/scene.js"></script>
+<script>window.__gkBoot(78, 'Двор, паркинг, квартиры…');</script>
 <script src="js/cars.js"></script>
 <script src="js/parking.js"></script>
 <script src="js/interior.js"></script>
 <script src="js/fx.js"></script>
+<script>window.__gkBoot(92, 'Настраиваем свет…');</script>
 <script src="js/ui.js"></script>
 </body>
 </html>
