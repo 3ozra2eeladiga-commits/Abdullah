@@ -1982,10 +1982,26 @@ def shield_text():
     return "\n".join(lines)
 
 
+def _catalog_watch_loop():
+    """Каталог пустой (сайт магазина не ответил при запуске, например после перезагрузки сервера) —
+    пробуем снова каждые 2 минуты, не дожидаясь первого клиента. Плюс плановое обновление раз в час."""
+    while True:
+        time.sleep(120)
+        try:
+            if any(not c.by_code for c in catalog.by_city.values()):
+                log.info("Каталог пустой в каком-то городе — загружаю заново")
+                catalog.refresh()
+            else:
+                catalog.ensure_fresh()
+        except Exception as e:
+            log.warning("Каталог: повторная загрузка не удалась: %s", e)
+
+
 def main():
     _disable_windows_quick_edit()
     catalog.refresh()
     threading.Thread(target=_daily_loop, daemon=True).start()
+    threading.Thread(target=_catalog_watch_loop, daemon=True).start()
     threading.Thread(target=qa_resume_after_restart, daemon=True).start()
     telegram_bot.start(deliver_debounced, on_check, on_photo=on_client_photo, on_photo_button=on_photo_button, on_more=on_more,
                        on_pay=on_pay, on_report=on_report, on_show=on_show, counts=staff_counts, on_delivered=on_delivered,
