@@ -170,22 +170,21 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 @media(max-width:900px){.bz-foot{grid-template-columns:1fr}}
 @media(max-width:520px){.cmp-tabs.bz-tabs{grid-template-columns:repeat(2,1fr)}.bz-in ul{grid-template-columns:1fr}}
 
-/* ——— Сферы: купол ——— */
-.dome-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(28px,5vw,72px);align-items:center}
-.dome{position:relative;aspect-ratio:2/1.08;border-radius:999px 999px 26px 26px/ 185% 185% 26px 26px;overflow:hidden}
-.dome img{width:100%;height:100%;object-fit:cover;transform:translate3d(0,var(--py,0px),0) scale(1.12);will-change:transform}
-.dome::after{content:"";position:absolute;inset:0;border-radius:inherit;border:1px solid var(--brass);opacity:.5;pointer-events:none}
-.tents{display:grid;gap:10px;margin-block:30px}
-.tent{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:18px 22px;border-radius:20px;border:1px solid var(--line);transition:border-color .3s,background .3s}
-.tent:hover{border-color:var(--brass);background:rgba(18,53,36,.5)}
-.tent .cap{font:300 30px/1 var(--f-display);color:var(--brass-hi);font-variant-numeric:tabular-nums;min-width:2.2ch}
-.tent b{font-weight:500}.tent small{display:block;color:var(--mist);font-size:13.5px}
-.tent .p{font:400 15px/1 var(--f-display);white-space:nowrap;font-variant-numeric:tabular-nums}
+/* ——— Сферы: пять куполов — вкладки, рисунок повода, фото и факты ——— */
 .occ{display:flex;flex-wrap:wrap;gap:8px}
-.occ span{padding:9px 16px;border-radius:999px;font-size:14px;font-weight:500;color:var(--fog);background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.22);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);text-shadow:0 1px 2px rgba(0,0,0,.35);transition:background .3s,border-color .3s}
-.occ span:hover{background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(255,255,255,.08));border-color:var(--brass-hi)}
-@media(max-width:900px){.dome-grid{grid-template-columns:1fr}.dome{order:-1}}
-@media(max-width:480px){.tent{grid-template-columns:auto 1fr}.tent .p{grid-column:2}}
+.occ span{padding:8px 14px;border-radius:999px;font-size:13.5px;font-weight:500;color:var(--fog);background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.22);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3)}
+.cmp-tabs.sf-tabs{grid-template-columns:repeat(5,1fr);margin-bottom:clamp(14px,2vw,22px)}
+.sf-tabs .chip{padding:11px 4px;font-size:14px}
+.sf-tabs .chip small{font:400 10.5px/1 var(--f-body);letter-spacing:.06em}
+.sf-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.sf-stats div{background:rgba(13,32,22,.7);padding:13px 10px;text-align:center;min-width:0}
+.sf-stats b{display:block;font:300 clamp(19px,2vw,26px)/1.05 var(--f-display);color:var(--brass-hi);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sf-stats span{font-size:12px;color:var(--mist)}
+.sf-lbl{font:500 11.5px/1 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--brass-hi);margin:16px 0 8px}
+.dd .beam{animation:tw 1.2s ease-in-out infinite alternate}
+.dd .sway{transform-box:fill-box;transform-origin:bottom center;animation:dsway 1.6s ease-in-out infinite alternate}
+@keyframes dsway{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+@media(max-width:620px){.cmp-tabs.sf-tabs{grid-template-columns:repeat(3,1fr)}.sf-stats b{font-size:14px;white-space:normal}.sf-stats div{padding:12px 4px}}
 
 /* ——— Автодом ——— */
 /* ——— Автодом: один блок — рисованный человечек показывает день в кемпере, рядом фото и факты ——— */
@@ -339,7 +338,7 @@ details p{margin:0 0 24px;color:var(--mist);max-width:60ch}
   radial-gradient(ellipse 80% 60% at 50% 50%,transparent 40%,rgba(10,26,18,.45) 100%)}
 .bg::after{content:"";position:absolute;inset:0;opacity:.16;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s var(--ease)}
-.rev,.tent,.mode,.addr,.chip{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.rev,.mode,.addr,.chip{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .rev,.tent,.addr{background:rgba(13,32,22,.46)}
 .route,details{border-color:rgba(238,240,232,.24)}
 
@@ -561,20 +560,37 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 </section>
 
 <section id="sfera">
-  <div class="wrap dome-grid">
-    <div class="rv">
-      <div class="eyebrow">Для торжеств и мероприятий</div>
-      <h2 style="margin-block:18px 20px">Праздник <em>под куполом</em></h2>
-      <p class="lead">Купольные сферы объединяют уют тёплой беседки и возможности банкетного зала. Вокруг лес, внутри ваша компания, рядом мангальная зона.</p>
-      <div class="tents">
-        <div class="tent"><span class="cap">25</span><span><b>Тёплая беседка</b><small>до 25 гостей, для камерных событий</small></span><span class="p">от 25 000 ₽</span></div>
-        <div class="tent"><span class="cap">35</span><span><b>Универсальный шатёр</b><small>до 35 гостей, для большой компании</small></span><span class="p">от 35 000 ₽</span></div>
-        <div class="tent"><span class="cap">♪</span><span><b>Сфера с караоке</b><small>купол с караоке и развлечениями</small></span><span class="p">по запросу</span></div>
+  <div class="wrap">
+    <div class="cmp-card rv">
+      <div class="cmp-top">
+        <div><div class="eyebrow">Купольные сферы · для торжеств и встреч</div><h2>Пять куполов — <em>на каждый повод</em></h2></div>
+        <p class="lead">Тёплые круглый год, каждый со своим характером и своей мангальной зоной. Выберите купол — покажем, что в нём делают.</p>
       </div>
-      <div class="occ"><span>Свадьба</span><span>День рождения</span><span>Гендер пати</span><span>Выпускной</span><span>Корпоратив</span></div>
-      <div style="margin-top:30px"><a class="btn" href="https://clubles.ru/sfera/" target="_blank" rel="noopener">Выбрать сферу<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></a></div>
+      <div class="cmp-tabs sf-tabs" id="sfTabs" role="group" aria-label="Купола">
+        <button class="chip" data-i="0" aria-pressed="true"><small>до 25 гостей</small>Малый</button>
+        <button class="chip" data-i="1" aria-pressed="false"><small>до 35 гостей</small>Средний</button>
+        <button class="chip" data-i="2" aria-pressed="false"><small>до 45 гостей</small>Музыкальный</button>
+        <button class="chip" data-i="3" aria-pressed="false"><small>до 70 гостей</small>Свадебный</button>
+        <button class="chip" data-i="4" aria-pressed="false"><small>до 15 гостей</small>Бильярдный</button>
+      </div>
+      <div class="cmp-main sf-main">
+        <div class="cmp-l">
+          <div class="doodle" id="sfDoodle" aria-hidden="true"></div>
+          <div class="sf-stats" id="sfStats"></div>
+        </div>
+        <div class="cmp-r">
+          <div class="cmp-photo"><img id="sfA" class="on" src="img/sf-small.webp" alt="Купол Малый"><img id="sfB" alt="" loading="lazy"></div>
+          <div class="cmp-txt" id="sfTxt" aria-live="polite"><h3 id="sfT"></h3><p id="sfP"></p>
+            <div class="sf-lbl">Подходит для</div><div class="occ" id="sfFor"></div>
+            <div class="sf-lbl">Особенное</div><div class="cmp-chips" id="sfX" style="margin-top:0"></div></div>
+        </div>
+      </div>
+      <div class="bz-foot">
+        <div class="bz-inc"><b>В каждом куполе</b>
+          <div class="cmp-chips"><span>тепло зимой, прохладно летом</span><span>проектор и экран</span><span>Wi-Fi</span><span>холодильник</span><span>кофемашина и чайник</span><span>своя мангальная зона</span><span>можно свою еду и напитки</span><span>можно своего ведущего и диджея</span><span>повар-шашлычник по запросу</span></div></div>
+        <div class="bz-buy"><a class="btn solid" href="https://clubles.ru/sfera/" target="_blank" rel="noopener">Забронировать купол<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></a></div>
+      </div>
     </div>
-    <div class="dome rv"><img src="img/sfera1.webp" alt="Купольная сфера в лесу" loading="lazy"></div>
   </div>
 </section>
 
@@ -939,7 +955,7 @@ XM.wreath();XM.hero();
     // 2 обед: папа готовит, мама несёт тарелку, ребёнок прыгает от радости
     ()=>[ground+camper({awn:1})+P('M14 152H48M18 152V180M44 152V180')+P('M24 152v-10h14v10M21 142h20')+P('M27 136q-4-6 0-12','a steam')+P('M35 136q4-6 0-12','a steam s2')+
       man(66,180,{arms:'M66 151L45 146M66 151L74 162'})+man(98,180,{w:1,arms:'M98 151L89 158M98 151L109 149'})+P('M106 148h13','a')+
-      `<g class="jump">${man(128,180,{k:.66,arms:'M128 161L121 152M128 161L135 152'})}</g>`+`<circle cx="352" cy="34" r="10" class="a dim"/>`,`<text x="6" y="60">маркиза</text><text x="226" y="150">кухня внутри</text>`],
+      `<g class="jump">${man(128,180,{k:.66,arms:'M128 161L121 152M128 161L135 152'})}</g>`+`<circle cx="352" cy="34" r="10" class="a dim"/>`,`<text x="6" y="60">маркиза</text><text x="152" y="176">кухня внутри</text>`],
     // 3 отдых: папа в кресле с чашкой, мама читает на ступеньке, ребёнок играет в мяч
     ()=>[ground+`<circle cx="352" cy="34" r="11" class="a"/><g class="rays" style="transform-origin:352px 34px">${P(rays(352,34,11),'a')}</g>`+P('M336 41L212 57','a flow')+
       camper({awn:1,inner:P('M92 58H206','a thick')+P('M112 54v8M134 54v8M156 54v8M178 54v8','a')+`<rect x="130" y="127" width="46" height="22" rx="3"/>${P('M176 134v8')}<rect x="134" y="131" width="38" height="14" rx="1.5" class="f charge"/>`+P('M196 62V138H180','a flow')})+
@@ -960,7 +976,7 @@ XM.wreath();XM.hero();
       `<g class="jump">${man(384,180,{k:.66,arms:'M384 161L376 152M384 161L392 152'})}</g>`,`<text x="128" y="140">горячий душ</text><text x="0" y="122">кофе</text>`]];
   const S=[['airport','Прилетели — машина уже ждёт','Подадим кемпер прямо к терминалу аэропорта Минеральные Воды. Вещи в багажник — и в путь.',['аэропорт Минводы','бельё и посуда внутри']],
     ['mount','Дорога в горы','Настоящий внедорожник: полный привод с блокировкой, автомат и резина AT. Проедет там, где обычные автодома застревают.',['4×4','218 л.с.','автомат, 8 ступеней']],
-    ['kitchen','Обед с видом на вершины','Раскрыли маркизу, достали стол. Внутри мойка, холодильник на 98 л с морозилкой и микроволновка.',['кухня','холодильник 98 л','маркиза']],
+    ['kitchen','Обед с видом на вершины','Раскрыли маркизу и выдвинули газовую плитку — готовим на свежем воздухе. Внутри мойка, холодильник на 98 л с морозилкой и микроволновка.',['газовая плитка на улице','холодильник 98 л','микроволновка','маркиза']],
     ['sunset','Отдых без розетки','Солнечные панели заряжают батарею — света, холодильника и проектора хватает на сутки. Кондиционер летом, отопитель в холод.',['600 Вт солнца','7,2 кВт·ч','климат']],
     ['bed','Ночь под звёздами','Крыша поднимается: наверху двуспальная кровать для родителей, внизу вторая спальная зона для детей. Всего до четырёх гостей.',['до 4 гостей','кровать 2,1 × 1,3 м']],
     ['lounge','Утро у реки','Горячий душ и туалет прямо в кемпере, кофе за столиком у окна. А вернувшись в клуб, можно сразу в баню.',['душ и туалет','горячая вода']]];
@@ -994,6 +1010,72 @@ XM.wreath();XM.hero();
   const rc=document.getElementById('r2card');if(!rc)return;
   const show=i=>{rc.innerHTML=`<b>${R[i][0]}</b> от клуба, примерно — ${R[i][1]}`;document.querySelectorAll('.r2-chips .chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r==i))};
   document.querySelectorAll('.r2-chips .chip').forEach(b=>b.addEventListener('click',()=>show(+b.dataset.r)));show(0);
+})();
+
+/* Сферы: пять куполов */
+(()=>{
+  const root=document.getElementById('sfDoodle');if(!root)return;
+  const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const P=(d,c)=>`<path d="${d}"${c?` class="${c}"`:''}/>`;
+  const man=(x,y,o={})=>{const k=o.k||1,r=o.k?5.4:6.5,hy=y-41*k,hip=y-15*k,sh=y-29*k;
+    return `<g${o.c?` class="${o.c}"`:''}${o.d?` style="animation-delay:${o.d}s"`:''}><circle cx="${x}" cy="${hy}" r="${r}"/>`+(o.w?P(`M${x-r+1} ${hy-3}q-6 2-5 11`):'')+
+      (o.w?P(`M${x} ${y-34*k}L${x-8*k} ${hip+2}H${x+8*k}Z`):P(`M${x} ${y-34*k}V${hip}`))+P(`M${x} ${hip}L${x-6*k} ${y}M${x} ${hip}L${x+6*k} ${y}`)+
+      P(o.arms||`M${x} ${sh}L${x-9*k} ${y-19*k}M${x} ${sh}L${x+9*k} ${y-19*k}`)+'</g>'};
+  const up=(x,y,k=1)=>`M${x} ${y-29*k}L${x-9*k} ${y-40*k}M${x} ${y-29*k}L${x+9*k} ${y-40*k}`;
+  const seat=x=>`<circle cx="${x}" cy="140" r="6"/>${P(`M${x} 147V164H${x-12}V180`)}${P(`M${x+6} 150V180M${x+6} 164H${x-2}`,'dim')}`;
+  const dome=P('M22 180Q26 44 200 30Q374 44 378 180')+P('M2 180H398','dim')+P('M70 98L134 52L200 104L266 52L330 98M200 104V30M134 52L112 150M266 52L288 150','dim');
+  const heart=(x,y,s,c)=>`<path class="${c||'a'}" d="M${x} ${y}q${-8*s} ${-10*s} ${-14*s} ${-2*s}q${-4*s} ${8*s} ${14*s} ${18*s}q${18*s} ${-10*s} ${14*s} ${-18*s}q${-6*s} ${-8*s} ${-14*s} ${2*s}z"/>`;
+  const SC=[
+    ()=>dome+P('M168 152H232M174 152V180M226 152V180')+`<rect x="186" y="136" width="28" height="16" rx="3"/>`+P('M186 143q7 5 14 0t14 0','a')+P('M193 136v-8M200 136v-8M207 136v-8','a')+
+      [193,200,207].map((x,i)=>`<circle cx="${x}" cy="124" r="2" class="f tw" style="animation-delay:${i*.3}s"/>`).join('')+
+      `<g class="sway"><circle cx="112" cy="84" r="9" class="a"/><circle cx="128" cy="72" r="9" class="a"/>${P('M112 93L122 150M128 81L122 150','a dim')}</g>`+
+      man(138,180,{c:'jump',arms:up(138,180)})+man(256,180,{w:1,arms:'M256 151L246 142M256 151L266 142'})+man(284,180,{k:.66,c:'jump',d:.17,arms:up(284,180,.66)})+
+      `<text x="200" y="-4" text-anchor="middle">с днём рождения!</text>`,
+    ()=>dome+`<rect x="150" y="62" width="104" height="58" rx="4"/>`+P('M162 108l22-16l18 9l26-27l16 11','a flow')+P('M202 120V132M186 132h32')+
+      man(122,180,{arms:'M122 151L146 132M122 151L114 163'})+seat(286)+seat(318)+seat(350)+P('M268 164H362','dim')+
+      `<text x="200" y="-4" text-anchor="middle">проектор и экран для презентаций</text>`,
+    ()=>dome+P('M200 30V46')+`<circle cx="200" cy="57" r="11" class="a"/>`+P('M189 57h22M200 46v22M192 49l16 16M208 49l-16 16','a dim')+
+      P('M200 68L120 176M200 68L282 176M200 68L60 150M200 68L340 150','a dim beam')+
+      `<rect x="42" y="136" width="28" height="44" rx="4"/><circle cx="56" cy="149" r="5"/><circle cx="56" cy="166" r="8"/>`+
+      man(168,180,{arms:'M168 151L181 141M168 151L158 162'})+`<circle cx="184" cy="138" r="3.5" class="f"/>`+
+      man(236,180,{w:1,c:'jump',arms:up(236,180)})+man(270,180,{c:'jump',d:.17,arms:up(270,180)})+man(304,180,{w:1,c:'jump',d:.09,arms:up(304,180)})+
+      `<text x="140" y="118" class="zz" style="font-size:22px">♪</text><text x="152" y="104" class="zz z2" style="font-size:18px">♫</text><text x="200" y="-4" text-anchor="middle">караоке и светомузыка</text>`,
+    ()=>dome+P('M158 180V112Q200 66 242 112V180','a')+[[158,130],[170,96],[200,78],[230,96],[242,130]].map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" class="a tw" style="animation-delay:${i*.25}s"/>`).join('')+
+      man(190,180,{arms:'M190 151L200 160M190 151L180 162'})+man(212,180,{w:1,arms:'M212 151L200 160M212 151L222 162'})+heart(201,112,.8,'a tw')+
+      man(74,180,{c:'jump',arms:up(74,180)})+man(104,180,{w:1,c:'jump',d:.17,arms:up(104,180)})+man(300,180,{w:1,c:'jump',d:.09,arms:up(300,180)})+man(330,180,{c:'jump',d:.25,arms:up(330,180)})+
+      `<text x="200" y="-4" text-anchor="middle">банкет, фотозона, танцпол</text>`,
+    ()=>dome+P('M200 30V60M176 76h48l-9-16h-30z','a')+P('M180 82L150 132M220 82L250 132','a dim beam')+
+      `<rect x="136" y="138" width="130" height="14" rx="4"/>`+P('M148 152V180M254 152V180')+`<circle cx="196" cy="134" r="4" class="f"/><circle cx="208" cy="134" r="4" class="a"/><circle cx="220" cy="134" r="4"/>`+
+      man(108,180,{arms:'M108 151L124 141M108 151L96 147'})+P('M84 150L190 135','a')+man(302,180,{arms:'M302 151L314 146M302 151L292 162'})+P('M316 112V180','a')+
+      `<rect x="330" y="128" width="34" height="22" rx="3" class="dim"/>`+P('M347 150v8M338 158h18','dim')+
+      `<text x="200" y="-4" text-anchor="middle">бильярд и PlayStation</text>`];
+  const D=[['small','Купол Малый','Камерный купол для своих. Здесь уютно сидеть за одним столом, поздравлять и петь под свою музыку.',['25','гостей'],['7 × 7','метров'],['от 25 000 ₽','аренда'],
+      ['день рождения','семейное торжество','детский праздник','вечеринка'],['музыкальное оборудование','уютная подсветка']],
+    ['mid','Купол Средний','Универсальный шатёр «как у друзей». Мягкие диваны, большой экран для презентации или фильма — подойдёт и для встречи по делу, и для домашней вечеринки.',['35','гостей'],['8 × 8','метров'],['от 35 000 ₽','аренда'],
+      ['мини-корпоратив','деловая встреча','детский день рождения','домашняя вечеринка'],['экран для презентаций','музыкальное оборудование']],
+    ['music','Купол Музыкальный','Купол для громкого вечера: профессиональное караоке, светомузыка и зеркальный шар под потолком. Рядом костровая зона — продолжить под звёздами.',['45','гостей'],['8 × 10','метров'],['от 55 000 ₽','аренда'],
+      ['громкий день рождения','мини-свадьба','корпоратив','мальчишник и девичник'],['профессиональное караоке','светомузыка','PlayStation','костровая зона']],
+    ['wed','Большой Свадебный купол','Самый большой купол клуба. Пространство перестраивается под банкетный зал, фотозону и танцпол — для церемонии и банкета в одном месте.',['70','гостей'],['8 × 12','метров'],['от 100 000 ₽','аренда'],
+      ['свадьба','юбилей','большой день рождения','корпоратив'],['премиальная мебель','танцпол и фотозона','караоке и светомузыка','костровая зона']],
+    ['bil','Купол с бильярдом','Купол для мужской компании и вечера с друзьями: профессиональный бильярдный стол, PlayStation и большой экран. Арендуется по часам.',['15','гостей'],['8 × 8','метров'],['2 000 ₽','за час'],
+      ['мужская компания','вечер с друзьями','семейная встреча','небольшой корпоратив'],['профессиональный бильярд','PlayStation','большой экран','костровая зона']]];
+  const tabs=[...document.querySelectorAll('#sfTabs .chip')],A=document.getElementById('sfA'),B=document.getElementById('sfB'),txt=document.getElementById('sfTxt'),$=id=>document.getElementById(id);
+  let cur=-1,img=A,auto=true,timer=0,vis=false;
+  const fill=d=>{$('sfT').textContent=d[1];$('sfP').textContent=d[2];$('sfFor').innerHTML=d[6].map(x=>`<span>${x}</span>`).join('');$('sfX').innerHTML=d[7].map(x=>`<span>${x}</span>`).join('');
+    $('sfStats').innerHTML=[d[3],d[4],d[5]].map(x=>`<div><b>${x[0]}</b><span>${x[1]}</span></div>`).join('')};
+  function show(i,user){if(user)auto=false;clearTimeout(timer);const first=cur<0;if(i===cur)return;cur=i;const d=D[i];
+    root.innerHTML=`<svg class="dd" viewBox="-4 -24 408 220"><defs><filter id="sks" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="11"/><feDisplacementMap in="SourceGraphic" scale="2.4"/></filter></defs><g filter="url(#sks)">${SC[i]()}</g></svg>`
+      .replace(/<text[^>]*>[^<]*<\/text>/g,'')+'';
+    const tx=(SC[i]().match(/<text[^>]*>[^<]*<\/text>/g)||[]).join('');root.firstChild.insertAdjacentHTML('beforeend',tx);
+    tabs.forEach((b,k)=>{b.setAttribute('aria-pressed',k===i);b.classList.remove('auto')});
+    if(first)fill(d);else{const nx=img===A?B:A;let done=false;const sw=()=>{if(done)return;done=true;nx.classList.add('on');img.classList.remove('on');img=nx};
+      nx.onload=sw;nx.src='img/sf-'+d[0]+'.webp';nx.alt=d[1];if(nx.complete&&nx.naturalWidth)sw();
+      txt.classList.add('swap');setTimeout(()=>{fill(d);txt.classList.remove('swap')},220)}
+    if(auto&&vis&&!still){void tabs[i].offsetWidth;tabs[i].classList.add('auto');timer=setTimeout(()=>show((cur+1)%D.length),7000)}}
+  tabs.forEach((b,k)=>b.addEventListener('click',()=>show(k,true)));
+  show(0);
+  if(!still)new IntersectionObserver(e=>{vis=e[0].isIntersecting;clearTimeout(timer);tabs.forEach(b=>b.classList.remove('auto'));
+    if(vis&&auto){tabs[cur].classList.add('auto');timer=setTimeout(()=>show((cur+1)%D.length),7000)}},{threshold:.35}).observe(root);
 })();
 
 /* Лёгкий параллакс фото внутри рамки */
