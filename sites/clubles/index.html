@@ -93,12 +93,6 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 .facts span{font-size:13.5px;color:var(--mist)}
 @media(max-width:760px){.facts{grid-template-columns:1fr 1fr}.facts div:nth-child(2){border-right:0}.facts div:nth-child(3){padding-left:0}.facts div:nth-child(-n+2){border-bottom:1px solid var(--line)}.hint{display:none}}
 
-/* ——— Бегущая строка ——— */
-.tape{border-block:1px solid var(--line);overflow:hidden;padding-block:18px;background:var(--moss)}
-.tape div{display:flex;gap:44px;width:max-content;animation:tape 38s linear infinite;font:300 15px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
-.tape span::after{content:"✦";margin-left:44px;color:var(--brass)}
-@keyframes tape{to{transform:translateX(-50%)}}
-
 /* ——— Дома: створки ——— */
 .head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:28px;margin-bottom:38px}
 .head h2{margin-top:18px}
@@ -291,8 +285,19 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 .snd .wave i{background:var(--brass-hi)}
 .snd[aria-pressed="false"] .wave i{animation:none;height:3px}
 
+/* ——— Проявление фото: снимок проступает снизу вверх сквозь край в форме линии леса, выходя из тумана ——— */
+.js .grow{-webkit-mask-image:url(img/reveal-mask.png);mask-image:url(img/reveal-mask.png);-webkit-mask-size:100% 300%;mask-size:100% 300%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:0 0;mask-position:0 0}
+.js .grow img{filter:blur(10px) saturate(.35) brightness(1.25);transform:scale(1.1);transition:filter 2.2s var(--ease),transform 2.6s var(--ease)}
+.js .grow.up img{filter:none;transform:none}
+.js .grow.done{-webkit-mask-image:none;mask-image:none}
+.js .slats.grow img{transition:filter 2.2s var(--ease),transform 2.6s var(--ease)}
+.js .slats.grow.up .slat img{filter:brightness(.82) saturate(.92)}
+.js .slats.grow.up .slat.on img{filter:none;transform:scale(1.04)}
+.js .slats.grow.done .slat img{transition:transform 1.2s var(--ease),filter .6s}
+
 /* ——— Появление (из видимого состояния) ——— */
 .js .rv{opacity:.25;transform:translateY(26px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+@media(prefers-reduced-motion:reduce){.js .grow{-webkit-mask-image:none!important;mask-image:none!important}.js .grow img{filter:none!important;transform:none!important}}
 .js .rv.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.js .rv{opacity:1;transform:none}html{scroll-behavior:auto}}
 </style>
@@ -367,11 +372,6 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
   </div>
 </section>
 
-<div class="tape" aria-hidden="true"><div>
-  <span>Зеркальные дома</span><span>Джакузи на террасе</span><span>Фиджитал баня</span><span>Купольные сферы</span><span>Берег реки</span><span>Стеклянная крыша над кроватью</span><span>Автодом для гор</span>
-  <span>Зеркальные дома</span><span>Джакузи на террасе</span><span>Фиджитал баня</span><span>Купольные сферы</span><span>Берег реки</span><span>Стеклянная крыша над кроватью</span><span>Автодом для гор</span>
-</div></div>
-
 <section id="homes">
   <div class="wrap">
     <div class="head rv">
@@ -388,14 +388,14 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
         <button class="chip" id="f-sky" data-f="sky" aria-pressed="false">Небо над кроватью</button>
       </div>
     </div>
-    <div class="slats rv" id="slats"></div>
+    <div class="slats rv grow" id="slats"></div>
     <p class="count" id="count" aria-live="polite"></p>
   </div>
 </section>
 
 <section class="bath" id="bath">
   <div class="wrap bath-grid">
-    <div class="stage rv" id="stage">
+    <div class="stage rv grow" id="stage">
       <img src="img/bath1.webp" alt="Парная умной бани" data-m="par" class="show">
       <img src="img/bath3.webp" alt="Интерьер бани с глиняными стенами" data-m="vyuga">
       <img src="img/bath4.webp" alt="Джакузи на террасе бани" data-m="dush">
@@ -434,13 +434,13 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
       <div class="occ"><span>Свадьба</span><span>День рождения</span><span>Гендер пати</span><span>Выпускной</span><span>Корпоратив</span></div>
       <div style="margin-top:30px"><a class="btn" href="https://clubles.ru/sfera/" target="_blank" rel="noopener">Выбрать сферу<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></a></div>
     </div>
-    <div class="dome rv"><img src="img/sfera1.webp" alt="Купольная сфера в лесу" loading="lazy"></div>
+    <div class="dome rv grow"><img src="img/sfera1.webp" alt="Купольная сфера в лесу" loading="lazy"></div>
   </div>
 </section>
 
 <section id="camper" style="padding-top:0">
   <div class="wrap">
-    <div class="camper rv">
+    <div class="camper rv grow">
       <img src="img/camper1.webp" alt="Автодом на базе пикапа на закате в горах" loading="lazy">
       <div class="camper-in">
         <div class="eyebrow">Автодом</div>
@@ -552,6 +552,18 @@ function filter(f){
 }
 document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));filter(c.dataset.f)}));
 filter('all');
+
+/* Проявление фото при прокрутке */
+(()=>{
+  const D=2000,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  const go=el=>{el.classList.add('up');const t0=performance.now();
+    const step=now=>{const k=Math.min(1,(now-t0)/D),v=(ease(k)*100).toFixed(2)+'%';el.style.webkitMaskPosition='0 '+v;el.style.maskPosition='0 '+v;
+      if(k<1)requestAnimationFrame(step);else setTimeout(()=>el.classList.add('done'),400)};
+    requestAnimationFrame(step)};
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){document.querySelectorAll('.grow').forEach(e=>e.classList.add('up','done'));return}
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){go(e.target);io.unobserve(e.target)}}),{threshold:.22});
+  document.querySelectorAll('.grow').forEach(e=>io.observe(e));
+})();
 
 /* Появление секций */
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
