@@ -285,6 +285,8 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
   <video id="v-mist" class="on" muted playsinline loop preload="auto" poster="img/bg-mist.webp" src="bg-mist.mp4"></video>
   <video id="v-pines" muted playsinline loop preload="metadata" poster="img/bg-pines.webp" src="bg-pines.mp4"></video>
   <video id="v-river" muted playsinline loop preload="metadata" poster="img/bg-river.webp" src="bg-river.mp4"></video>
+  <video id="v-sun" muted playsinline loop preload="metadata" poster="img/bg-sun.webp" src="bg-sun.mp4"></video>
+  <video id="v-stream" muted playsinline loop preload="metadata" poster="img/bg-stream.webp" src="bg-stream.mp4"></video>
   <div class="tint"></div>
 </div>
 
@@ -539,10 +541,10 @@ const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
 
 
 /* ——— Фон: живая природа — три сцены сменяют друг друга по мере прокрутки ———
-   туман над лесом на рассвете → сосновый бор → река в утренней дымке */
+   туман над лесом → сосновый бор → солнце сквозь кроны → река в дымке → горный ручей */
 (()=>{
-  const V={mist:document.getElementById('v-mist'),pines:document.getElementById('v-pines'),river:document.getElementById('v-river')};
-  const MAP={gate:'mist',hero:'mist',homes:'mist',bath:'pines',sfera:'pines',camper:'pines',way:'river',reviews:'river',faq:'river',book:'river'};
+  const V={mist:document.getElementById('v-mist'),pines:document.getElementById('v-pines'),sun:document.getElementById('v-sun'),river:document.getElementById('v-river'),stream:document.getElementById('v-stream')};
+  const MAP={gate:'mist',hero:'mist',homes:'mist',bath:'pines',sfera:'sun',camper:'sun',way:'river',reviews:'stream',faq:'stream',book:'river'};
   let cur='mist';
   const play=v=>{if(still)return;const pr=v.play();pr&&pr.catch(()=>{})};
   function show(k){if(k===cur)return;const nv=V[k],ov=V[cur];cur=k;nv.preload='auto';
