@@ -283,11 +283,11 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 
 <script>document.documentElement.classList.add('js','gated')</script>
 <div class="bg" aria-hidden="true">
-  <video id="v-mist" class="on" muted playsinline loop preload="auto" poster="img/bg-mist.webp" src="bg-mist.mp4"></video>
-  <video id="v-pines" muted playsinline loop preload="metadata" poster="img/bg-pines.webp" src="bg-pines.mp4"></video>
-  <video id="v-river" muted playsinline loop preload="metadata" poster="img/bg-river.webp" src="bg-river.mp4"></video>
-  <video id="v-sun" muted playsinline loop preload="metadata" poster="img/bg-sun.webp" src="bg-sun.mp4"></video>
-  <video id="v-stream" muted playsinline loop preload="metadata" poster="img/bg-stream.webp" src="bg-stream.mp4"></video>
+  <video id="v-mist" class="on" data-n="bg-mist" muted playsinline loop preload="auto"></video>
+  <video id="v-pines" data-n="bg-pines" muted playsinline loop preload="auto"></video>
+  <video id="v-sun" data-n="bg-sun" muted playsinline loop preload="auto"></video>
+  <video id="v-river" data-n="bg-river" muted playsinline loop preload="auto"></video>
+  <video id="v-stream" data-n="bg-stream" muted playsinline loop preload="auto"></video>
   <div class="tint"></div>
 </div>
 
@@ -541,24 +541,32 @@ document.querySelectorAll('.rv').forEach(e=>io.observe(e));
 const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
 
 
-/* ——— Фон: живая природа — три сцены сменяют друг друга по мере прокрутки ———
-   туман над лесом → сосновый бор → солнце сквозь кроны → река в дымке → горный ручей */
+/* ——— Фон: живая природа — пять сцен сменяют друг друга по мере прокрутки ———
+   туман над лесом → сосновый бор → солнце сквозь кроны → река в дымке → горный ручей.
+   На вертикальном экране — свои вертикальные версии (кадрированы из 1080p, без растягивания).
+   Все сцены грузятся сразу, соседние уже играют заранее — смена мгновенная. */
 (()=>{
-  const V={mist:document.getElementById('v-mist'),pines:document.getElementById('v-pines'),sun:document.getElementById('v-sun'),river:document.getElementById('v-river'),stream:document.getElementById('v-stream')};
+  const ORDER=['mist','pines','sun','river','stream'];
+  const V={};ORDER.forEach(k=>V[k]=document.getElementById('v-'+k));
   const MAP={gate:'mist',hero:'mist',homes:'mist',bath:'pines',sfera:'sun',camper:'sun',way:'river',reviews:'stream',faq:'stream',book:'river'};
+  const portrait=matchMedia('(max-aspect-ratio: 1/1)');
   let cur='mist';
+  function setSrc(){const sfx=portrait.matches?'-v':'';
+    ORDER.forEach(k=>{const v=V[k],n=v.dataset.n+sfx,want=n+'.mp4';if(v.dataset.src===want)return;
+      v.dataset.src=want;v.poster='img/'+n+'.webp';v.src=want;v.load()});
+    warm()}
   const play=v=>{if(still)return;const pr=v.play();pr&&pr.catch(()=>{})};
-  function show(k){if(k===cur)return;const nv=V[k],ov=V[cur];cur=k;nv.preload='auto';
-    try{nv.currentTime=0}catch(e){}play(nv);nv.classList.add('on');ov.classList.remove('on');setTimeout(()=>{if(cur!==Object.keys(V).find(x=>V[x]===ov))ov.pause()},2000)}
-  play(V.mist);
+  function warm(){const i=ORDER.indexOf(cur); // текущая и соседние играют, дальние на паузе
+    ORDER.forEach((k,j)=>{Math.abs(j-i)<=1?play(V[k]):V[k].pause()})}
+  function show(k){if(k===cur)return;V[k].classList.add('on');V[cur].classList.remove('on');cur=k;warm()}
+  setSrc();portrait.addEventListener?portrait.addEventListener('change',setSrc):portrait.addListener(setSrc);
   const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&MAP[e.target.id])show(MAP[e.target.id])})},{rootMargin:'-45% 0px -45% 0px'});
   Object.keys(MAP).forEach(id=>{const el=document.getElementById(id);el&&io.observe(el)});
-  // лёгкий параллакс: фон чуть медленнее страницы
   const move=()=>{const y=Math.min(scrollY*.03,40);for(const v of Object.values(V))v.style.transform=`translate3d(0,${-y}px,0) scale(1.02)`};
   move();addEventListener('scroll',move,{passive:true});
-  document.addEventListener('visibilitychange',()=>{document.hidden?V[cur].pause():play(V[cur])});
-  // первое касание на телефоне — запустить видео, если браузер его придержал
-  addEventListener('pointerdown',()=>play(V[cur]),{once:true});
+  document.addEventListener('visibilitychange',()=>{document.hidden?ORDER.forEach(k=>V[k].pause()):warm()});
+  addEventListener('pointerdown',warm,{once:true});
+  window.bgWarm=warm;
 })();
 
 /* ——— Звук: настоящая запись реки и леса (общественное достояние), бесшовный круг ——— */
@@ -567,13 +575,13 @@ const Sound=(()=>{
   const load=()=>loading||(loading=fetch('forest.mp3').then(r=>r.arrayBuffer()).then(a=>new Promise((ok,no)=>ac.decodeAudioData(a,ok,no))).then(b=>{buf=b}));
   function start(){if(srcNode||!buf)return;srcNode=ac.createBufferSource();srcNode.buffer=buf;srcNode.loop=true;srcNode.loopStart=.06;srcNode.loopEnd=buf.duration-.06;srcNode.connect(gain);srcNode.start(0,.06)}
   function fallback(v){ // если Web Audio недоступен — обычный плеер
-    if(!el){el=new Audio('forest.mp3');el.loop=true;el.volume=.7}
+    if(!el){el=new Audio('forest.mp3');el.loop=true;el.volume=.32}
     v?el.play().catch(()=>{}):el.pause()}
   function set(v){
     on=v;
     try{
       if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)();gain=ac.createGain();gain.gain.value=0;gain.connect(ac.destination)}
-      if(v){ac.resume();load().then(()=>{if(!on)return;start();const t=ac.currentTime;gain.gain.cancelScheduledValues(t);gain.gain.setValueAtTime(gain.gain.value,t);gain.gain.linearRampToValueAtTime(.75,t+3)}).catch(()=>fallback(on))}
+      if(v){ac.resume();load().then(()=>{if(!on)return;start();const t=ac.currentTime;gain.gain.cancelScheduledValues(t);gain.gain.setValueAtTime(gain.gain.value,t);gain.gain.linearRampToValueAtTime(.32,t+3)}).catch(()=>fallback(on))}
       else{const t=ac.currentTime;gain.gain.cancelScheduledValues(t);gain.gain.setValueAtTime(gain.gain.value,t);gain.gain.linearRampToValueAtTime(0,t+.8);setTimeout(()=>{if(!on&&ac)ac.suspend()},900)}
     }catch(e){fallback(v)}
     if(el&&!v)el.pause();
@@ -587,7 +595,7 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
 /* ——— Вход ——— */
 (()=>{
   const gate=document.getElementById('gate');
-  const go=sound=>{if(sound)Sound.set(true);gate.classList.add('leave');document.documentElement.classList.remove('gated');scrollTo(0,0);setTimeout(()=>gate.remove(),1300)};
+  const go=sound=>{if(sound)Sound.set(true);window.bgWarm&&bgWarm();gate.classList.add('leave');document.documentElement.classList.remove('gated');scrollTo(0,0);setTimeout(()=>gate.remove(),1300)};
   document.getElementById('enter').addEventListener('click',()=>go(true));
   document.getElementById('enterQuiet').addEventListener('click',()=>go(false));
 })();
