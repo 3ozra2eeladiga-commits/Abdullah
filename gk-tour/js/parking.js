@@ -58,7 +58,7 @@
   var built = false, root, ceilG, mirrorG, schemeG, wallMesh, colMesh, hot = [], pickList = [], carMats = [], obstacles = [];
   var envTex = null, bgScheme = null, bgInside = new T.Color(0x08090c), skyMat = null, rampGlow = null, rampL = null, followL = null, hemiL = null, shafts = [], floorFlash = null, yourGlow = null;
   var st = { active: false, view: 'inside', taken: false, cur: null, tok: 0, hidden: [], saved: null, fly: null, pose: null, poseDirty: false, uiOn: false };
-  var START = { ex: 5.4, ez: 7.6, yaw: -0.105, pit: 0.03 };
+  var START = { ex: 13.0, ez: 8.0, yaw: -0.75, pit: 0.02 };
   var v1 = new T.Vector3(), v2 = new T.Vector3(), ray = new T.Raycaster(), ndc = new T.Vector2();
 
   /* ---------- интерфейс (свой, префикс gkp-) ---------- */
@@ -81,7 +81,7 @@
     '.gkp-switch{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:flex;padding:4px;border-radius:28px;background:rgba(15,18,27,.76);border:1px solid rgba(239,231,218,.16);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);pointer-events:auto}',
     '.gkp-switch button{min-width:116px;height:46px;border:0;border-radius:23px;background:transparent;color:rgba(239,231,218,.72);font:500 15px/1 "Onest",system-ui,sans-serif;letter-spacing:.02em;cursor:pointer;transition:background .4s ease,color .4s ease}',
     '.gkp-switch button.on{background:linear-gradient(180deg,#e6b088,#c98a5b);color:#1a130d;box-shadow:0 6px 22px rgba(201,138,91,.35)}',
-    '.gkp-hint{position:absolute;left:50%;bottom:92px;transform:translateX(-50%);font-size:13px;color:rgba(239,231,218,.74);letter-spacing:.03em;white-space:nowrap;transition:opacity .9s ease;text-shadow:0 1px 10px rgba(0,0,0,.9)}',
+    '.gkp-hint{margin-top:18px;padding-top:14px;border-top:1px solid rgba(239,231,218,.16);max-width:330px;font-size:12.5px;line-height:1.5;color:rgba(239,231,218,.62);letter-spacing:.03em;transition:opacity .9s ease;text-shadow:0 1px 10px rgba(0,0,0,.9)}',
     '.gkp-hint.off{opacity:0}',
     '.gkp-fade{position:absolute;inset:0;z-index:60;background:#07080b;opacity:0;pointer-events:none;transition:opacity .32s ease}',
     '.gkp-fade.on{opacity:1;pointer-events:auto}',
@@ -92,9 +92,8 @@
   var hud = document.createElement('div'); hud.className = 'gkp-hud';
   hud.innerHTML = '<button class="gkp-back" type="button"><i>←</i>Вернуться к дому</button>' +
     '<div class="gkp-head"><div class="gkp-eyebrow">Уровень −1 · под домом</div><h2 class="gkp-title">Подземный паркинг</h2>' +
-    '<p class="gkp-lead">Своё машино-место под домом. Лифт поднимает прямо на ваш этаж.</p></div>' +
+    '<p class="gkp-lead">Своё машино-место под домом. Лифт поднимает прямо на ваш этаж.</p><div class="gkp-hint"></div></div>' +
     '<div class="gkp-chips"><span>45 машино-мест в основном зале</span><span>Лифт на свой этаж без улицы</span><span>Пожаротушение и вентиляция</span></div>' +
-    '<div class="gkp-hint"></div>' +
     '<div class="gkp-switch"><button type="button" data-v="inside" class="on">Внутри</button><button type="button" data-v="scheme">Схема</button></div>';
   var fade = document.createElement('div'); fade.className = 'gkp-fade';
   app.appendChild(hud); app.appendChild(fade);
@@ -162,11 +161,11 @@
     var i, k, m;
 
     /* --- текстуры --- */
-    var floorT = tex(512, 512, function (g, w, h) { g.fillStyle = '#8b8f93'; g.fillRect(0, 0, w, h); speck(g, w, h, 5200, 0.07);
+    var floorT = tex(512, 512, function (g, w, h) { g.fillStyle = '#73777b'; g.fillRect(0, 0, w, h); speck(g, w, h, 5200, 0.07);
       for (var j = 0; j < 9; j++) { g.strokeStyle = 'rgba(20,20,22,' + (0.03 + rnd() * 0.04) + ')'; g.lineWidth = 6 + rnd() * 10; g.beginPath(); var y = rnd() * h; g.moveTo(-20, y); g.bezierCurveTo(w * 0.3, y + rnd() * 80 - 40, w * 0.7, y + rnd() * 80 - 40, w + 20, y + rnd() * 60 - 30); g.stroke(); } }, true, true);
     var wallT = tex(512, 512, function (g, w, h) {
       var Y = function (hm) { return h - 146.8 * hm; };
-      g.fillStyle = '#b9b6af'; g.fillRect(0, 0, w, h); speck(g, w, h, 4200, 0.06);
+      g.fillStyle = '#aaa7a1'; g.fillRect(0, 0, w, h); speck(g, w, h, 4200, 0.06);
       g.fillStyle = 'rgba(0,0,0,.07)'; g.fillRect(0, 0, 2, h); g.fillRect(256, 0, 2, h); g.fillRect(0, Y(2.35), w, 2);
       var gr = g.createLinearGradient(0, 0, 0, 150); gr.addColorStop(0, 'rgba(8,8,10,.62)'); gr.addColorStop(1, 'rgba(8,8,10,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, 150);
       g.fillStyle = '#2b2d32'; g.fillRect(0, Y(1.15), w, h); speck(g, w, h, 0, 0);
@@ -231,14 +230,14 @@
       'float gkF = pow( 1.0 - clamp( abs( dot( normalize( vViewPosition ), normal ) ), 0.0, 1.0 ), 3.0 );\n\tgl_FragColor = vec4( outgoingLight, mix( diffuseColor.a, 0.45, gkF ) );'); };
     var mWall = S({ map: wallT, roughness: 0.86, metalness: 0, envMapIntensity: 0.12 });
     var mCol = S({ map: colT, roughness: 0.8, metalness: 0, envMapIntensity: 0.12 });
-    var mCeil = S({ color: 0x3a3c41, vertexColors: true, roughness: 0.95, metalness: 0, envMapIntensity: 0 });
+    var mCeil = S({ color: 0x25272b, vertexColors: true, roughness: 0.95, metalness: 0, envMapIntensity: 0 });
     var mDuct = S({ color: 0xaeb4ba, roughness: 0.42, metalness: 0.55, envMapIntensity: 0.9 });
     var mPipe = S({ color: 0xa3261d, roughness: 0.45, metalness: 0.2, envMapIntensity: 0.4 });
     var mLine = S({ vertexColors: true, roughness: 0.55, metalness: 0, envMapIntensity: 0.2, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -3 });
     var mNum = S({ map: numT, transparent: true, depthWrite: false, roughness: 0.6, envMapIntensity: 0.1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -3 });
     var mTrim = S({ vertexColors: true, roughness: 0.5, metalness: 0.35, envMapIntensity: 0.5 });
     var mRamp = S({ map: rampT, roughness: 0.9, envMapIntensity: 0.05 });
-    var mLobby = S({ color: 0xd8cbb4, roughness: 0.7, emissive: 0xffd2a0, emissiveIntensity: 0.22, envMapIntensity: 0.2 });
+    var mLobby = S({ color: 0xd8cbb4, roughness: 0.7, emissive: 0xffd2a0, emissiveIntensity: 0.12, envMapIntensity: 0.2 });
     var mGlass = S({ color: 0xa9c0cc, roughness: 0.04, metalness: 0, transparent: true, opacity: 0.2, envMapIntensity: 1.3, depthWrite: false });
     var mStrip = new T.MeshBasicMaterial({ color: new T.Color(3.1, 3.2, 3.4) });
     var mWarm = new T.MeshBasicMaterial({ color: new T.Color(2.4, 1.75, 1.05) });
@@ -282,7 +281,7 @@
     bC.box(25.5, 25.9, CY - 0.45, CY, -17.0, -6.0, null, 1, 1, 7);
     ROWZ.forEach(function (z) { bC.box(-13.3, z < -19 || z > -12 ? 25.7 : 30.7, CY - 0.45, CY, z - 0.2, z + 0.2, null, 26, 1, 1); });
     bC.box(-13.55, -13.05, CY - 0.6, CY, -26.75, 8.0, null, 1, 1, 22); bC.box(-13.3, 25.7, CY - 0.6, CY, 11.5, 12.0, null, 26, 1, 1);
-    var ceil = bC.mesh(mCeil, null, function (x, y, z, nx, ny) { var L = 0.42 + 0.95 * Math.min(1.6, lightAt(x, z, 1.1)) + (ny < -0.5 && y < CY - 0.1 ? 0.12 : 0); return [L, L, L * 1.03]; });
+    var ceil = bC.mesh(mCeil, null, function (x, y, z, nx, ny) { var L = 0.34 + 0.8 * Math.min(1.6, lightAt(x, z, 1.1)) + (ny < -0.5 && y < CY - 0.1 ? 0.12 : 0); return [L, L, L * 1.03]; });
     ceilG.add(ceil);
 
     /* --- светильники-линии (и их отражение в полу) --- */
@@ -328,7 +327,7 @@
     [[20, -27, -PI / 2], [9.5, -27, -PI / 2], [-3, -27, -PI / 2], [-10.05, -20, 0], [-10.05, -3.5, 0], [-5.5, 8.45, PI / 2], [14.5, 8.45, PI / 2], [22.45, 1.5, PI], [22.45, -19.5, PI], [16, -9.3, -PI / 2], [-1.5, -9.3, -PI / 2]].forEach(function (a) { arrow(a[0], a[1], a[2]); });
     for (k = 0; k < 6; k++) fq(bL, 2.1, 11.2 - k, 2.2, 0.5, 0, WH);                                    // «зебра» к лифтовому холлу
     fq(bL, 6.45, 12.0, 6.3, 0.1, 0, YE); fq(bL, 6.45, 15.1, 6.3, 0.1, 0, YE); fq(bL, 3.35, 13.55, 0.1, 3.2, 0, YE); fq(bL, 9.55, 13.55, 0.1, 3.2, 0, YE);
-    for (k = 0; k < 7; k++) fq(bL, 4.15 + k * 0.82, 13.55, 0.09, 3.9, PI / 4 * 0.72, YE);
+    for (k = 0; k < 6; k++) fq(bL, 4.35 + k * 0.82, 13.55, 0.09, 3.7, PI / 4 * 0.72, YE);
     var lines = bL.mesh(mLine); root.add(lines);
     var nums = bN.mesh(mNum); nums.renderOrder = 2; root.add(nums);
 
@@ -338,7 +337,7 @@
     bWarm.box(1.0, 3.2, FY + 2.46, FY + 2.5, 15.5, 17.8);                                            // светящийся потолок холла
     bWarm.box(5.15, 9.45, FY + 0.3, FY + 0.33, 15.13, 15.16);                                        // тёплая линия под панно
     root.add(bLo.mesh(mLobby));
-    var liftWall = new T.Mesh(new T.PlaneGeometry(2.34, 2.46), new T.MeshStandardMaterial({ map: liftT, emissiveMap: liftT, emissive: 0xffffff, emissiveIntensity: 0.72, roughness: 0.5, envMapIntensity: 0.3 })); liftWall.rotation.y = PI; liftWall.position.set(2.1, FY + 1.23, 17.97); root.add(liftWall);
+    var liftWall = new T.Mesh(new T.PlaneGeometry(2.34, 2.46), new T.MeshStandardMaterial({ map: liftT, emissiveMap: liftT, emissive: 0xffffff, emissiveIntensity: 0.5, roughness: 0.5, envMapIntensity: 0.3 })); liftWall.rotation.y = PI; liftWall.position.set(2.1, FY + 1.23, 17.97); root.add(liftWall);
     bT.box(0.9, 3.3, FY + 2.4, FY + 2.5, 15.2, 15.3, GR); bT.box(0.9, 0.96, FY, FY + 2.4, 15.22, 15.3, GR); bT.box(3.24, 3.3, FY, FY + 2.4, 15.22, 15.3, GR); bT.box(2.07, 2.13, FY, FY + 2.4, 15.22, 15.3, GR);
     bT.box(1.9, 1.94, FY + 0.85, FY + 1.6, 15.14, 15.18, BR); bT.box(2.26, 2.3, FY + 0.85, FY + 1.6, 15.14, 15.18, BR);
     bG.plane(1.11, 2.4, mat4(1.515, FY + 1.2, 15.26, PI)); bG.plane(1.11, 2.4, mat4(2.685, FY + 1.2, 15.26, PI));
@@ -353,7 +352,7 @@
     var sign = new T.Group(), sb = new T.Mesh(new T.BoxGeometry(1.9, 0.44, 0.06), S({ color: 0x0c0d10, roughness: 0.5, envMapIntensity: 0.3 })), sf = new T.Mesh(new T.PlaneGeometry(1.84, 0.4), mSelf(signT));
     sf.rotation.y = PI; sf.position.z = -0.032; sign.add(sb, sf);
     [-0.8, 0.8].forEach(function (dx) { var r = new T.Mesh(new T.BoxGeometry(0.02, 0.5, 0.02), sb.material); r.position.set(dx, 0.47, 0); sign.add(r); });
-    sign.position.set(6.2, CY - 0.72, 10.9); ceilG.add(sign);
+    sign.position.set(5.0, CY - 0.72, 11.2); sign.rotation.y = -PI / 4; ceilG.add(sign);
     // двери выходов и таблички «ВЫХОД»
     var door = function (x, z, ry, noSign) { bT.add(new T.BoxGeometry(1.12, 2.2, 0.04), mat4(x, FY + 1.1, z, ry), [0.3, 0.31, 0.33]); var c = Math.sin(ry), s = Math.cos(ry); bT.add(new T.BoxGeometry(0.95, 2.08, 0.05), mat4(x + c * 0.02, FY + 1.04, z + s * 0.02, ry), [0.16, 0.19, 0.24]);
       bT.add(new T.BoxGeometry(0.03, 0.16, 0.05), mat4(x + c * 0.05 + s * 0.36, FY + 1.05, z + s * 0.05 - c * 0.36, ry), [0.7, 0.7, 0.72]);
@@ -414,11 +413,11 @@
     });
 
     /* --- свет: только свой --- */
-    hemiL = new T.HemisphereLight(0xe2e8f0, 0x6a655d, 0.6); root.add(hemiL);
-    followL = new T.PointLight(0xf2f5ff, 0.95, 30, 1.5); followL.position.set(START.ex, CY - 0.55, START.ez); root.add(followL);
-    var p1 = new T.PointLight(0xeef2ff, 0.7, 40, 1.5); p1.position.set(-3, CY - 0.6, -15); root.add(p1);
-    var p2 = new T.PointLight(0xeef2ff, 0.7, 40, 1.5); p2.position.set(15.5, CY - 0.6, -15); root.add(p2);
-    var pl = new T.PointLight(0xffc48c, 1.35, 15, 1.4); pl.position.set(3.4, FY + 2.2, 13.6); root.add(pl);
+    hemiL = new T.HemisphereLight(0xe2e8f0, 0x6a655d, 0.42); root.add(hemiL);
+    followL = new T.PointLight(0xf2f5ff, 0.7, 30, 1.5); followL.position.set(START.ex, CY - 0.55, START.ez); root.add(followL);
+    var p1 = new T.PointLight(0xeef2ff, 0.5, 40, 1.5); p1.position.set(-3, CY - 0.6, -15); root.add(p1);
+    var p2 = new T.PointLight(0xeef2ff, 0.5, 40, 1.5); p2.position.set(15.5, CY - 0.6, -15); root.add(p2);
+    var pl = new T.PointLight(0xffc48c, 1.05, 15, 1.4); pl.position.set(3.4, FY + 2.2, 13.6); root.add(pl);
     rampL = new T.PointLight(0xd6e6ff, 1.9, 30, 1.3); rampL.position.set(28.35, -0.6, -25.5); root.add(rampL);
 
     /* --- окружение для отражений (тёмный зал со светящимися линиями) --- */
@@ -495,7 +494,7 @@
     var bRm = new Batch(), row = function (j) { return [0, 1 - (j + 1) / 4, 1, 1 - j / 4]; };
     fq(bRm, -23.85, -13.0, 7.6, 0.95, PI, [1, 1, 1], row(0), CY + 0.03); fq(bRm, -23.85, 1.5, 7.6, 0.95, PI, [1, 1, 1], row(1), CY + 0.03); fq(bRm, 6.0, 20.6, 9.6, 1.2, PI, [1, 1, 1], row(2), CY + 0.03); fq(bRm, 18.5, 24.2, 8.0, 1.0, PI, [1, 1, 1], row(3), CY + 0.03);
     var rm = bRm.mesh(new T.MeshBasicMaterial({ map: rt, transparent: true, depthWrite: false, toneMapped: false, fog: false })); rm.renderOrder = 6; schemeG.add(rm);
-    var tag = new T.Sprite(new T.SpriteMaterial({ map: labelT('Лифт: паркинг → ваш этаж', true), transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, toneMapped: false, fog: false }));
+    var tag = new T.Sprite(new T.SpriteMaterial({ map: labelT('Лифт на ваш этаж', true), transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, toneMapped: false, fog: false }));
     tag.position.set(2.1, H + 4.2, 19.4); tag.scale.set(0.2, 0.05, 1); tag.renderOrder = 12; schemeG.add(tag);
   }
   function cabGlowTex() { return tex(128, 128, function (g) { var gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(0.3, 'rgba(255,255,255,.3)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }); }
@@ -524,9 +523,9 @@
     hideOutdoor();
     if (f && f.color) { f.color.setHex(inside ? 0x0a0b0e : 0x0d0f13); if ('near' in f) { f.near = inside ? 30 : 500; f.far = inside ? 150 : 4000; } }
     scene.background = inside ? bgInside : bgScheme; scene.environment = envTex;
-    renderer.toneMappingExposure = inside ? 1.16 : 1.1;
+    renderer.toneMappingExposure = inside ? 1.05 : 1.08;
     for (i = 0; i < carMats.length; i++) carMats[i].envMapIntensity = carMats[i].userData.gkpE;
-    hemiL.intensity = inside ? 0.6 : 0.95;
+    hemiL.intensity = inside ? 0.42 : 0.85;
     skySync();
   }
   function applyView() {

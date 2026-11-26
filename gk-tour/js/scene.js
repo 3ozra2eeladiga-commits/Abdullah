@@ -322,7 +322,7 @@ window.GKScene = (function () {
     // пятиэтажки: стены с окнами, скатная шиферная кровля, балконы
     var facade = function (lit) { return ctex(512, 512, function (g) { var R = seeded(31), x, y, k;
       if (lit) { g.fillStyle = '#000'; g.fillRect(0, 0, 512, 512); }
-      else { g.fillStyle = '#bdbab1'; g.fillRect(0, 0, 512, 512);
+      else { g.fillStyle = '#a5a299'; g.fillRect(0, 0, 512, 512);
         for (y = 0; y < 512; y += 6) { g.fillStyle = 'rgba(70,66,60,0.17)'; g.fillRect(0, y, 512, 1); for (x = (y / 6 % 2) * 7; x < 512; x += 14) g.fillRect(x, y, 1, 6); }
         for (k = 0; k < 70; k++) { g.fillStyle = 'rgba(' + (R() < 0.5 ? '255,255,255,' : '90,80,70,') + (0.03 + R() * 0.06) + ')'; g.fillRect(R() * 512, R() * 512, 30 + R() * 120, 6 + R() * 40); }
         for (y = 0; y < 4; y++) { g.fillStyle = 'rgba(60,55,50,0.2)'; g.fillRect(0, y * 128 + 124, 512, 3); } }
@@ -365,12 +365,12 @@ window.GKScene = (function () {
     var bodies = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), hWall, houses.length), roofsG = new T.InstancedMesh(roofG(1, 1, 1, 0), roofM, Math.max(1, gab.length)), roofsH = new T.InstancedMesh(roofG(1, 1, 1, 0.34), roofM, Math.max(1, hip.length));
     var frame = mergeG([new T.BoxGeometry(1, 1, 0.012).translate(0, 0.5, 0.5), new T.BoxGeometry(1, 1, 0.012).translate(0, 0.5, -0.5), new T.BoxGeometry(0.012, 1, 1).translate(0.5, 0.5, 0), new T.BoxGeometry(0.012, 1, 1).translate(-0.5, 0.5, 0)]);
     var fences = new T.InstancedMesh(frame, M({ color: 0xffffff, roughness: 0.85 }), houses.length), shedM = new T.InstancedMesh(mergeG([new T.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), roofG(1.12, 1.12, 0.28, 0).translate(0, 1, 0)]), M({ color: 0xffffff, roughness: 0.9 }), Math.max(1, sheds.length));
-    var RC = [0x6e4034, 0x53565c, 0x7d3a2e, 0x46524a, 0x5e5044, 0x8a8d90, 0x35506a], WC = [0xf4f1ea, 0xe9dcc2, 0xd3bd9c, 0xdedede, 0xc49a80, 0xb8c2b0, 0xa8523c], FC = [0x6b6e72, 0x7a5540, 0x4f5a4c, 0x8a8880, 0x6a3b30, 0x9a9a94];
+    var RC = [0x6e4034, 0x53565c, 0x7d3a2e, 0x46524a, 0x5e5044, 0x8a8d90, 0x35506a], WC = [0xf4f1ea, 0xe9dcc2, 0xd3bd9c, 0xdedede, 0xc49a80, 0xb8c2b0, 0xa8523c], FC = [0x4e5154, 0x5e4232, 0x3f4a40, 0x6a6862, 0x55302a, 0x54585c];
     var ng = 0, nh = 0, ns = 0, lin = function (hex) { return col.setHex(hex).convertSRGBToLinear(); };
     houses.forEach(function (h, n) { var ry = h.r ? Math.PI / 2 : 0, rm = h.hip ? roofsH : roofsG, ri = h.hip ? nh++ : ng++;
       o.rotation.set(0, ry, 0); o.position.set(h.x, h.h / 2, h.z); o.scale.set(h.w, h.h, h.d); o.updateMatrix(); bodies.setMatrixAt(n, o.matrix); bodies.setColorAt(n, lin(WC[(rnd() * WC.length) | 0]));
       o.position.set(h.x, h.h, h.z); o.scale.set(h.w * 1.14, h.hip ? 2.1 : 2.5, h.d * 1.16); o.updateMatrix(); rm.setMatrixAt(ri, o.matrix); rm.setColorAt(ri, lin(RC[(rnd() * RC.length) | 0]));
-      o.rotation.set(0, 0, 0); o.position.set(h.lx, 0, h.lz); o.scale.set(h.lw, 1.5 + rnd() * 0.5, h.ld); o.updateMatrix(); fences.setMatrixAt(n, o.matrix); fences.setColorAt(n, lin(FC[(rnd() * FC.length) | 0])); });
+      o.rotation.set(0, 0, 0); o.position.set(h.lx, 0, h.lz); o.scale.set(h.lw, 1.1 + rnd() * 0.5, h.ld); o.updateMatrix(); fences.setMatrixAt(n, o.matrix); fences.setColorAt(n, lin(FC[(rnd() * FC.length) | 0])); });
     sheds.forEach(function (h, n) { o.rotation.set(0, rnd() < 0.5 ? 0 : Math.PI / 2, 0); o.position.set(h.lx + (rnd() < 0.5 ? -1 : 1) * (h.lw / 2 - 3), 0, h.lz + (rnd() < 0.5 ? -1 : 1) * (h.ld / 2 - 2.6)); o.scale.set(3 + rnd() * 2.5, 2.2 + rnd() * 0.5, 2.6 + rnd() * 1.6); o.updateMatrix(); shedM.setMatrixAt(n, o.matrix); shedM.setColorAt(n, lin(FC[(rnd() * FC.length) | 0])); });
     roofsG.count = Math.max(ng, 0); roofsH.count = Math.max(nh, 0);
     [bodies, roofsG, roofsH, fences, shedM].forEach(function (im) { im.castShadow = im.receiveShadow = true; im.frustumCulled = false; if (im.instanceColor) im.instanceColor.needsUpdate = true; site.add(im); });
@@ -379,12 +379,12 @@ window.GKScene = (function () {
   /* ---------- зелень: кроны из нескольких неровных «облаков» листвы, ветвистые стволы, ели и туи, кусты с цветами ---------- */
   (function () {
     function clump(r, sy, x, y, z, hue, lum, sw, shh, flower) {
-      var g = new T.SphereGeometry(1, sw || 9, shh || 7), p = g.attributes.position, n = p.count, colr = new Float32Array(n * 3), ox = rnd() * 60, i, vx, vy, vz, k, l;
+      var g = new T.SphereGeometry(1, sw || 12, shh || 9), p = g.attributes.position, n = p.count, colr = new Float32Array(n * 3), ox = rnd() * 60, i, vx, vy, vz, k, l;
       for (i = 0; i < n; i++) { vx = p.getX(i); vy = p.getY(i); vz = p.getZ(i);
-        k = 1 + sn.noise3d(vx * 1.4 + ox, vy * 1.4, vz * 1.4) * 0.3 + sn.noise3d(vx * 3.6 + ox, vy * 3.6, vz * 3.6) * 0.12; if (vy < -0.25) k *= 0.8;
+        k = 1 + sn.noise3d(vx * 1.3 + ox, vy * 1.3, vz * 1.3) * 0.26 + sn.noise3d(vx * 3.4 + ox, vy * 3.4, vz * 3.4) * 0.15 + sn.noise3d(vx * 8 + ox, vy * 8, vz * 8) * 0.05; if (vy < -0.25) k *= 0.8;
         p.setXYZ(i, vx * k * r + x, vy * k * r * sy + y, vz * k * r + z);
-        l = lum * (0.48 + 0.52 * Math.min(1, vy * 0.7 + 0.75)) * (0.9 + sn.noise3d(vx * 3 + ox, vy * 3 + 7, vz * 3) * 0.22);
-        if (flower && vy > -0.2 && sn.noise3d(vx * 6 + ox, vy * 6, vz * 6) > 0.1) _c.setHSL(flower, 0.72, 0.42); else _c.setHSL(hue + sn.noise3d(vx + ox, vy, vz + 3) * 0.025, 0.42, l);
+        l = lum * 0.8 * (0.42 + 0.58 * Math.min(1, vy * 0.7 + 0.75)) * (0.9 + sn.noise3d(vx * 3 + ox, vy * 3 + 7, vz * 3) * 0.24);
+        if (flower && vy > -0.2 && sn.noise3d(vx * 6 + ox, vy * 6, vz * 6) > 0.1) _c.setHSL(flower, 0.72, 0.42); else _c.setHSL(hue - 0.012 + sn.noise3d(vx + ox, vy, vz + 3) * 0.025, 0.36, l);
         _c.convertSRGBToLinear(); colr[i * 3] = _c.r; colr[i * 3 + 1] = _c.g; colr[i * 3 + 2] = _c.b; }
       g.computeVertexNormals(); g.deleteAttribute('uv'); g.setAttribute('color', new T.BufferAttribute(colr, 3)); return g.toNonIndexed();
     }
@@ -400,7 +400,7 @@ window.GKScene = (function () {
         gs.push(clump(2.5, 0.85, 0, th + 3.6, 0, 0.28, 0.3)); for (i = 0; i < 7; i++) { a = i / 7 * 6.283 + rnd() * 0.4; gs.push(clump(1.5 + rnd() * 0.7, 0.8, Math.cos(a) * (1.9 + rnd() * 0.5), th + 1.9 + rnd() * 1.9, Math.sin(a) * (1.9 + rnd() * 0.5), 0.27 + rnd() * 0.03, 0.27 + rnd() * 0.06)); }
         gs.push(clump(1.5, 0.8, 0.5, th + 5.3, -0.3, 0.27, 0.33)); }
       else if (kind === 'poplar') { gs.push(limb(0.14, 0.32, 6, 0, 0, 0, 0, 0, 0x5c5248));
-        for (i = 0; i < 6; i++) gs.push(clump(1.75 - Math.abs(i - 1.6) * 0.27, 1.55, (rnd() - 0.5) * 0.7, 3.6 + i * 2.25, (rnd() - 0.5) * 0.7, 0.26, 0.25 + rnd() * 0.04)); }
+        gs.push(clump(1.9, 3.4, 0, 9.2, 0, 0.26, 0.27, 12, 12)); for (i = 0; i < 4; i++) gs.push(clump(1.25, 2.3, (rnd() - 0.5) * 1.3, 5.6 + i * 2.6, (rnd() - 0.5) * 1.3, 0.255, 0.25 + rnd() * 0.04)); }
       else if (kind === 'birch') { th = 4.6; gs.push(limb(0.07, 0.17, th + 3, 0, 0, 0, 0.04, 0, 0xd9d5c8));
         for (i = 0; i < 3; i++) gs.push(limb(0.03, 0.07, 2.4, 0, th - 0.4 + i * 0.7, 0, 0.7, i * 2.1 + rnd(), 0xcfcabb));
         for (i = 0; i < 6; i++) { a = i / 6 * 6.283 + rnd() * 0.5; gs.push(clump(1.15 + rnd() * 0.5, 1.15, Math.cos(a) * (0.9 + rnd() * 0.7), th + 0.6 + rnd() * 3, Math.sin(a) * (0.9 + rnd() * 0.7), 0.23 + rnd() * 0.03, 0.34 + rnd() * 0.06)); } }
@@ -479,13 +479,13 @@ window.GKScene = (function () {
       var ridge = function (amp, base, seed, top, bot, shade) { var hs = [], x, i, a, n, south, mx = 0;
         for (x = 0; x <= W; x += 2) { a = x / W * 6.283; south = Math.pow(Math.max(0, Math.cos(a)), 0.7);
           n = (1 - Math.abs(sn.noise(Math.cos(a) * 2.2 + seed, Math.sin(a) * 2.2))) * 0.52 + (1 - Math.abs(sn.noise(Math.cos(a) * 6 + seed, Math.sin(a) * 6))) * 0.27 + sn.noise(Math.cos(a) * 16 + seed, Math.sin(a) * 16) * 0.12 + sn.noise(Math.cos(a) * 44, Math.sin(a) * 44 + seed) * 0.07;
-          n = base + (0.1 + 0.9 * south) * amp * Math.max(0.08, n); hs.push(n); if (n > mx) mx = n; }
+          n = south * (base + amp * Math.max(0.08, n)); hs.push(n); if (n > mx) mx = n; }
         g.beginPath(); g.moveTo(0, Hh); for (i = 0; i < hs.length; i++) g.lineTo(i * 2, Hh - hs[i] * Hh); g.lineTo(W, Hh); g.closePath();
         var gr = g.createLinearGradient(0, Hh - mx * Hh, 0, Hh); gr.addColorStop(0, top); gr.addColorStop(0.55, bot); gr.addColorStop(1, bot); g.fillStyle = gr; g.fill();
         if (shade) for (i = 1; i < hs.length - 1; i++) { var sl = (hs[i + 1] - hs[i - 1]) * Hh, al = Math.min(0.55, Math.abs(sl) * 0.22); g.fillStyle = sl > 0 ? 'rgba(255,255,255,' + al + ')' : 'rgba(74,96,140,' + al + ')'; g.fillRect(i * 2, Hh - hs[i] * Hh, 2, hs[i] * Hh * (0.25 + 0.3 * Math.abs(sn.noise(i * 0.05, seed)))); } };
       g.clearRect(0, 0, W, Hh);
       ridge(0.74, 0.1, 1.3, '#ffffff', '#aebdd4', true); ridge(0.4, 0.07, 7.1, '#93a5c0', '#a3b3ca', false); ridge(0.2, 0.05, 13.7, '#7f91aa', '#97a8bf', false);
-      g.globalCompositeOperation = 'destination-out'; var fd = g.createLinearGradient(0, Hh * 0.66, 0, Hh * 0.97); fd.addColorStop(0, 'rgba(0,0,0,0)'); fd.addColorStop(1, 'rgba(0,0,0,1)'); g.fillStyle = fd; g.fillRect(0, Hh * 0.66, W, Hh); g.globalCompositeOperation = 'source-over';
+      g.globalCompositeOperation = 'destination-out'; var fd = g.createLinearGradient(0, Hh * 0.6, 0, Hh * 0.95); fd.addColorStop(0, 'rgba(0,0,0,0)'); fd.addColorStop(1, 'rgba(0,0,0,1)'); g.fillStyle = fd; g.fillRect(0, Hh * 0.66, W, Hh); g.globalCompositeOperation = 'source-over';
     }) });
   var mount = new T.Mesh(new T.CylinderGeometry(1560, 1560, 240, 96, 1, true), mountMat); mount.position.y = 106; mount.renderOrder = -1; mount.name = 'mountains'; scene.add(mount);
   // режим «Облака»: дом над морем облаков
@@ -509,11 +509,11 @@ window.GKScene = (function () {
   /* ---------- режимы ---------- */
   var C = function (h) { return new T.Color(h); }, K = function (r, g, b) { return new T.Color(r, g, b); }, V = function (x, y, z) { return new T.Vector3(x, y, z); };
   var MODES = {
-    day: { top: K(0.02, 0.05, 0.12), hor: K(0.5, 0.59, 0.7), bot: K(0.16, 0.17, 0.15), sunC: C(0xfff0dc), sun: 2.5, sunP: V(-120, 135, 150), hemiS: C(0xc4d8ff), hemiG: C(0x77705f), hemi: 0.42, exp: 0.9, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 0, env: 1, fogN: 170, fogF: 1500, sh: 0.2,
+    day: { top: K(0.02, 0.05, 0.12), hor: K(0.52, 0.62, 0.76), bot: K(0.16, 0.17, 0.15), sunC: C(0xfff0dc), sun: 2.5, sunP: V(-120, 135, 150), hemiS: C(0xc4d8ff), hemiG: C(0x77705f), hemi: 0.42, exp: 0.9, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 0, env: 1, fogN: 150, fogF: 1150, sh: 0.2,
       cl: K(0.95, 0.95, 0.95), cd: K(0.6, 0.65, 0.72), glow: K(0, 0, 0), mt: K(0.9, 0.94, 1), skyG: 1, scl: 0.8, turb: 2.5, ray: 1.1, mie: 0.004 },
-    sunset: { top: K(0.02, 0.03, 0.08), hor: K(0.8, 0.5, 0.36), bot: K(0.13, 0.1, 0.09), sunC: C(0xffb27a), sun: 2.3, sunP: V(-290, 44, 95), hemiS: C(0x9aa6d8), hemiG: C(0x6a5448), hemi: 0.4, exp: 0.95, win: 0.85, shop: 1.2, lamp: 0.55, stars: 0, cloud: 0, env: 1, fogN: 170, fogF: 1400, sh: 0.25,
+    sunset: { top: K(0.02, 0.03, 0.08), hor: K(0.8, 0.5, 0.36), bot: K(0.13, 0.1, 0.09), sunC: C(0xffb27a), sun: 2.3, sunP: V(-290, 44, 95), hemiS: C(0x9aa6d8), hemiG: C(0x6a5448), hemi: 0.4, exp: 0.95, win: 0.85, shop: 1.2, lamp: 0.55, stars: 0, cloud: 0, env: 1, fogN: 150, fogF: 1100, sh: 0.25,
       cl: K(1, 0.6, 0.4), cd: K(0.42, 0.33, 0.44), glow: K(0, 0, 0), mt: K(1, 0.74, 0.62), skyG: 1, scl: 0.9, turb: 6, ray: 2.6, mie: 0.006 },
-    night: { top: K(0.003, 0.006, 0.018), hor: K(0.014, 0.02, 0.045), bot: K(0.006, 0.007, 0.01), sunC: C(0x9db6ff), sun: 0.55, sunP: V(100, 180, 110), hemiS: C(0x4a5f98), hemiG: C(0x15171f), hemi: 0.3, exp: 1.0, win: 1.5, shop: 1.5, lamp: 1, stars: 1, cloud: 0, env: 0.9, fogN: 200, fogF: 1300, sh: 0.3,
+    night: { top: K(0.003, 0.006, 0.018), hor: K(0.014, 0.02, 0.045), bot: K(0.006, 0.007, 0.01), sunC: C(0x9db6ff), sun: 0.55, sunP: V(100, 180, 110), hemiS: C(0x4a5f98), hemiG: C(0x15171f), hemi: 0.3, exp: 1.0, win: 1.5, shop: 1.5, lamp: 1, stars: 1, cloud: 0, env: 0.9, fogN: 160, fogF: 1050, sh: 0.3,
       cl: K(0.05, 0.065, 0.11), cd: K(0.015, 0.02, 0.04), glow: K(0.1, 0.055, 0.022), mt: K(0.03, 0.045, 0.08), skyG: 1, scl: 0.55, turb: 2.5, ray: 1.1, mie: 0.004 },
     clouds: { top: K(0.02, 0.05, 0.12), hor: K(0.78, 0.84, 0.92), bot: K(0.8, 0.84, 0.9), sunC: C(0xfff3df), sun: 1.9, sunP: V(-95, 175, 135), hemiS: C(0xe6eeff), hemiG: C(0xb9c0cc), hemi: 0.6, exp: 0.92, win: 0, shop: 0.45, lamp: 0, stars: 0, cloud: 1, env: 1, fogN: 190, fogF: 700, sh: 0,
       cl: K(1, 1, 1), cd: K(0.7, 0.75, 0.82), glow: K(0, 0, 0), mt: K(1, 1, 1), skyG: 1, scl: 0.3, turb: 2, ray: 1, mie: 0.003 }
