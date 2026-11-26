@@ -159,7 +159,7 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 /* ——— Сферы: купол ——— */
 .dome-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(28px,5vw,72px);align-items:center}
 .dome{position:relative;aspect-ratio:2/1.08;border-radius:999px 999px 26px 26px/ 185% 185% 26px 26px;overflow:hidden}
-.dome img{width:100%;height:100%;object-fit:cover}
+.dome img{width:100%;height:100%;object-fit:cover;transform:translate3d(0,var(--py,0px),0) scale(1.12);will-change:transform}
 .dome::after{content:"";position:absolute;inset:0;border-radius:inherit;border:1px solid var(--brass);opacity:.5;pointer-events:none}
 .tents{display:grid;gap:10px;margin-block:30px}
 .tent{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:18px 22px;border-radius:20px;border:1px solid var(--line);transition:border-color .3s,background .3s}
@@ -174,7 +174,7 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 
 /* ——— Автодом ——— */
 .camper{position:relative;border-radius:32px;overflow:hidden;min-height:480px;display:flex;align-items:flex-end;isolation:isolate}
-.camper>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.camper>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transform:translate3d(0,var(--py,0px),0) scale(1.12);will-change:transform}
 .camper::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,32,22,.9) 0,rgba(13,32,22,.35) 60%,transparent);z-index:-1}
 .camper-in{padding:clamp(24px,4vw,56px);max-width:620px}
 .camper h2{font-size:clamp(28px,3.8vw,48px);margin-block:16px}
@@ -226,7 +226,13 @@ details p{margin:0 0 24px;color:var(--mist);max-width:60ch}
 .end .eyebrow{justify-content:center}.end .eyebrow::before{display:none}
 .contacts{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 34px;margin-top:40px;color:var(--mist);font-size:15px}
 .contacts b{color:var(--fog);font-weight:500;user-select:all}
-.giant{font:500 clamp(120px,29vw,460px)/.74 var(--f-display);letter-spacing:.02em;margin-top:60px;background:url(img/river.webp) center/cover;-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none;transform:translateY(8%)}
+.giant-wrap{position:relative;margin-top:60px}
+.giant{font:500 clamp(120px,29vw,460px)/.74 var(--f-display);letter-spacing:.02em;background:url(img/river.webp) center/cover;-webkit-background-clip:text;background-clip:text;color:transparent;user-select:none;transform:translateY(8%)}
+.giant .bl{display:inline-block;width:0;height:0}
+.squirrel{position:absolute;left:0;top:0;width:var(--sq,56px);height:auto;fill:var(--brass-hi);pointer-events:none;overflow:visible;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));will-change:transform}
+.squirrel .eye{fill:var(--night)}
+.squirrel g{display:none}
+.squirrel[data-p="run1"] .p-run1,.squirrel[data-p="run2"] .p-run2,.squirrel[data-p="sit"] .p-sit{display:inline}
 .legal{position:relative;border-top:1px solid var(--line);padding-block:20px;font-size:12.5px;color:var(--mist);background:var(--night)}
 .legal .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
 
@@ -291,19 +297,9 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 .snd .wave i{background:var(--brass-hi)}
 .snd[aria-pressed="false"] .wave i{animation:none;height:3px}
 
-/* ——— Проявление фото: снимок проступает снизу вверх сквозь край в форме линии леса, выходя из тумана ——— */
-.js .grow{-webkit-mask-image:url(img/reveal-mask.png);mask-image:url(img/reveal-mask.png);-webkit-mask-size:100% 300%;mask-size:100% 300%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:0 0;mask-position:0 0}
-.js .grow img{filter:blur(10px) saturate(.35) brightness(1.25);transform:scale(1.1);transition:filter 2.2s var(--ease),transform 2.6s var(--ease)}
-.js .grow.up img{filter:none;transform:none}
-.js .grow.done{-webkit-mask-image:none;mask-image:none}
-.js .slats.grow img{transition:filter 2.2s var(--ease),transform 2.6s var(--ease)}
-.js .slats.grow.up .slat img{filter:brightness(.82) saturate(.92)}
-.js .slats.grow.up .slat.on img{filter:none;transform:scale(1.04)}
-.js .slats.grow.done .slat img{transition:transform 1.2s var(--ease),filter .6s}
 
 /* ——— Появление (из видимого состояния) ——— */
 .js .rv{opacity:.25;transform:translateY(26px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
-@media(prefers-reduced-motion:reduce){.js .grow{-webkit-mask-image:none!important;mask-image:none!important}.js .grow img{filter:none!important;transform:none!important}}
 .js .rv.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.js .rv{opacity:1;transform:none}html{scroll-behavior:auto}}
 </style>
@@ -391,14 +387,14 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
         <button class="chip" id="f-sky" data-f="sky" aria-pressed="false">Небо над кроватью</button>
       </div>
     </div>
-    <div class="slats rv grow" id="slats"></div>
+    <div class="slats rv" id="slats"></div>
     <p class="count" id="count" aria-live="polite"></p>
   </div>
 </section>
 
 <section class="bath" id="bath">
   <div class="wrap bath-grid">
-    <div class="stage rv grow" id="stage">
+    <div class="stage rv" id="stage">
       <img src="img/bath1.webp" alt="Парная умной бани" data-m="par" class="show">
       <img src="img/bath3.webp" alt="Интерьер бани с глиняными стенами" data-m="vyuga">
       <img src="img/bath4.webp" alt="Джакузи на террасе бани" data-m="dush">
@@ -437,13 +433,13 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
       <div class="occ"><span>Свадьба</span><span>День рождения</span><span>Гендер пати</span><span>Выпускной</span><span>Корпоратив</span></div>
       <div style="margin-top:30px"><a class="btn" href="https://clubles.ru/sfera/" target="_blank" rel="noopener">Выбрать сферу<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></a></div>
     </div>
-    <div class="dome rv grow"><img src="img/sfera1.webp" alt="Купольная сфера в лесу" loading="lazy"></div>
+    <div class="dome rv"><img src="img/sfera1.webp" alt="Купольная сфера в лесу" loading="lazy"></div>
   </div>
 </section>
 
 <section id="camper" style="padding-top:0">
   <div class="wrap">
-    <div class="camper rv grow">
+    <div class="camper rv">
       <img src="img/camper1.webp" alt="Автодом на базе пикапа на закате в горах" loading="lazy">
       <div class="camper-in">
         <div class="eyebrow">Автодом</div>
@@ -516,7 +512,32 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
       <a href="https://t.me/club_les_kmv" target="_blank" rel="noopener">Telegram <b>@club_les_kmv</b></a>
     </div>
   </div>
-  <div class="giant" aria-hidden="true">ЛЕС</div>
+  <div class="giant-wrap" id="gwrap" aria-hidden="true">
+    <div class="giant" id="giant"><span>Л</span><span>Е</span><span>С</span><i class="bl"></i></div>
+    <svg class="squirrel" id="squirrel" viewBox="0 0 100 70">
+      <g class="p-run1">
+        <path d="M30 44C14 46 4 36 6 22C8 10 20 4 30 9C24 12 21 19 24 27C27 35 34 38 33 44Z"/>
+        <ellipse cx="50" cy="46" rx="19" ry="9" transform="rotate(-6 50 46)"/>
+        <circle cx="72" cy="38" r="8"/><ellipse cx="79" cy="40" rx="5" ry="3.6"/><path d="M68 31L70 23L74 30Z"/>
+        <path d="M64 50L82 60L84 63L80 63L62 54Z"/><path d="M38 50C34 56 26 60 18 63L16 66L22 66C30 63 38 60 44 53Z"/>
+        <circle class="eye" cx="74" cy="36" r="1.3"/>
+      </g>
+      <g class="p-run2">
+        <path d="M34 40C20 38 12 26 16 14C20 4 32 2 38 8C32 10 28 16 30 23C32 30 38 34 38 40Z"/>
+        <ellipse cx="50" cy="47" rx="16" ry="11" transform="rotate(-12 50 47)"/>
+        <circle cx="68" cy="37" r="8"/><ellipse cx="75" cy="39" rx="5" ry="3.6"/><path d="M64 30L66 22L70 29Z"/>
+        <path d="M58 52L60 66L64 68L66 66L64 52Z"/><path d="M42 50C44 58 52 64 58 66L60 68L54 68C46 66 40 60 38 54Z"/>
+        <circle class="eye" cx="70" cy="35" r="1.3"/>
+      </g>
+      <g class="p-sit">
+        <path d="M44 64C28 62 20 48 24 32C28 18 40 10 50 14C42 18 38 26 40 36C42 46 50 54 48 64Z"/>
+        <ellipse cx="56" cy="50" rx="11" ry="16" transform="rotate(10 56 50)"/>
+        <circle cx="62" cy="30" r="8"/><ellipse cx="69" cy="31" rx="4.5" ry="3.4"/><path d="M58 23L59 14L64 22Z"/>
+        <ellipse cx="66" cy="44" rx="4" ry="3"/><ellipse cx="57" cy="66" rx="10" ry="3"/>
+        <circle class="eye" cx="64" cy="28" r="1.3"/>
+      </g>
+    </svg>
+  </div>
   <div class="legal"><div class="wrap"><span>Концепт редизайна главной страницы. Официальный сайт клуба: clubles.ru</span><span>Фото и тексты: загородный клуб «Лес». Видео фона: Mixkit (свободная лицензия). Звук: полевые записи рек Семуа, Оредеж и ручья Штайнбах (radio aporee, общественное достояние)</span></div></div>
 </section>
 </main>
@@ -556,16 +577,65 @@ function filter(f){
 document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));filter(c.dataset.f)}));
 filter('all');
 
-/* Проявление фото при прокрутке */
+/* ——— Белка на буквах «ЛЕС»: бегает по верхнему краю, перепрыгивает между буквами, присаживается ——— */
 (()=>{
-  const D=2000,ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-  const go=el=>{el.classList.add('up');const t0=performance.now();
-    const step=now=>{const k=Math.min(1,(now-t0)/D),v=(ease(k)*100).toFixed(2)+'%';el.style.webkitMaskPosition='0 '+v;el.style.maskPosition='0 '+v;
-      if(k<1)requestAnimationFrame(step);else setTimeout(()=>el.classList.add('done'),400)};
-    requestAnimationFrame(step)};
-  if(matchMedia('(prefers-reduced-motion:reduce)').matches){document.querySelectorAll('.grow').forEach(e=>e.classList.add('up','done'));return}
-  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){go(e.target);io.unobserve(e.target)}}),{threshold:.22});
-  document.querySelectorAll('.grow').forEach(e=>io.observe(e));
+  const wrap=document.getElementById('gwrap'),gi=document.getElementById('giant'),sq=document.getElementById('squirrel');
+  if(!wrap)return;
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  let prof=null,x0=0,x1=0,W=0,size=56,x=0,dir=1,mode='sit',until=0,target=0,last=0,frame=0,ft=0,vis=false;
+  function measure(){
+    const wr=wrap.getBoundingClientRect(),cs=getComputedStyle(gi),bl=gi.querySelector('.bl').getBoundingClientRect();
+    W=Math.max(1,Math.ceil(wr.width));const H=Math.ceil(wr.height)+40,base=bl.top-wr.top;
+    const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+    g.font=`${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;g.textBaseline='alphabetic';g.fillStyle='#000';
+    gi.querySelectorAll('span').forEach(sp=>{const r=sp.getBoundingClientRect();g.fillText(sp.textContent,r.left-wr.left,base)});
+    const d=g.getImageData(0,0,W,H).data;prof=new Float32Array(W).fill(-1);
+    for(let i=0;i<W;i++)for(let j=0;j<H;j++)if(d[(j*W+i)*4+3]>120){prof[i]=j;break}
+    x0=prof.findIndex(v=>v>=0);let k=W-1;while(k>0&&prof[k]<0)k--;x1=k;
+    size=Math.max(40,Math.min(92,parseFloat(cs.fontSize)*.21));sq.style.setProperty('--sq',size+'px');
+    if(!x||x<x0||x>x1)x=x0+(x1-x0)*.2;
+  }
+  // высота опоры под лапами; в зазоре между буквами — дуга прыжка
+  function footY(px){
+    const r=Math.round(size*.25);let best=1e9;
+    for(let i=Math.max(0,Math.round(px)-r);i<=Math.min(W-1,Math.round(px)+r);i++)if(prof[i]>=0)best=Math.min(best,prof[i]);
+    if(best<1e9)return{y:best,air:false};
+    let a=Math.round(px),b=Math.round(px);while(a>0&&prof[a]<0)a--;while(b<W-1&&prof[b]<0)b++;
+    const t=(px-a)/Math.max(1,b-a),y=prof[a]+(prof[b]-prof[a])*t-Math.sin(Math.PI*t)*size*.9;
+    return{y,air:true};
+  }
+  function pickNext(now){
+    if(mode==='run'){mode='sit';until=now+1200+Math.random()*2600;if(Math.random()<.5)dir*=-1}
+    else{mode='run';let t,n=0;do{t=x0+size*.4+Math.random()*(x1-x0-size*.8);n++}while((Math.abs(t-x)<size*1.5||footY(t).air||footY(t+size*.3).air||footY(t-size*.3).air)&&n<60);target=t;dir=t>x?1:-1}
+  }
+  function draw(){
+    if(!prof)return;
+    const f=footY(x),bob=mode==='run'&&!f.air?(frame?-size*.06:0):0;
+    sq.dataset.p=mode==='sit'?'sit':(f.air?'run1':(frame?'run2':'run1'));
+    const h=size*.7;sq.style.transform=`translate3d(${x-size/2}px,${f.y-h+size*.03+bob}px,0) scaleX(${dir})`;
+  }
+  function tick(now){
+    if(!vis)return;const dt=Math.min(.05,(now-last)/1000);last=now;
+    if(mode==='run'){x+=dir*size*3.4*dt;ft+=dt;if(ft>.085){ft=0;frame^=1}
+      if((dir>0&&x>=target)||(dir<0&&x<=target)){x=target;pickNext(now)}}
+    else if(now>until)pickNext(now);
+    draw();requestAnimationFrame(tick);
+  }
+  const start=()=>{measure();draw()};
+  (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(start);
+  let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(start,200)});
+  sq.dataset.p='sit';
+  if(reduce)return;
+  new IntersectionObserver(e=>{const was=vis;vis=e[0].isIntersecting;if(vis&&!was){measure();last=performance.now();requestAnimationFrame(tick)}}).observe(wrap);
+})();
+
+/* Лёгкий параллакс фото внутри рамки */
+(()=>{
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const els=[...document.querySelectorAll('.dome img,.camper>img')];
+  const upd=()=>{const h=innerHeight;els.forEach(im=>{const r=im.parentElement.getBoundingClientRect();if(r.bottom<0||r.top>h)return;
+    const k=(r.top+r.height/2-h/2)/h;im.style.setProperty('--py',(k*-40).toFixed(1)+'px')})};
+  upd();addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);
 })();
 
 /* Появление секций */
