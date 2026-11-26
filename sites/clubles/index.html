@@ -73,17 +73,12 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 
 /* ——— Герой: фонарь в ночном лесу ——— */
 .hero{position:relative;min-height:min(900px,96svh);display:flex;align-items:flex-end;padding-block:150px 0;overflow:hidden;--mx:68%;--my:42%}
-.hero .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.hero .dark{filter:brightness(.55) saturate(.75)}
-.hero .light{-webkit-mask-image:radial-gradient(circle clamp(150px,22vw,330px) at var(--mx) var(--my),#000 0,rgba(0,0,0,.55) 45%,transparent 100%);mask-image:radial-gradient(circle clamp(150px,22vw,330px) at var(--mx) var(--my),#000 0,rgba(0,0,0,.55) 45%,transparent 100%)}
+.hero .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.82) saturate(1.02)}
 .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,32,22,.55) 0,transparent 30%,transparent 45%,var(--night) 100%);pointer-events:none}
-#flies{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
 .hero-in{position:relative;z-index:2;width:100%}
 .hero h1{font-size:clamp(38px,7.4vw,112px);line-height:.98;margin-block:22px 26px;max-width:12ch}
 .hero .lead{font-size:clamp(16px,1.35vw,19px);color:var(--fog);opacity:.86}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
-.hint{position:absolute;z-index:2;right:var(--gut-r);top:150px;display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist)}
-.hint i{width:9px;height:9px;border-radius:50%;background:var(--brass-hi);box-shadow:0 0 0 0 rgba(220,195,154,.6);animation:ping 2.2s infinite}
 @keyframes ping{70%{box-shadow:0 0 0 14px rgba(220,195,154,0)}100%{box-shadow:0 0 0 0 rgba(220,195,154,0)}}
 .facts{display:grid;grid-template-columns:repeat(4,1fr);margin-top:clamp(40px,6vw,80px);border-top:1px solid var(--line)}
 .facts div{padding:22px 20px 26px 0;border-right:1px solid var(--line);padding-left:20px}
@@ -301,19 +296,6 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 @media(max-width:860px){.scene{display:none}}
 .gated .scene{opacity:0;visibility:hidden}
 
-/* ——— Вступительный ролик ——— */
-.film{position:fixed;inset:0;z-index:95;background:#0b1a12;opacity:0;transition:opacity 1s var(--ease)}
-.film.on{opacity:1}.film.leave{opacity:0;transform:scale(1.04);transition:opacity 1.3s var(--ease),transform 1.4s var(--ease);pointer-events:none}
-.film video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.film::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,26,18,.35),transparent 25%,transparent 70%,rgba(11,26,18,.55));pointer-events:none}
-.film-logo{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;opacity:0;transform:scale(.96);transition:opacity 1.4s var(--ease),transform 2.4s var(--ease);background:radial-gradient(circle at 50% 50%,rgba(11,26,18,.55),transparent 60%)}
-.film-logo img:first-child{width:clamp(70px,9vw,110px);height:auto}.film-logo img:last-child{width:clamp(150px,18vw,230px);height:auto}
-.film.logo .film-logo{opacity:1;transform:none}
-.film-skip{position:absolute;z-index:3;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));height:44px;padding:0 20px;border-radius:999px;background:rgba(13,32,22,.55);border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);font-size:13.5px;color:var(--fog);transition:border-color .3s}
-.film-skip:hover{border-color:var(--brass)}
-.film-bar{position:absolute;z-index:3;left:max(18px,env(safe-area-inset-left,0px));right:calc(max(18px,env(safe-area-inset-right,0px)) + 150px);bottom:calc(47px + env(safe-area-inset-bottom,0px));height:2px;background:rgba(238,240,232,.18);border-radius:2px;overflow:hidden}
-.film-bar i{display:block;height:100%;background:var(--brass-hi);transform-origin:0 50%;transform:scaleX(0)}
-
 /* ——— Кнопка звука ——— */
 .snd{position:fixed;z-index:60;right:calc(max(18px,env(safe-area-inset-right,0px)));bottom:calc(18px + env(safe-area-inset-bottom,0px));height:52px;padding:0 20px 0 16px;border-radius:999px;display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);font-size:13.5px;transition:border-color .3s,opacity 1s,transform .3s var(--ease)}
 .snd:hover{border-color:var(--brass);transform:translateY(-2px)}
@@ -351,13 +333,6 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
   </div>
 </div>
 
-<div class="film" id="film" hidden>
-  <video id="filmV" muted playsinline preload="auto"></video>
-  <div class="film-logo" aria-hidden="true"><img src="img/logo-tree.webp" alt=""><img src="img/logo-word.webp" alt=""></div>
-  <button class="film-skip" id="filmSkip">Пропустить</button>
-  <div class="film-bar"><i id="filmBar"></i></div>
-</div>
-
 <div class="scene" id="scene" aria-hidden="true"><span><b id="sceneName">Туман над лесом, рассвет</b><small>44°03′ с. ш. · 42°51′ в. д.</small></span></div>
 
 <button class="snd" id="snd" aria-pressed="false" aria-label="Звук леса"><span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span id="sndText">Звук выключен</span></button>
@@ -380,10 +355,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 
 <main id="top">
 <section class="hero" id="hero">
-  <img class="ph dark" src="img/hero.webp" alt="">
-  <img class="ph light" src="img/hero.webp" alt="Дом с террасой и джакузи среди деревьев">
-  <canvas id="flies" aria-hidden="true"></canvas>
-  <div class="hint"><i></i>Посветите в лес</div>
+  <video class="ph" id="heroV" muted playsinline loop autoplay preload="auto" aria-label="Лес с высоты, река, отдых у домика и костра"></video>
   <div class="wrap hero-in">
     <div class="eyebrow">Глэмпинг у реки · Пятигорск, п. Нижнеподкумский</div>
     <h1>Тишина, <em>в которой</em> отражается лес</h1>
@@ -758,49 +730,17 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
 (()=>{
   const gate=document.getElementById('gate');
   const chirp=new Audio('enter.mp3');chirp.preload='auto';chirp.volume=.6;
-  // вступительный ролик: дрон над лесом → моменты отдыха; своя версия для вертикального экрана
-  const film=document.getElementById('film'),fv=document.getElementById('filmV'),fbar=document.getElementById('filmBar');
-  const vert=matchMedia('(max-aspect-ratio: 1/1)').matches;fv.src=vert?'intro-v.mp4':'intro.mp4';fv.load();
-  let opened=false;
-  function openSite(){if(opened)return;opened=true;document.documentElement.classList.remove('gated');scrollTo(0,0);window.bgWarm&&bgWarm();
-    film.classList.add('leave');setTimeout(()=>{film.remove()},1400)}
-  function playFilm(){film.hidden=false;requestAnimationFrame(()=>film.classList.add('on'));
-    const pr=fv.play();pr&&pr.catch(openSite);
-    fv.addEventListener('timeupdate',()=>{const d=fv.duration||22;fbar.style.transform=`scaleX(${fv.currentTime/d})`;if(d-fv.currentTime<3.4)film.classList.add('logo')});
-    fv.addEventListener('ended',()=>setTimeout(openSite,900));fv.addEventListener('error',openSite);
-    setTimeout(()=>{if(fv.readyState<2)openSite()},6000)}
-  document.getElementById('filmSkip').addEventListener('click',openSite);
+  // ролик на первом экране: своя версия для вертикального экрана
+  const hv=document.getElementById('heroV'),vert=matchMedia('(max-aspect-ratio: 1/1)').matches;
+  hv.poster=vert?'img/hero-poster-v.webp':'img/hero-poster.webp';hv.src=vert?'intro-v.mp4':'intro.mp4';
+  const playHero=()=>{if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;const pr=hv.play();pr&&pr.catch(()=>{})};playHero();
+  function openSite(){document.documentElement.classList.remove('gated');scrollTo(0,0);window.bgWarm&&bgWarm();try{hv.currentTime=0}catch(e){}playHero()}
   const go=sound=>{if(sound){try{chirp.currentTime=0;const pr=chirp.play();pr&&pr.catch(()=>{})}catch(e){}Sound.set(true)}
-    gate.classList.add('leave');setTimeout(()=>gate.remove(),1300);
-    if(matchMedia('(prefers-reduced-motion:reduce)').matches){openSite();return}playFilm()};
+    gate.classList.add('leave');setTimeout(()=>gate.remove(),1300);openSite()};
   document.getElementById('enter').addEventListener('click',()=>go(true));
   document.getElementById('enterQuiet').addEventListener('click',()=>go(false));
 })();
 
-/* Герой: фонарь + светлячки */
-(()=>{
-  const hero=document.getElementById('hero'),cv=document.getElementById('flies'),c=cv.getContext('2d');
-  let W,H,tx=.68,ty=.42,x=tx,y=ty,manual=0,flies=[];
-  const size=()=>{const r=hero.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;cv.width=W*d;cv.height=H*d;c.setTransform(d,0,0,d,0,0)};
-  size();addEventListener('resize',size);
-  for(let i=0;i<34;i++)flies.push({x:Math.random(),y:Math.random(),r:Math.random()*1.6+.6,s:Math.random()*.6+.2,p:Math.random()*6.28});
-  hero.addEventListener('pointermove',e=>{const r=hero.getBoundingClientRect();tx=(e.clientX-r.left)/r.width;ty=(e.clientY-r.top)/r.height;manual=performance.now()});
-  function tick(t){
-    if(t-manual>2600){tx=.62+Math.cos(t/4200)*.22;ty=.4+Math.sin(t/3100)*.14}
-    x+=(tx-x)*.07;y+=(ty-y)*.07;
-    hero.style.setProperty('--mx',(x*100).toFixed(2)+'%');hero.style.setProperty('--my',(y*100).toFixed(2)+'%');
-    c.clearRect(0,0,W,H);
-    for(const f of flies){
-      f.p+=.012*f.s;f.x+=Math.cos(f.p)*.0006*f.s;f.y+=Math.sin(f.p*1.3)*.0006*f.s-.00012;
-      if(f.y<-.02)f.y=1.02;if(f.x<-.02)f.x=1.02;if(f.x>1.02)f.x=-.02;
-      const a=.25+.55*Math.abs(Math.sin(f.p*2.2)),px=f.x*W,py=f.y*H;
-      const g=c.createRadialGradient(px,py,0,px,py,f.r*7);g.addColorStop(0,`rgba(236,214,160,${a})`);g.addColorStop(1,'rgba(236,214,160,0)');
-      c.fillStyle=g;c.beginPath();c.arc(px,py,f.r*7,0,6.28);c.fill();
-    }
-    if(!still)requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-})();
 
 /* Баня: сценарии — меняется фото и голосовая команда */
 (()=>{
