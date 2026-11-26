@@ -163,7 +163,8 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
 .tent b{font-weight:500}.tent small{display:block;color:var(--mist);font-size:13.5px}
 .tent .p{font:400 15px/1 var(--f-display);white-space:nowrap;font-variant-numeric:tabular-nums}
 .occ{display:flex;flex-wrap:wrap;gap:8px}
-.occ span{padding:8px 14px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;color:var(--mist)}
+.occ span{padding:9px 16px;border-radius:999px;font-size:14px;font-weight:500;color:var(--fog);background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 18px rgba(0,0,0,.22);backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);text-shadow:0 1px 2px rgba(0,0,0,.35);transition:background .3s,border-color .3s}
+.occ span:hover{background:linear-gradient(135deg,rgba(255,255,255,.24),rgba(255,255,255,.08));border-color:var(--brass-hi)}
 @media(max-width:900px){.dome-grid{grid-template-columns:1fr}.dome{order:-1}}
 @media(max-width:480px){.tent{grid-template-columns:auto 1fr}.tent .p{grid-column:2}}
 
