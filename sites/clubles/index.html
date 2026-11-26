@@ -389,43 +389,25 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 @media(max-width:1799px){.scene{display:none}}
 .gated .scene{opacity:0;visibility:hidden}
 
-/* ——— Подбор дома: фото дома — главное ——— */
-.pick{position:relative;border-radius:30px;overflow:hidden;overflow:clip;min-height:clamp(480px,68vh,640px);margin-bottom:22px;padding:18px;isolation:isolate;border:1px solid rgba(255,255,255,.2)}
-.pick-view{position:absolute;inset:0;z-index:-1}
-.pick-ph{position:absolute;inset:0;overflow:hidden;overflow:clip}
-.pick-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.1);transition:opacity 1s var(--ease),transform 9s linear}
-.pick-ph img.on{opacity:1;transform:scale(1)}
-.pick-view::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(13,32,22,.88) 0,rgba(13,32,22,.25) 42%,transparent 60%);pointer-events:none}
-.pick-q{display:inline-flex;flex-direction:column;gap:10px;padding:16px 18px;border-radius:22px;max-width:min(430px,100%);background:rgba(13,32,22,.6);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
-.pick-q>b{font:400 16px/1.2 var(--f-display);color:var(--brass-hi)}
-.pick-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-.pick-row span{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);width:100%}
-.pick-row .chip{color:var(--fog);background:rgba(255,255,255,.08)}.pick-row .chip[aria-pressed="true"]{color:var(--night);background:var(--fog)}
-.pick-res{position:absolute;z-index:1;left:clamp(18px,3vw,36px);right:clamp(18px,3vw,36px);bottom:clamp(18px,3vw,32px);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px;transition:opacity .35s,transform .5s var(--ease)}
-.pick-res.swap{opacity:0;transform:translateY(10px)}
-.pick-res small.k{display:block;font:500 11.5px/1 var(--f-body);letter-spacing:.2em;text-transform:uppercase;color:var(--brass-hi);margin-bottom:10px}
-.pick-res strong{display:block;font:300 clamp(36px,6vw,76px)/1 var(--f-display);letter-spacing:-.03em;text-shadow:0 4px 30px rgba(0,0,0,.4)}
-.pick-res p{margin:10px 0 0;font-size:clamp(15px,1.3vw,18px);color:var(--fog);opacity:.9}
-.pick-res .pk-r{display:flex;align-items:center;gap:18px}
-.pick-res .price{white-space:nowrap}
-@media(max-width:760px){.pick-res .pk-r{width:100%;justify-content:space-between}.pick-res .price{font-size:19px}}
-@media(max-width:760px){
-  .pick{overflow:visible;min-height:0;padding:0;border:0;border-radius:0}
-  .pick-q{display:flex;max-width:none;margin-bottom:10px}
-  .pick-view{position:relative;inset:auto;z-index:0;aspect-ratio:4/5;border-radius:26px;overflow:hidden}
+/* ——— Лёгкий режим: телефон не размывает видео под каждой карточкой; то, что за экраном, не анимируется ——— */
+@media (hover:none),(max-width:900px){
+  .btn,.cmp-card,.rev,.tent,.mode,.addr,.chip,.occ span,.cmp-chips span,.meta span,.bz-nav,.hero-load{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .cmp-card{background:rgba(18,46,32,.93)}
+  .rev,.tent,.addr{background:rgba(13,32,22,.8)}
+  .occ span{background:rgba(34,66,48,.9)}
+  .btn:not(.solid){background:rgba(13,32,22,.55)}
+  .bg .leak,.bg::after{display:none}
 }
+.off .dd *,.off .bulb *,.off .swag,.off .bauble{animation-play-state:paused!important}
 
 /* ——— Новогоднее ——— */
 #heroLights{position:absolute;left:0;top:0;width:100%;z-index:1;pointer-events:none;overflow:visible}
 .swag{animation:swag 7s ease-in-out infinite alternate}
 @keyframes swag{from{transform:rotate(-.6deg)}to{transform:rotate(.6deg)}}
-.bulb .glow{opacity:.45;filter:blur(3px);animation:tw 2.6s ease-in-out infinite alternate;animation-delay:var(--d)}
-.bulb .glass{filter:drop-shadow(0 0 2px var(--c))}
+.bulb .glow{opacity:.45;animation:tw 2.6s ease-in-out infinite alternate;animation-delay:var(--d)}
 @keyframes tw{0%{opacity:.25}60%{opacity:.6}100%{opacity:.9}}
 .wreath{position:absolute;inset:-17%;width:134%;height:134%;pointer-events:none;overflow:visible;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
-.wreath .bulb .glow{filter:blur(1.2px)}
 .glights{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.glights .bulb .glow{filter:blur(4px)}
 .bauble{animation:bsw 4.5s ease-in-out infinite alternate}
 @keyframes bsw{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
 .gate-hint b{font-weight:400;font-variant-numeric:tabular-nums}
@@ -497,7 +479,7 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 
 <main id="top">
 <section class="hero" id="hero">
-  <video class="ph" id="heroV" muted playsinline loop autoplay preload="auto" aria-label="Лес с высоты, река, отдых у домика и костра"></video>
+  <video class="ph" id="heroV" muted playsinline loop preload="auto" aria-label="Лес с высоты, река, отдых у домика и костра"></video>
   <div class="wrap hero-in">
     <div class="eyebrow">Глэмпинг у реки · Пятигорск, п. Нижнеподкумский</div>
     <h1>Тишина, <em>в которой</em> отражается лес</h1>
@@ -529,16 +511,6 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
         <button class="chip" id="f-jac" data-f="jac" aria-pressed="false">С джакузи</button>
         <button class="chip" id="f-chan" data-f="chan" aria-pressed="false">С чаном</button>
         <button class="chip" id="f-sky" data-f="sky" aria-pressed="false">Небо над кроватью</button>
-      </div>
-    </div>
-    <div class="pick rv" id="pick">
-      <div class="pick-q"><b>Подобрать за 30 секунд</b>
-        <div class="pick-row" data-q="who"><span>С кем едете</span><button class="chip" data-v="2" aria-pressed="true">Вдвоём</button><button class="chip" data-v="4" aria-pressed="false">Семьёй</button><button class="chip" data-v="2x2" aria-pressed="false">Две пары</button></div>
-        <div class="pick-row" data-q="want"><span>Что важнее</span><button class="chip" data-v="sky" aria-pressed="true">Небо над кроватью</button><button class="chip" data-v="jac" aria-pressed="false">Джакузи</button><button class="chip" data-v="chan" aria-pressed="false">Чан</button></div>
-      </div>
-      <div class="pick-view">
-        <div class="pick-ph"><img id="pkA" class="on" alt=""><img id="pkB" alt=""></div>
-        <div class="pick-res" id="pickRes" aria-live="polite"></div>
       </div>
     </div>
     <div class="slats rv" id="slats"></div>
@@ -809,7 +781,9 @@ const XM=(()=>{
   // одна лампочка: свечение + стеклянная колба + цоколь
   function bulb(g,x,y,s,col,ang){
     const b=el('g',{transform:`translate(${x} ${y}) rotate(${ang||0})`,class:'bulb',style:`--d:${R(0,3).toFixed(2)}s;--c:${col}`},g);
-    el('circle',{cx:0,cy:s*1.4,r:s*3.2,class:'glow',fill:col},b);
+    const root=g.ownerSVGElement||g,id='gl'+col.slice(1);
+    if(!root.querySelector('#'+id)){let d=root.querySelector('defs');if(!d){d=el('defs',{});root.insertBefore(d,root.firstChild)}const rg=el('radialGradient',{id},d);el('stop',{offset:'0','stop-color':col,'stop-opacity':.95},rg);el('stop',{offset:'.35','stop-color':col,'stop-opacity':.4},rg);el('stop',{offset:'1','stop-color':col,'stop-opacity':0},rg)}
+    el('circle',{cx:0,cy:s*1.4,r:s*4.4,class:'glow',fill:`url(#${id})`},b);
     el('rect',{x:-s*.45,y:-s*.2,width:s*.9,height:s*.7,rx:s*.15,fill:'#2b3a2c'},b);
     el('ellipse',{cx:0,cy:s*1.45,rx:s*.75,ry:s*1.1,fill:col,class:'glass'},b);
     el('ellipse',{cx:-s*.25,cy:s*1.1,rx:s*.18,ry:s*.38,fill:'#fff',opacity:.7},b);
@@ -1031,25 +1005,10 @@ XM.wreath();XM.hero();
   upd();addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);
 })();
 
-/* Подбор дома за 30 секунд */
-(()=>{
-  const res=document.getElementById('pickRes');if(!res)return;
-  const A=document.getElementById('pkA'),B=document.getElementById('pkB');let img=A,first=true;
-  const MAP={'2-sky':2,'2-jac':1,'2-chan':2,'4-sky':6,'4-jac':5,'4-chan':4,'2x2-sky':8,'2x2-jac':8,'2x2-chan':7};
-  const WHY={'2-sky':'Стеклянная крыша над кроватью и чан у воды','2-jac':'Зеркальный дом и тёплая джакузи на террасе','2-chan':'Терраса у воды с чаном, звёзды над кроватью',
-    '4-sky':'50 м², проектор и панорамные окна в лес','4-jac':'Зеркальный дом у реки на четверых','4-chan':'В глубине леса, чан с тёплой водой',
-    '2x2-sky':'Два дома рядом, у каждого стекло над кроватью','2x2-jac':'Два дома рядом, джакузи у каждой пары','2x2-chan':'50 м², большая терраса и кухня'};
-  const q={who:'2',want:'sky'};
-  function upd(){const key=q.who+'-'+q.want,i=MAP[key],h=HOMES[i],src=`img/${h.img}.webp`;
-    if(first){A.src=src;A.alt=`Дом «${h.n}»`;first=false}
-    else if(!img.src.endsWith(src)){const nx=img===A?B:A;let done=false;const sw=()=>{if(done)return;done=true;nx.classList.add('on');img.classList.remove('on');img=nx};
-      nx.onload=sw;nx.src=src;nx.alt=`Дом «${h.n}»`;if(nx.complete&&nx.naturalWidth)sw()}
-    res.classList.add('swap');
-    setTimeout(()=>{res.innerHTML=`<div><small class="k">Вам подойдёт</small><strong>${h.n}</strong><p>${WHY[key]}</p></div><div class="pk-r"><div class="price">от ${fmt(h.p)} ₽<small>за ночь</small></div><button class="btn solid small" id="pickGo">Смотреть дом${arrow}</button></div>`;
-      res.classList.remove('swap');document.getElementById('pickGo').addEventListener('click',()=>{document.getElementById('f-all').click();activate(all[i]);all[i].scrollIntoView({behavior:'smooth',block:'center',inline:'center'})})},250)}
-  document.querySelectorAll('.pick-row').forEach(r=>r.addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;r.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===b));q[r.dataset.q]=b.dataset.v;upd()}));
-  upd();
-})();
+
+/* То, что не на экране, не анимируется */
+{const io=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('off',!e.isIntersecting)),{rootMargin:'80px'});
+ document.querySelectorAll('.doodle,#hero,#gwrap').forEach(e=>io.observe(e))}
 
 /* Появление секций */
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
@@ -1068,48 +1027,52 @@ const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
   const MAP={gate:'mist',hero:'mist',homes:'mist',bath:'pines',sfera:'sun',camper:'sun',way:'river',reviews:'stream',faq:'stream',book:'river'};
   const portrait=matchMedia('(max-aspect-ratio: 1/1)');
   let cur='mist';
-  let all=false;
-  function setSrc(){const sfx=portrait.matches?'-v':'';
-    ORDER.forEach(k=>{if(!all&&k!=='mist')return;if(all)V[k].preload='auto';const v=V[k],n=v.dataset.n+sfx,want=n+'.mp4';if(v.dataset.src===want)return;
-      v.dataset.src=want;v.poster='img/'+n+'.webp';v.src=want;v.load()});
-    warm()}
-  const play=v=>{if(still)return;const pr=v.play();pr&&pr.catch(()=>{})};
-  function warm(){const i=ORDER.indexOf(cur); // текущая и соседние играют, дальние на паузе
-    ORDER.forEach((k,j)=>{Math.abs(j-i)<=1?play(V[k]):V[k].pause()})}
+  let all=false,heroTop=true;
+  const play=v=>{if(still||document.hidden)return;const pr=v.play();pr&&pr.catch(()=>{})};
+  const gated=()=>document.documentElement.classList.contains('gated');
+  function ensure(k){const v=V[k],n=v.dataset.n+(portrait.matches?'-v':''),want=n+'.mp4';if(v.dataset.src===want)return;
+    v.dataset.src=want;v.poster='img/'+n+'.webp';v.preload='auto';v.src=want;v.load()}
+  function drop(k){const v=V[k];if(!v.dataset.src)return;v.pause();delete v.dataset.src;v.removeAttribute('src');v.load()}
+  // играет только текущая сцена; соседние загружены и ждут на паузе; дальние выгружены, чтобы не грузить телефон
+  function warm(){const i=ORDER.indexOf(cur),cover=heroTop&&!gated();
+    ORDER.forEach((k,j)=>{const d=Math.abs(j-i);if(!all&&k!=='mist')return;
+      if(d===0){ensure(k);cover?V[k].pause():play(V[k])}else if(d===1){ensure(k);V[k].pause()}else drop(k)})}
+  const setSrc=()=>warm();
+  { // ролик первого экрана играет только пока виден; под ним фон не крутится зря
+    const hero=document.getElementById('hero'),hv=document.getElementById('heroV');
+    const chk=()=>{const r=hero.getBoundingClientRect(),c=r.top<innerHeight*.15&&r.bottom>innerHeight*.85;if(c!==heroTop){heroTop=c;warm()}};
+    heroTop=false;chk();addEventListener('scroll',chk,{passive:true});addEventListener('resize',chk);
+    new IntersectionObserver(e=>{if(!gated()&&hv.src){e[0].isIntersecting?play(hv):hv.pause()}}).observe(hero)}
   const NAMES={mist:'Туман над лесом, рассвет',pines:'Сосновый бор, утро',sun:'Солнце сквозь кроны, полдень',river:'Река в утренней дымке',stream:'Горный ручей'};
   const sc=document.getElementById('scene'),sn=document.getElementById('sceneName');
   function show(k){if(k===cur)return;V[k].classList.add('on');V[cur].classList.remove('on');cur=k;warm();
     sc.classList.add('swap');setTimeout(()=>{sn.textContent=NAMES[k];sc.classList.remove('swap')},800)}
-  setSrc();portrait.addEventListener?portrait.addEventListener('change',setSrc):portrait.addListener(setSrc);
+  setSrc();
   window.bgStart=()=>{if(all)return;all=true;setSrc()};setTimeout(()=>window.bgStart(),15000);
   const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&MAP[e.target.id])show(MAP[e.target.id])})},{rootMargin:'-45% 0px -45% 0px'});
   Object.keys(MAP).forEach(id=>{const el=document.getElementById(id);el&&io.observe(el)});
   const move=()=>{const y=Math.min(scrollY*.03,40);for(const v of Object.values(V))v.style.transform=`translate3d(0,${-y}px,0) scale(1.02)`};
   move();addEventListener('scroll',move,{passive:true});
   document.addEventListener('visibilitychange',()=>{document.hidden?ORDER.forEach(k=>V[k].pause()):warm()});
+  portrait.addEventListener&&portrait.addEventListener('change',()=>{ORDER.forEach(drop);warm()});
   addEventListener('pointerdown',warm,{once:true});
   window.bgWarm=warm;
 })();
 
 /* ——— Звук: настоящая запись реки и леса (общественное достояние), бесшовный круг ——— */
 const Sound=(()=>{
-  let ac,gain,srcNode,buf,on=false,loading=null,el;
-  const load=()=>loading||(loading=fetch('forest.mp3').then(r=>r.arrayBuffer()).then(a=>new Promise((ok,no)=>ac.decodeAudioData(a,ok,no))).then(b=>{buf=b}));
-  function start(){if(srcNode||!buf)return;srcNode=ac.createBufferSource();srcNode.buffer=buf;srcNode.loop=true;srcNode.loopStart=.06;srcNode.loopEnd=buf.duration-.06;srcNode.connect(gain);srcNode.start(0,.06)}
-  function fallback(v){ // если Web Audio недоступен — обычный плеер
-    if(!el){el=new Audio('forest.mp3');el.loop=true;el.volume=.32}
-    v?el.play().catch(()=>{}):el.pause()}
+  let ac,gain,el,on=false;
+  function init(){el=new Audio('forest.mp3');el.loop=true;el.preload='auto';
+    try{ac=new (window.AudioContext||window.webkitAudioContext)();const node=ac.createMediaElementSource(el);gain=ac.createGain();gain.gain.value=0;node.connect(gain);gain.connect(ac.destination)}
+    catch(e){ac=null;el.volume=.32}}
+  const ramp=(to,sec)=>{const t=ac.currentTime;gain.gain.cancelScheduledValues(t);gain.gain.setValueAtTime(gain.gain.value,t);gain.gain.linearRampToValueAtTime(to,t+sec)};
   function set(v){
-    on=v;
-    try{
-      if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)();gain=ac.createGain();gain.gain.value=0;gain.connect(ac.destination)}
-      if(v){ac.resume();load().then(()=>{if(!on)return;start();const t=ac.currentTime;gain.gain.cancelScheduledValues(t);gain.gain.setValueAtTime(gain.gain.value,t);gain.gain.linearRampToValueAtTime(.32,t+3)}).catch(()=>fallback(on))}
-      else{const t=ac.currentTime;gain.gain.cancelScheduledValues(t);gain.gain.setValueAtTime(gain.gain.value,t);gain.gain.linearRampToValueAtTime(0,t+.8);setTimeout(()=>{if(!on&&ac)ac.suspend()},900)}
-    }catch(e){fallback(v)}
-    if(el&&!v)el.pause();
+    on=v;try{if(!el)init();
+      if(v){ac&&ac.resume();const pr=el.play();pr&&pr.catch(()=>{});ac&&ramp(.32,3)}
+      else if(ac){ramp(0,.8);setTimeout(()=>{if(!on)el.pause()},900)}else el.pause()}catch(e){}
     document.getElementById('snd').setAttribute('aria-pressed',on);document.getElementById('sndText').textContent=on?'Звук леса':'Звук выключен';
   }
-  document.addEventListener('visibilitychange',()=>{if(ac&&on)document.hidden?ac.suspend():ac.resume()});
+  document.addEventListener('visibilitychange',()=>{if(!el||!on)return;if(document.hidden)el.pause();else{const pr=el.play();pr&&pr.catch(()=>{})}});
   return{set,get on(){return on}};
 })();
 document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on));
@@ -1124,7 +1087,7 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
   const heroSrc=vert?'intro-v.mp4':'intro.mp4',prog=document.getElementById('orbProg'),orb=document.getElementById('enter');
   const gTxt=document.getElementById('gateTxt'),gSub=document.getElementById('gateSub');let pct=0;
   const setProg=k=>{prog.style.strokeDashoffset=(1-k)*339.3;pct=Math.round(k*100);if(k<1){gTxt.textContent='Готовим лес для вас · '+pct+'%';const hl=document.getElementById('heroLoad');hl&&(hl.lastChild.textContent='Загружаем видео · '+pct+'%')}};
-  const playHero=()=>{if(matchMedia('(prefers-reduced-motion:reduce)').matches||!hv.src)return;const pr=hv.play();pr&&pr.catch(()=>{})};
+  const playHero=()=>{if(matchMedia('(prefers-reduced-motion:reduce)').matches||!hv.src||document.documentElement.classList.contains('gated'))return;const r=hv.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;const pr=hv.play();pr&&pr.catch(()=>{})};
   const ready=url=>{hv.src=url;setProg(1);orb.classList.add('ready');gTxt.textContent='Нажмите, чтобы войти';gSub.textContent='со звуком реки и леса';hv.addEventListener('loadeddata',playHero,{once:true});playHero();window.bgStart&&bgStart()};
   (async()=>{try{
       const r=await fetch(heroSrc);if(!r.ok||!r.body)throw 0;
@@ -1140,6 +1103,15 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
     gate.classList.add('leave');setTimeout(()=>gate.remove(),1300);openSite()};
   document.getElementById('enter').addEventListener('click',()=>go(true));
   document.getElementById('enterQuiet').addEventListener('click',()=>go(false));
+  // страница может перезагрузиться сама (обновление сайта, нехватка памяти на телефоне) — не возвращаем человека на экран входа
+  const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}};
+  const hot=(window.claude&&window.claude.hot)||null,hd=(hot&&hot.data)||{};
+  try{hot&&hot.snapshot&&hot.snapshot(()=>({in:!document.documentElement.classList.contains('gated'),y:scrollY}))}catch(e){}
+  document.getElementById('enter').addEventListener('click',()=>SS.set('les-in','1'));document.getElementById('enterQuiet').addEventListener('click',()=>SS.set('les-in','1'));
+  let st=0;addEventListener('scroll',()=>{if(st)return;st=setTimeout(()=>{st=0;SS.set('les-y',String(Math.round(scrollY)))},400)},{passive:true});
+  if(SS.get('les-in')==='1'||hd.in){const y=+(hd.y!=null?hd.y:SS.get('les-y'))||0;
+    gate.remove();document.documentElement.classList.remove('gated');XM.hero();window.bgWarm&&bgWarm();playHero();
+    const back=()=>scrollTo(0,y);requestAnimationFrame(back);setTimeout(back,300);addEventListener('load',back,{once:true})}
 })();
 
 
