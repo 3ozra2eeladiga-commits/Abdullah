@@ -127,29 +127,48 @@ section{padding-block:clamp(72px,10vw,140px);scroll-margin-top:60px}
   .slat.off{display:none}
 }
 
-/* ——— Баня: пульт голоса ——— */
-.bath{background:linear-gradient(180deg,transparent,rgba(23,66,45,.86) 28%,rgba(23,66,45,.86) 72%,transparent)}
-.bath-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:clamp(28px,5vw,72px);align-items:center}
-.stage{position:relative;border-radius:28px;overflow:hidden;aspect-ratio:4/3.3;background:#000}
-.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.04);transition:opacity 1.1s var(--ease),transform 6s var(--ease)}
-.stage img.show{opacity:1;transform:scale(1)}
-.say{position:absolute;z-index:3;left:18px;bottom:18px;right:18px;display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:999px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);font-size:14.5px}
+/* ——— Баня: голосовая демонстрация на рисунке + фото, которые меняются сами ——— */
 .wave{display:flex;gap:3px;align-items:center;height:20px;flex:none}
 .wave i{width:3px;border-radius:2px;background:var(--brass-hi);animation:wave 1.2s ease-in-out infinite}
 .wave i:nth-child(1){height:8px}.wave i:nth-child(2){height:18px;animation-delay:.15s}.wave i:nth-child(3){height:12px;animation-delay:.3s}.wave i:nth-child(4){height:20px;animation-delay:.45s}.wave i:nth-child(5){height:9px;animation-delay:.6s}
 @keyframes wave{50%{transform:scaleY(.35)}}
-.bath h2{margin-block:18px 20px}
-.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-block:30px}
-.mode{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:18px;border:1px solid var(--line);text-align:left;transition:all .4s var(--ease);background:rgba(13,32,22,.35)}
-.mode svg{width:26px;height:26px;flex:none;color:var(--brass)}
-.mode b{display:block;font-weight:500;font-size:15.5px}
-.mode small{color:var(--mist);font-size:12.5px}
-.mode:hover{border-color:var(--brass);transform:translateY(-2px)}
-.mode[aria-pressed="true"]{background:var(--fog);color:var(--night);border-color:var(--fog)}
-.mode[aria-pressed="true"] small{color:#4a554c}.mode[aria-pressed="true"] svg{color:var(--moss)}
-.bath-foot{display:flex;flex-wrap:wrap;align-items:center;gap:22px}
-@media(max-width:900px){.bath-grid{grid-template-columns:1fr}}
-@media(max-width:420px){.modes{grid-template-columns:1fr}}
+.vb{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:12px 18px;border-radius:20px;background:rgba(13,32,22,.6);border:1px solid var(--line);min-height:52px}
+.vb b{font:400 clamp(15px,1.5vw,18px)/1.2 var(--f-display);letter-spacing:-.01em}
+.vb b.typing::after{content:"";display:inline-block;width:2px;height:1em;background:var(--brass-hi);margin-left:3px;vertical-align:-2px;animation:tw .5s steps(1) infinite alternate}
+.vb .va{font:italic 17px/1.25 var(--f-accent);color:var(--brass-hi);transition:opacity .5s;flex-basis:100%}
+.vb .va.hide{opacity:0}
+.cmp-tabs.bz-tabs{grid-template-columns:repeat(4,1fr)}
+.bz-tabs .chip small{font:italic 13px/1 var(--f-accent)}
+.bz-photo{aspect-ratio:16/10}
+.bz-photo img{transform:scale(1.06);transition:opacity .9s var(--ease),transform 6s linear}
+.bz-photo img.on{transform:scale(1)}
+.bz-cap{position:absolute;left:0;right:0;bottom:0;padding:34px 18px 14px;background:linear-gradient(0deg,rgba(13,32,22,.85),transparent);display:flex;flex-direction:column;gap:2px}
+.bz-cap b{font:400 18px/1.2 var(--f-display)}.bz-cap span{font-size:13.5px;color:var(--mist)}
+.bz-nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(13,32,22,.55);border:1px solid var(--line);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:20px;line-height:1;color:var(--fog);transition:border-color .3s,background .3s}
+.bz-nav:hover{border-color:var(--brass);background:rgba(13,32,22,.8)}.bz-nav.prev{left:10px}.bz-nav.next{right:10px}
+.bz-dots{display:flex;gap:5px}
+.bz-dots i{flex:1;height:3px;border-radius:3px;background:rgba(238,240,232,.18);overflow:hidden;position:relative}
+.bz-dots i.done{background:var(--brass)}
+.bz-dots i.on::after{content:"";position:absolute;inset:0;background:var(--brass-hi);transform-origin:left;animation:tabbar 4.5s linear forwards}
+.bz-in b,.bz-inc>b{display:block;font-weight:500;margin-bottom:8px}
+.bz-in ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:14.5px;color:var(--mist)}
+.bz-in li{padding-left:16px;position:relative}.bz-in li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:1px;background:var(--brass-hi)}
+.bz-foot{display:grid;grid-template-columns:1fr auto;gap:18px 32px;align-items:end;margin-top:clamp(16px,2.5vw,26px);padding-top:clamp(16px,2.5vw,24px);border-top:1px solid var(--line)}
+.bz-inc .cmp-chips{margin-top:0}
+.bz-buy{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.dd .puff{transform-box:fill-box;transform-origin:center;animation:dpuff 4.2s ease-out infinite;opacity:0}
+.dd .snowf{animation:dsnow 3.2s linear infinite;opacity:0}
+.dd .shiver{animation:dshiver .12s linear infinite alternate}
+.dd .spk{animation:tw 1s ease-in-out infinite alternate}
+.dd .twig{animation:dtwig 5s ease-in-out infinite;opacity:0}
+.dd .breath{transform-box:fill-box;transform-origin:bottom center;animation:dbreath 3s ease-in-out infinite alternate}
+@keyframes dpuff{0%{opacity:0;transform:translate(0,0) scale(.6)}25%{opacity:.85}100%{opacity:0;transform:translate(46px,-64px) scale(1.7)}}
+@keyframes dsnow{0%{opacity:0;transform:translate(0,0)}10%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translate(8px,122px)}}
+@keyframes dshiver{from{transform:translateX(-1px)}to{transform:translateX(1px)}}
+@keyframes dtwig{0%{opacity:0;transform:translate(0,0) rotate(0)}20%{opacity:1}100%{opacity:0;transform:translate(190px,-14px) rotate(40deg)}}
+@keyframes dbreath{to{transform:scaleY(1.03)}}
+@media(max-width:900px){.bz-foot{grid-template-columns:1fr}}
+@media(max-width:520px){.cmp-tabs.bz-tabs{grid-template-columns:repeat(2,1fr)}.bz-in ul{grid-template-columns:1fr}}
 
 /* ——— Сферы: купол ——— */
 .dome-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(28px,5vw,72px);align-items:center}
@@ -521,27 +540,42 @@ main{position:relative;z-index:1;transition:opacity 1.4s var(--ease),filter 1.4s
 </section>
 
 <section class="bath" id="bath">
-  <div class="wrap bath-grid">
-    <div class="stage rv" id="stage">
-      <img src="img/bath1.webp" alt="Парная умной бани" data-m="par" class="show">
-      <img src="img/bath3.webp" alt="Интерьер бани с глиняными стенами" data-m="vyuga">
-      <img src="img/bath4.webp" alt="Джакузи на террасе бани" data-m="dush">
-      <img src="img/bath2.webp" alt="Баня среди деревьев, вид сверху" data-m="hvoya">
-      <div class="say"><span class="wave"><i></i><i></i><i></i><i></i><i></i></span><span id="sayText">«Включи пар»</span></div>
-    </div>
-    <div class="rv">
-      <div class="eyebrow">Единственная в мире</div>
-      <h2>Баня, которая <em>слушает</em></h2>
-      <p class="lead">Фиджитал баня сама держит температуру и влажность, а сценарии включаются голосом. Стены из глины копят тепло, печь даёт плотный ровный пар. Попробуйте сказать ей что-нибудь:</p>
-      <div class="modes" role="group" aria-label="Сценарии бани">
-        <button class="mode" id="m-par" data-m="par" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 20c-2-3 2-5 0-8s2-5 0-8M12 20c-2-3 2-5 0-8s2-5 0-8M17 20c-2-3 2-5 0-8s2-5 0-8"/></svg><span><b>Пар</b><small>плотный и ровный</small></span></button>
-        <button class="mode" id="m-vyuga" data-m="vyuga" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M20.7 7 3.3 17M9 4l3 3 3-3M9 20l3-3 3 3"/></svg><span><b>Вьюга</b><small>снег после парной</small></span></button>
-        <button class="mode" id="m-dush" data-m="dush" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M5 9a7 7 0 0 1 14 0H5ZM8 13v2M12 13v5M16 13v2M8 19v1M16 19v1"/></svg><span><b>Тропический душ</b><small>тёплый ливень</small></span></button>
-        <button class="mode" id="m-hvoya" data-m="hvoya" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 7 9h3l-4 6h4l-3 4h10l-3-4h4l-4-6h3l-5-7ZM12 19v3"/></svg><span><b>Хвоя</b><small>аромат леса</small></span></button>
+  <div class="wrap">
+    <div class="cmp-card rv">
+      <div class="cmp-top">
+        <div><div class="eyebrow">Фиджитал-баня · единственная в мире</div><h2>Баня, которая <em>слушает</em></h2></div>
+        <p class="lead">Скажите вслух, чего хочется, — баня сделает сама. Смотрите, как это работает.</p>
       </div>
-      <div class="bath-foot">
-        <div class="price">23 000 ₽<small>за 3 часа · до 6 человек</small></div>
-        <a class="btn" href="https://clubles.ru/banya/" target="_blank" rel="noopener">Подробнее о бане<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></a>
+      <div class="cmp-main">
+        <div class="cmp-l">
+          <div class="vb" aria-live="polite"><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><b id="vbCmd">«Баня, включи пар»</b><span class="va" id="vbAns">Включаю. Пар мягкий и ровный, температуру держу сама.</span></div>
+          <div class="doodle" id="bathDoodle" aria-hidden="true"></div>
+          <div class="cmp-tabs bz-tabs" id="bathTabs" role="group" aria-label="Голосовые команды">
+            <button class="chip" data-i="0" aria-pressed="true"><small>«включи»</small>Пар</button>
+            <button class="chip" data-i="1" aria-pressed="false"><small>«включи»</small>Вьюгу</button>
+            <button class="chip" data-i="2" aria-pressed="false"><small>«включи»</small>Тропический душ</button>
+            <button class="chip" data-i="3" aria-pressed="false"><small>«наполни»</small>Запахом хвои</button>
+          </div>
+        </div>
+        <div class="cmp-r">
+          <div class="cmp-photo bz-photo" id="bzPhoto"><img id="bzA" class="on" src="img/ban-steam.webp" alt="Парная"><img id="bzB" alt="">
+            <div class="bz-cap"><b id="bzT">Парная</b><span id="bzS">Стены из глины держат тепло, пар мягкий и ровный</span></div>
+            <button class="bz-nav prev" id="bzPrev" aria-label="Предыдущее фото">‹</button><button class="bz-nav next" id="bzNext" aria-label="Следующее фото">›</button>
+          </div>
+          <div class="bz-dots" id="bzDots" aria-hidden="true"></div>
+          <div class="bz-in">
+            <b>Внутри</b>
+            <ul><li>Парная с глиняными стенами</li><li>Купель под стеклянным куполом</li><li>Джакузи на террасе</li><li>Ледяная капель</li><li>Зона отдыха</li><li>Спуск к реке</li></ul>
+          </div>
+        </div>
+      </div>
+      <div class="bz-foot">
+        <div class="bz-inc"><b>Ничего не нужно брать с собой</b>
+          <div class="cmp-chips"><span>халаты</span><span>полотенца</span><span>тапочки</span><span>косметика</span><span>чай из горных трав</span><span>мёд и орехи</span><span>прохладная вода</span></div></div>
+        <div class="bz-buy">
+          <div class="price">23 000 ₽<small>за 3 часа · до 6 человек · ежедневно 10:00–00:00</small></div>
+          <a class="btn solid" href="https://clubles.ru/banya/" target="_blank" rel="noopener">Забронировать баню<span class="dot"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h12M9 3l5 5-5 5"/></svg></span></a>
+        </div>
       </div>
     </div>
   </div>
@@ -1092,12 +1126,62 @@ document.getElementById('snd').addEventListener('click',()=>Sound.set(!Sound.on)
 })();
 
 
-/* Баня: сценарии — меняется фото и голосовая команда */
+/* Баня: голосовая команда → рисунок показывает, что делает баня */
 (()=>{
-  const stage=document.getElementById('stage'),say=document.getElementById('sayText');
-  const SAY={par:'«Включи пар»',vyuga:'«Включи вьюгу»',dush:'«Включи тропический душ»',hvoya:'«Наполни всё запахом хвои»'};
-  document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{const m=b.dataset.m;say.textContent=SAY[m];
-    stage.querySelectorAll('img').forEach(i=>i.classList.toggle('show',i.dataset.m===m));
-    document.querySelectorAll('.mode').forEach(x=>x.setAttribute('aria-pressed',x===b))}));
+  const root=document.getElementById('bathDoodle');if(!root)return;
+  const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const P=(d,c)=>`<path d="${d}"${c?` class="${c}"`:''}/>`;
+  const base=icon=>P('M30 180V88Q30 42 108 36H292Q370 42 370 88V180')+P('M8 180H392','dim')+P('M150 36Q200 8 250 36')+P('M163 31L183 17L200 33L217 17L237 31','dim')+
+    `<rect x="52" y="132" width="48" height="48" rx="7"/><circle cx="60" cy="127" r="6"/><circle cx="73" cy="123" r="7"/><circle cx="87" cy="126" r="6"/><circle cx="96" cy="129" r="3.5"/>`+P('M70 170q-6-10 2-18q1 8 6 8q-2-8 4-12q6 10 1 22z','a')+
+    P('M252 152H352M258 152V180M346 152V180M276 122H352M346 122V152')+
+    `<circle cx="200" cy="64" r="5" class="a"/>`+P('M189 56a13 13 0 0 0 0 16M211 56a13 13 0 0 1 0 16','a spk')+P('M182 50a21 21 0 0 0 0 28M218 50a21 21 0 0 1 0 28','a spk dim')+
+    `<rect x="318" y="58" width="30" height="24" rx="5"/>`+icon;
+  const sit=arms=>`<g class="breath"><circle cx="304" cy="113" r="6.5"/>${P('M296 108L304 95L312 108Z')}${P('M304 120V150')}${P(arms)}</g>`+P('M304 150H286V178M304 150H294V178');
+  const stand=(arms,cls)=>`<g class="${cls||''}"><circle cx="190" cy="139" r="6.5"/>${P('M182 134L190 121L198 134Z')}${P('M190 146V165M190 165L184 180M190 165L196 180')}${P(arms)}</g>`;
+  const cloud=(x,y,d)=>`<path class="puff" style="animation-delay:${d}s" d="M${x} ${y}q-9-9 3-15q2-10 13-6q9-6 15 3q10 2 6 12q-3 8-14 6q-9 6-16 0q-6 2-7 0z"/>`;
+  const SC=[
+    ()=>base(P('M333 78q-7-7 0-15q6 8 0 15z','a'))+cloud(58,116,0)+cloud(70,112,1.4)+cloud(52,118,2.8)+cloud(78,116,3.5)+sit('M304 128L290 140M304 128L318 139'),
+    ()=>{let f='';for(let i=0;i<16;i++){const x=162+(i*37%58),d=(i*.41%3.2).toFixed(2);f+=`<path class="snowf a" style="animation-delay:${d}s" d="M${x-3} 50h6M${x} 47v6M${x-2} 48l4 4M${x+2} 48l-4 4"/>`}
+      return base(P('M333 62v16M326 66l14 8M340 66l-14 8','a'))+P('M172 38v7h36v-7','a')+f+P('M164 180q26-9 52 0','dim')+stand('M190 151L179 158L190 163M190 151L201 158L190 163','shiver')},
+    ()=>base(P('M333 62q-7 9 0 15q7-6 0-15z','a'))+P('M166 40h48M172 40v6M181 40v6M190 40v6M199 40v6M208 40v6','a')+P('M172 52V116M181 52V112M199 52V112M208 52V116M172 150V176M208 150V176M164 60V172M216 60V172','a drops dim')+
+      P('M166 180q24-7 48 0M176 184q14-4 28 0','a dim')+stand('M190 151L178 137M190 151L202 137'),
+    ()=>{const tw=(x,y,d)=>`<g class="twig" style="animation-delay:${d}s"><path class="a" d="M${x} ${y}l16-6M${x+4} ${y-1.5}l-1-5M${x+4} ${y-1.5}l2 4M${x+8} ${y-3}l-1-5M${x+8} ${y-3}l2 4M${x+12} ${y-4.5}l-1-5M${x+12} ${y-4.5}l2 4"/></g>`;
+      return base(P('M333 61l-7 8h4l-6 7h18l-6-7h4z','a'))+`<rect x="40" y="82" width="14" height="12" rx="3" class="a"/>`+P('M58 84q12-9 24 0t24 0t24 0t24 0t24 0M58 96q12-9 24 0t24 0t24 0t24 0','a flow dim')+tw(60,78,0)+tw(64,104,1.7)+tw(58,92,3.3)+sit('M304 127L294 113M304 127L314 113')}];
+  const CMD=[['«Баня, включи пар»','Включаю. Пар мягкий и ровный, температуру держу сама.'],['«Баня, включи вьюгу»','Вьюга! Снег после парной — бодрит и освежает.'],
+    ['«Баня, включи тропический душ»','Тёплый ливень уже идёт.'],['«Баня, наполни всё запахом хвои»','Дышите глубже: пахнет хвойным лесом.']];
+  const tabs=[...document.querySelectorAll('#bathTabs .chip')],cmd=document.getElementById('vbCmd'),ans=document.getElementById('vbAns');
+  let cur=0,auto=true,timer=0,typer=0,vis=false;
+  const draw=i=>{root.innerHTML=`<svg class="dd" viewBox="-4 0 408 196"><defs><filter id="skb" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="2.4"/></filter></defs><g filter="url(#skb)">${SC[i]()}</g><text x="36" y="26">глиняные стены</text><text x="258" y="22">стеклянный купол</text><text x="106" y="150">печь</text></svg>`};
+  function play(i,user){if(user){auto=false}clearTimeout(timer);clearInterval(typer);cur=i;
+    tabs.forEach((b,k)=>{b.setAttribute('aria-pressed',k===i);b.classList.remove('auto')});
+    const[c,a]=CMD[i];
+    const finish=()=>{cmd.classList.remove('typing');cmd.textContent=c;draw(i);ans.textContent=a;ans.classList.remove('hide');
+      if(auto&&vis&&!still){void tabs[i].offsetWidth;tabs[i].classList.add('auto');timer=setTimeout(()=>play((cur+1)%SC.length),6000)}};
+    if(still){finish();return}
+    ans.classList.add('hide');cmd.textContent='';cmd.classList.add('typing');let n=0;
+    typer=setInterval(()=>{n++;cmd.textContent=c.slice(0,n);if(n>=c.length){clearInterval(typer);timer=setTimeout(finish,350)}},32)}
+  tabs.forEach((b,k)=>b.addEventListener('click',()=>play(k,true)));
+  draw(0);
+  if(!still)new IntersectionObserver(e=>{const was=vis;vis=e[0].isIntersecting;if(vis&&!was&&auto)play(cur);if(!vis){clearTimeout(timer);clearInterval(typer);tabs.forEach(b=>b.classList.remove('auto'))}},{threshold:.4}).observe(root);
+})();
+
+/* Баня: фото меняются сами */
+(()=>{
+  const box=document.getElementById('bzPhoto');if(!box)return;
+  const L=[['steam','Парная','Стены из глины держат тепло, пар мягкий и ровный'],['tub','Купель под куполом','Цветное стекло, дерево и небо над головой'],['clay','Бионический интерьер','Плавные формы, глина и тёплый свет'],
+    ['dome','Стеклянный купол','Кроны деревьев и небо прямо над вами'],['jac','Джакузи на террасе','Гидромассаж после парной'],['rest','Зона отдыха','Чай из горных трав, мёд и орехи'],
+    ['room','Комната с выходом на террасу','Дерево, глина и панорамные окна'],['river','Спуск к реке','Окунуться в прохладную воду после пара'],['out','Снаружи','Зеркальный купол среди деревьев']];
+  const A=document.getElementById('bzA'),B=document.getElementById('bzB'),T=document.getElementById('bzT'),S=document.getElementById('bzS'),dots=document.getElementById('bzDots');
+  dots.innerHTML=L.map(()=>'<i></i>').join('');const ds=[...dots.children];
+  let cur=0,img=A,timer=0,vis=false;const still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const pre=i=>{const im=new Image();im.src='img/ban-'+L[i][0]+'.webp'};
+  function mark(){ds.forEach((d,k)=>{d.classList.toggle('done',k<cur);d.classList.remove('on');if(k===cur&&vis&&!still){void d.offsetWidth;d.classList.add('on')}})}
+  function go(i){i=(i+L.length)%L.length;clearTimeout(timer);cur=i;const d=L[i],nx=img===A?B:A;let done=false;
+    const sw=()=>{if(done)return;done=true;nx.classList.add('on');img.classList.remove('on');img=nx;T.textContent=d[1];S.textContent=d[2]};
+    nx.onload=sw;nx.src='img/ban-'+d[0]+'.webp';nx.alt=d[1];if(nx.complete&&nx.naturalWidth)sw();
+    mark();pre((i+1)%L.length);if(vis&&!still)timer=setTimeout(()=>go(cur+1),4500)}
+  document.getElementById('bzNext').addEventListener('click',()=>go(cur+1));document.getElementById('bzPrev').addEventListener('click',()=>go(cur-1));
+  mark();
+  new IntersectionObserver(e=>{vis=e[0].isIntersecting;clearTimeout(timer);mark();if(vis&&!still){pre(1);timer=setTimeout(()=>go(cur+1),4500)}},{threshold:.4}).observe(box);
 })();
 </script>
