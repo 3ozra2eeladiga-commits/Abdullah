@@ -377,7 +377,15 @@
     var shadows = bS.mesh(mShadow); shadows.renderOrder = 2; root.add(shadows);
     var carsG = new T.Group(); root.add(carsG);
     var usedReal = false;
-    if (window.GKCars && typeof window.GKCars.make === 'function') {
+    var takeMats = function (o) { if (o.isLight) o.visible = false; if (o.isMesh) { o.castShadow = false; (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (mm) { if (mm && mm.isMeshStandardMaterial && carMats.indexOf(mm) < 0) { var e0 = mm.userData.env != null ? mm.userData.env : mm.envMapIntensity; mm.userData.gkpE0 = mm.envMapIntensity; mm.userData.gkpE = mm.roughness < 0.6 ? Math.max(e0, 0.85) : e0; carMats.push(mm); } }); } };
+    if (window.GKCars && typeof window.GKCars.makeInstanced === 'function') {           // весь паркинг одним «тиражом»: не больше 12 вызовов отрисовки
+      try {
+        var tps = window.GKCars.types && window.GKCars.types.length ? window.GKCars.types : ['sedan'];
+        var fleet = window.GKCars.makeInstanced(parked.map(function (c, j) { return { type: tps[j === 0 ? 0 : (rnd() * tps.length) | 0], color: c.col, x: c.x, y: FY, z: c.z, ry: c.ry }; }), { lights: false, shadow: false });
+        if (fleet && fleet.isObject3D) { fleet.traverse(takeMats); carsG.add(fleet); usedReal = true; }
+      } catch (err0) { usedReal = false; while (carsG.children.length) carsG.remove(carsG.children[0]); carMats.length = 0; if (window.console) console.warn('GKParking: GKCars.makeInstanced не сработал', err0); }
+    }
+    if (!usedReal && window.GKCars && typeof window.GKCars.make === 'function') {
       try {
         var TYPES = ['sedan', 'suv', 'sedan', 'hatch', 'suv', 'sedan'], probe = window.GKCars.make({ color: PAL[0], lights: false, type: 'sedan' }), meshN = 0;
         if (probe && probe.isObject3D) {
@@ -387,7 +395,7 @@
             if (j >= maxCars) { c.fb = true; return; }
             var car = j === 0 && c.col === PAL[0] ? probe : window.GKCars.make({ color: c.col, lights: false, type: TYPES[j % TYPES.length] });
             car.position.set(c.x, FY, c.z); car.rotation.y = c.ry;
-            car.traverse(function (o) { if (o.isLight) o.visible = false; if (o.isMesh) { o.castShadow = false; (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (mm) { if (mm && mm.isMeshStandardMaterial && carMats.indexOf(mm) < 0) { mm.userData.gkpE0 = mm.envMapIntensity; mm.userData.gkpE = mm.roughness < 0.6 ? Math.max(mm.userData.env != null ? mm.userData.env : mm.envMapIntensity, 0.85) : (mm.userData.env != null ? mm.userData.env : mm.envMapIntensity); carMats.push(mm); } }); } });
+            car.traverse(takeMats);
             carsG.add(car);
           });
           usedReal = true;
@@ -418,7 +426,7 @@
     var p1 = new T.PointLight(0xeef2ff, 0.5, 40, 1.5); p1.position.set(-3, CY - 0.6, -15); root.add(p1);
     var p2 = new T.PointLight(0xeef2ff, 0.5, 40, 1.5); p2.position.set(15.5, CY - 0.6, -15); root.add(p2);
     var pl = new T.PointLight(0xffc48c, 1.05, 15, 1.4); pl.position.set(3.4, FY + 2.2, 13.6); root.add(pl);
-    rampL = new T.PointLight(0xd6e6ff, 1.9, 30, 1.3); rampL.position.set(28.35, -0.6, -25.5); root.add(rampL);
+    rampL = new T.PointLight(0xd6e6ff, 1.5, 30, 1.3); rampL.position.set(28.35, -0.6, -25.5); root.add(rampL);
 
     /* --- окружение для отражений (тёмный зал со светящимися линиями) --- */
     try {
@@ -512,7 +520,7 @@
   function skySync() {
     if (!skyMat) return; var c = ctx.cur || {}, night = c.lamp || 0;
     if (c.hor && c.top) skyMat.color.copy(c.hor).lerp(c.top, 0.35).convertSRGBToLinear();
-    if (rampL) { rampL.intensity = 1.9 * (1 - night * 0.86); rampGlow.material.opacity = 0.5 * (1 - night * 0.9); }
+    if (rampL) { rampL.intensity = 1.5 * (1 - night * 0.86); rampGlow.material.opacity = 0.5 * (1 - night * 0.9); }
   }
   function hideOutdoor() {
     var ch = scene.children, i, o;
