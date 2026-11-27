@@ -569,6 +569,24 @@ body.tp-on{overflow:hidden}
 @keyframes annFloat{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(1.8px,-2.4px) rotate(-1.4deg)}}
 @keyframes annMarch{to{stroke-dashoffset:-.09}}
 @media (prefers-reduced-motion:reduce){.guide.drawn .ann g,.guide.drawn .ann .dash path{animation:none}}
+
+/* ===== мультик-вступление ===== */
+.toon{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;padding:0;background:#BFE1F7;color:#14161C}
+.toon svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.toon-cap{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 96px);text-align:center;font:400 clamp(2rem,5vw,4rem)/1.05 var(--f-display);padding-inline:var(--gut);opacity:0;transform:translateY(14px);transition:opacity .45s,transform .45s;text-shadow:0 2px 0 rgba(255,255,255,.6)}
+.toon-cap.on{opacity:1;transform:none}
+.toon-end{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding-inline:var(--gut);opacity:0;pointer-events:none;transition:opacity .8s}
+.toon-end.on{opacity:1;pointer-events:auto}
+.toon-end::before{content:"";position:absolute;left:50%;top:50%;width:min(900px,96vw);height:420px;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(234,246,252,.92),rgba(234,246,252,0));z-index:-1}
+.toon-end{z-index:1}
+.toon.ended .toon-skip{opacity:0;pointer-events:none}
+.toon-logo{font:500 clamp(4rem,14vw,11rem)/.85 var(--f-display);letter-spacing:.06em;text-shadow:0 3px 0 #fff}
+.toon-sub{font:500 clamp(1.1rem,2.4vw,1.8rem)/1.2 var(--f-display);font-style:italic}
+.toon-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px}
+.toon-end .btn-ghost{background:#fff;color:#14161C;border-color:#14161C}
+.toon-skip{position:absolute;right:var(--gutr);bottom:34px;font:600 .72rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;background:rgba(255,255,255,.85);color:#14161C;border:2px solid #14161C;border-radius:99px;padding:.9em 1.2em;cursor:pointer;min-height:44px}
+.toon-bar{position:absolute;left:0;right:0;bottom:0;height:6px;background:rgba(20,22,28,.2)}
+.toon-bar i{display:block;height:100%;background:#FF6A3D;transform-origin:left;transform:scaleX(0)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -581,6 +599,15 @@ body.tp-on{overflow:hidden}
   <div class="alt-pill" title="Высота растёт, пока вы листаете страницу"><i>▲</i><span id="altNum">512 м</span><small id="altPlace">Пятигорск</small></div>
   <a class="btn btn-main" href="#book">Заявка</a>
 </div></header>
+
+<section class="toon" id="toon" aria-label="Мультфильм: как проходит поездка с МАГТУР">
+  <svg id="tsvg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Самолёт, автобус МАГТУР, поход к вершине, фото, обед и катер по Сулакскому каньону"></svg>
+  <p class="toon-cap" id="tCap"></p>
+  <div class="toon-end" id="tEnd"><p class="toon-logo">МАГТУР</p><p class="toon-sub">Кавказ, на который возвращаются</p>
+    <div class="toon-btns"><a class="btn btn-main" href="#tours">Выбрать тур</a><button class="btn btn-ghost toon-again" type="button" id="tAgain">↻ Ещё раз</button></div></div>
+  <button class="toon-skip" type="button" id="tSkip">Пропустить →</button>
+  <div class="toon-bar"><i id="tProg"></i></div>
+</section>
 
 <section class="hero" id="top" data-alt="512" data-place="Пятигорск" aria-roledescription="карусель" aria-label="Направления МАГТУР">
   <div class="slides" id="slides"></div>
@@ -1460,4 +1487,159 @@ addEventListener('resize',()=>{layoutWord();drawProfile();altitude()});
 addEventListener('load',()=>{layoutWord();altitude()});
 document.addEventListener('visibilitychange',()=>{vis=!document.hidden;if(vis){t0=performance.now();requestAnimationFrame(frame)}});
 apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
+
+/* ---------- мультик-вступление ---------- */
+(function(){
+  const svg=document.getElementById('tsvg');if(!svg)return;
+  const NS='http://www.w3.org/2000/svg',INK='#14161C';
+  const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e};
+  const W=1600,SC=1600,N=6;const X=i=>800+i*SC;
+  const HOLD=2.9,MOVE=1.7,TOTAL=N*HOLD+(N-1)*MOVE,SCX=1010,BUSX=470;
+  const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+  /* слои */
+  const defs=el('defs',{});
+  const sky=el('linearGradient',{id:'tSky',x1:0,y1:0,x2:0,y2:1},defs);
+  el('stop',{offset:0,'stop-color':'#5FA8E8'},sky);el('stop',{offset:.7,'stop-color':'#BFE1F7'},sky);el('stop',{offset:1,'stop-color':'#EAF6FC'},sky);
+  el('rect',{x:-2000,y:-1200,width:6000,height:2400,fill:'url(#tSky)'});
+  const sun=el('circle',{cx:1240,cy:180,r:62,fill:'#FFE27A',stroke:INK,'stroke-width':3});
+  const cloudsG=el('g',{});
+  const cloud=(x,y,s)=>{const g=el('g',{transform:`translate(${x} ${y}) scale(${s})`},cloudsG);el('path',{d:'M0 0 q10-34 44-30 q14-28 50-20 q34-12 50 18 q34 0 34 32 z',fill:'#fff',stroke:INK,'stroke-width':3,'stroke-linejoin':'round'},g);return g};
+  const CL=[cloud(120,140,1),cloud(620,90,.8),cloud(980,230,.7),cloud(1500,120,1.1),cloud(2100,180,.9)];
+  // дальние горы и холмы — длинные пути с повтором
+  const far=el('g',{}),mid=el('g',{}),gnd=el('g',{});
+  const ridge=(y0,amp,step,seed,len)=>{let d=`M-400 900 L-400 ${y0}`;let s=seed;for(let x=-400;x<=len;x+=step){s=(s*9301+49297)%233280;const r=s/233280;const peak=y0-amp*(.35+.65*r);d+=` L${x+step/2} ${peak.toFixed(0)} L${x+step} ${(y0-amp*.15*r).toFixed(0)}`}return d+` L${len} 900 Z`};
+  el('path',{d:ridge(560,260,300,7,14000),fill:'#D3DEEC',stroke:INK,'stroke-width':2.5,'stroke-linejoin':'round'},far);
+  // снежные шапки на дальних горах
+  el('path',{d:ridge(560,260,300,7,14000),fill:'none',stroke:'#fff','stroke-width':0},far);
+  el('path',{d:'M-400 900 C 0 600, 300 640, 600 650 S 1200 600, 1600 640 S 2400 610, 2800 650 S 3600 600, 4000 645 S 4800 615, 5200 650 S 6000 600, 6400 640 S 7200 615, 7600 650 S 8400 600, 8800 645 S 9600 610, 10000 650 S 11000 620, 12000 650 L12000 900 Z',fill:'#9CC487',stroke:INK,'stroke-width':2.5},mid);
+  const world=el('g',{});
+  el('rect',{x:-2000,y:720,width:16000,height:600,fill:'#86B573',stroke:INK,'stroke-width':2.5},gnd);
+  const road=el('g',{});
+  el('rect',{x:-2000,y:770,width:16000,height:60,fill:'#3B3F47',stroke:INK,'stroke-width':3},road);
+  const dash=el('line',{x1:-2000,y1:800,x2:14000,y2:800,stroke:'#fff','stroke-width':4,'stroke-dasharray':'36 30'},road);
+  /* человечек */
+  function man(parent,x,y,s,col){
+    const g=el('g',{transform:`translate(${x} ${y}) scale(${s})`},parent);
+    const st={stroke:col||INK,'stroke-width':5,'stroke-linecap':'round',fill:'none'};
+    const o={g,x,y,s,
+      ll:el('line',st,g),lr:el('line',st,g),body:el('line',{...st,x1:0,y1:-66,x2:0,y2:-30},g),
+      al:el('line',st,g),ar:el('line',st,g),head:el('circle',{cx:0,cy:-80,r:12,fill:'#fff',stroke:col||INK,'stroke-width':5},g)};
+    o.set=(lA,rA,alA,arA,sit)=>{const L=30;const leg=(ln,a)=>{if(sit){ln.setAttribute('x1',0);ln.setAttribute('y1',-30);ln.setAttribute('x2',22);ln.setAttribute('y2',-30);}else{ln.setAttribute('x1',0);ln.setAttribute('y1',-30);ln.setAttribute('x2',(Math.sin(a)*L).toFixed(1));ln.setAttribute('y2',(-30+Math.cos(a)*L).toFixed(1))}};
+      leg(o.ll,lA);leg(o.lr,rA);const arm=(ln,a)=>{ln.setAttribute('x1',0);ln.setAttribute('y1',-60);ln.setAttribute('x2',(Math.sin(a)*26).toFixed(1));ln.setAttribute('y2',(-60+Math.cos(a)*26).toFixed(1))};arm(o.al,alA);arm(o.ar,arA)};
+    o.walk=p=>{const a=Math.sin(p)*.5;o.set(a,-a,-a*.9,a*.9)};
+    o.stand=()=>o.set(.18,-.18,.25,-.25);
+    o.cheer=p=>o.set(.2,-.2,2.6+Math.sin(p)*.2,-2.6-Math.sin(p)*.2);
+    o.move=(nx,ny)=>{o.x=nx;o.y=ny;g.setAttribute('transform',`translate(${nx.toFixed(1)} ${ny.toFixed(1)}) scale(${s})`)};
+    o.stand();return o;
+  }
+  const A=[];// аниматоры: f(lt,t)
+  /* 0 · Минводы */
+  {const x=X(0),g=el('g',{},world);
+    el('line',{x1:x-440,y1:720,x2:x-440,y2:600,stroke:INK,'stroke-width':6},g);el('line',{x1:x-250,y1:720,x2:x-250,y2:600,stroke:INK,'stroke-width':6},g);
+    el('rect',{x:x-470,y:560,width:250,height:60,rx:8,fill:'#fff',stroke:INK,'stroke-width':4},g);
+    el('text',{x:x-345,y:600,'text-anchor':'middle',fill:INK,style:'font:700 26px var(--f-mono,monospace);letter-spacing:3px'},g).textContent='МИНВОДЫ ✈';
+    const pl=el('g',{},g);el('path',{d:'M0 0 L90 -6 Q110 0 90 6 Z M30 -2 L10 -30 L24 -30 L56 -3 M30 2 L12 26 L26 26 L56 3 M82 -4 L96 -22 L104 -22 L98 -3',fill:'#fff',stroke:INK,'stroke-width':3.5,'stroke-linejoin':'round'},pl);
+    const p1=man(g,x+380,735,.9),p2=man(g,x+450,735,.82,'#2A5CB8');
+    const s1=el('rect',{x:0,y:0,width:26,height:30,rx:4,fill:'#FF6A3D',stroke:INK,'stroke-width':3},g),s2=el('rect',{x:0,y:0,width:24,height:28,rx:4,fill:'#7A5CFF',stroke:INK,'stroke-width':3},g);
+    A.push((lt,t,i)=>{if(i!==0)return;const k=Math.min(1,lt/HOLD);pl.setAttribute('transform',`translate(${x+620-k*520} ${120+k*190}) rotate(${8-k*6})`);
+      const px=x+380-k*230,qx=x+450-k*240;p1.move(px,735);p2.move(qx,735);p1.walk(t*9);p2.walk(t*9+1);
+      s1.setAttribute('x',px+14);s1.setAttribute('y',705);s2.setAttribute('x',qx+12);s2.setAttribute('y',707);
+      const op=k>.85?(1-(k-.85)/.15):1;[p1.g,p2.g,s1,s2].forEach(e=>e.style.opacity=op)});
+  }
+  /* 1 · тропа к вершине */
+  {const x=X(1),g=el('g',{},world);
+    el('path',{d:`M${x-150} 720 L${x+260} 250 L${x+680} 720 Z`,fill:'#B9C6D8',stroke:INK,'stroke-width':4,'stroke-linejoin':'round'},g);
+    el('path',{d:`M${x+260} 250 L${x+178} 344 L${x+214} 330 L${x+240} 360 L${x+272} 326 L${x+306} 352 L${x+342} 344 Z`,fill:'#fff',stroke:INK,'stroke-width':3.5,'stroke-linejoin':'round'},g);
+    const trail=[[x-80,712],[x+200,640],[x+40,560],[x+240,470],[x+150,400],[x+250,300]];
+    el('polyline',{points:trail.map(p=>p.join(' ')).join(' '),fill:'none',stroke:INK,'stroke-width':3,'stroke-dasharray':'2 12','stroke-linecap':'round'},g);
+    el('line',{x1:x+260,y1:250,x2:x+260,y2:196,stroke:INK,'stroke-width':4},g);const flag=el('path',{d:`M${x+260} 196 L${x+300} 206 L${x+260} 218 Z`,fill:'#FF6A3D',stroke:INK,'stroke-width':3},g);
+    for(const tx of [x-420,x-360,x-470]){el('path',{d:`M${tx} 720 l26 -90 l26 90 z M${tx+8} 680 l18 -64 l18 64 z`,fill:'#3F7A4A',stroke:INK,'stroke-width':3,'stroke-linejoin':'round'},g)}
+    const len=[];let tot=0;for(let k=1;k<trail.length;k++){const d=Math.hypot(trail[k][0]-trail[k-1][0],trail[k][1]-trail[k-1][1]);len.push(d);tot+=d}
+    const at=f=>{let d=f*tot;for(let k=0;k<len.length;k++){if(d<=len[k]){const r=d/len[k];return[trail[k][0]+(trail[k+1][0]-trail[k][0])*r,trail[k][1]+(trail[k+1][1]-trail[k][1])*r]}d-=len[k]}return trail[trail.length-1]};
+    const H=[man(g,0,0,.5,'#C2410C'),man(g,0,0,.5),man(g,0,0,.5,'#2A5CB8')];
+    A.push((lt,t,i)=>{if(i<0||i>2)return;const base=i===1?Math.min(1,lt/HOLD):(i>1?1:0);H.forEach((h,k)=>{const f=Math.max(0,Math.min(1,base*.95-k*.07+.05));const [hx,hy]=at(f);h.move(hx,hy);if(f>=.97)h.cheer(t*4+k);else h.walk(t*8+k)});
+      flag.setAttribute('transform',`skewY(${Math.sin(t*6)*4})`)});
+  }
+  /* 2 · кадр на память */
+  {const x=X(2),g=el('g',{},world);
+    el('path',{d:`M${x-520} 720 L${x-500} 600 Q${x-420} 560 ${x-300} 590 L${x-120} 600 L${x-90} 720 Z`,fill:'#A89A8C',stroke:INK,'stroke-width':4,'stroke-linejoin':'round'},g);
+    el('path',{d:`M${x+120} 720 L${x+250} 330 L${x+330} 420 L${x+420} 300 L${x+560} 720 Z`,fill:'#C7D3E2',stroke:INK,'stroke-width':4,'stroke-linejoin':'round'},g);
+    el('path',{d:`M${x+250} 330 L${x+228} 396 L${x+262} 380 L${x+290} 404 L${x+312} 398 L${x+330} 420 Z M${x+420} 300 L${x+392} 384 L${x+420} 368 L${x+452} 390 L${x+468} 372 Z`,fill:'#fff',stroke:INK,'stroke-width':3},g);
+    const ph=man(g,x-420,592,.8),md=man(g,x-200,600,.8,'#C2410C');
+    el('rect',{x:x-404,y:530,width:26,height:18,rx:3,fill:INK},g);
+    const fl=el('path',{d:`M${x-374} 538 l40 -18 l-12 16 l46 -4 l-46 12 l14 16 z`,fill:'#FFE27A',stroke:INK,'stroke-width':2.5},g);
+    ph.set(.2,-.2,1.9,1.6);
+    A.push((lt,t,i)=>{if(i<1||i>3)return;const j=Math.max(0,Math.sin(t*5));md.move(x-200,600-j*46);md.cheer(t*5);fl.style.opacity=(t%1.3)<.18?1:0});
+  }
+  /* 3 · обед */
+  {const x=X(3),g=el('g',{},world);
+    for(let k=0;k<7;k++)el('path',{d:`M${x-330+k*94} 470 h94 v30 q-47 22 -94 0 z`,fill:k%2?'#fff':'#FF6A3D',stroke:INK,'stroke-width':3},g);
+    el('line',{x1:x-322,y1:500,x2:x-322,y2:720,stroke:INK,'stroke-width':6},g);el('line',{x1:x+322,y1:500,x2:x+322,y2:720,stroke:INK,'stroke-width':6},g);
+    el('text',{x:x,y:458,'text-anchor':'middle',fill:INK,style:'font:700 24px var(--f-mono,monospace);letter-spacing:3px'},g).textContent='КАВКАЗСКАЯ КУХНЯ';
+    const bulbs=[];for(let k=0;k<9;k++)bulbs.push(el('circle',{cx:x-280+k*70,cy:520+Math.sin(k)*6,r:7,fill:'#FFE27A',stroke:INK,'stroke-width':2.5},g));
+    el('rect',{x:x-170,y:640,width:340,height:16,rx:4,fill:'#C98B55',stroke:INK,'stroke-width':3.5},g);
+    el('line',{x1:x-140,y1:656,x2:x-140,y2:720,stroke:INK,'stroke-width':5},g);el('line',{x1:x+140,y1:656,x2:x+140,y2:720,stroke:INK,'stroke-width':5},g);
+    const D=[man(g,x-210,690,.75),man(g,x-120,690,.75,'#2A5CB8'),man(g,x+120,690,.75,'#C2410C'),man(g,x+210,690,.75)];
+    D.forEach(d=>d.set(0,0,1.4,1.1,true));D[2].g.setAttribute('transform',`translate(${x+120} 690) scale(-.75 .75)`);D[3].g.setAttribute('transform',`translate(${x+210} 690) scale(-.75 .75)`);
+    const steam=[];for(const px of [x-90,x,x+90]){el('ellipse',{cx:px,cy:636,rx:30,ry:8,fill:'#fff',stroke:INK,'stroke-width':3},g);steam.push(el('path',{d:`M${px-8} 624 q-10 -14 0 -26 q10 -12 0 -26 M${px+8} 624 q-10 -14 0 -26 q10 -12 0 -26`,fill:'none',stroke:INK,'stroke-width':2.5,'stroke-linecap':'round'},g))}
+    A.push((lt,t,i)=>{if(i<2||i>4)return;steam.forEach((s,k)=>{const p=(t*.8+k*.33)%1;s.setAttribute('transform',`translate(0 ${-p*22})`);s.style.opacity=1-p});
+      bulbs.forEach((b,k)=>b.style.opacity=.55+.45*Math.max(0,Math.sin(t*4+k)));const up=Math.max(0,Math.sin(t*3));D[1].set(0,0,1.4,1.1-up*1.6,true)});
+  }
+  /* 4 · Сулакский каньон */
+  {const x=X(4),g=el('g',{},world);
+    el('path',{d:`M${x-620} 760 L${x-620} 330 L${x-520} 300 L${x-430} 360 L${x-330} 320 L${x-220} 400 L${x-150} 470 L${x-110} 560 L${x-60} 760 Z`,fill:'#C98B55',stroke:INK,'stroke-width':4,'stroke-linejoin':'round'},g);
+    el('path',{d:`M${x+640} 760 L${x+640} 320 L${x+520} 290 L${x+430} 350 L${x+340} 330 L${x+240} 410 L${x+170} 480 L${x+120} 570 L${x+70} 760 Z`,fill:'#B9773F',stroke:INK,'stroke-width':4,'stroke-linejoin':'round'},g);
+    for(const yy of [420,500,600])el('path',{d:`M${x-600} ${yy} q60 -10 120 4 M${x+500} ${yy+10} q60 -12 120 2`,fill:'none',stroke:INK,'stroke-width':2.5,opacity:.5},g);
+    el('path',{d:`M${x-110} 560 Q${x} 540 ${x+120} 570 L${x+160} 720 L${x-160} 720 Z`,fill:'#2EC4C0',stroke:INK,'stroke-width':4},g);
+    const waves=[];for(let k=0;k<4;k++)waves.push(el('path',{d:`M${x-60+k*30} ${600+k*28} q12 -8 24 0 q12 8 24 0`,fill:'none',stroke:'#fff','stroke-width':3},g));
+    const boat=el('g',{},g);el('path',{d:'M-70 0 L70 0 L52 26 L-56 26 Z',fill:'#fff',stroke:INK,'stroke-width':4,'stroke-linejoin':'round'},boat);el('rect',{x:-60,y:8,width:120,height:6,fill:'#FF6A3D'},boat);
+    const B=[man(boat,-36,2,.42,'#C2410C'),man(boat,0,2,.42),man(boat,34,2,.42,'#2A5CB8')];B.forEach(b=>b.stand());
+    const wake=el('path',{d:'',fill:'none',stroke:'#fff','stroke-width':3,'stroke-linecap':'round'},g);
+    A.push((lt,t,i)=>{if(i<3||i>5)return;const bx=x-30+Math.sin(t*.9)*40,by=650+Math.sin(t*2.2)*4;boat.setAttribute('transform',`translate(${bx.toFixed(1)} ${by.toFixed(1)}) rotate(${(Math.sin(t*2.2)*2).toFixed(2)})`);
+      B[2].cheer(t*5);wake.setAttribute('d',`M${bx+70} ${by+20} q20 4 40 -2 M${bx+76} ${by+28} q24 4 50 -2`);waves.forEach((w,k)=>w.setAttribute('transform',`translate(${(Math.sin(t*2+k)*6).toFixed(1)} 0)`))});
+  }
+  /* 5 · финал: горы и солнце */
+  {const x=X(5),g=el('g',{},world);
+    el('path',{d:`M${x-700} 720 L${x-380} 360 L${x-200} 520 L${x} 260 L${x+220} 500 L${x+400} 380 L${x+700} 720 Z`,fill:'#C7D3E2',stroke:INK,'stroke-width':4,'stroke-linejoin':'round'},g);
+    el('path',{d:`M${x} 260 L${x-60} 330 L${x-20} 316 L${x+10} 342 L${x+40} 314 L${x+70} 330 Z M${x-380} 360 L${x-420} 405 L${x-388} 396 L${x-360} 410 L${x-346} 398 Z`,fill:'#fff',stroke:INK,'stroke-width':3.5},g);
+  }
+  /* автобус */
+  const bus=el('g',{});
+  const bb=el('g',{},bus);
+  el('rect',{x:-150,y:-108,width:300,height:96,rx:18,fill:'#FF6A3D',stroke:INK,'stroke-width':4.5},bb);
+  for(let k=0;k<4;k++)el('rect',{x:-128+k*58,y:-94,width:46,height:36,rx:6,fill:'#DDF1FB',stroke:INK,'stroke-width':3.5},bb);
+  el('rect',{x:110,y:-94,width:30,height:60,rx:6,fill:'#DDF1FB',stroke:INK,'stroke-width':3.5},bb);
+  el('text',{x:-20,y:-26,'text-anchor':'middle',fill:'#fff',style:'font:800 26px var(--f-body,sans-serif);letter-spacing:4px'},bb).textContent='МАГТУР';
+  const heads=[];for(let k=0;k<4;k++)heads.push(el('circle',{cx:-105+k*58,cy:-70,r:9,fill:'#fff',stroke:INK,'stroke-width':3},bb));
+  const wheel=cx=>{const w=el('g',{transform:`translate(${cx} -10)`},bus);el('circle',{r:24,fill:INK},w);el('circle',{r:10,fill:'#ddd',stroke:INK,'stroke-width':3},w);const sp=el('path',{d:'M-16 0 H16 M0 -16 V16',stroke:'#ddd','stroke-width':3},w);return sp};
+  const W1=wheel(-90),W2=wheel(90);
+  /* камера */
+  const ui={cap:document.getElementById('tCap'),bar:document.getElementById('tProg'),end:document.getElementById('tEnd')};
+  const CAPS=['Прилетели в Минеральные Воды','Идём к вершине','Ловим кадр на память','Пробуем Кавказ на вкус','Катер по Сулакскому каньону',''];
+  let t=0,last=performance.now(),play=true,vis=true,lastCap=-1;
+  const STILL=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function state(tt){let acc=0;for(let i=0;i<N;i++){if(tt<acc+HOLD)return{cam:X(i)-SCX,i,lt:tt-acc,moving:false};acc+=HOLD;if(i<N-1){if(tt<acc+MOVE){const k=ease((tt-acc)/MOVE);return{cam:X(i)-SCX+k*SC,i:i+.5,lt:0,moving:true,k}}acc+=MOVE}}return{cam:X(N-1)-SCX,i:N-1,lt:HOLD,moving:false,done:true}}
+  function draw(){
+    const s=state(Math.min(t,TOTAL)),cam=s.cam;
+    world.setAttribute('transform',`translate(${-cam} 0)`);gnd.setAttribute('transform',`translate(${-cam} 0)`);road.setAttribute('transform',`translate(${-cam} 0)`);
+    mid.setAttribute('transform',`translate(${-cam*.55} 0)`);far.setAttribute('transform',`translate(${-cam*.25} 0)`);
+    CL.forEach((c,k)=>{const base=[120,620,980,1500,2100][k];const xx=((base-cam*.08-t*8)%2200+2200)%2200-300;c.setAttribute('transform',`translate(${xx.toFixed(1)} ${[140,90,230,120,180][k]}) scale(${[1,.8,.7,1.1,.9][k]})`)});
+    const rot=cam*.9;W1.setAttribute('transform',`rotate(${rot})`);W2.setAttribute('transform',`rotate(${rot})`);
+    const bob=s.moving?Math.sin(t*28)*1.6:Math.sin(t*3)*.6;bb.setAttribute('transform',`translate(0 ${bob.toFixed(2)})`);
+    heads.forEach((h,k)=>h.setAttribute('cy',(-70+(s.moving?Math.sin(t*20+k)*2:0)).toFixed(1)));
+    bus.setAttribute('transform',`translate(${BUSX} 792) scale(.82)`);bus.style.opacity=s.i>=N-1&&!s.moving?Math.max(0,1-s.lt*1.2):1;
+    const ii=Math.floor(s.i+.001);A.forEach(f=>f(s.lt,t,s.moving?-9:ii));
+    if(!s.moving){const ci=Math.round(s.i);if(ci!==lastCap){lastCap=ci;ui.cap.classList.remove('on');setTimeout(()=>{ui.cap.textContent=CAPS[ci];if(CAPS[ci])ui.cap.classList.add('on')},120)}}
+    ui.bar.style.transform=`scaleX(${Math.min(1,t/TOTAL)})`;
+    const fin=t>=TOTAL-HOLD*.6;ui.end.classList.toggle('on',fin);svg.parentElement.classList.toggle('ended',fin);
+  }
+  function loop(now){const dt=Math.min(.2,(now-last)/1000);last=now;if(play&&vis&&t<TOTAL)t+=dt;draw();requestAnimationFrame(loop)}
+  new IntersectionObserver(es=>{vis=es[0].isIntersecting}).observe(svg);
+  document.getElementById('tSkip').onclick=()=>{t=TOTAL};
+  document.getElementById('tAgain').onclick=()=>{t=0;lastCap=-1};
+  const fit=()=>{const r=svg.getBoundingClientRect();svg.setAttribute('viewBox',r.width/r.height<1?'250 -300 1000 1650':'0 0 1600 900')};fit();addEventListener('resize',fit);
+  if(STILL)t=TOTAL;
+  requestAnimationFrame(loop);
+})();
+
 </script>
