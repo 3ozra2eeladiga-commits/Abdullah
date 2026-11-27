@@ -780,7 +780,17 @@ html.loading,html.loading body{overflow:hidden}
 .pre-nesw{font:700 13px var(--f-mono);fill:#2F6FE0;text-anchor:middle}
 .pre-mnt{fill:none;stroke:#16213A;stroke-width:3;stroke-linejoin:round;transition:stroke .5s,fill .5s}
 .pre-snow{fill:#2F6FE0;transition:fill .5s}
-.pre-n{position:relative;margin-top:92px;font:800 1.5rem/1 var(--f-body);letter-spacing:-.02em;color:#16213A;font-variant-numeric:tabular-nums}
+.pre-n{position:relative;display:flex;align-items:flex-start;font:800 clamp(3.6rem,15vw,5rem)/1 var(--f-body);letter-spacing:-.05em;color:#16213A;font-variant-numeric:tabular-nums;transition:opacity .4s}
+.pre-n em{font-style:normal;font-size:.38em;margin:.18em 0 0 .08em;color:#2F6FE0;letter-spacing:0}
+.dgs{display:flex}
+.dg{display:block;height:1em;overflow:hidden;width:.62em;transition:width .3s}
+.dg.hide{width:0}
+.dg>span{display:flex;flex-direction:column;transition:transform .45s cubic-bezier(.2,.9,.25,1)}
+.dg b{height:1em;line-height:1;font-weight:800;text-align:center}
+.pre-alt{position:absolute;bottom:24%;font:700 .64rem/1 var(--f-mono);letter-spacing:.16em;color:#2F6FE0;font-variant-numeric:tabular-nums;transition:opacity .4s}
+.pre-mnt,.pre-snow{opacity:.18}
+.pre.ready .pre-mnt,.pre.ready .pre-snow{opacity:1}
+.pre.ready .pre-alt{opacity:0}
 .pre-go{position:absolute;bottom:22%;font:800 1.15rem/1 var(--f-body);color:#fff;opacity:0;transform:translateY(8px);transition:opacity .4s .2s,transform .4s .2s}
 .pre-go i{font-style:normal;display:inline-block;animation:goArr 1.2s ease-in-out infinite}
 @keyframes goArr{50%{transform:translateX(4px)}}
@@ -805,7 +815,7 @@ html.loading,html.loading body{overflow:hidden}
   <button class="pre-btn" id="preBtn" type="button" disabled aria-label="Поехали">
     <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="pre-track" cx="100" cy="100" r="92"/><circle class="pre-ring" id="preRing" cx="100" cy="100" r="92" pathLength="1"/><g class="pre-ticks"><line x1="100.0" y1="20.0" x2="100.0" y2="28.0"/><line x1="113.9" y1="21.2" x2="113.0" y2="26.1"/><line x1="127.4" y1="24.8" x2="125.7" y2="29.5"/><line x1="140.0" y1="30.7" x2="137.5" y2="35.0"/><line x1="151.4" y1="38.7" x2="148.2" y2="42.5"/><line x1="161.3" y1="48.6" x2="157.5" y2="51.8"/><line x1="169.3" y1="60.0" x2="165.0" y2="62.5"/><line x1="175.2" y1="72.6" x2="170.5" y2="74.3"/><line x1="178.8" y1="86.1" x2="173.9" y2="87.0"/><line x1="180.0" y1="100.0" x2="172.0" y2="100.0"/><line x1="178.8" y1="113.9" x2="173.9" y2="113.0"/><line x1="175.2" y1="127.4" x2="170.5" y2="125.7"/><line x1="169.3" y1="140.0" x2="165.0" y2="137.5"/><line x1="161.3" y1="151.4" x2="157.5" y2="148.2"/><line x1="151.4" y1="161.3" x2="148.2" y2="157.5"/><line x1="140.0" y1="169.3" x2="137.5" y2="165.0"/><line x1="127.4" y1="175.2" x2="125.7" y2="170.5"/><line x1="113.9" y1="178.8" x2="113.0" y2="173.9"/><line x1="100.0" y1="180.0" x2="100.0" y2="172.0"/><line x1="86.1" y1="178.8" x2="87.0" y2="173.9"/><line x1="72.6" y1="175.2" x2="74.3" y2="170.5"/><line x1="60.0" y1="169.3" x2="62.5" y2="165.0"/><line x1="48.6" y1="161.3" x2="51.8" y2="157.5"/><line x1="38.7" y1="151.4" x2="42.5" y2="148.2"/><line x1="30.7" y1="140.0" x2="35.0" y2="137.5"/><line x1="24.8" y1="127.4" x2="29.5" y2="125.7"/><line x1="21.2" y1="113.9" x2="26.1" y2="113.0"/><line x1="20.0" y1="100.0" x2="28.0" y2="100.0"/><line x1="21.2" y1="86.1" x2="26.1" y2="87.0"/><line x1="24.8" y1="72.6" x2="29.5" y2="74.3"/><line x1="30.7" y1="60.0" x2="35.0" y2="62.5"/><line x1="38.7" y1="48.6" x2="42.5" y2="51.8"/><line x1="48.6" y1="38.7" x2="51.8" y2="42.5"/><line x1="60.0" y1="30.7" x2="62.5" y2="35.0"/><line x1="72.6" y1="24.8" x2="74.3" y2="29.5"/><line x1="86.1" y1="21.2" x2="87.0" y2="26.1"/></g><text x="100" y="40" class="pre-nesw">С</text>
       <path class="pre-mnt" d="M58 128 L84 92 L96 106 L112 82 L142 128 Z"/><path class="pre-snow" d="M106 91 L112 82 L118 91 L114 89 L112 92 L109 89 Z"/></svg>
-    <span class="pre-n" id="preN">0%</span><span class="pre-go">Поехали <i>→</i></span>
+    <span class="pre-n" id="preN"><span class="dgs"><span class="dg"><span><b>0</b><b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b></span></span><span class="dg"><span><b>0</b><b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b></span></span><span class="dg"><span><b>0</b><b>1</b><b>2</b><b>3</b><b>4</b><b>5</b><b>6</b><b>7</b><b>8</b><b>9</b></span></span></span><em>%</em></span><span class="pre-alt" id="preAlt">↑ 310 м</span><span class="pre-go">Поехали <i>→</i></span>
   </button>
   <small id="preSub">Собираем рюкзак для вашего путешествия</small>
 </div></div>
@@ -1251,10 +1261,12 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
   document.documentElement.classList.add('loading');
   const CAP=[[3.9,8.9,'Дагестан','Сулакский каньон'],[9.5,11.1,'Приэльбрусье','Канатка к Эльбрусу'],[12.6,15.6,'Карачаево-Черкесия','Домбай · лошади']];
   const cap=$('filmCap'),bar=$('filmBar'),sec=$('start'),pre=$('pre'),hint=$('filmHint');let cur=-1,shown=0,drawn=-1,intro=0,introOn=false,lastMove=performance.now(),lastP=-1;const IF=22;
+  const DG=[...document.querySelectorAll('#preN .dg > span')];
+  function setNum(n){const t=String(n).padStart(3,'0');DG.forEach((c,i)=>{c.style.transform=`translateY(${-t[i]*10}%)`;c.parentNode.classList.toggle('hide',i===0&&n<100||i===1&&n<10)});$('preAlt').textContent='↑ '+Math.round(310+(5642-310)*n/100).toLocaleString('ru-RU')+' м'+(n>=100?' · вершина':'')}
   function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1600);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0);setTimeout(()=>pre.remove(),1000)}
-  function done(){if(ready)return;ready=true;$('preN').textContent='100%';$('preRing').style.strokeDashoffset=0;drawn=-1;
+  function done(){if(ready)return;ready=true;setNum(100);$('preRing').style.strokeDashoffset=0;drawn=-1;
     setTimeout(()=>{pre.classList.add('ready');$('preBtn').disabled=false;$('preSub').textContent='Всё готово — нажмите, чтобы начать';$('preBtn').onclick=go},300);}
-  for(let i=0;i<N;i++){const im=new Image();im.decoding='async';im.onload=im.onerror=()=>{loaded++;const k=loaded/N;$('preN').textContent=Math.floor(k*99)+'%';$('preRing').style.strokeDashoffset=1-k;if(loaded===N)done()};
+  for(let i=0;i<N;i++){const im=new Image();im.decoding='async';im.onload=im.onerror=()=>{loaded++;const k=loaded/N;setNum(Math.floor(k*99));$('preRing').style.strokeDashoffset=1-k;if(loaded===N)done()};
     im.src='video/f/'+String(i+1).padStart(3,'0')+'.webp';imgs[i]=im}
   setTimeout(done,25000);
   function size(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);drawn=-1}
