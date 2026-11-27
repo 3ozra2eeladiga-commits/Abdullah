@@ -93,6 +93,8 @@ html.has-silk .backdrop{display:none}
 
 /* scroll-driven build sequence */
 .seq{height:520vh;position:relative}
+/* телефон: видео играет само, поэтому блок короткий — пролистал пару раз и дальше */
+@media (pointer:coarse){.seq{height:210vh}}
 .seq-stick{position:sticky;top:0;height:100svh;overflow:hidden;display:grid;place-items:center}
 .seq video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111}
 .seq-frame{position:absolute;inset:9vh 7vw;border:1px solid rgba(255,255,255,.55);pointer-events:none;z-index:2}
