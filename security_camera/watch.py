@@ -22,6 +22,10 @@ from PIL import Image, ImageDraw, ImageFont
 from ultralytics import YOLO
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+try:   # чтобы русские сообщения не ломали консоль Windows
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 FONTS = ["C:/Windows/Fonts/arialbd.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
          "/System/Library/Fonts/Supplemental/Arial Bold.ttf"]
 GREEN, RED, WHITE, YELLOW = (60, 220, 60), (255, 40, 40), (255, 255, 255), (255, 210, 0)
@@ -105,6 +109,9 @@ def font(size):
     return ImageFont.load_default()
 
 
+WIN = "Smart camera"   # заголовок окна (латиницей — Windows иначе ломает буквы)
+
+
 def play(name):
     """Проиграть voice/<name>.mp3 через колонку, не останавливая видео."""
     path = os.path.join(HERE, "voice", name + ".mp3")
@@ -126,6 +133,7 @@ def main():
     ap.add_argument("--source", required=True, help="файл видео, номер веб-камеры или адрес rtsp://")
     ap.add_argument("--save", help="сохранить результат в файл mp4")
     ap.add_argument("--show", action="store_true", help="показывать окно на экране")
+    ap.add_argument("--fullscreen", action="store_true", help="окно на весь экран (для экрана покупателей)")
     ap.add_argument("--sound", action="store_true", help="включать голос из колонки")
     ap.add_argument("--model", default="yolo11s-pose.pt")
     ap.add_argument("--skip", type=int, default=1, help="обрабатывать каждый N-й кадр (быстрее)")
@@ -133,7 +141,8 @@ def main():
     ap.add_argument("--pause", type=int, default=40, help="пауза между приветствиями, секунд")
     a = ap.parse_args()
 
-    model = YOLO(a.model)
+    local = os.path.join(HERE, a.model)
+    model = YOLO(local if os.path.exists(local) else a.model)
     src = int(a.source) if a.source.isdigit() else a.source
     cap = cv2.VideoCapture(src)
     if not cap.isOpened():
@@ -256,7 +265,11 @@ def main():
                 out = cv2.VideoWriter(a.save, cv2.VideoWriter_fourcc(*"mp4v"), fps / a.skip, (w, h))
             out.write(frame)
         if a.show:
-            cv2.imshow("Security камера", frame)
+            if n <= a.skip:
+                cv2.namedWindow(WIN, cv2.WINDOW_NORMAL)
+                if a.fullscreen:
+                    cv2.setWindowProperty(WIN, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.imshow(WIN, frame)
             if cv2.waitKey(1) & 0xFF == 27:  # Esc — выход
                 break
 
