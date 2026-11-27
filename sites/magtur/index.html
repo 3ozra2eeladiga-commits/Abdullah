@@ -5,9 +5,9 @@
 /* Идея: каждый раздел — кадр из фильма о Кавказе. Фото на весь экран, матовое стекло, облака, крупный текст прямо на фото. Цвета берутся из самих гор: глубокий тёмный, кремовый снег, золото заката. Один тёмный мир намеренно. */
 :root{
   color-scheme:light;
-  --ink:#12313B; --ink2:#1A1D24; --cream:#12313B; --mist:#474D59; --dim:#737985; --pearl:#EEF0F3;
-  --gold:#12313B; --gold2:#5A606C; --sun:#12313B;
-  --c-hike:#12B862; --c-bus:#2F7BFF; --c-horse:#9C6B3F; --c-ski:#8B5CF6; --c-rest:#D4A017; --c-all:#2E3BFF; --line:rgba(18,49,59,.14);
+  --ink:#16213A; --ink2:#1A1D24; --cream:#16213A; --mist:#474D59; --dim:#737985; --pearl:#EEF0F3;
+  --gold:#16213A; --gold2:#5A606C; --sun:#16213A;
+  --c-hike:#12B862; --c-bus:#2F7BFF; --c-horse:#9C6B3F; --c-ski:#8B5CF6; --c-rest:#D4A017; --c-all:#2E3BFF; --line:rgba(22,33,58,.14);
   --glass:rgba(255,255,255,.55); --glass-strong:rgba(12,17,22,.62);
   --f-display:"Cormorant Garamond","Times New Roman",Georgia,serif;
   --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -16,7 +16,7 @@
   --lx:max(var(--gut),calc((100vw - var(--max))/2 + 16px));
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;overflow-x:clip}
+html{scroll-behavior:smooth;overflow-x:clip;overscroll-behavior-x:none}
 body{margin:0;background:var(--ink);color:var(--cream);font:400 16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased;overflow-x:clip}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ink)}
 .wrap{max-width:var(--max);margin:0 auto;padding-left:var(--gut);padding-right:var(--gutr)}
@@ -78,7 +78,7 @@ header.top.solid{background:rgba(11,15,20,.55);backdrop-filter:blur(18px);border
 .clouds.on{opacity:1}
 .sl{position:absolute;inset:0;z-index:1;clip-path:polygon(0 100%,0 96%,9% 86%,17% 92%,26% 78%,34% 88%,43% 70%,51% 84%,60% 76%,68% 90%,77% 74%,86% 87%,93% 80%,100% 90%,100% 100%)}
 .sl.was{z-index:2;clip-path:polygon(0 100%,0 0,9% 0,17% 0,26% 0,34% 0,43% 0,51% 0,60% 0,68% 0,77% 0,86% 0,93% 0,100% 0,100% 100%)}
-.sl.on{z-index:3;clip-path:polygon(0 100%,0 0,9% 0,17% 0,26% 0,34% 0,43% 0,51% 0,60% 0,68% 0,77% 0,86% 0,93% 0,100% 0,100% 100%);transition:clip-path 1.5s cubic-bezier(.7,0,.2,1)}
+.sl.on{z-index:3;clip-path:polygon(0 100%,0 0,9% 0,17% 0,26% 0,34% 0,43% 0,51% 0,60% 0,68% 0,77% 0,86% 0,93% 0,100% 0,100% 100%);transition:clip-path 1s cubic-bezier(.7,0,.2,1)}
 .sl img{width:100%;height:100%;object-fit:cover;transform:scale(1.18);transition:transform 9s cubic-bezier(.2,.6,.2,1)}
 .sl.on img,.sl.was img{transform:scale(1.02)}
 .sl::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,30,.45) 0%,transparent 22%,transparent 62%,rgba(8,10,30,.55) 100%)}
@@ -121,6 +121,7 @@ header.top.solid{background:rgba(11,15,20,.55);backdrop-filter:blur(18px);border
 @media(max-width:760px){
   .hero{--seam:100vw}
   .glass{top:47%;width:100%;border-right:0;border-top:1px solid rgba(255,255,255,.3)}
+  .sl{background-size:cover;background-position:center bottom}.sl img{height:54%}
   .hero-in{padding-block:0 104px;grid-template-rows:47% 1fr}
   .hero-in .wrap{grid-row:2;align-self:start;padding-left:var(--gut)}
   .ptxt{width:auto;padding-top:calc(var(--fs,60px) * .8);gap:12px}
@@ -288,7 +289,7 @@ ol.steps{margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap
 
 /* ===== гиды ===== */
 .guides-sec{background:var(--sun);color:var(--ink);padding-block:clamp(90px,11vw,140px);position:relative;isolation:isolate}
-.guides-sec::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 50% 50% at 100% 0%,rgba(43,127,217,.35),transparent 70%),radial-gradient(ellipse 50% 50% at 0% 100%,rgba(15,139,141,.35),transparent 70%)}
+.guides-sec::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 50% 50% at 100% 0%,rgba(43,127,217,.35),transparent 70%),radial-gradient(ellipse 50% 50% at 0% 100%,rgba(47,111,224,.35),transparent 70%)}
 .guides-sec .said{border-color:rgba(11,15,20,.2)}.guides-sec .said li{border-color:rgba(11,15,20,.25);color:rgba(11,15,20,.75)}.guides-sec .said li b{color:var(--ink)}.guides-sec a{color:#1D2BE0}
 .guides{display:grid;grid-template-columns:repeat(4,1fr);gap:36px 24px}
 @media(max-width:900px){.guides{grid-template-columns:repeat(2,1fr);gap:26px 14px}}
@@ -379,37 +380,37 @@ dialog::backdrop{background:rgba(5,7,10,.7);backdrop-filter:blur(10px)}
 body{background:var(--pearl);color:var(--ink)}
 body::before{background:var(--pearl)}
 #fx{position:fixed;inset:0;width:100%;height:100%;z-index:-10;display:block;background:radial-gradient(120% 90% at 70% 20%,#fff,#e4e6ea 70%)}
-#bar{position:fixed;top:0;left:0;height:2px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,#12313B,#8a909c);z-index:20}
+#bar{position:fixed;top:0;left:0;height:2px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,#16213A,#8a909c);z-index:20}
 .hero,.intro,.lens{--cream:#F7F3EC;--mist:rgba(255,255,255,.84);--dim:rgba(255,255,255,.62);--line:rgba(255,255,255,.28);--gold:#fff;--gold2:#fff;--glass:rgba(12,17,22,.3);color:#F7F3EC}
 .btn-main{background:var(--ink);color:#fff}
 .btn-main:hover{background:#2A2E36;transform:translateY(-2px)}
-.btn-sky,.btn-ghost{background:rgba(255,255,255,.45);color:var(--ink);border-color:rgba(18,49,59,.55)}
+.btn-sky,.btn-ghost{background:rgba(255,255,255,.45);color:var(--ink);border-color:rgba(22,33,58,.55)}
 .btn-sky:hover,.btn-ghost:hover{background:var(--ink);color:#fff}
 .hero .btn-main,.intro .btn-main,.lens .btn-main,header.top:not(.solid) .btn-main{background:var(--ink);color:#fff}
 .hero .btn-sky,.lens .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.6)}
 .hero .btn-sky:hover,.lens .btn-ghost:hover{background:#fff;color:var(--ink)}
-.spaced i{background:linear-gradient(90deg,#12313B,#8a909c);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
+.spaced i{background:linear-gradient(90deg,#16213A,#8a909c);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
 .intro .spaced i{background:none;color:rgba(255,255,255,.85)}
 header.top{--hd:var(--ink)}
-header.top.solid{background:rgba(255,255,255,.62);border-color:rgba(18,49,59,.1);--hd:#12313B}
+header.top.solid{background:rgba(255,255,255,.62);border-color:rgba(22,33,58,.1);--hd:#16213A}
 header .logo,header nav a,header .alt-pill{color:var(--hd)}
 header .alt-pill i{color:var(--hd)}
 header .alt-pill small{color:var(--hd);opacity:.6}
 header.top.solid .btn-main{background:var(--ink);color:#fff}
-.frost{background:rgba(255,255,255,.55);border-color:rgba(255,255,255,.85);box-shadow:0 24px 60px -34px rgba(18,49,59,.4)}
+.frost{background:rgba(255,255,255,.55);border-color:rgba(255,255,255,.85);box-shadow:0 24px 60px -34px rgba(22,33,58,.4)}
 .plain{position:relative;padding-block:clamp(80px,10vw,130px)}
 /* подбор */
 .tours{background:transparent;color:var(--ink)}
 .tours::before{display:none}
 .tours .eyebrow{color:var(--mist)}.tours .eyebrow b{color:var(--ink)}.tours .lead{color:var(--mist)}
-.fm{background:rgba(255,255,255,.55);border-color:rgba(18,49,59,.12);color:var(--ink);backdrop-filter:blur(14px)}
+.fm{background:rgba(255,255,255,.55);border-color:rgba(22,33,58,.12);color:var(--ink);backdrop-filter:blur(14px)}
 .fm:hover{border-color:var(--ink)}
 .fm[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
-.bar{box-shadow:0 24px 60px -34px rgba(18,49,59,.45);border:1px solid rgba(18,49,59,.08)}
+.bar{box-shadow:0 24px 60px -34px rgba(22,33,58,.45);border:1px solid rgba(22,33,58,.08)}
 .cnt button{color:#fff}
-.rarr{border-color:rgba(18,49,59,.5);background:rgba(255,255,255,.5);color:var(--ink)}
+.rarr{border-color:rgba(22,33,58,.5);background:rgba(255,255,255,.5);color:var(--ink)}
 .rarr:hover{background:var(--ink);color:#fff}
-.rtext .btn-ghost{border-color:rgba(18,49,59,.55)}
+.rtext .btn-ghost{border-color:rgba(22,33,58,.55)}
 .rtext .btn-ghost:hover{color:#fff}
 .rc .lab em{background:rgba(255,255,255,.92);color:var(--ink)}
 .rc.new::before{background:#fff;color:var(--ink)}
@@ -418,18 +419,18 @@ header.top.solid .btn-main{background:var(--ink);color:#fff}
 .cal .nm{background:rgba(255,255,255,.94);color:var(--ink)}
 .cal .mh.now{background:var(--ink);color:#fff}
 .cal .c i{background:var(--ink)}
-.cal .c.col-now{background:rgba(18,49,59,.06)}
+.cal .c.col-now{background:rgba(22,33,58,.06)}
 .pay b{color:var(--ink)}
 /* гиды */
 .guides-sec{background:transparent}
 .guides-sec::before{display:none}
 .guide{background:#fff}
 /* формы */
-input,select,textarea{background:rgba(255,255,255,.78);color:var(--ink);border-color:rgba(18,49,59,.14)}
+input,select,textarea{background:rgba(255,255,255,.78);color:var(--ink);border-color:rgba(22,33,58,.14)}
 input::placeholder,textarea::placeholder{color:#8A909C}
 select option{background:#fff;color:var(--ink)}
-input:focus,select:focus,textarea:focus{border-color:var(--ink);background:#fff;box-shadow:0 0 0 4px rgba(18,49,59,.06)}
-.stepper button{background:rgba(255,255,255,.78);color:var(--ink);border-color:rgba(18,49,59,.14)}
+input:focus,select:focus,textarea:focus{border-color:var(--ink);background:#fff;box-shadow:0 0 0 4px rgba(22,33,58,.06)}
+.stepper button{background:rgba(255,255,255,.78);color:var(--ink);border-color:rgba(22,33,58,.14)}
 .stepper button:hover{background:var(--ink);color:#fff}
 .err{color:#B3261E}
 .done{border-color:var(--ink)}
@@ -438,10 +439,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--ink);background:#fff;
 footer{background:transparent;color:var(--mist);border-top:1px solid var(--line)}
 .fcols h3,.tel,footer a{color:var(--ink)}
 .copy{color:var(--mist);border-color:var(--line)}
-dialog{background:#fff;color:var(--ink);border-color:rgba(18,49,59,.1)}
+dialog{background:#fff;color:var(--ink);border-color:rgba(22,33,58,.1)}
 dialog::backdrop{background:rgba(230,233,238,.65)}
 .x{background:rgba(255,255,255,.92);color:var(--ink)}
-.specs .peaks i{background:rgba(18,49,59,.15)}.specs .peaks i.on{background:var(--ink)}
+.specs .peaks i{background:rgba(22,33,58,.15)}.specs .peaks i.on{background:var(--ink)}
 /* «Кавказ.» без прилипания */
 .kv2 .head{text-align:center;justify-items:center;margin-bottom:0}
 .kv2 .head .eyebrow{justify-content:center}
@@ -471,7 +472,7 @@ dialog::backdrop{background:rgba(230,233,238,.65)}
 .guide{background:none!important;padding:0;box-shadow:none;border-radius:0;gap:10px;transform:none;transition:opacity .9s var(--d,0ms),transform 1s cubic-bezier(.2,.85,.2,1) var(--d,0ms)}
 .guide.wait{opacity:0;transform:translateY(50px)}
 .guide:hover{transform:none}
-.guide .im{aspect-ratio:3/4;border-radius:6px;position:relative;overflow:hidden;background:#cfd3da;box-shadow:0 30px 60px -36px rgba(18,49,59,.55)}
+.guide .im{aspect-ratio:3/4;border-radius:6px;position:relative;overflow:hidden;background:#cfd3da;box-shadow:0 30px 60px -36px rgba(22,33,58,.55)}
 .guide img{filter:grayscale(1) contrast(1.08);transition:filter .8s,transform 1.4s cubic-bezier(.2,.8,.2,1)}
 .guide:hover img,.guide:focus-within img{filter:none;transform:scale(1.05)}
 .guide .im::after{content:attr(data-n);position:absolute;left:14px;top:14px;font:600 .62rem/1 var(--f-mono);letter-spacing:.22em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5)}
@@ -506,7 +507,7 @@ body.tp-on{overflow:hidden}
 .tp-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:tpZoom 9s cubic-bezier(.2,.6,.2,1) both}
 @keyframes tpZoom{from{transform:scale(1.15)}}
 .tp-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,14,.45) 0%,transparent 30%,rgba(8,10,14,.25) 55%,rgba(8,10,14,.85) 100%)}
-.tp-back{position:fixed;z-index:45;top:calc(env(safe-area-inset-top,0px) + 14px);left:var(--lx);font:600 .7rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#fff;background:rgba(18,49,59,.82);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(10px);padding:1em 1.3em;cursor:pointer;min-height:44px;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
+.tp-back{position:fixed;z-index:45;top:calc(env(safe-area-inset-top,0px) + 14px);left:var(--lx);font:600 .7rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#fff;background:rgba(22,33,58,.82);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(10px);padding:1em 1.3em;cursor:pointer;min-height:44px;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
 .tp-back:hover{background:#fff;color:var(--ink)}
 .tp-hin{position:absolute;z-index:1;left:0;right:0;bottom:clamp(26px,6vh,56px);display:grid;gap:18px}
 .tp-hin .eyebrow{color:rgba(255,255,255,.85)}.tp-hin .eyebrow b{color:#fff;background:none;-webkit-text-fill-color:#fff}
@@ -539,13 +540,13 @@ body.tp-on{overflow:hidden}
 .tp-note{font-size:.92rem;color:var(--mist)}
 .tp-like{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 @media(max-width:800px){.tp-like{grid-template-columns:1fr;gap:8px}}
-.tp-like button{display:flex;align-items:center;gap:12px;border:1px solid rgba(18,49,59,.14);background:#fff;padding:8px;cursor:pointer;color:#12313B;text-align:left;font:inherit;border-radius:12px;transition:border-color .3s,transform .3s}
-.tp-like button:hover{border-color:#12313B;transform:translateY(-2px)}
+.tp-like button{display:flex;align-items:center;gap:12px;border:1px solid rgba(22,33,58,.14);background:#fff;padding:8px;cursor:pointer;color:#16213A;text-align:left;font:inherit;border-radius:12px;transition:border-color .3s,transform .3s}
+.tp-like button:hover{border-color:#16213A;transform:translateY(-2px)}
 .tp-like img{width:64px;height:64px;flex:none;object-fit:cover;border-radius:8px}
 .tp-like span{display:grid;gap:4px;font:700 .95rem/1.2 var(--f-body);letter-spacing:-.01em}
-.tp-like small{display:block;font:600 .56rem/1.3 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:#0F8B8D}
+.tp-like small{display:block;font:600 .56rem/1.3 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:#2F6FE0}
 .tp-side{position:sticky;top:24px}
-.tp-card{background:#fff;border:1px solid var(--line);padding:24px;display:grid;gap:14px;box-shadow:0 30px 60px -40px rgba(18,49,59,.5)}
+.tp-card{background:#fff;border:1px solid var(--line);padding:24px;display:grid;gap:14px;box-shadow:0 30px 60px -40px rgba(22,33,58,.5)}
 .tp-card h3{font-size:1.6rem}
 .tp-card dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:.9rem}
 .tp-card dt{color:var(--dim)}.tp-card dd{margin:0;text-align:right;font-weight:600}
@@ -556,7 +557,7 @@ body.tp-on{overflow:hidden}
 .ann .dash path:not(.hd){stroke-dasharray:.02 .025;stroke-dashoffset:0;opacity:0;transition:opacity .9s var(--ad,0ms)}
 .ann text{font:700 21px/1 Caveat,'Comic Sans MS',cursive;letter-spacing:.01em;opacity:0;transform:translateY(4px);transition:opacity .6s calc(var(--ad,0ms) + .7s),transform .6s calc(var(--ad,0ms) + .7s);paint-order:stroke;stroke-width:4px;stroke-linejoin:round}
 .ann .w path{stroke:#fff;filter:drop-shadow(0 0 2px rgba(0,0,0,.55))}.ann .w text{fill:#fff;stroke:rgba(0,0,0,.45)}
-.ann .k path{stroke:#12313B}.ann .k text{fill:#12313B;stroke:rgba(255,255,255,.85)}
+.ann .k path{stroke:#16213A}.ann .k text{fill:#16213A;stroke:rgba(255,255,255,.85)}
 .guide.drawn .ann path{stroke-dashoffset:0}.guide.drawn .ann .dash path{opacity:1}.guide.drawn .ann text{opacity:1;transform:none}
 .guide .im::after{z-index:3}
 @media(max-width:700px){.ann text{font-size:28px}.ann path{stroke-width:2.6}}
@@ -569,7 +570,7 @@ body.tp-on{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.guide.drawn .ann g,.guide.drawn .ann .dash path{animation:none}}
 
 /* ===== мультик-вступление ===== */
-.toon{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;padding:0;background:#BFE1F7;color:#12313B}
+.toon{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;padding:0;background:#BFE1F7;color:#16213A}
 .toon svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .toon-cap{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 96px);text-align:center;font:400 clamp(2rem,5vw,4rem)/1.05 var(--f-display);padding-inline:var(--gut);opacity:0;transform:translateY(14px);transition:opacity .45s,transform .45s;text-shadow:0 2px 0 rgba(255,255,255,.6)}
 .toon-cap.on{opacity:1;transform:none}
@@ -581,57 +582,57 @@ body.tp-on{overflow:hidden}
 .toon-logo{font:500 clamp(4rem,14vw,11rem)/.85 var(--f-display);letter-spacing:.06em;text-shadow:0 3px 0 #fff}
 .toon-sub{font:500 clamp(1.1rem,2.4vw,1.8rem)/1.2 var(--f-display);font-style:italic}
 .toon-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px}
-.toon-end .btn-ghost{background:#fff;color:#12313B;border-color:#12313B}
-.toon-skip{position:absolute;right:var(--gutr);bottom:34px;font:600 .72rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;background:rgba(255,255,255,.85);color:#12313B;border:2px solid #12313B;border-radius:99px;padding:.9em 1.2em;cursor:pointer;min-height:44px}
-.toon-bar{position:absolute;left:0;right:0;bottom:0;height:6px;background:rgba(18,49,59,.2)}
-.toon-bar i{display:block;height:100%;background:#0F8B8D;transform-origin:left;transform:scaleX(0)}
+.toon-end .btn-ghost{background:#fff;color:#16213A;border-color:#16213A}
+.toon-skip{position:absolute;right:var(--gutr);bottom:34px;font:600 .72rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;background:rgba(255,255,255,.85);color:#16213A;border:2px solid #16213A;border-radius:99px;padding:.9em 1.2em;cursor:pointer;min-height:44px}
+.toon-bar{position:absolute;left:0;right:0;bottom:0;height:6px;background:rgba(22,33,58,.2)}
+.toon-bar i{display:block;height:100%;background:#2F6FE0;transform-origin:left;transform:scaleX(0)}
 
 /* ===== старт-карта и маршрут ===== */
 .start{position:relative;min-height:100vh;min-height:100svh;display:flex;align-items:center;padding-block:120px 80px;background:transparent}
 .start-in{display:grid;gap:24px;width:100%}
-.start .eyebrow b{color:#0F8B8D;-webkit-text-fill-color:#0F8B8D;background:none}
+.start .eyebrow b{color:#2F6FE0;-webkit-text-fill-color:#2F6FE0;background:none}
 .start-h{font-size:clamp(3.2rem,10vw,9.5rem);line-height:.88;max-width:10ch}
 .start-sub{max-width:46ch;font-size:1.1rem;color:var(--mist)}
 .start-cta{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
 .start-hint{font:600 .66rem/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
 .start-pin{position:absolute;left:74%;top:72%;display:flex;align-items:center;gap:12px;z-index:7}
-.start-pin i{width:16px;height:16px;border-radius:50%;background:#0F8B8D;border:3px solid #12313B;box-shadow:0 0 0 8px rgba(15,139,141,.25);animation:pinPulse 2s infinite}
-@keyframes pinPulse{50%{box-shadow:0 0 0 16px rgba(15,139,141,0)}}
-.start-pin span,.rt-stop span{font:600 .62rem/1.2 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;background:#fff;color:#12313B;border:1.5px solid #12313B;border-radius:99px;padding:.55em .85em;white-space:nowrap}
+.start-pin i{width:16px;height:16px;border-radius:50%;background:#2F6FE0;border:3px solid #16213A;box-shadow:0 0 0 8px rgba(47,111,224,.25);animation:pinPulse 2s infinite}
+@keyframes pinPulse{50%{box-shadow:0 0 0 16px rgba(47,111,224,0)}}
+.start-pin span,.rt-stop span{font:600 .62rem/1.2 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;background:#fff;color:#16213A;border:1.5px solid #16213A;border-radius:99px;padding:.55em .85em;white-space:nowrap}
 .start-pin b,.rt-stop b{font-weight:800}
 @media(max-width:700px){.start-pin{left:12%;top:auto;bottom:9%}}
 .route{position:absolute;left:0;top:0;width:100%;pointer-events:none;z-index:6}
 .rt-svg{position:absolute;left:0;top:0;overflow:visible}
-.rt-plan{fill:none;stroke:rgba(18,49,59,.35);stroke-width:2;stroke-dasharray:2 9;stroke-linecap:round}
-.rt-done{fill:none;stroke:#0F8B8D;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
+.rt-plan{fill:none;stroke:rgba(22,33,58,.35);stroke-width:2;stroke-dasharray:2 9;stroke-linecap:round}
+.rt-done{fill:none;stroke:#2F6FE0;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
 .rt-stop{position:absolute;display:flex;align-items:center;gap:10px;transform:translate(-9px,-9px)}
 .rt-stop.r{flex-direction:row-reverse;transform:translate(calc(-100% + 9px),-9px)}
-.rt-stop i{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid #12313B;flex:none;transition:background .4s,transform .4s}
+.rt-stop i{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid #16213A;flex:none;transition:background .4s,transform .4s}
 .rt-stop span{opacity:.0;transform:translateX(-6px);transition:opacity .5s,transform .5s}
 .rt-stop.r span{transform:translateX(6px)}
-.rt-stop.on i{background:#0F8B8D;transform:scale(1.15)}
+.rt-stop.on i{background:#2F6FE0;transform:scale(1.15)}
 .rt-stop.on span{opacity:1;transform:none}
 .rt-bus{position:absolute;left:0;top:0;width:0;height:0;z-index:2}
 .rt-bus svg{position:absolute;width:56px;height:30px;left:-28px;top:-26px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25));transition:transform .3s}
 .rt-bus.flip svg{transform:scaleX(-1)}
-.rt-alt{position:absolute;left:34px;top:-24px;font:700 .62rem/1 var(--f-mono);letter-spacing:.1em;background:#12313B;color:#fff;padding:.45em .6em;border-radius:99px;white-space:nowrap}
+.rt-alt{position:absolute;left:34px;top:-24px;font:700 .62rem/1 var(--f-mono);letter-spacing:.1em;background:#16213A;color:#fff;padding:.45em .6em;border-radius:99px;white-space:nowrap}
 .rt-bus.rside .rt-alt{left:auto;right:34px}
 @media(max-width:700px){.rt-stop span{display:none}.rt-stop.on span{display:none}.rt-done{stroke-width:3}.rt-bus svg{width:30px;height:16px;left:-8px;top:-14px}.rt-bus.rside svg{left:-22px}.rt-alt{display:none}}
 
 
 .start-h{font-family:var(--f-body);font-weight:800;letter-spacing:-.045em;line-height:.9;font-size:clamp(3rem,8.6vw,8.4rem);max-width:11ch}
-.start-h i{font-style:normal;color:#0F8B8D;background:none;-webkit-text-fill-color:#0F8B8D;padding:0}
+.start-h i{font-style:normal;color:#2F6FE0;background:none;-webkit-text-fill-color:#2F6FE0;padding:0}
 
 .rt-ic{position:absolute;bottom:26px;left:-14px;display:grid;justify-items:start;gap:6px;pointer-events:none}
 .rt-stop.r .rt-ic{left:auto;right:-14px;justify-items:end}
 .rt-ic svg{width:78px;height:78px;overflow:visible;animation:rtBob 4.5s ease-in-out infinite}
 .rt-ic svg .d{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.3s cubic-bezier(.5,0,.2,1)}
 .rt-ic svg .f{opacity:0;transition:opacity .6s .9s}
-.rt-ic em{font:700 .6rem/1 var(--f-mono);font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:#12313B;background:#CDEDEE;padding:.5em .7em;border-radius:6px;white-space:nowrap;opacity:0;transform:translateY(4px);transition:opacity .5s 1s,transform .5s 1s}
+.rt-ic em{font:700 .6rem/1 var(--f-mono);font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:#16213A;background:#DCE6FB;padding:.5em .7em;border-radius:6px;white-space:nowrap;opacity:0;transform:translateY(4px);transition:opacity .5s 1s,transform .5s 1s}
 .rt-stop.on .rt-ic svg .d{stroke-dashoffset:0}
 .rt-stop.on .rt-ic svg .f{opacity:1}
 .rt-stop.on .rt-ic em{opacity:1;transform:none}
-.rt-stop.cur .rt-ic svg{filter:drop-shadow(0 6px 10px rgba(15,139,141,.35))}
+.rt-stop.cur .rt-ic svg{filter:drop-shadow(0 6px 10px rgba(47,111,224,.35))}
 @keyframes rtBob{50%{transform:translateY(-5px) rotate(-1.5deg)}}
 @media(max-width:700px){.rt-ic{bottom:16px;left:-6px}.rt-stop.r .rt-ic{right:-6px}.rt-ic svg{width:44px;height:44px;background:rgba(255,255,255,.9);border-radius:50%;padding:6px;box-sizing:content-box}.rt-ic em{display:none}
  .rt-stop .rt-ic{opacity:0;transition:opacity .4s}.rt-stop.cur .rt-ic{opacity:1}}
@@ -640,8 +641,8 @@ body.tp-on{overflow:hidden}
 .rt-ic svg g,.rt-ic svg .spr,.rt-ic svg .tw{transform-box:fill-box;transform-origin:center}
 .rt-ic .flow{fill:none;stroke:#2B86BD;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:4 5;animation:rtFlow .7s linear infinite;opacity:0;transition:opacity .6s 1s}
 .rt-ic .smoke{fill:none;stroke:#9AA3AE;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:3 4;animation:rtFlow 1.4s linear infinite reverse;opacity:0;transition:opacity .6s 1s}
-.rt-ic .trail{fill:none;stroke:#0F8B8D;stroke-width:1.6;stroke-dasharray:2 3;opacity:0;transition:opacity .6s 1s}
-.rt-ic .lamp{offset-path:path('M38 68 L54 61 L42 55 L52 49 L46 40');animation:rtLamp 4.8s linear infinite;filter:drop-shadow(0 0 3px #0F8B8D)}
+.rt-ic .trail{fill:none;stroke:#2F6FE0;stroke-width:1.6;stroke-dasharray:2 3;opacity:0;transition:opacity .6s 1s}
+.rt-ic .lamp{offset-path:path('M38 68 L54 61 L42 55 L52 49 L46 40');animation:rtLamp 4.8s linear infinite;filter:drop-shadow(0 0 3px #2F6FE0)}
 .rt-stop.on .rt-ic .flow,.rt-stop.on .rt-ic .smoke,.rt-stop.on .rt-ic .trail{opacity:1}
 .rt-ic .a-pg{animation:rtPg 5s ease-in-out infinite}
 .rt-ic .a-gon{animation:rtGon 6s ease-in-out infinite alternate}
@@ -680,7 +681,7 @@ body.tp-on{overflow:hidden}
 .cm-list button{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px;cursor:pointer;font:inherit;color:var(--ink)}
 .cm-list img{width:52px;height:52px;flex:none;object-fit:cover;border-radius:8px}
 .cm-list span{display:grid;gap:3px;font:700 .92rem/1.2 var(--f-body)}
-.cm-list small{font:600 .56rem/1.3 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#0F8B8D}
+.cm-list small{font:600 .56rem/1.3 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#2F6FE0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -1124,14 +1125,14 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
 
 /* ---------- первый экран: направления ---------- */
 const SLIDES=[
- {k:'kbr',word:'Эльбрус',img:'t7',title:'Кабардино-Балкария',txt:'Приэльбрусье и Чегет: ледники, горные реки и подножие высшей точки Европы.'},
+ {k:'kbr',word:'Эльбрус',img:'v2/elbrus',pos:'38% 66%',title:'Кабардино-Балкария',txt:'Приэльбрусье и Чегет: ледники, горные реки и подножие высшей точки Европы.'},
  {k:'kchr',word:'Домбай',img:'t12',title:'Карачаево-Черкесия',txt:'Домбай, Архыз и Теберда: водопады, осенние леса и больше всего туров — пешком, верхом и на лыжах.'},
  {k:'dag',word:'Дагестан',img:'t11',title:'Дагестан',txt:'Гамсутль, Сулакский каньон и Дербент: аулы на скалах и бирюзовая вода каньона.'},
  {k:'oset',word:'Осетия',img:'t9',title:'Осетия, Чечня, Ингушетия',txt:'Дигорское ущелье, ледники, водопады и древние башенные комплексы.'},
  {k:'kmv',word:'Кавминводы',img:'t4',title:'Кавказские Минеральные Воды',txt:'Пятигорск, Кисловодск и Железноводск: курортные парки, нарзан и зелёные плато.'}
 ];
 let si=0,busy=false,auto=null;
-$('slides').innerHTML=SLIDES.map((d,i)=>`<div class="sl${i===0?' on':''}"><img src="img/${d.img}.jpg" alt="${d.title}" ${i?'loading="lazy"':''}></div>`).join('');
+$('slides').innerHTML=SLIDES.map((d,i)=>`<div class="sl${i===0?' on':''}" style="background-image:url(img/${d.img}.jpg)"><img src="img/${d.img}.jpg" alt="${d.title}" style="object-position:${d.pos||'50% 50%'}"></div>`).join('');
 $('sDots').innerHTML=SLIDES.map((d,i)=>`<button type="button" aria-label="${d.title}" data-i="${i}"></button>`).join('');
 const vert=()=>innerWidth<=760;
 function seamPos(){const g=document.querySelector('.glass').getBoundingClientRect();return vert()?g.top:g.right}
@@ -1167,7 +1168,7 @@ function show(n){
     $('sTitle').textContent=d.title;$('sTxt').textContent=d.txt;$('sNum').textContent=String(n+1).padStart(2,'0');
     $('ptxt').classList.remove('fade');
   },STILL?0:420);
-  moveMarker(n);si=n;mark();setTimeout(()=>busy=false,STILL?0:900);
+  moveMarker(n);si=n;mark();setTimeout(()=>busy=false,STILL?0:550);
 }
 function mark(){
   $('sDots').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-current',i===si));
@@ -1177,9 +1178,12 @@ function restart(){clearInterval(auto);if(!STILL)auto=setInterval(()=>{if(heroSe
 $('next').onclick=()=>{show(si+1);restart()};$('prev').onclick=()=>{show(si-1);restart()};
 $('sDots').onclick=e=>{const b=e.target.closest('button');if(b){show(+b.dataset.i);restart()}};
 $('sGo').onclick=()=>{Object.assign(F,{type:'',month:0,diff:0,budget:0,reg:SLIDES[si].k});more=true;apply();$('tours').scrollIntoView()};
-let px0=null;
-$('top').addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')px0=e.clientX});
-$('top').addEventListener('pointerup',e=>{if(px0===null)return;const dx=e.clientX-px0;px0=null;if(Math.abs(dx)>50){show(si+(dx<0?1:-1));restart()}});
+function hSwipe(el,onEnd){let x0=null,y0=0,h=null;
+  el.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;h=null},{passive:true});
+  el.addEventListener('touchmove',e=>{if(x0===null)return;const t=e.touches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(h===null&&(Math.abs(dx)>6||Math.abs(dy)>6))h=Math.abs(dx)>Math.abs(dy);if(h)e.preventDefault()},{passive:false});
+  el.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;if(h&&onEnd)onEnd(dx);x0=null},{passive:true});}
+hSwipe($('top'),dx=>{if(Math.abs(dx)>40){busy=false;show(si+(dx<0?1:-1));restart()}});
+hSwipe($('stage'));
 let heroSeen=true;new IntersectionObserver(es=>{heroSeen=es[0].isIntersecting}).observe($('top'));
 
 /* горный профиль с точками-направлениями */
@@ -1524,8 +1528,8 @@ let fx=()=>{};
 (function(){
   const c=$('fx');if(!c)return;const gl=c.getContext('webgl',{antialias:false});if(!gl)return;
   // состояния: [вода, линии высот, сияние, снег] + оттенок
-  const ST={start:[0,1,0,0,'#ECEFE8'],top:[1,0,0,0,'#E9ECF1'],intro:[1,0,0,0,'#E6EEF2'],tours:[.25,1,0,0,'#EEF0EA'],lens:[0,0,1,0,'#E8E4F2'],kv:[0,.2,1,0,'#E6EAF6'],
-    season:[1,.3,0,0,'#DDF1F0'],how:[0,1,0,0,'#F1EEE7'],guides:[0,0,.35,1,'#EEF1F6'],faq:[.6,0,.6,0,'#E7EEF6'],book:[0,.25,0,1,'#F6EEE6']};
+  const ST={start:[0,1,0,0,'#ECEFF4'],top:[1,0,0,0,'#E9ECF1'],intro:[1,0,0,0,'#E6EEF2'],tours:[.25,1,0,0,'#EEF0F5'],lens:[0,0,1,0,'#E8E4F2'],kv:[0,.2,1,0,'#E6EAF6'],
+    season:[1,.3,0,0,'#E3EAF6'],how:[0,1,0,0,'#F1EEE7'],guides:[0,0,.35,1,'#EEF1F6'],faq:[.6,0,.6,0,'#E7EEF6'],book:[0,.25,0,1,'#F6EEE6']};
   const SEC=Object.keys(ST).map(k=>({k,el:$(k)})).filter(o=>o.el);
   const fs=`precision highp float;uniform vec2 r;uniform float t;uniform vec2 m;uniform float s;uniform vec4 w;uniform vec3 tint;
   float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -1603,7 +1607,7 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
 /* ---------- мультик-вступление ---------- */
 (function(){
   const svg=document.getElementById('tsvg');if(!svg)return;
-  const NS='http://www.w3.org/2000/svg',INK='#12313B';
+  const NS='http://www.w3.org/2000/svg',INK='#16213A';
   const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e};
   const W=1600,SC=1600,N=6;const X=i=>800+i*SC;
   const HOLD=2.9,MOVE=1.7,TOTAL=N*HOLD+(N-1)*MOVE,SCX=1010,BUSX=470;
@@ -1652,7 +1656,7 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
     el('text',{x:x-345,y:600,'text-anchor':'middle',fill:INK,style:'font:700 26px var(--f-mono,monospace);letter-spacing:3px'},g).textContent='МИНВОДЫ ✈';
     const pl=el('g',{},g);el('path',{d:'M0 0 L90 -6 Q110 0 90 6 Z M30 -2 L10 -30 L24 -30 L56 -3 M30 2 L12 26 L26 26 L56 3 M82 -4 L96 -22 L104 -22 L98 -3',fill:'#fff',stroke:INK,'stroke-width':3.5,'stroke-linejoin':'round'},pl);
     const p1=man(g,x+380,735,.9),p2=man(g,x+450,735,.82,'#2A5CB8');
-    const s1=el('rect',{x:0,y:0,width:26,height:30,rx:4,fill:'#0F8B8D',stroke:INK,'stroke-width':3},g),s2=el('rect',{x:0,y:0,width:24,height:28,rx:4,fill:'#7A5CFF',stroke:INK,'stroke-width':3},g);
+    const s1=el('rect',{x:0,y:0,width:26,height:30,rx:4,fill:'#2F6FE0',stroke:INK,'stroke-width':3},g),s2=el('rect',{x:0,y:0,width:24,height:28,rx:4,fill:'#7A5CFF',stroke:INK,'stroke-width':3},g);
     A.push((lt,t,i)=>{if(i!==0)return;const k=Math.min(1,lt/HOLD);pl.setAttribute('transform',`translate(${x+620-k*520} ${120+k*190}) rotate(${8-k*6})`);
       const px=x+380-k*230,qx=x+450-k*240;p1.move(px,735);p2.move(qx,735);p1.walk(t*9);p2.walk(t*9+1);
       s1.setAttribute('x',px+14);s1.setAttribute('y',705);s2.setAttribute('x',qx+12);s2.setAttribute('y',707);
@@ -1664,7 +1668,7 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
     el('path',{d:`M${x+260} 250 L${x+178} 344 L${x+214} 330 L${x+240} 360 L${x+272} 326 L${x+306} 352 L${x+342} 344 Z`,fill:'#fff',stroke:INK,'stroke-width':3.5,'stroke-linejoin':'round'},g);
     const trail=[[x-80,712],[x+200,640],[x+40,560],[x+240,470],[x+150,400],[x+250,300]];
     el('polyline',{points:trail.map(p=>p.join(' ')).join(' '),fill:'none',stroke:INK,'stroke-width':3,'stroke-dasharray':'2 12','stroke-linecap':'round'},g);
-    el('line',{x1:x+260,y1:250,x2:x+260,y2:196,stroke:INK,'stroke-width':4},g);const flag=el('path',{d:`M${x+260} 196 L${x+300} 206 L${x+260} 218 Z`,fill:'#0F8B8D',stroke:INK,'stroke-width':3},g);
+    el('line',{x1:x+260,y1:250,x2:x+260,y2:196,stroke:INK,'stroke-width':4},g);const flag=el('path',{d:`M${x+260} 196 L${x+300} 206 L${x+260} 218 Z`,fill:'#2F6FE0',stroke:INK,'stroke-width':3},g);
     for(const tx of [x-420,x-360,x-470]){el('path',{d:`M${tx} 720 l26 -90 l26 90 z M${tx+8} 680 l18 -64 l18 64 z`,fill:'#3F7A4A',stroke:INK,'stroke-width':3,'stroke-linejoin':'round'},g)}
     const len=[];let tot=0;for(let k=1;k<trail.length;k++){const d=Math.hypot(trail[k][0]-trail[k-1][0],trail[k][1]-trail[k-1][1]);len.push(d);tot+=d}
     const at=f=>{let d=f*tot;for(let k=0;k<len.length;k++){if(d<=len[k]){const r=d/len[k];return[trail[k][0]+(trail[k+1][0]-trail[k][0])*r,trail[k][1]+(trail[k+1][1]-trail[k][1])*r]}d-=len[k]}return trail[trail.length-1]};
@@ -1685,7 +1689,7 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
   }
   /* 3 · обед */
   {const x=X(3),g=el('g',{},world);
-    for(let k=0;k<7;k++)el('path',{d:`M${x-330+k*94} 470 h94 v30 q-47 22 -94 0 z`,fill:k%2?'#fff':'#0F8B8D',stroke:INK,'stroke-width':3},g);
+    for(let k=0;k<7;k++)el('path',{d:`M${x-330+k*94} 470 h94 v30 q-47 22 -94 0 z`,fill:k%2?'#fff':'#2F6FE0',stroke:INK,'stroke-width':3},g);
     el('line',{x1:x-322,y1:500,x2:x-322,y2:720,stroke:INK,'stroke-width':6},g);el('line',{x1:x+322,y1:500,x2:x+322,y2:720,stroke:INK,'stroke-width':6},g);
     el('text',{x:x,y:458,'text-anchor':'middle',fill:INK,style:'font:700 24px var(--f-mono,monospace);letter-spacing:3px'},g).textContent='КАВКАЗСКАЯ КУХНЯ';
     const bulbs=[];for(let k=0;k<9;k++)bulbs.push(el('circle',{cx:x-280+k*70,cy:520+Math.sin(k)*6,r:7,fill:'#FFE27A',stroke:INK,'stroke-width':2.5},g));
@@ -1704,7 +1708,7 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
     for(const yy of [420,500,600])el('path',{d:`M${x-600} ${yy} q60 -10 120 4 M${x+500} ${yy+10} q60 -12 120 2`,fill:'none',stroke:INK,'stroke-width':2.5,opacity:.5},g);
     el('path',{d:`M${x-110} 560 Q${x} 540 ${x+120} 570 L${x+160} 720 L${x-160} 720 Z`,fill:'#2EC4C0',stroke:INK,'stroke-width':4},g);
     const waves=[];for(let k=0;k<4;k++)waves.push(el('path',{d:`M${x-60+k*30} ${600+k*28} q12 -8 24 0 q12 8 24 0`,fill:'none',stroke:'#fff','stroke-width':3},g));
-    const boat=el('g',{},g);el('path',{d:'M-70 0 L70 0 L52 26 L-56 26 Z',fill:'#fff',stroke:INK,'stroke-width':4,'stroke-linejoin':'round'},boat);el('rect',{x:-60,y:8,width:120,height:6,fill:'#0F8B8D'},boat);
+    const boat=el('g',{},g);el('path',{d:'M-70 0 L70 0 L52 26 L-56 26 Z',fill:'#fff',stroke:INK,'stroke-width':4,'stroke-linejoin':'round'},boat);el('rect',{x:-60,y:8,width:120,height:6,fill:'#2F6FE0'},boat);
     const B=[man(boat,-36,2,.42,'#C2410C'),man(boat,0,2,.42),man(boat,34,2,.42,'#2A5CB8')];B.forEach(b=>b.stand());
     const wake=el('path',{d:'',fill:'none',stroke:'#fff','stroke-width':3,'stroke-linecap':'round'},g);
     A.push((lt,t,i)=>{if(i<3||i>5)return;const bx=x-30+Math.sin(t*.9)*40,by=650+Math.sin(t*2.2)*4;boat.setAttribute('transform',`translate(${bx.toFixed(1)} ${by.toFixed(1)}) rotate(${(Math.sin(t*2.2)*2).toFixed(2)})`);
@@ -1718,7 +1722,7 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
   /* автобус */
   const bus=el('g',{});
   const bb=el('g',{},bus);
-  el('rect',{x:-150,y:-108,width:300,height:96,rx:18,fill:'#0F8B8D',stroke:INK,'stroke-width':4.5},bb);
+  el('rect',{x:-150,y:-108,width:300,height:96,rx:18,fill:'#2F6FE0',stroke:INK,'stroke-width':4.5},bb);
   for(let k=0;k<4;k++)el('rect',{x:-128+k*58,y:-94,width:46,height:36,rx:6,fill:'#DDF1FB',stroke:INK,'stroke-width':3.5},bb);
   el('rect',{x:110,y:-94,width:30,height:60,rx:6,fill:'#DDF1FB',stroke:INK,'stroke-width':3.5},bb);
   el('text',{x:-20,y:-26,'text-anchor':'middle',fill:'#fff',style:'font:800 26px var(--f-body,sans-serif);letter-spacing:4px'},bb).textContent='МАГТУР';
@@ -1773,7 +1777,7 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
   const plan=document.createElementNS(NS,'path');plan.setAttribute('class','rt-plan');svg.appendChild(plan);
   const done=document.createElementNS(NS,'path');done.setAttribute('class','rt-done');svg.appendChild(done);
   const bus=document.createElement('div');bus.className='rt-bus';
-  bus.innerHTML='<svg viewBox="0 0 56 30" aria-hidden="true"><rect x="2" y="2" width="50" height="20" rx="5" fill="#0F8B8D" stroke="#12313B" stroke-width="2.2"/><rect x="7" y="6" width="9" height="7" rx="1.5" fill="#DDF1FB" stroke="#12313B" stroke-width="1.6"/><rect x="19" y="6" width="9" height="7" rx="1.5" fill="#DDF1FB" stroke="#12313B" stroke-width="1.6"/><rect x="31" y="6" width="9" height="7" rx="1.5" fill="#DDF1FB" stroke="#12313B" stroke-width="1.6"/><rect x="43" y="6" width="6" height="12" rx="1.5" fill="#DDF1FB" stroke="#12313B" stroke-width="1.6"/><circle cx="14" cy="23" r="4.5" fill="#12313B"/><circle cx="40" cy="23" r="4.5" fill="#12313B"/></svg><span class="rt-alt"></span>';
+  bus.innerHTML='<svg viewBox="0 0 56 30" aria-hidden="true"><rect x="2" y="2" width="50" height="20" rx="5" fill="#2F6FE0" stroke="#16213A" stroke-width="2.2"/><rect x="7" y="6" width="9" height="7" rx="1.5" fill="#DDF1FB" stroke="#16213A" stroke-width="1.6"/><rect x="19" y="6" width="9" height="7" rx="1.5" fill="#DDF1FB" stroke="#16213A" stroke-width="1.6"/><rect x="31" y="6" width="9" height="7" rx="1.5" fill="#DDF1FB" stroke="#16213A" stroke-width="1.6"/><rect x="43" y="6" width="6" height="12" rx="1.5" fill="#DDF1FB" stroke="#16213A" stroke-width="1.6"/><circle cx="14" cy="23" r="4.5" fill="#16213A"/><circle cx="40" cy="23" r="4.5" fill="#16213A"/></svg><span class="rt-alt"></span>';
   box.appendChild(bus);
   let marks=[],L=0,W=0,H=0,pts=[];
   function build(){
@@ -1783,7 +1787,7 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
     const pin=document.getElementById('startPin');const pr=pin.getBoundingClientRect();
     const sx=pr.left+8,sy=pr.top+scrollY+8;
     let d=`M${sx} ${sy}`;let px=sx,py=sy;marks.forEach(m=>m.el.remove());marks=[];
-    const RTIC=[[`Параплан над Машуком`, `<path class="f" d="M2 68 L32 46 L44 54 L62 38 L94 68Z" fill="#E7F0E4"/><path d="M2 68 L32 46 L44 54 L62 38 L94 68" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M62 38 V24 M58 30 H66" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-pg"><path class="f" d="M12 16 Q28 2 44 16 Q28 10 12 16Z" fill="#0F8B8D"/><path d="M12 16 Q28 2 44 16 Q28 10 12 16Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M14 16 L27 26 M42 16 L29 26 M28 11 L28 26" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><circle class="f" cx="28" cy="28" r="2.6" fill="#12313B"/><path d="M28 30.5 V35 M25 33 L31 33" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g>`], [`Крупнейший телескоп России`, `<path class="f" d="M8 66 Q48 58 88 66 Q48 72 8 66Z" fill="#9AD6F2"/><path d="M8 66 Q48 58 88 66 Q48 72 8 66Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M30 50 A18 18 0 0 1 66 50Z" fill="#FFFFFF"/><path d="M30 50 A18 18 0 0 1 66 50Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M26 50 H70 V58 H26Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-tel"><path d="M48 42 L64 22" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M60 20 L68 26" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g><path class="f tw" style="animation-delay:0s" d="M14 10 L15.2 12.8 L18 14 L15.2 15.2 L14 18 L12.8 15.2 L10 14 L12.8 12.8Z" fill="#0F8B8D"/><path class="f tw" style="animation-delay:0.7s" d="M82 6 L83.2 8.8 L86 10 L83.2 11.2 L82 14 L80.8 11.2 L78 10 L80.8 8.8Z" fill="#0F8B8D"/><path class="f tw" style="animation-delay:1.4s" d="M88 26 L89.2 28.8 L92 30 L89.2 31.2 L88 34 L86.8 31.2 L84 30 L86.8 28.8Z" fill="#0F8B8D"/><path class="f tw" style="animation-delay:2.1s" d="M30 20 L31.2 22.8 L34 24 L31.2 25.2 L30 28 L28.8 25.2 L26 24 L28.8 22.8Z" fill="#0F8B8D"/>`], [`Канатка к ледникам`, `<path class="f" d="M4 70 L22 52 L34 62 L50 44 L72 70Z" fill="#EEF4F8"/><path d="M4 70 L22 52 L34 62 L50 44 L72 70" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M0 12 L96 30" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M86 28 V70 M80 70 H92 M82 34 H90" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-gon"><path d="M40 19.5 V28" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M28 28 H52 V46 H28Z" fill="#0F8B8D"/><path d="M28 28 H52 V46 H28Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M32 32 H38 V38 H32Z M42 32 H48 V38 H42Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g>`], [`Водопады Домбая`, `<path class="f" d="M4 18 H38 V70 H4Z" fill="#E2E6EA"/><path d="M4 70 V18 H38" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M36 18 H50 C53 32 55 48 57 62 H33 C35 48 36 32 36 18Z" fill="#9AD6F2"/><path class="f" d="M50 18 H72 Q76 18 76 24 V60 H57 C55 48 53 32 50 18Z" fill="#E2E6EA"/><path d="M50 18 H72 Q76 18 76 24 V60" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="flow" d="M39 20 C40 34 39 48 38 60"/><path class="flow" d="M43 20 C44 36 45 48 45 60"/><path class="flow" d="M47 20 C49 34 51 48 53 60"/><path class="f" d="M18 64 Q46 56 76 64 Q46 72 18 64Z" fill="#9AD6F2"/><path d="M18 64 Q46 56 76 64 Q46 72 18 64Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-spl"><path d="M30 60 q3 -6 6 0 M54 59 q3 -6 6 0 M42 57 q2 -5 4 0" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g><path class="f" d="M86 34 L78 50 H94Z M86 42 L76 60 H96Z" fill="#3E8E5A"/><path d="M86 70 V60 M86 34 L78 50 H94Z M86 42 L76 60 H96Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/>`], [`Лыжи и фрирайд`, `<path class="f" d="M2 30 L94 70 H2Z" fill="#EEF6FB"/><path d="M2 30 L94 70" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M70 18 L78 8 L86 18 M62 22 L72 10 L80 22" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-ski"><path d="M26 39 L56 52" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M37 43 L35 36 L42 31 M46 47 L45 39 L42 31" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M42 31 L49 22" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><circle class="f" cx="51" cy="18" r="3.5" fill="#0F8B8D"/><path d="M47 25 L55 30 L60 45 M46 26 L38 30 L31 41" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M40 32 L47 23 L52 26 L46 34Z" fill="#0F8B8D"/></g><circle class="f spr" cx="22" cy="35" r="2.2" fill="#BFD9E8"/><circle class="f spr" cx="17" cy="31" r="1.6" fill="#BFD9E8"/><circle class="f spr" cx="23" cy="30" r="1.3" fill="#BFD9E8"/><circle class="f spr" cx="13" cy="28" r="1" fill="#BFD9E8"/>`], [`Знаменитые «Бочки»`, `<path d="M24 22 L38 6 L52 22 M46 16 L58 4 L74 22" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M2 66 H94" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M54 40 H84 A5 9 0 0 1 84 58 H54 A5 9 0 0 1 54 40Z" fill="#FFFFFF"/><path d="M54 40 H84 A5 9 0 0 1 84 58 H54 A5 9 0 0 1 54 40Z M54 40 A5 9 0 0 0 54 58" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M12 44 H46 A6 11 0 0 1 46 66 H12 A6 11 0 0 1 12 44Z" fill="#0F8B8D"/><path d="M12 44 H46 A6 11 0 0 1 46 66 H12 A6 11 0 0 1 12 44Z M12 44 A6 11 0 0 0 12 66" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M24 44 V66 M35 44 V66" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M40 44 V36" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="smoke" d="M40 34 C36 30 44 26 40 22 C36 18 44 14 40 10"/>`], [`Акклиматизация`, `<path class="f" d="M2 70 L94 22 V70Z" fill="#EEF4F8"/><path d="M2 70 L94 22" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M70 34 L76 26 L82 31 L88 22 L94 22" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><circle class="f fp" style="animation-delay:0.0s" cx="10" cy="64.5" r="1.4" fill="#12313B"/><circle class="f fp" style="animation-delay:0.35s" cx="18" cy="60.5" r="1.4" fill="#12313B"/><circle class="f fp" style="animation-delay:0.7s" cx="26" cy="56.5" r="1.4" fill="#12313B"/><circle class="f fp" style="animation-delay:1.0499999999999998s" cx="33" cy="53" r="1.4" fill="#12313B"/><g class="a-clb"><path class="f" d="M39 29 L46 26 L48 37 L41 39Z" fill="#0F8B8D"/><path d="M39 29 L46 26 L48 37 L41 39Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M40 50 L42 44 L44 38 M48 46 L47 41 L44 38" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M44 38 L48 28" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><circle class="f" cx="50" cy="24" r="3.4" fill="#12313B"/><path d="M47 31 L55 35" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M53 29 L58 41 M50 29 L56 31" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g>`], [`Выход в 3 ночи`, `<path class="f" d="M2 68 L28 14 L46 40 L64 10 L94 68Z" fill="#E4E8F2"/><path d="M2 68 L28 14 L46 40 L64 10 L94 68" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M20 30 L28 14 L35 28 L30 25 L26 30Z M57 24 L64 10 L71 24 L66 21 L62 25Z" fill="#FFFFFF"/><path d="M84 8 A7 7 0 1 0 90 20 A6 6 0 1 1 84 8Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="trail" d="M38 68 L54 61 L42 55 L52 49 L46 40"/><circle class="lamp" style="animation-delay:0s" r="2.2" fill="#0F8B8D"/><circle class="lamp" style="animation-delay:-1.6s" r="2.2" fill="#0F8B8D"/><circle class="lamp" style="animation-delay:-3.2s" r="2.2" fill="#0F8B8D"/>`], [`Крыша Европы`, `<g class="a-sun"><circle class="f" cx="80" cy="28" r="8" fill="#BFE3F0"/><path d="M80 12 V8 M92 18 L95 15 M96 30 H100 M68 18 L65 15" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g><path class="f" d="M6 70 L48 22 L90 70Z" fill="#EEF2F6"/><path d="M6 70 L48 22 L90 70Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M38 34 L48 22 L58 34 L53 31 L48 36 L43 31Z" fill="#FFFFFF"/><path d="M38 34 L43 31 L48 36 L53 31 L58 34" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M48 22 V4" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-flag"><path class="f" d="M48 4 Q56 2 62 6 Q56 10 48 10Z" fill="#0F8B8D"/><path d="M48 4 Q56 2 62 6 Q56 10 48 10Z" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g><circle class="f" cx="40" cy="13" r="2.5" fill="#12313B"/><path d="M40 16 V22 M36 11 L40 17 L44 11 M40 22 L37 27 M40 22 L43 27" stroke="#12313B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/>`]];
+    const RTIC=[[`Параплан над Машуком`, `<path class="f" d="M2 68 L32 46 L44 54 L62 38 L94 68Z" fill="#E6ECF5"/><path d="M2 68 L32 46 L44 54 L62 38 L94 68" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M62 38 V24 M58 30 H66" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-pg"><path class="f" d="M12 16 Q28 2 44 16 Q28 10 12 16Z" fill="#2F6FE0"/><path d="M12 16 Q28 2 44 16 Q28 10 12 16Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M14 16 L27 26 M42 16 L29 26 M28 11 L28 26" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><circle class="f" cx="28" cy="28" r="2.6" fill="#16213A"/><path d="M28 30.5 V35 M25 33 L31 33" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g>`], [`Крупнейший телескоп России`, `<path class="f" d="M8 66 Q48 58 88 66 Q48 72 8 66Z" fill="#9AD6F2"/><path d="M8 66 Q48 58 88 66 Q48 72 8 66Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M30 50 A18 18 0 0 1 66 50Z" fill="#FFFFFF"/><path d="M30 50 A18 18 0 0 1 66 50Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M26 50 H70 V58 H26Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-tel"><path d="M48 42 L64 22" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M60 20 L68 26" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g><path class="f tw" style="animation-delay:0s" d="M14 10 L15.2 12.8 L18 14 L15.2 15.2 L14 18 L12.8 15.2 L10 14 L12.8 12.8Z" fill="#2F6FE0"/><path class="f tw" style="animation-delay:0.7s" d="M82 6 L83.2 8.8 L86 10 L83.2 11.2 L82 14 L80.8 11.2 L78 10 L80.8 8.8Z" fill="#2F6FE0"/><path class="f tw" style="animation-delay:1.4s" d="M88 26 L89.2 28.8 L92 30 L89.2 31.2 L88 34 L86.8 31.2 L84 30 L86.8 28.8Z" fill="#2F6FE0"/><path class="f tw" style="animation-delay:2.1s" d="M30 20 L31.2 22.8 L34 24 L31.2 25.2 L30 28 L28.8 25.2 L26 24 L28.8 22.8Z" fill="#2F6FE0"/>`], [`Канатка к ледникам`, `<path class="f" d="M4 70 L22 52 L34 62 L50 44 L72 70Z" fill="#EEF4F8"/><path d="M4 70 L22 52 L34 62 L50 44 L72 70" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M0 12 L96 30" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M86 28 V70 M80 70 H92 M82 34 H90" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-gon"><path d="M40 19.5 V28" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M28 28 H52 V46 H28Z" fill="#2F6FE0"/><path d="M28 28 H52 V46 H28Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M32 32 H38 V38 H32Z M42 32 H48 V38 H42Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g>`], [`Водопады Домбая`, `<path class="f" d="M4 18 H38 V70 H4Z" fill="#E2E6EA"/><path d="M4 70 V18 H38" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M36 18 H50 C53 32 55 48 57 62 H33 C35 48 36 32 36 18Z" fill="#9AD6F2"/><path class="f" d="M50 18 H72 Q76 18 76 24 V60 H57 C55 48 53 32 50 18Z" fill="#E2E6EA"/><path d="M50 18 H72 Q76 18 76 24 V60" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="flow" d="M39 20 C40 34 39 48 38 60"/><path class="flow" d="M43 20 C44 36 45 48 45 60"/><path class="flow" d="M47 20 C49 34 51 48 53 60"/><path class="f" d="M18 64 Q46 56 76 64 Q46 72 18 64Z" fill="#9AD6F2"/><path d="M18 64 Q46 56 76 64 Q46 72 18 64Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-spl"><path d="M30 60 q3 -6 6 0 M54 59 q3 -6 6 0 M42 57 q2 -5 4 0" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g><path class="f" d="M86 34 L78 50 H94Z M86 42 L76 60 H96Z" fill="#3E8E5A"/><path d="M86 70 V60 M86 34 L78 50 H94Z M86 42 L76 60 H96Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/>`], [`Лыжи и фрирайд`, `<path class="f" d="M2 30 L94 70 H2Z" fill="#EEF6FB"/><path d="M2 30 L94 70" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M70 18 L78 8 L86 18 M62 22 L72 10 L80 22" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-ski"><path d="M26 39 L56 52" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M37 43 L35 36 L42 31 M46 47 L45 39 L42 31" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M42 31 L49 22" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><circle class="f" cx="51" cy="18" r="3.5" fill="#2F6FE0"/><path d="M47 25 L55 30 L60 45 M46 26 L38 30 L31 41" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M40 32 L47 23 L52 26 L46 34Z" fill="#2F6FE0"/></g><circle class="f spr" cx="22" cy="35" r="2.2" fill="#BFD9E8"/><circle class="f spr" cx="17" cy="31" r="1.6" fill="#BFD9E8"/><circle class="f spr" cx="23" cy="30" r="1.3" fill="#BFD9E8"/><circle class="f spr" cx="13" cy="28" r="1" fill="#BFD9E8"/>`], [`Знаменитые «Бочки»`, `<path d="M24 22 L38 6 L52 22 M46 16 L58 4 L74 22" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M2 66 H94" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M54 40 H84 A5 9 0 0 1 84 58 H54 A5 9 0 0 1 54 40Z" fill="#FFFFFF"/><path d="M54 40 H84 A5 9 0 0 1 84 58 H54 A5 9 0 0 1 54 40Z M54 40 A5 9 0 0 0 54 58" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M12 44 H46 A6 11 0 0 1 46 66 H12 A6 11 0 0 1 12 44Z" fill="#2F6FE0"/><path d="M12 44 H46 A6 11 0 0 1 46 66 H12 A6 11 0 0 1 12 44Z M12 44 A6 11 0 0 0 12 66" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M24 44 V66 M35 44 V66" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M40 44 V36" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="smoke" d="M40 34 C36 30 44 26 40 22 C36 18 44 14 40 10"/>`], [`Акклиматизация`, `<path class="f" d="M2 70 L94 22 V70Z" fill="#EEF4F8"/><path d="M2 70 L94 22" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M70 34 L76 26 L82 31 L88 22 L94 22" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><circle class="f fp" style="animation-delay:0.0s" cx="10" cy="64.5" r="1.4" fill="#16213A"/><circle class="f fp" style="animation-delay:0.35s" cx="18" cy="60.5" r="1.4" fill="#16213A"/><circle class="f fp" style="animation-delay:0.7s" cx="26" cy="56.5" r="1.4" fill="#16213A"/><circle class="f fp" style="animation-delay:1.0499999999999998s" cx="33" cy="53" r="1.4" fill="#16213A"/><g class="a-clb"><path class="f" d="M39 29 L46 26 L48 37 L41 39Z" fill="#2F6FE0"/><path d="M39 29 L46 26 L48 37 L41 39Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M40 50 L42 44 L44 38 M48 46 L47 41 L44 38" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M44 38 L48 28" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><circle class="f" cx="50" cy="24" r="3.4" fill="#16213A"/><path d="M47 31 L55 35" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M53 29 L58 41 M50 29 L56 31" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g>`], [`Выход в 3 ночи`, `<path class="f" d="M2 68 L28 14 L46 40 L64 10 L94 68Z" fill="#E4E8F2"/><path d="M2 68 L28 14 L46 40 L64 10 L94 68" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M20 30 L28 14 L35 28 L30 25 L26 30Z M57 24 L64 10 L71 24 L66 21 L62 25Z" fill="#FFFFFF"/><path d="M84 8 A7 7 0 1 0 90 20 A6 6 0 1 1 84 8Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="trail" d="M38 68 L54 61 L42 55 L52 49 L46 40"/><circle class="lamp" style="animation-delay:0s" r="2.2" fill="#2F6FE0"/><circle class="lamp" style="animation-delay:-1.6s" r="2.2" fill="#2F6FE0"/><circle class="lamp" style="animation-delay:-3.2s" r="2.2" fill="#2F6FE0"/>`], [`Крыша Европы`, `<g class="a-sun"><circle class="f" cx="80" cy="28" r="8" fill="#BFE3F0"/><path d="M80 12 V8 M92 18 L95 15 M96 30 H100 M68 18 L65 15" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g><path class="f" d="M6 70 L48 22 L90 70Z" fill="#EEF2F6"/><path d="M6 70 L48 22 L90 70Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path class="f" d="M38 34 L48 22 L58 34 L53 31 L48 36 L43 31Z" fill="#FFFFFF"/><path d="M38 34 L43 31 L48 36 L53 31 L58 34" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><path d="M48 22 V4" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/><g class="a-flag"><path class="f" d="M48 4 Q56 2 62 6 Q56 10 48 10Z" fill="#2F6FE0"/><path d="M48 4 Q56 2 62 6 Q56 10 48 10Z" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/></g><circle class="f" cx="40" cy="13" r="2.5" fill="#16213A"/><path d="M40 16 V22 M36 11 L40 17 L44 11 M40 22 L37 27 M40 22 L43 27" stroke="#16213A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d"/>`]];
 STOPS.forEach(([id,name,alt,txt],k)=>{
       const el=document.getElementById(id);if(!el)return;
       const y=el.getBoundingClientRect().top+scrollY,x=xs[k%2];
