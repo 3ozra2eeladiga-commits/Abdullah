@@ -181,10 +181,9 @@ header.top.solid{background:rgba(11,15,20,.55);backdrop-filter:blur(18px);border
 .ring{position:absolute;left:50%;top:0;width:0;height:100%;transform-style:preserve-3d}
 .rc{--w:clamp(190px,22vw,290px);position:absolute;left:calc(var(--w) / -2);top:0;width:var(--w);aspect-ratio:3/4;max-height:100%;padding:0;border:0;background:#111;border-radius:14px;overflow:hidden;cursor:pointer;color:#fff;font:inherit;text-align:left;box-shadow:0 30px 60px -24px rgba(0,0,0,.6);transition:filter .3s}
 .rc .ph{position:absolute;inset:0;display:flex}
-.rc .rs{position:relative;flex:1;overflow:hidden}
-.rc .rs img{position:absolute;top:0;height:100%;width:var(--w);max-width:none;object-fit:cover;left:calc(var(--k) * var(--w) / -4);transition:transform 1s cubic-bezier(.7,0,.2,1) calc(var(--d,0ms) + var(--k) * 80ms)}
-.rc.build .rs img{transform:translateY(calc((var(--k) - 1.5) * 40% + 110% * var(--dir)))}
-.rc::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.8))}
+.rc .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:inset(0 0 0 0 round 14px);transition:clip-path .9s cubic-bezier(.7,0,.2,1) var(--d,0ms),transform 1.2s cubic-bezier(.2,.8,.2,1) var(--d,0ms)}
+.rc.build .ph img{clip-path:inset(100% 0 0 0 round 14px);transform:scale(1.15)}
+.rc::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.8)),rgba(0,0,0,var(--dim,0))}
 .rc .lab{position:absolute;z-index:1;left:14px;right:14px;bottom:14px;display:grid;gap:8px}
 .rc .lab em{justify-self:start;font:700 .58rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;font-style:normal;background:var(--tc);color:#fff;padding:.55em .7em;border-radius:99px}
 .rc .lab b{font:500 1.35rem/1.05 var(--f-display)}
@@ -1059,12 +1058,12 @@ function build(){
   if(!n){$('ring').innerHTML='';cards=[];$('stage').insertAdjacentHTML('beforeend','');$('tours').style.setProperty('--tc',TC[F.type]);
     $('ring').innerHTML='<div class="empty" style="position:absolute;left:-40vw;width:80vw">Под такие условия тура нет. Снимите один из фильтров или напишите нам: соберём маршрут под вас.</div>';return}
   $('ring').innerHTML=list.map((t,i)=>`<button class="rc${t.isNew?' new':''} build" type="button" data-i="${i}" style="--tc:${TC[t.type]};--d:${Math.min(i,8)*70}ms;--dir:${i%2?1:-1}" aria-label="${t.name}">
-    <span class="ph">${[0,1,2,3].map(k=>`<span class="rs" style="--k:${k}"><img src="${t.img}" alt="" loading="lazy" draggable="false"></span>`).join('')}</span>
+    <span class="ph"><img src="${t.img}" alt="" decoding="async" draggable="false"></span>
     <span class="lab"><em>${TYPES[t.type]}</em><b>${short(t.name)}</b></span></button>`).join('');
   cards=[...$('ring').children];
   const w=cards[0].offsetWidth;step=360/slots;R=Math.round((w/2)/Math.tan(Math.PI/slots)+w*.18);
   cards.forEach((c,i)=>c.style.transform=`rotateY(${i*step}deg) translateZ(${R}px)`);
-  ang=STILL?0:120;goal=0;vel=0;front=-1;
+  ang=STILL?0:120;goal=0;vel=0;front=-1;ring.last=null;
   requestAnimationFrame(()=>requestAnimationFrame(()=>cards.forEach(c=>c.classList.remove('build'))));
   ring();
 }
@@ -1077,10 +1076,11 @@ function ring(){
     else if(Math.abs(vel)>.01){ang+=vel;vel*=.93;if(Math.abs(vel)<.25){goal=Math.round(ang/step)*step;vel=0}}
     if(n<9&&goal===null){if(ang>0)goal=0;if(ang<minA)goal=minA}
   }
+  if(Math.abs(ang-ring.last)<.01&&ring.R===R)return;ring.last=ang;ring.R=R;
   $('ring').style.transform=`translateZ(${-R}px) rotateY(${ang}deg)`;
   let best=0,bd=999;
   cards.forEach((c,i)=>{const d=Math.abs(norm(i*step+ang));if(d<bd){bd=d;best=i}
-    c.style.opacity=Math.max(0,1-d/105).toFixed(3);c.style.filter=`brightness(${(1-d/200).toFixed(3)})`;c.style.pointerEvents=d<70?'auto':'none';c.style.zIndex=Math.round(200-d)});
+    c.style.opacity=Math.max(0,1-d/105).toFixed(3);c.style.setProperty('--dim',(d/200).toFixed(3));c.style.pointerEvents=d<70?'auto':'none';c.style.zIndex=Math.round(200-d)});
   if(best!==front)setFront(best);
 }
 function setFront(i){
@@ -1105,7 +1105,8 @@ addEventListener('pointerup',e=>{if(!dragS||e.pointerId!==dragS.id)return;const 
   if(was.moved<6){const c=e.target.closest&&e.target.closest('.rc');if(c){const i=+c.dataset.i;if(i===front)openTour(list[i].id);else{goal=ang-norm(i*step+ang);vel=0}}else goal=Math.round(ang/step)*step}
   else if(Math.abs(vel)<.3)goal=Math.round(ang/step)*step});
 addEventListener('pointercancel',()=>{if(dragS){dragS=null;goal=Math.round(ang/step)*step}});
-addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slots=Math.max(cards.length,9);R=Math.round((w/2)/Math.tan(Math.PI/slots)+w*.18);cards.forEach((c,i)=>c.style.transform=`rotateY(${i*step}deg) translateZ(${R}px)`)}});
+let wt=0;$('stage').addEventListener('wheel',e=>{if(!cards.length||Math.abs(e.deltaX)<Math.abs(e.deltaY))return;e.preventDefault();goal=null;vel=0;ang-=e.deltaX*.12;clearTimeout(wt);wt=setTimeout(()=>{goal=Math.round(ang/step)*step},140)},{passive:false});
+addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slots=Math.max(cards.length,9);R=Math.round((w/2)/Math.tan(Math.PI/slots)+w*.18);cards.forEach((c,i)=>c.style.transform=`rotateY(${i*step}deg) translateZ(${R}px)`);ring.last=null}});
 
 /* ---------- первый экран: направления ---------- */
 const SLIDES=[
@@ -1559,12 +1560,13 @@ function parallax(){
 }
 
 /* ---------- общий цикл ---------- */
-let t0=performance.now(),vis=true;
+let t0=performance.now(),vis=true;frame.off={};
 function frame(now){
   const dt=Math.min(.05,(now-t0)/1000);t0=now;
-  lens(dt);ring();fx(now);if(!STILL)parallax();
-  CLOUDS.forEach(c=>c.vis&&c.render(dt));
   if(vis)requestAnimationFrame(frame);
+  const safe=(k,f)=>{if(frame.off[k])return;try{f()}catch(e){frame.off[k]=1;console.warn(k,e)}};
+  safe('ring',ring);safe('lens',()=>lens(dt));safe('fx',()=>fx(now));if(!STILL)safe('par',parallax);
+  safe('clouds',()=>CLOUDS.forEach(c=>c.vis&&c.render(dt)));
 }
 addEventListener('scroll',altitude,{passive:true});
 addEventListener('resize',()=>{layoutWord();drawProfile();altitude()});
