@@ -530,7 +530,8 @@ addEventListener('scroll',kick,{passive:true});addEventListener('resize',kick);k
 /* подсказка «листайте дальше»: человек остановился посреди видео — показываем руку */
 /* подсказка видна всё время, пока человек внутри блока с видео: там страница «стоит», и без подсказки кажется, что сайт закончился */
 {const h=document.getElementById('moreHint');let t=false;
- const upd=()=>{t=false;const r=seq.getBoundingClientRect();const inside=r.top<=2&&r.bottom>=innerHeight-2;const p=prog();h.classList.toggle('on',inside&&p<0.96)};
+ const upd=()=>{t=false;const r=seq.getBoundingClientRect(),H=innerHeight;/* мягкая проверка: на iPhone высота экрана «гуляет» из-за панели браузера */const inside=r.top<=H*.3&&r.bottom>=H*.85;h.classList.toggle('on',inside)};
+ setInterval(upd,700);
  addEventListener('scroll',()=>{if(!t){t=true;requestAnimationFrame(upd)}},{passive:true});addEventListener('resize',upd);upd();}
 
 /* первый экран: сначала фото в костюме, через 2 секунды — карточка */
