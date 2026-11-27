@@ -718,6 +718,46 @@ body.tp-on{overflow:hidden}
  .hx-tabs::-webkit-scrollbar{display:none}
  .hx-tabs button{flex:0 0 auto;min-width:44vw;padding:14px 16px 18px 0;scroll-snap-align:start}
  .hx-tabs span{display:none}}
+
+.film{position:relative;min-height:100vh;min-height:100svh;display:flex;align-items:center;padding-block:96px 56px;overflow:hidden;background:#F2F4F8}
+.film-bg{position:absolute;inset:-40px;background:url(video/film.jpg) center/cover;filter:blur(60px) saturate(1.1);opacity:.35;transform:scale(1.1)}
+.film-in{position:relative;z-index:2;display:grid;grid-template-columns:1fr auto;gap:clamp(30px,5vw,80px);align-items:center;width:100%}
+.film-txt{display:grid;gap:22px;max-width:620px}
+.film .eyebrow b{color:#2F6FE0;-webkit-text-fill-color:#2F6FE0;background:none}
+.film-h{margin:0;font:800 clamp(2.8rem,6.4vw,6.4rem)/.92 var(--f-body);letter-spacing:-.045em;color:var(--ink);max-width:11ch}
+.film-h i{font-style:normal;color:#2F6FE0}
+.film-sub{margin:0;font-size:1.12rem;line-height:1.55;color:var(--mist);max-width:44ch}
+.film-cta{display:flex;flex-wrap:wrap;gap:22px;align-items:center}
+.film-link{color:var(--ink);font:600 .95rem/1 var(--f-body);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:4px}
+.film-frame{position:relative;height:min(80vh,820px);aspect-ratio:9/16;border-radius:28px;overflow:hidden;background:#0d1424;box-shadow:0 50px 100px -40px rgba(22,33,58,.55),0 0 0 1px rgba(22,33,58,.08)}
+.film-frame video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.film-cap{position:absolute;left:22px;right:22px;bottom:34px;z-index:2;display:grid;gap:6px;color:#fff;opacity:0;transform:translateY(12px);transition:opacity .4s,transform .4s cubic-bezier(.2,.8,.2,1);text-shadow:0 2px 20px rgba(0,0,0,.45);pointer-events:none}
+.film-cap.on{opacity:1;transform:none}
+.film-cap small{font:700 .64rem/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;opacity:.9}
+.film-cap b{font:800 clamp(1.7rem,2.4vw,2.3rem)/1 var(--f-body);letter-spacing:-.03em}
+.film-frame::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,transparent 62%,rgba(8,12,24,.55));pointer-events:none}
+.film-end{position:absolute;inset:0;z-index:3;display:grid;align-content:end;gap:14px;padding:28px 24px 40px;color:#fff;background:rgba(8,12,26,0);opacity:0;pointer-events:none;transition:opacity .9s,background 1.2s}
+.film-end h2{margin:0;font:800 clamp(2rem,3vw,2.8rem)/1 var(--f-body);letter-spacing:-.035em}
+.film-end p{margin:0;color:rgba(255,255,255,.85)}
+.film-end .eyebrow{color:rgba(255,255,255,.75)}
+.film.ended .film-end{opacity:1;background:rgba(8,12,26,.62);pointer-events:auto}
+.film-end-cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:6px}
+.film-btn{background:#fff;color:#16213A;border-color:#fff}
+.film-again{background:none;border:0;color:#fff;font:600 .9rem/1 var(--f-body);cursor:pointer;padding:10px 4px;opacity:.85}
+.film-bar{position:absolute;left:18px;right:18px;top:16px;height:3px;border-radius:3px;background:rgba(255,255,255,.3);z-index:2;overflow:hidden}
+.film-bar i{display:block;height:100%;background:#fff;transform-origin:left;transform:scaleX(0)}
+.film .start-pin{left:auto;right:4%;top:auto;bottom:4%}
+@media(max-width:900px){
+ .film{padding:0;align-items:stretch;background:#0d1424}
+ .film-bg{display:none}
+ .film-in{grid-template-columns:1fr;padding:0;gap:0;max-width:none}
+ .film-txt{display:none}
+ .film-frame{height:100vh;height:100svh;width:100%;aspect-ratio:auto;border-radius:0;box-shadow:none}
+ .film-cap{bottom:96px;left:20px}
+ .film-end{padding-bottom:110px}
+ .film-bar{top:calc(env(safe-area-inset-top,0px) + 76px)}
+ .film .start-pin{left:20px;right:auto;bottom:26px}
+ header.top:not(.solid){background:rgba(242,244,248,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -725,33 +765,37 @@ body.tp-on{overflow:hidden}
 <header class="top" id="hdr"><div class="wrap">
   <a class="logo" href="#top">МАГТУР</a>
   <nav aria-label="Разделы">
-    <a href="#tours">Туры</a><a href="#top">Направления</a><a href="#season">Сезоны</a><a href="#how">Бронирование</a><a href="#guides">Гиды</a>
+    <a href="#tours">Туры</a><a href="#start">Видео</a><a href="#season">Сезоны</a><a href="#how">Бронирование</a><a href="#guides">Гиды</a>
   </nav>
   <div class="alt-pill" title="Высота растёт, пока вы листаете страницу"><i>▲</i><span id="altNum">512 м</span><small id="altPlace">Пятигорск</small></div>
   <a class="btn btn-main" href="#book">Заявка</a>
 </div></header>
 
-<section class="start" id="start" data-alt="310" data-place="Минеральные Воды">
-  <div class="wrap start-in">
-    <p class="eyebrow"><b>●</b> Маршрут МАГТУР · 9 остановок</p>
-    <h1 class="start-h">Кавказ, на который <i>возвращаются</i></h1>
-    <p class="start-sub">Листайте вниз — поедем по маршруту от Минеральных Вод до вершины Эльбруса. По дороге покажем туры, горы и людей, которые вас поведут.</p>
-    <div class="start-cta"><a class="btn btn-main" href="#tours">Сразу к турам</a><span class="start-hint">Листайте — автобус поедет ↓</span></div>
+<section class="film" id="start" data-alt="310" data-place="Минеральные Воды" aria-label="МАГТУР — путешествие одной кнопкой">
+  <div class="film-bg" aria-hidden="true"></div>
+  <div class="wrap film-in">
+    <div class="film-txt">
+      <p class="eyebrow"><b>●</b> МАГТУР · туры по Кавказу с 2013 года</p>
+      <h1 class="film-h">Одна кнопка — <i>и вы уже там</i></h1>
+      <p class="film-sub">Сулакский каньон, канатка к Эльбрусу, лошади в Домбае. Вы бронируете — всё остальное мы берём на себя.</p>
+      <div class="film-cta"><a class="btn btn-main" href="#tours">Выбрать тур</a><a class="film-link" href="#how">Как всё устроено</a></div>
+    </div>
+    <div class="film-frame">
+      <video id="film" src="video/film.mp4" poster="video/film.jpg" muted playsinline autoplay preload="auto"></video>
+      <div class="film-cap" id="filmCap" aria-live="polite"><small></small><b></b></div>
+      <div class="film-end" id="filmEnd">
+        <p class="eyebrow">Так начинается ваш Кавказ</p>
+        <h2>Осталось выбрать даты</h2>
+        <p>20 000+ человек уже съездили с нами. Каждый четвёртый — снова.</p>
+        <div class="film-end-cta"><a class="btn film-btn" href="#tours">Выбрать тур</a><button class="film-again" type="button" id="filmAgain">↺ Смотреть снова</button></div>
+      </div>
+      <div class="film-bar" aria-hidden="true"><i id="filmBar"></i></div>
+    </div>
   </div>
   <div class="start-pin" id="startPin"><i></i><span><b>Минеральные Воды</b> 310 м · старт</span></div>
 </section>
 <div class="route" id="route" aria-hidden="true"></div>
 
-<section class="hero hx" id="top" data-alt="512" data-place="Пятигорск" aria-label="Направления МАГТУР">
-  <div class="hx-ph" id="hxPh"></div>
-  <div class="wrap hx-in" id="hxIn">
-    <p class="hx-eye"><span id="hxN">01</span> / 05 · Направления МАГТУР</p>
-    <h1 class="hx-t" id="hxT" aria-live="polite"></h1>
-    <p class="hx-s" id="hxS"></p>
-    <div class="hx-cta"><button class="hx-go" id="hxGo" type="button"></button><a class="hx-all" href="#tours">Все 19 туров</a></div>
-  </div>
-  <nav class="hx-tabs" id="hxTabs" aria-label="Направления"></nav>
-</section>
 
 <section class="scene intro" id="intro">
   <img class="bg" src="img/t11.jpg" alt="Сулакский каньон с высоты">
@@ -1150,39 +1194,28 @@ addEventListener('pointercancel',()=>{if(dragS){dragS=null;goal=Math.round(ang/s
 let wt=0;$('stage').addEventListener('wheel',e=>{if(!cards.length||Math.abs(e.deltaX)<Math.abs(e.deltaY))return;e.preventDefault();goal=null;vel=0;ang-=e.deltaX*.12;clearTimeout(wt);wt=setTimeout(()=>{goal=Math.round(ang/step)*step},140)},{passive:false});
 addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slots=Math.max(cards.length,9);R=Math.round((w/2)/Math.tan(Math.PI/slots)+w*.18);cards.forEach((c,i)=>c.style.transform=`rotateY(${i*step}deg) translateZ(${R}px)`);ring.last=null}});
 
-/* ---------- первый экран: направления ---------- */
-const SLIDES=[
- {k:'kbr',tab:'Приэльбрусье',img:'v2/elbrus',pos:'38% 62%',title:'Кабардино-Балкария',txt:'Приэльбрусье и Чегет: ледники, горные реки и подножие высшей точки Европы.'},
- {k:'kchr',tab:'Домбай и Архыз',img:'t12',title:'Карачаево-Черкесия',txt:'Домбай, Архыз и Теберда: водопады, осенние леса, походы пешком, верхом и на лыжах.'},
- {k:'dag',tab:'Дагестан',img:'t11',title:'Дагестан',txt:'Гамсутль, Сулакский каньон и Дербент: аулы на скалах и бирюзовая вода каньона.'},
- {k:'oset',tab:'Осетия',img:'t9',title:'Осетия, Чечня, Ингушетия',txt:'Дигорское ущелье, ледники, водопады и древние башенные комплексы.'},
- {k:'kmv',tab:'Кавминводы',img:'t4',title:'Кавказские Минеральные Воды',txt:'Пятигорск, Кисловодск и Железноводск: курортные парки, нарзан и зелёные плато.'}
-];
-let si=-1,auto=null,heroSeen=true;
-const rcnt=k=>T.filter(t=>t.rg.includes(k)).length,rtx=k=>{const n=rcnt(k);return n+' '+plural(n,'тур','тура','туров')};
-$('hxPh').innerHTML=SLIDES.map(d=>`<div><img src="img/${d.img}.jpg" alt="${d.title}" style="object-position:${d.pos||'50% 50%'}"></div>`).join('');
-$('hxTabs').innerHTML=SLIDES.map((d,i)=>`<button type="button" data-i="${i}"><small>${String(i+1).padStart(2,'0')}</small><b>${d.tab}</b><span>${rtx(d.k)}</span></button>`).join('');
-function show(n){
-  n=(n+SLIDES.length)%SLIDES.length;if(n===si)return;const d=SLIDES[n],first=si<0;
-  [...$('hxPh').children].forEach((e,i)=>e.classList.toggle('on',i===n));
-  [...$('hxTabs').children].forEach((b,i)=>{b.classList.toggle('on',i===n);b.setAttribute('aria-current',i===n)});
-  if(innerWidth<=760){const tb=$('hxTabs').children[n];$('hxTabs').scrollTo({left:tb.offsetLeft-parseFloat(getComputedStyle($('hxTabs')).paddingLeft),behavior:first?'auto':'smooth'})}
-  const box=$('hxIn');if(!first)box.classList.add('sw');
-  setTimeout(()=>{$('hxN').textContent=String(n+1).padStart(2,'0');$('hxT').textContent=d.title;$('hxS').textContent=d.txt;$('hxGo').textContent='Смотреть '+rtx(d.k)+' →';box.classList.remove('sw')},first||STILL?0:380);
-  si=n;restart();
-}
-function restart(){clearTimeout(auto);if(!STILL)auto=setTimeout(()=>{if(heroSeen&&!document.hidden)show(si+1);else restart()},7000)}
-$('hxTabs').onclick=e=>{const b=e.target.closest('[data-i]');if(b)show(+b.dataset.i)};
-$('hxGo').onclick=()=>{Object.assign(F,{type:'',month:0,diff:0,budget:0,reg:SLIDES[si].k});more=true;apply();$('tours').scrollIntoView()};
-function hSwipe(el,onEnd,skip){let x0=null,y0=0,h=null;
+/* ---------- первый экран: фильм ---------- */
+(function(){
+  const v=document.getElementById('film');if(!v)return;
+  const CAP=[[0.25,0.95,'МАГТУР','Нажимаем «забронировать»'],[4.9,8.5,'Дагестан','Сулакский каньон'],[9.6,13.4,'Приэльбрусье','Канатка к Эльбрусу'],[16.6,19.9,'Карачаево-Черкесия','Домбай · лошади']];
+  const cap=$('filmCap'),bar=$('filmBar'),sec=$('start');let cur=-1;
+  function tick(){const t=v.currentTime||0;let k=-1;CAP.forEach((c,i)=>{if(t>=c[0]&&t<c[1])k=i});
+    if(k!==cur){cur=k;if(k<0)cap.classList.remove('on');else{cap.querySelector('small').textContent=CAP[k][2];cap.querySelector('b').textContent=CAP[k][3];cap.classList.add('on')}}
+    if(v.duration)bar.style.transform=`scaleX(${Math.min(1,t/v.duration)})`;
+    requestAnimationFrame(tick)}
+  requestAnimationFrame(tick);
+  v.addEventListener('play',()=>sec.classList.remove('ended'));
+  v.addEventListener('ended',()=>{sec.classList.add('ended');cap.classList.remove('on');cur=-1});
+  $('filmAgain').onclick=()=>{v.currentTime=0;v.play()};
+  new IntersectionObserver(es=>{const e=es[0];if(!e.isIntersecting&&!v.paused)v.pause();else if(e.isIntersecting&&v.paused&&!sec.classList.contains('ended'))v.play().catch(()=>{})},{threshold:.35}).observe(v);
+  v.play().catch(()=>{});
+})();
+function hSwipe(el,onEnd,skip){if(!el)return;let x0=null,y0=0,h=null;
   el.addEventListener('touchstart',e=>{if(skip&&e.target.closest(skip)){x0=null;return}const t=e.touches[0];x0=t.clientX;y0=t.clientY;h=null},{passive:true});
   el.addEventListener('touchmove',e=>{if(x0===null)return;const t=e.touches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(h===null&&(Math.abs(dx)>6||Math.abs(dy)>6))h=Math.abs(dx)>Math.abs(dy);if(h)e.preventDefault()},{passive:false});
   el.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;if(h&&onEnd)onEnd(dx);x0=null},{passive:true});}
-hSwipe($('top'),dx=>{if(Math.abs(dx)>40)show(si+(dx<0?1:-1))},'.hx-tabs');
 hSwipe($('stage'));
-new IntersectionObserver(es=>{heroSeen=es[0].isIntersecting}).observe($('top'));
 function layoutWord(){}function drawProfile(){}
-show(0);
 
 /* ---------- календарь ---------- */
 (function(){
