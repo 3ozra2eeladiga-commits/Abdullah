@@ -563,6 +563,12 @@ body.tp-on{overflow:hidden}
 .guide .im::after{z-index:3}
 @media(max-width:700px){.ann text{font-size:28px}.ann path{stroke-width:2.6}}
 @media (prefers-reduced-motion:reduce){.ann path{stroke-dashoffset:0}.ann text{opacity:1;transform:none}}
+.guide.drawn .ann g{animation:annFloat 3.4s ease-in-out calc(var(--ad,0ms) + 1.8s) infinite;transform-box:fill-box;transform-origin:50% 50%}
+.guide.drawn .ann g:nth-child(2n){animation-duration:4.1s}
+.guide.drawn .ann .dash path:not(.hd){animation:annMarch 1.6s linear infinite}
+@keyframes annFloat{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(1.8px,-2.4px) rotate(-1.4deg)}}
+@keyframes annMarch{to{stroke-dashoffset:-.09}}
+@media (prefers-reduced-motion:reduce){.guide.drawn .ann g,.guide.drawn .ann .dash path{animation:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -1185,19 +1191,20 @@ const ANN={
          ['w','M18 372 q 60 7 132 -3','',[['≈200 восхождений',18,362]],'start'],
          ['k','M30 120 C 22 150, 40 168, 66 172','M66 172 l-8 -4 M66 172 l-7 5',[['эксперт',14,110]],'start']],
  g_umar:[['w','M152 150 C 142 120, 124 100, 112 80','M112 80 l0 -18 l13 6 l-13 6',[['к вершине',128,70]],'start','dash'],
-         ['w','M152 150 a44 100 0 1 0 0.1 0','',[['основатель',202,292],['с 2013 года',202,312]],'start']],
+         ['w','M200 280 C 192 258, 184 240, 172 226','M172 226 l9 2 M172 226 l1 9',[['основатель',202,292],['с 2013 года',202,312]],'start'],
+         ['w','M60 334 C 80 322, 110 304, 136 294','M136 294 l-9 0 M136 294 l-4 8',[['сам придумал',10,352],['все маршруты',10,372]],'start']],
  g_ush:[['k','M44 34 C 32 62, 50 86, 80 94','M80 94 l-9 -1 M80 94 l-6 -7',[['альпинистка',10,24]],'start'],
         ['k','M276 226 C 270 248, 256 258, 238 262','M238 262 l8 -4 M238 262 l7 5',[['скалолаз',292,214]],'end'],
         ['w','M20 384 q 70 6 140 -2','',[['20+ восхождений',20,374]],'start']],
- g_hub:[['w','M148 70 a24 26 0 1 0 0.1 0','',[['инструктор',178,58]],'start'],
-        ['w','M222 206 C 200 200, 178 192, 162 184','M162 184 l9 1 M162 184 l6 -7',[['на связи',212,226],['с группой',212,244]],'start'],
+ g_hub:[['w','M200 56 C 186 60, 172 70, 164 82','M164 82 l9 -1 M164 82 l4 8',[['инструктор',182,48]],'start'],
+        ['w','M222 206 C 200 200, 178 192, 162 184','M162 184 l9 1 M162 184 l6 -7',[['рация:',200,226],['«всё под',200,244],['контролем»',200,262]],'start'],
         ['w','M20 386 q 60 6 130 -2','',[['в команде с 2013',20,376]],'start']],
  g_chek:[['k','M46 38 C 50 70, 72 86, 96 96','M96 96 l-9 -2 M96 96 l-4 -8',[['историк',10,28]],'start'],
          ['k','M262 154 C 256 172, 238 182, 218 186','M218 186 l8 -4 M218 186 l7 5',[['раскопки',292,122],['с 2006',292,142]],'end']],
  g_mag:[['k','M150 32 C 150 40, 150 44, 150 48','',[['гид по Дагестану',150,24]],'middle'],
         ['k','M262 150 C 256 168, 238 178, 220 184','M220 184 l8 -4 M220 184 l7 5',[['с 2016',292,124],['года',292,142]],'end']],
- g_ilis:[['w','M100 142 a18 18 0 1 0 0.1 0','',[['съёмка 360°',10,112]],'start'],
-         ['w','M218 132 C 202 150, 188 166, 174 176','M174 176 l2 -9 M174 176 l8 -3',[['каска',206,108],['и страховка',206,126]],'start'],
+ g_ilis:[['w','M40 118 C 50 138, 66 150, 84 154','M84 154 l-9 -1 M84 154 l-5 -7',[['снимает ваш',10,92],['полёт на 360°',10,110]],'start'],
+         ['w','M222 160 C 210 175, 196 185, 180 192','M180 192 l3 -9 M180 192 l9 -2',[['адреналин',192,104],['— его утренний',182,122],['кофе ☕',192,140]],'start'],
          ['w','M190 392 q 50 5 100 -2','',[['Дагестан',190,382]],'start']]
 };
 const annSVG=k=>!ANN[k]?'':`<svg class="ann" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${ANN[k].map((a,i)=>{const [c,d,h,txt,anc,dash]=a,dl=i*450;
