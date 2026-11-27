@@ -1,6 +1,6 @@
 <title>МАГТУР — туры на Кавказ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Onest:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Caveat:wght@600;700&display=swap">
 <style>
 /* Идея: каждый раздел — кадр из фильма о Кавказе. Фото на весь экран, матовое стекло, облака, крупный текст прямо на фото. Цвета берутся из самих гор: глубокий тёмный, кремовый снег, золото заката. Один тёмный мир намеренно. */
 :root{
@@ -552,6 +552,17 @@ body.tp-on{overflow:hidden}
 .tp-card dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:.9rem}
 .tp-card dt{color:var(--dim)}.tp-card dd{margin:0;text-align:right;font-weight:600}
 .tp-card small{color:var(--dim);font-size:.8rem}
+.ann{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.ann path{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.2s cubic-bezier(.6,0,.2,1) var(--ad,0ms)}
+.ann .hd{transition-delay:calc(var(--ad,0ms) + 1s);transition-duration:.35s}
+.ann .dash path:not(.hd){stroke-dasharray:.02 .025;stroke-dashoffset:0;opacity:0;transition:opacity .9s var(--ad,0ms)}
+.ann text{font:700 21px/1 Caveat,'Comic Sans MS',cursive;letter-spacing:.01em;opacity:0;transform:translateY(4px);transition:opacity .6s calc(var(--ad,0ms) + .7s),transform .6s calc(var(--ad,0ms) + .7s);paint-order:stroke;stroke-width:4px;stroke-linejoin:round}
+.ann .w path{stroke:#fff;filter:drop-shadow(0 0 2px rgba(0,0,0,.55))}.ann .w text{fill:#fff;stroke:rgba(0,0,0,.45)}
+.ann .k path{stroke:#0b0c10}.ann .k text{fill:#0b0c10;stroke:rgba(255,255,255,.85)}
+.guide.drawn .ann path{stroke-dashoffset:0}.guide.drawn .ann .dash path{opacity:1}.guide.drawn .ann text{opacity:1;transform:none}
+.guide .im::after{z-index:3}
+@media(max-width:700px){.ann text{font-size:28px}.ann path{stroke-width:2.6}}
+@media (prefers-reduced-motion:reduce){.ann path{stroke-dashoffset:0}.ann text{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -1169,17 +1180,41 @@ document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>copy(b.dataset.copy,
 
 /* ---------- гиды ---------- */
 const ROT=[-3,2,-1.5,3,-2.5,1.5,-1];
+const ANN={
+ g_greb:[['k','M266 40 C 262 62, 242 74, 222 80','M222 80 l9 -1 M222 80 l4 8',[['30 лет',292,26],['в горах',292,44]],'end'],
+         ['w','M18 372 q 60 7 132 -3','',[['≈200 восхождений',18,362]],'start'],
+         ['k','M30 120 C 22 150, 40 168, 66 172','M66 172 l-8 -4 M66 172 l-7 5',[['эксперт',14,110]],'start']],
+ g_umar:[['w','M152 150 C 142 120, 124 100, 112 80','M112 80 l0 -18 l13 6 l-13 6',[['к вершине',128,70]],'start','dash'],
+         ['w','M152 150 a44 100 0 1 0 0.1 0','',[['основатель',202,292],['с 2013 года',202,312]],'start']],
+ g_ush:[['k','M44 34 C 32 62, 50 86, 80 94','M80 94 l-9 -1 M80 94 l-6 -7',[['альпинистка',10,24]],'start'],
+        ['k','M276 226 C 270 248, 256 258, 238 262','M238 262 l8 -4 M238 262 l7 5',[['скалолаз',292,214]],'end'],
+        ['w','M20 384 q 70 6 140 -2','',[['20+ восхождений',20,374]],'start']],
+ g_hub:[['w','M148 70 a24 26 0 1 0 0.1 0','',[['инструктор',178,58]],'start'],
+        ['w','M222 206 C 200 200, 178 192, 162 184','M162 184 l9 1 M162 184 l6 -7',[['на связи',212,226],['с группой',212,244]],'start'],
+        ['w','M20 386 q 60 6 130 -2','',[['в команде с 2013',20,376]],'start']],
+ g_chek:[['k','M46 38 C 50 70, 72 86, 96 96','M96 96 l-9 -2 M96 96 l-4 -8',[['историк',10,28]],'start'],
+         ['k','M262 154 C 256 172, 238 182, 218 186','M218 186 l8 -4 M218 186 l7 5',[['раскопки',292,122],['с 2006',292,142]],'end']],
+ g_mag:[['k','M150 32 C 150 40, 150 44, 150 48','',[['гид по Дагестану',150,24]],'middle'],
+        ['k','M262 150 C 256 168, 238 178, 220 184','M220 184 l8 -4 M220 184 l7 5',[['с 2016',292,124],['года',292,142]],'end']],
+ g_ilis:[['w','M100 142 a18 18 0 1 0 0.1 0','',[['съёмка 360°',10,112]],'start'],
+         ['w','M218 132 C 202 150, 188 166, 174 176','M174 176 l2 -9 M174 176 l8 -3',[['каска',206,108],['и страховка',206,126]],'start'],
+         ['w','M190 392 q 50 5 100 -2','',[['Дагестан',190,382]],'start']]
+};
+const annSVG=k=>!ANN[k]?'':`<svg class="ann" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${ANN[k].map((a,i)=>{const [c,d,h,txt,anc,dash]=a,dl=i*450;
+  return `<g class="${c}${dash?' dash':''}" style="--ad:${dl}ms"><path pathLength="1" d="${d}"/>${h?`<path class="hd" pathLength="1" d="${h}"/>`:''}${txt.map(([t,x,y])=>`<text x="${x}" y="${y}" text-anchor="${anc}">${t}</text>`).join('')}</g>`}).join('')}</svg>`;
 const NEWP={g_greb:'g_greb_new',g_mag:'g_mag_new',g_ush:'g_ush_new2',g_umar:'g_umar_new',g_hub:'g_hub_new',g_chek:'g_chek_new',g_ilis:'g_ilis_new'};
 $('guidesGrid').innerHTML=[
- ['g_umar','Умар Айдинов','Основатель МАГТУР','20+','лет в туризме','Собрал команду в 2013 году и сам придумывает маршруты. Возглавляет Региональный союз туриндустрии СКФО.'],
  ['g_greb','Александр Гребенюк','Эксперт по маршрутам','≈200','восхождений за 30 лет','Руководит Региональным научно-спортивным центром СКФО. Проверяет каждый маршрут на безопасность.'],
+ ['g_umar','Умар Айдинов','Основатель МАГТУР','20+','лет в туризме','Собрал команду в 2013 году и сам придумывает маршруты. Возглавляет Региональный союз туриндустрии СКФО.'],
  ['g_ush','Мария Ушакова','Эксперт по маршрутам','20+','восхождений','Альпинистка и спортивный скалолаз. Отвечает за то, чтобы маршрут был по силам вашей группе.'],
  ['g_hub','Абдуррахман Хубиев','Гид-инструктор','5642','метра — его Эльбрус','В команде с первого дня. Инструктор по горному туризму и горным лыжам, сам стоял на вершине Эльбруса.'],
  ['g_chek','Эдуард Чеккуев','Гид-историк','2006','год первой экспедиции','Археолог: с 2006 года участвует в раскопках. На экскурсии рассказывает о том, что сам держал в руках.'],
  ['g_mag','Абдула Магомедов','Гид по Дагестану','2016','водит группы с этого года','Знает Дагестан изнутри: аулы, каньоны и дороги, по которым ездят местные.'],
  ['g_ilis','Абдула Илистубегов','Гид по Дагестану','Дагестан','его родные горы','Ведёт группы по горному Дагестану: к Сулакскому каньону, Гамсутлю и древним крепостям.']
-].map((g,i)=>`<div class="guide" style="--d:${(i%4)*120}ms"><div class="im" data-n="${String(i+1).padStart(2,'0')}"><img src="img/${NEWP[g[0]]||g[0]+'_pro'}.jpg" alt="${g[1]}" loading="lazy"></div><small>${g[2]}</small><h3>${g[1]}</h3><p class="gst"><b>${g[3]}</b><span>${g[4]}</span></p><p>${g[5]}</p></div>`).join('');
+].map((g,i)=>`<div class="guide" style="--d:${(i%4)*120}ms"><div class="im" data-n="${String(i+1).padStart(2,'0')}"><img src="img/${NEWP[g[0]]||g[0]+'_pro'}.jpg" alt="${g[1]}" loading="lazy">${annSVG(g[0])}</div><small>${g[2]}</small><h3>${g[1]}</h3><p class="gst"><b>${g[3]}</b><span>${g[4]}</span></p><p>${g[5]}</p></div>`).join('');
 $('guidesGrid').querySelectorAll('.guide').forEach(arm);
+{const ao=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const g=e.target;setTimeout(()=>g.classList.add('drawn'),STILL?0:700);ao.unobserve(g)}}),{threshold:.45});
+ $('guidesGrid').querySelectorAll('.guide').forEach(g=>ao.observe(g));}
 $('said').innerHTML=[['Софья К.','«Курортный роман»','Рамазан'],['Екатерина У.','«Домбай и его окрестности»','Азнаур и Мурадин'],['Иван','«Путешествие в страну гор»','Магомед'],['Михаил','«Выходные в седле»','Казбек'],['Галина','«Приключения в стране гор»','Ахмед'],['Наталья','«Калейдоскоп времён»','Сеит'],['Елена','«Курортный роман»','Эдуард'],['Сергей','«Горнолыжка для чайников»','Абдуррахман']]
  .map(s=>`<li><b>${s[0]}</b> · ${s[1]} · гид ${s[2]}</li>`).join('');
 
