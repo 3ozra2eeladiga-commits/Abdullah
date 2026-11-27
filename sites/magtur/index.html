@@ -770,11 +770,29 @@ body.tp-on{overflow:hidden}
 html.loading,html.loading body{overflow:hidden}
 .pre{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#F2F4F8;transition:opacity .8s,visibility .8s}
 .pre.out{opacity:0;visibility:hidden}
-.pre-in{display:grid;justify-items:center;gap:14px;width:min(340px,80vw)}
-.pre-logo{font:500 1.5rem/1 var(--f-display);letter-spacing:.32em;color:#16213A;padding-left:.32em}
-.pre-n{font:800 clamp(4rem,14vw,7rem)/1 var(--f-body);letter-spacing:-.05em;color:#16213A;font-variant-numeric:tabular-nums}
-.pre-bar{width:100%;height:3px;border-radius:3px;background:rgba(22,33,58,.12);overflow:hidden}
-.pre-bar i{display:block;height:100%;background:#2F6FE0;transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.pre-in{display:grid;justify-items:center;gap:22px}
+.pre-logo{font:500 1.3rem/1 var(--f-display);letter-spacing:.34em;color:#16213A;padding-left:.34em}
+.pre-btn{position:relative;width:min(240px,62vw);aspect-ratio:1;border-radius:50%;border:0;padding:0;background:#fff;box-shadow:0 30px 60px -30px rgba(22,33,58,.45);cursor:default;display:grid;place-items:center;transition:background .6s,transform .4s}
+.pre-btn svg{position:absolute;inset:0;width:100%;height:100%}
+.pre-track{fill:none;stroke:rgba(22,33,58,.08);stroke-width:5}
+.pre-ring{fill:none;stroke:#2F6FE0;stroke-width:5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transform:rotate(-90deg);transform-origin:100px 100px;transition:stroke-dashoffset .3s}
+.pre-ticks line{stroke:rgba(22,33,58,.35);stroke-width:1.4;stroke-linecap:round}
+.pre-nesw{font:700 13px var(--f-mono);fill:#2F6FE0;text-anchor:middle}
+.pre-mnt{fill:none;stroke:#16213A;stroke-width:3;stroke-linejoin:round;transition:stroke .5s,fill .5s}
+.pre-snow{fill:#2F6FE0;transition:fill .5s}
+.pre-n{position:relative;margin-top:92px;font:800 1.5rem/1 var(--f-body);letter-spacing:-.02em;color:#16213A;font-variant-numeric:tabular-nums}
+.pre-go{position:absolute;bottom:22%;font:800 1.15rem/1 var(--f-body);color:#fff;opacity:0;transform:translateY(8px);transition:opacity .4s .2s,transform .4s .2s}
+.pre-go i{font-style:normal;display:inline-block;animation:goArr 1.2s ease-in-out infinite}
+@keyframes goArr{50%{transform:translateX(4px)}}
+.pre.ready .pre-btn{background:#2F6FE0;cursor:pointer;animation:prePulse 2s ease-out infinite}
+.pre.ready .pre-btn:hover{transform:scale(1.04)}
+.pre.ready .pre-track{stroke:rgba(255,255,255,.25)}.pre.ready .pre-ring{stroke:#fff}
+.pre.ready .pre-ticks line{stroke:rgba(255,255,255,.55)}.pre.ready .pre-nesw{fill:#fff}
+.pre.ready .pre-mnt{stroke:#fff;transform:translateY(-14px)}.pre.ready .pre-snow{fill:#fff;transform:translateY(-14px)}
+.pre-mnt,.pre-snow{transition:stroke .5s,fill .5s,transform .5s}
+.pre.ready .pre-n{opacity:0}
+.pre.ready .pre-go{opacity:1;transform:none}
+@keyframes prePulse{0%{box-shadow:0 0 0 0 rgba(47,111,224,.45),0 30px 60px -30px rgba(22,33,58,.45)}70%{box-shadow:0 0 0 26px rgba(47,111,224,0),0 30px 60px -30px rgba(22,33,58,.45)}100%{box-shadow:0 0 0 0 rgba(47,111,224,0),0 30px 60px -30px rgba(22,33,58,.45)}}
 .pre small{font:600 .62rem/1.4 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:#6B7385;text-align:center}
 .film .start-pin{bottom:2%}
 @media(max-width:900px){.film{height:560vh}.film-sticky{padding-top:0;align-items:stretch}.film-hint{bottom:22%}}
@@ -782,7 +800,15 @@ html.loading,html.loading body{overflow:hidden}
 </style>
 
 <canvas id="fx" aria-hidden="true"></canvas><div id="bar" aria-hidden="true"></div>
-<div class="pre" id="pre" aria-live="polite"><div class="pre-in"><b class="pre-logo">МАГТУР</b><span class="pre-n" id="preN">0%</span><div class="pre-bar"><i id="preBar"></i></div><small>Готовим ваше путешествие по Кавказу</small></div></div>
+<div class="pre" id="pre" aria-live="polite"><div class="pre-in">
+  <b class="pre-logo">МАГТУР</b>
+  <button class="pre-btn" id="preBtn" type="button" disabled aria-label="Поехали">
+    <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="pre-track" cx="100" cy="100" r="92"/><circle class="pre-ring" id="preRing" cx="100" cy="100" r="92" pathLength="1"/><g class="pre-ticks"><line x1="100.0" y1="20.0" x2="100.0" y2="28.0"/><line x1="113.9" y1="21.2" x2="113.0" y2="26.1"/><line x1="127.4" y1="24.8" x2="125.7" y2="29.5"/><line x1="140.0" y1="30.7" x2="137.5" y2="35.0"/><line x1="151.4" y1="38.7" x2="148.2" y2="42.5"/><line x1="161.3" y1="48.6" x2="157.5" y2="51.8"/><line x1="169.3" y1="60.0" x2="165.0" y2="62.5"/><line x1="175.2" y1="72.6" x2="170.5" y2="74.3"/><line x1="178.8" y1="86.1" x2="173.9" y2="87.0"/><line x1="180.0" y1="100.0" x2="172.0" y2="100.0"/><line x1="178.8" y1="113.9" x2="173.9" y2="113.0"/><line x1="175.2" y1="127.4" x2="170.5" y2="125.7"/><line x1="169.3" y1="140.0" x2="165.0" y2="137.5"/><line x1="161.3" y1="151.4" x2="157.5" y2="148.2"/><line x1="151.4" y1="161.3" x2="148.2" y2="157.5"/><line x1="140.0" y1="169.3" x2="137.5" y2="165.0"/><line x1="127.4" y1="175.2" x2="125.7" y2="170.5"/><line x1="113.9" y1="178.8" x2="113.0" y2="173.9"/><line x1="100.0" y1="180.0" x2="100.0" y2="172.0"/><line x1="86.1" y1="178.8" x2="87.0" y2="173.9"/><line x1="72.6" y1="175.2" x2="74.3" y2="170.5"/><line x1="60.0" y1="169.3" x2="62.5" y2="165.0"/><line x1="48.6" y1="161.3" x2="51.8" y2="157.5"/><line x1="38.7" y1="151.4" x2="42.5" y2="148.2"/><line x1="30.7" y1="140.0" x2="35.0" y2="137.5"/><line x1="24.8" y1="127.4" x2="29.5" y2="125.7"/><line x1="21.2" y1="113.9" x2="26.1" y2="113.0"/><line x1="20.0" y1="100.0" x2="28.0" y2="100.0"/><line x1="21.2" y1="86.1" x2="26.1" y2="87.0"/><line x1="24.8" y1="72.6" x2="29.5" y2="74.3"/><line x1="30.7" y1="60.0" x2="35.0" y2="62.5"/><line x1="38.7" y1="48.6" x2="42.5" y2="51.8"/><line x1="48.6" y1="38.7" x2="51.8" y2="42.5"/><line x1="60.0" y1="30.7" x2="62.5" y2="35.0"/><line x1="72.6" y1="24.8" x2="74.3" y2="29.5"/><line x1="86.1" y1="21.2" x2="87.0" y2="26.1"/></g><text x="100" y="40" class="pre-nesw">С</text>
+      <path class="pre-mnt" d="M58 128 L84 92 L96 106 L112 82 L142 128 Z"/><path class="pre-snow" d="M106 91 L112 82 L118 91 L114 89 L112 92 L109 89 Z"/></svg>
+    <span class="pre-n" id="preN">0%</span><span class="pre-go">Поехали <i>→</i></span>
+  </button>
+  <small id="preSub">Собираем рюкзак для вашего путешествия</small>
+</div></div>
 <header class="top" id="hdr"><div class="wrap">
   <a class="logo" href="#top">МАГТУР</a>
   <nav aria-label="Разделы">
@@ -1225,9 +1251,10 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
   document.documentElement.classList.add('loading');
   const CAP=[[3.9,8.9,'Дагестан','Сулакский каньон'],[9.5,11.1,'Приэльбрусье','Канатка к Эльбрусу'],[12.6,15.6,'Карачаево-Черкесия','Домбай · лошади']];
   const cap=$('filmCap'),bar=$('filmBar'),sec=$('start'),pre=$('pre'),hint=$('filmHint');let cur=-1,shown=0,drawn=-1,intro=0,introOn=false,lastMove=performance.now(),lastP=-1;const IF=22;
-  function done(){if(ready)return;ready=true;$('preN').textContent='100%';$('preBar').style.transform='scaleX(1)';drawn=-1;
-    setTimeout(()=>{pre.classList.add('out');document.documentElement.classList.remove('loading');introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1600);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0)},350);setTimeout(()=>pre.remove(),1300)}
-  for(let i=0;i<N;i++){const im=new Image();im.decoding='async';im.onload=im.onerror=()=>{loaded++;const k=loaded/N;$('preN').textContent=Math.floor(k*99)+'%';$('preBar').style.transform=`scaleX(${k})`;if(loaded===N)done()};
+  function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1600);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0);setTimeout(()=>pre.remove(),1000)}
+  function done(){if(ready)return;ready=true;$('preN').textContent='100%';$('preRing').style.strokeDashoffset=0;drawn=-1;
+    setTimeout(()=>{pre.classList.add('ready');$('preBtn').disabled=false;$('preSub').textContent='Всё готово — нажмите, чтобы начать';$('preBtn').onclick=go},300);}
+  for(let i=0;i<N;i++){const im=new Image();im.decoding='async';im.onload=im.onerror=()=>{loaded++;const k=loaded/N;$('preN').textContent=Math.floor(k*99)+'%';$('preRing').style.strokeDashoffset=1-k;if(loaded===N)done()};
     im.src='video/f/'+String(i+1).padStart(3,'0')+'.webp';imgs[i]=im}
   setTimeout(done,25000);
   function size(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);drawn=-1}
