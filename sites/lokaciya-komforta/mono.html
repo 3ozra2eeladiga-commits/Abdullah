@@ -319,7 +319,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
 <audio id="bgm" src="music.mp3" loop preload="auto"></audio>
 <button class="snd" id="snd" aria-label="Музыка: включить или выключить"><i></i><i></i><i></i><i></i></button>
-<footer><div class="wrap up"><span>© 2026 Локация Комфорта</span><span style="text-transform:none;letter-spacing:.04em">Музыка: Kevin MacLeod — «Inspired» (incompetech.com), CC BY 4.0</span><span>lokaciakomforta@gmail.com</span></div></footer>
+<footer><div class="wrap up"><span>© 2026 Локация Комфорта</span><span style="text-transform:none;letter-spacing:.04em">Музыка: Kevin MacLeod — «Dreamer» (incompetech.com), CC BY 4.0</span><span>lokaciakomforta@gmail.com</span></div></footer>
 
 <script>
 const FRAMES_H=61,FRAMES_V=61; /* число кадров видео в папках frames-h/ и frames-v/ */
@@ -376,7 +376,7 @@ addEventListener('scroll',kick,{passive:true});setInterval(()=>{if(need)kick()},
  addEventListener('scroll',()=>{if(!t){t=true;requestAnimationFrame(upd)}},{passive:true});addEventListener('resize',upd);upd();}
 
 /* музыка: включается сразу, а если браузер не разрешает — с первого касания */
-{const a=document.getElementById('bgm'),b=document.getElementById('snd');a.volume=.35;let muted=false;
+{const a=document.getElementById('bgm'),b=document.getElementById('snd');a.volume=.3;let muted=false;
  const set=on=>b.classList.toggle('on',on);
  const play=()=>{if(muted)return;const p=a.play();if(p)p.then(()=>set(true)).catch(()=>set(false))};
  a.addEventListener('pause',()=>set(false));a.addEventListener('play',()=>set(true));
