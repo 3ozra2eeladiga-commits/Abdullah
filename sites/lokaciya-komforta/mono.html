@@ -443,6 +443,11 @@ addEventListener('scroll',kick,{passive:true});addEventListener('resize',kick);k
  const first=e=>{if(e&&e.target&&e.target.closest&&e.target.closest('#snd'))return;play();['pointerdown','touchstart','keydown','click'].forEach(t=>removeEventListener(t,first,true))};
  ['pointerdown','touchstart','keydown','click'].forEach(t=>addEventListener(t,first,{capture:true,passive:true}));
  b.addEventListener('click',()=>{if(a.paused){muted=false;a.play().catch(()=>{})}else{muted=true;a.pause()}});
+ /* ушёл с сайта (другая вкладка, свернул, закрыл) — музыка останавливается; вернулся — продолжает */
+ let away=false;
+ const leave=()=>{if(!a.paused){away=true;a.pause()}};
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)leave();else if(away&&!muted){away=false;a.play().catch(()=>{})}});
+ addEventListener('pagehide',leave);addEventListener('blur',()=>{if(document.hidden)leave()});
  play();}
 
 /* шаги: линия прорисовывается, точки загораются по очереди */
