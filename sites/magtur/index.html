@@ -892,6 +892,49 @@ html.loading,html.loading body,html.filmlock,html.filmlock body{overflow:hidden;
 .pre.ready .tree{fill:#2f5d46}
 .pre-go{color:#16213A!important;text-shadow:none!important}
 @keyframes prePulseG{0%{box-shadow:0 0 0 0 rgba(201,162,74,.45),0 30px 60px -22px rgba(22,33,58,.35)}70%{box-shadow:0 0 0 26px rgba(201,162,74,0),0 30px 60px -22px rgba(22,33,58,.35)}100%{box-shadow:0 0 0 0 rgba(201,162,74,0),0 30px 60px -22px rgba(22,33,58,.35)}}
+
+.mapsec{position:relative;padding-block:clamp(70px,9vw,120px);background:transparent;color:var(--ink)}
+.mapsec .wrap{position:relative;z-index:7}
+.map-head{display:grid;gap:14px;max-width:760px;margin-bottom:clamp(24px,4vw,40px)}
+.mapsec .eyebrow b{color:#2F6FE0;-webkit-text-fill-color:#2F6FE0;background:none}
+.map-h{margin:0;font:800 clamp(2.2rem,5vw,4.4rem)/.95 var(--f-body);letter-spacing:-.04em;color:var(--ink)}
+.map-h i{font-style:normal;color:#2F6FE0}
+.map-lead{margin:0;color:var(--mist);font-size:1.05rem}
+.map{position:relative;border-radius:22px;background:#eef1f5;box-shadow:0 40px 80px -50px rgba(22,33,58,.45),0 0 0 1px rgba(22,33,58,.07)}
+.map-in{position:relative;border-radius:22px;overflow:hidden}
+.map-in img{display:block;width:100%;height:auto;user-select:none}
+.map-lbl{position:absolute;font:500 italic .82rem/1.2 var(--f-display);color:#7c8aa0;letter-spacing:.06em;pointer-events:none}
+.map-lbl.ridge{font:700 .56rem/1 var(--f-mono);font-style:normal;letter-spacing:.3em;text-transform:uppercase;color:rgba(22,33,58,.35);transform:rotate(-8deg)}
+.pin{position:absolute;transform:translate(-50%,-50%);background:none;border:0;padding:0;cursor:pointer;display:flex;align-items:center;gap:8px;z-index:2}
+.pin i{position:relative;width:16px;height:16px;border-radius:50%;background:#2F6FE0;border:3px solid #fff;box-shadow:0 3px 10px rgba(22,33,58,.35);flex:none}
+.pin i::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid rgba(47,111,224,.5);animation:pinRing 2.2s ease-out infinite}
+@keyframes pinRing{from{transform:scale(.4);opacity:1}to{transform:scale(1.6);opacity:0}}
+.pin span{font:700 .62rem/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#16213A;background:rgba(255,255,255,.92);padding:.5em .7em;border-radius:99px;white-space:nowrap;box-shadow:0 4px 12px -6px rgba(22,33,58,.4);transition:background .3s,color .3s}
+.pin.on i{background:#16213A;transform:scale(1.25)}
+.pin.on span,.pin:hover span{background:#16213A;color:#fff}
+.map-card{position:absolute;z-index:5;width:300px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 30px 60px -24px rgba(22,33,58,.5);opacity:0;transform:translateY(10px) scale(.97);transition:opacity .35s,transform .35s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.map-card.in{opacity:1;transform:none;pointer-events:auto}
+.map-card img{display:block;width:100%;height:150px;object-fit:cover}
+.mc-b{display:grid;gap:6px;padding:16px 18px 18px}
+.mc-b small{font:700 .58rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#2F6FE0}
+.mc-b b{font:800 1.35rem/1.05 var(--f-body);letter-spacing:-.02em;color:#16213A}
+.mc-b p{margin:0;font-size:.9rem;line-height:1.45;color:#5b6577}
+.mc-go{margin-top:8px;justify-self:start;border:0;border-radius:99px;background:#16213A;color:#fff;font:700 .85rem/1 var(--f-body);padding:12px 18px;cursor:pointer}
+.mc-x{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.9);font-size:1.1rem;cursor:pointer;color:#16213A}
+.map-swipe{display:none}
+.trust{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:22px;font-size:.95rem;color:var(--mist)}
+.trust b{color:var(--ink)}
+.trust span{display:inline-flex;align-items:center;gap:6px}
+.trust span+span::before{content:"";width:5px;height:5px;border-radius:50%;background:#2F6FE0;margin-right:16px}
+@media(max-width:760px){
+ .map{overflow-x:auto;overflow-y:visible;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-radius:18px}
+ .map::-webkit-scrollbar{display:none}
+ .map-in{width:880px;border-radius:0}
+ .map-card{position:sticky;left:0;display:block;width:auto;margin:-2px 0 0;border-radius:0 0 18px 18px;transform:none}
+ .map-card:not(.in){display:none}
+ .map-card img{height:130px}
+ .map-swipe{display:block;position:sticky;left:0;text-align:center;font:700 .58rem/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:#7c8aa0;padding:10px 0}
+ .trust{gap:8px 16px;font-size:.85rem}.trust span+span::before{margin-right:10px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -943,20 +986,25 @@ html.loading,html.loading body,html.filmlock,html.filmlock body{overflow:hidden;
 <div class="route" id="route" aria-hidden="true"></div>
 
 
-<section class="scene intro" id="intro">
-  <img class="bg" src="img/t11.jpg" alt="Сулакский каньон с высоты">
-  <canvas class="cl" data-cov=".5" aria-hidden="true"></canvas>
+<section class="mapsec" id="intro" data-alt="512" data-place="Пятигорск">
   <div class="wrap">
-    <p class="eyebrow" data-r="up">✦ В самом сердце Кавказа ✦</p>
-    <h2 class="spaced" data-r="words">Горы, которые зовут обратно</h2>
-    <p class="lead" data-r="up" style="--d:400ms">С 2013 года с нами прошли больше 20 000 человек. Больше 80% говорят, что готовы повторить, и каждый четвёртый действительно едет снова.</p>
-    <div data-r="up" style="--d:550ms"><a class="btn btn-main" href="#tours">Смотреть маршруты</a></div>
-    <div class="facts" data-r="up" style="--d:700ms">
-      <div><b data-count="20000" data-suf="+">20 000+</b><span>туристов прошли маршруты</span></div>
-      <div><b data-count="20" data-suf="+">20+</b><span>гидов в команде</span></div>
-      <div><b>от 1</b><span>человека: тур состоится</span></div>
-      <div><b data-count="100" data-suf="%">100%</b><span>возврат при отмене за 72 часа</span></div>
+    <div class="map-head">
+      <p class="eyebrow"><b>●</b> Живая карта</p>
+      <h2 class="map-h">Где уже побывали <i>20&nbsp;000+</i> человек</h2>
+      <p class="map-lead">Нажмите на точку — покажем, что там и какие туры туда едут.</p>
     </div>
+    <div class="map" id="map">
+      <div class="map-in" id="mapIn">
+        <img src="img/caucasus_map.webp" alt="Рельеф Северного Кавказа" draggable="false">
+        <span class="map-lbl sea" style="left:1.3200000000000003%;top:40.83%">Чёрное<br>море</span>
+        <span class="map-lbl sea" style="left:94.9%;top:25.55%">Каспийское<br>море</span>
+        <span class="map-lbl ridge" style="left:35.9%;top:69.91%">Главный Кавказский хребет</span>
+        <div id="mapPins"></div>
+      </div>
+      <div class="map-card" id="mapCard" aria-live="polite"></div>
+      <span class="map-swipe">← листайте карту →</span>
+    </div>
+    <div class="trust"><span><b>20 000+</b> туристов</span><span><b>20+</b> гидов</span><span>тур от <b>1</b> человека</span><span>возврат <b>100%</b> за 72 часа</span></div>
   </div>
 </section>
 
@@ -1394,6 +1442,24 @@ function hSwipe(el,onEnd,skip){if(!el)return;let x0=null,y0=0,h=null;
 hSwipe($('stage'));
 function layoutWord(){}function drawProfile(){}
 
+/* ---------- живая карта ---------- */
+(function(){
+  const box=$('mapPins');if(!box)return;
+  const P=[{"k": "kmv", "n": "Пятигорск · КМВ", "x": 30.0, "y": 16.18, "img": "t4", "r": "Кавминводы", "t": "Курортные парки, нарзан и гора Машук. Отсюда стартуют почти все маршруты."}, {"k": "kchr", "n": "Архыз", "x": 8.29, "y": 32.94, "img": "t13", "r": "Карачаево-Черкесия", "t": "Бирюзовые озёра, древние храмы и самая большая обсерватория России."}, {"k": "kchr", "n": "Домбай", "x": 12.44, "y": 42.3, "img": "t12", "r": "Карачаево-Черкесия", "t": "Водопады, горные озёра и конные прогулки по Тебердинскому заповеднику."}, {"k": "kbr", "n": "Эльбрус", "x": 22.44, "y": 40.22, "img": "v2/elbrus", "r": "Кабардино-Балкария", "t": "Высшая точка Европы. Канатка к ледникам, Чегет и поляна Азау."}, {"k": "oset", "n": "Дигория", "x": 35.98, "y": 57.47, "img": "t9", "r": "Осетия", "t": "Ледники, водопады и древние башни в Дигорском ущелье."}, {"k": "dag", "n": "Гамсутль", "x": 77.68, "y": 75.27, "img": "t11", "r": "Дагестан", "t": "Аул-призрак на скале, куда ведёт горная тропа."}, {"k": "dag", "n": "Сулакский каньон", "x": 75.98, "y": 51.63, "img": "t11", "r": "Дагестан", "t": "Один из самых глубоких каньонов мира и бирюзовая вода на катере."}, {"k": "dag", "n": "Дербент", "x": 93.78, "y": 84.45, "img": "t11", "r": "Дагестан", "t": "Древнейший город России, крепость Нарын-Кала у Каспия."}];
+  const cnt=k=>T.filter(t=>t.rg.includes(k)).length;
+  box.innerHTML=P.map((p,i)=>`<button type="button" class="pin" data-i="${i}" style="left:${p.x}%;top:${p.y}%" aria-label="${p.n}"><i></i><span>${p.n}</span></button>`).join('');
+  const card=$('mapCard'),pins=[...box.children];let cur=-1,auto=null,user=false;
+  function show(i,fromUser){if(fromUser){user=true;clearInterval(auto)}cur=i;const p=P[i],n=cnt(p.k);
+    pins.forEach((b,j)=>b.classList.toggle('on',j===i));
+    card.classList.remove('in');void card.offsetWidth;
+    card.innerHTML=`<button type="button" class="mc-x" aria-label="Закрыть">×</button><img src="img/${p.img}.jpg" alt=""><div class="mc-b"><small>${p.r}</small><b>${p.n}</b><p>${p.t}</p><button type="button" class="mc-go" data-k="${p.k}">${n} ${plural(n,'тур','тура','туров')} сюда →</button></div>`;
+    const wide=innerWidth>760;if(wide){const L=p.x>60;card.style.left=L?'auto':`calc(${p.x}% + 26px)`;card.style.right=L?`calc(${100-p.x}% + 26px)`:'auto';card.style.top=`clamp(10px,calc(${p.y}% - 120px),calc(100% - 330px))`}else{card.style.left=card.style.right=card.style.top='';const m=$('map');const px=$('mapIn').offsetWidth*p.x/100-m.clientWidth/2;m.scrollTo({left:px,behavior:fromUser===undefined?'auto':'smooth'})}
+    card.classList.add('in')}
+  box.onclick=e=>{const b=e.target.closest('.pin');if(b)show(+b.dataset.i,true)};
+  card.onclick=e=>{if(e.target.closest('.mc-x')){card.classList.remove('in');pins.forEach(b=>b.classList.remove('on'));user=true;clearInterval(auto)}
+    const g=e.target.closest('.mc-go');if(g){Object.assign(F,{type:'',month:0,diff:0,reg:g.dataset.k});apply();$('tours').scrollIntoView()}};
+  let seen=false;new IntersectionObserver(es=>{if(es[0].isIntersecting&&!seen){seen=true;show(3);auto=setInterval(()=>{if(!user)show((cur+1)%P.length,false)},4200)}},{threshold:.4}).observe($('map'));
+})();
 /* ---------- календарь ---------- */
 (function(){
   const order=[...T].sort((a,b)=>a.id-b.id);
