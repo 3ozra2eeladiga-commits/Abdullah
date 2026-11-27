@@ -493,16 +493,27 @@ const v=document.getElementById('sv');
 function vsrc(){const V=window.VIDEOS;const s=V?(vert?V.v:V.h):(vert?'build-v.mp4':'build-h.mp4');
   if(s.startsWith('data:')){try{const b=atob(s.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return URL.createObjectURL(new Blob([u],{type:'video/mp4'}))}catch(e){return s}}return s}
 v.src=vsrc();v.muted=true;
-let ready=false;const prime=()=>{const q=v.play();if(q&&q.then)q.then(()=>{v.pause();ready=true;kick()}).catch(()=>{ready=true;kick()});else{v.pause();ready=true}};
+/* телефон/планшет: перемотка видео пальцем на iPhone и Android дёргается — там видео просто играет само по кругу,
+   пока блок на экране; подписи по-прежнему меняются от прокрутки. Компьютер — перемотка прокруткой. */
+const PLAY=matchMedia('(pointer:coarse)').matches;
+let seqVis=false;
+if(PLAY){v.loop=true;v.preload='auto';
+  const go=()=>{const q=v.play();if(q&&q.catch)q.catch(()=>{})};
+  new IntersectionObserver(es=>es.forEach(e=>{seqVis=e.isIntersecting;seqVis?go():v.pause()}),{threshold:0}).observe(document.getElementById('build'));
+  /* «Войти» — это касание: заодно «будим» видео (iOS в режиме энергосбережения иначе не запускает автоплей) */
+  addEventListener('site-enter',()=>{const q=v.play();if(q&&q.then)q.then(()=>{if(!seqVis)v.pause()}).catch(()=>{})});
+  ['touchend','click'].forEach(t=>addEventListener(t,()=>{if(seqVis&&v.paused)go()},{passive:true}));
+}
+let ready=false;const prime=()=>{if(PLAY)return;const q=v.play();if(q&&q.then)q.then(()=>{v.pause();ready=true;kick()}).catch(()=>{ready=true;kick()});else{v.pause();ready=true}};
 v.addEventListener('loadedmetadata',()=>{ready=true;kick()});v.addEventListener('loadeddata',prime,{once:true});
-['touchstart','pointerdown'].forEach(t=>addEventListener(t,()=>{if(v.readyState<2)v.load();prime()},{once:true,passive:true}));
+if(!PLAY)['touchstart','pointerdown'].forEach(t=>addEventListener(t,()=>{if(v.readyState<2)v.load();prime()},{once:true,passive:true}));
 const seq=document.getElementById('build'),bar=document.getElementById('bar'),cnt=document.getElementById('cnt'),chaps=[...document.querySelectorAll('.chap')];
 let cur=0,lastK=-1,seeking=false;
 v.addEventListener('seeked',()=>{seeking=false});
 function prog(){const r=seq.getBoundingClientRect(),total=seq.offsetHeight-innerHeight;return Math.min(1,Math.max(0,-r.top/total))}
 function seqFrame(){
   const target=prog();cur+=(target-cur)*.22;if(Math.abs(target-cur)<.0005)cur=target;
-  const d=v.duration;if(ready&&d&&isFinite(d)&&!seeking){const t=Math.min(d-.05,cur*d);if(Math.abs(v.currentTime-t)>.03){seeking=true;v.currentTime=t;setTimeout(()=>{seeking=false},120)}}
+  const d=v.duration;if(!PLAY&&ready&&d&&isFinite(d)&&!seeking){const t=Math.min(d-.05,cur*d);if(Math.abs(v.currentTime-t)>.03){seeking=true;v.currentTime=t;setTimeout(()=>{seeking=false},120)}}
   bar.style.transform='scaleX('+cur+')';
   const k=Math.min(3,Math.floor(cur*4));if(k!==lastK){lastK=k;cnt.textContent='0'+(k+1)+' / 04';chaps.forEach((c,j)=>c.classList.toggle('on',j===k))}
   if(target!==cur||seeking)requestAnimationFrame(seqFrame);else running=false;
