@@ -682,6 +682,42 @@ body.tp-on{overflow:hidden}
 .cm-list img{width:52px;height:52px;flex:none;object-fit:cover;border-radius:8px}
 .cm-list span{display:grid;gap:3px;font:700 .92rem/1.2 var(--f-body)}
 .cm-list small{font:600 .56rem/1.3 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#2F6FE0}
+
+.hx .hx-ph{position:absolute;inset:0;z-index:1}
+.hx .hx-ph>div{position:absolute;inset:0;opacity:0;transition:opacity 1.3s ease}
+.hx .hx-ph>div.on{opacity:1}
+.hx .hx-ph img{width:100%;height:100%;object-fit:cover;transform:scale(1.1);transition:transform 9s cubic-bezier(.2,.5,.3,1)}
+.hx .hx-ph>div.on img{transform:scale(1)}
+.hx .hx-ph::after{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(9,14,30,.45) 0%,rgba(9,14,30,0) 26%,rgba(9,14,30,0) 42%,rgba(9,14,30,.78) 100%)}
+.hx::after{display:none}
+.hx-in{position:absolute;z-index:3;left:0;right:0;bottom:clamp(130px,17vh,170px);display:grid;gap:16px;color:#fff;padding-left:var(--lx)}
+.hx-eye{margin:0;font:600 .68rem/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.78)}
+.hx-eye span{color:#fff}
+.hx-t{margin:0;font:800 clamp(2.6rem,6.4vw,6rem)/.95 var(--f-body);letter-spacing:-.045em;max-width:13ch;color:#fff;text-shadow:0 2px 30px rgba(0,0,0,.25)}
+.hx-s{margin:0;font:500 clamp(1rem,1.25vw,1.15rem)/1.5 var(--f-body);max-width:46ch;color:rgba(255,255,255,.9)}
+.hx-t,.hx-s{transition:opacity .38s,transform .38s cubic-bezier(.2,.8,.2,1)}
+.hx-in.sw .hx-t,.hx-in.sw .hx-s{opacity:0;transform:translateY(14px)}
+.hx-cta{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-top:6px}
+.hx-go{border:0;border-radius:99px;background:#fff;color:#16213A;font:700 .98rem/1 var(--f-body);padding:17px 28px;cursor:pointer;transition:transform .25s,box-shadow .25s}
+.hx-go:hover{transform:translateY(-2px);box-shadow:0 14px 30px -12px rgba(0,0,0,.5)}
+.hx-all{color:#fff;font:600 .95rem/1 var(--f-body);text-decoration:none;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.5)}
+.hx-all:hover{border-color:#fff}
+.hx-tabs{position:absolute;z-index:3;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);padding:0 var(--lx);border-top:1px solid rgba(255,255,255,.22)}
+.hx-tabs button{position:relative;display:grid;gap:6px;text-align:left;background:none;border:0;color:#fff;opacity:.55;padding:20px 18px 28px 0;cursor:pointer;font:inherit;transition:opacity .3s}
+.hx-tabs button:hover,.hx-tabs button.on{opacity:1}
+.hx-tabs small{font:600 .6rem/1 var(--f-mono);letter-spacing:.18em}
+.hx-tabs b{font:700 1.02rem/1.15 var(--f-body);letter-spacing:-.01em}
+.hx-tabs span{font:500 .8rem/1 var(--f-body);color:rgba(255,255,255,.75)}
+.hx-tabs button::before{content:"";position:absolute;left:0;right:18px;top:-1px;height:2px;background:#fff;transform:scaleX(0);transform-origin:left}
+.hx-tabs button.on::before{animation:hxBar 7s linear forwards}
+@keyframes hxBar{to{transform:scaleX(1)}}
+@media(max-width:760px){
+ .hx-in{bottom:96px;padding-left:var(--gut);padding-right:var(--gut);gap:12px}
+ .hx-t{font-size:clamp(2.3rem,11vw,3.4rem)}
+ .hx-tabs{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--gut);padding:0 var(--gut);scrollbar-width:none}
+ .hx-tabs::-webkit-scrollbar{display:none}
+ .hx-tabs button{flex:0 0 auto;min-width:44vw;padding:14px 16px 18px 0;scroll-snap-align:start}
+ .hx-tabs span{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -706,24 +742,15 @@ body.tp-on{overflow:hidden}
 </section>
 <div class="route" id="route" aria-hidden="true"></div>
 
-<section class="hero" id="top" data-alt="512" data-place="Пятигорск" aria-roledescription="карусель" aria-label="Направления МАГТУР">
-  <div class="slides" id="slides"></div>
-  <canvas class="clouds" id="clouds" aria-hidden="true"></canvas>
-  <div class="glass" aria-hidden="true"></div>
-  <div class="word" id="word" aria-hidden="true"></div>
-  <div class="hero-in">
-    <div class="wrap">
-      <div class="ptxt" id="ptxt">
-        <p class="eyebrow"><b>●</b> МАГТУР · Кавказ, на который возвращаются</p>
-        <div class="num"><b id="sNum">01</b><span>/ 05</span><span class="dots" id="sDots"></span></div>
-        <h1 id="sTitle" aria-live="polite">Кабардино-Балкария</h1>
-        <p class="sub" id="sTxt"></p>
-        <div class="cta"><button class="btn btn-main" type="button" id="sGo">Туры направления →</button><a class="btn btn-sky" href="#tours">Все 19 туров</a></div>
-      </div>
-    </div>
+<section class="hero hx" id="top" data-alt="512" data-place="Пятигорск" aria-label="Направления МАГТУР">
+  <div class="hx-ph" id="hxPh"></div>
+  <div class="wrap hx-in" id="hxIn">
+    <p class="hx-eye"><span id="hxN">01</span> / 05 · Направления МАГТУР</p>
+    <h1 class="hx-t" id="hxT" aria-live="polite"></h1>
+    <p class="hx-s" id="hxS"></p>
+    <div class="hx-cta"><button class="hx-go" id="hxGo" type="button"></button><a class="hx-all" href="#tours">Все 19 туров</a></div>
   </div>
-  <div class="arrows"><button type="button" id="prev" aria-label="Предыдущее направление">←</button><button type="button" id="next" aria-label="Следующее направление">→</button></div>
-  <svg class="profile" id="profile" aria-label="Направления на горном профиле"></svg>
+  <nav class="hx-tabs" id="hxTabs" aria-label="Направления"></nav>
 </section>
 
 <section class="scene intro" id="intro">
@@ -1125,100 +1152,37 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
 
 /* ---------- первый экран: направления ---------- */
 const SLIDES=[
- {k:'kbr',word:'Эльбрус',img:'v2/elbrus',pos:'38% 66%',title:'Кабардино-Балкария',txt:'Приэльбрусье и Чегет: ледники, горные реки и подножие высшей точки Европы.'},
- {k:'kchr',word:'Домбай',img:'t12',title:'Карачаево-Черкесия',txt:'Домбай, Архыз и Теберда: водопады, осенние леса и больше всего туров — пешком, верхом и на лыжах.'},
- {k:'dag',word:'Дагестан',img:'t11',title:'Дагестан',txt:'Гамсутль, Сулакский каньон и Дербент: аулы на скалах и бирюзовая вода каньона.'},
- {k:'oset',word:'Осетия',img:'t9',title:'Осетия, Чечня, Ингушетия',txt:'Дигорское ущелье, ледники, водопады и древние башенные комплексы.'},
- {k:'kmv',word:'Кавминводы',img:'t4',title:'Кавказские Минеральные Воды',txt:'Пятигорск, Кисловодск и Железноводск: курортные парки, нарзан и зелёные плато.'}
+ {k:'kbr',tab:'Приэльбрусье',img:'v2/elbrus',pos:'38% 62%',title:'Кабардино-Балкария',txt:'Приэльбрусье и Чегет: ледники, горные реки и подножие высшей точки Европы.'},
+ {k:'kchr',tab:'Домбай и Архыз',img:'t12',title:'Карачаево-Черкесия',txt:'Домбай, Архыз и Теберда: водопады, осенние леса, походы пешком, верхом и на лыжах.'},
+ {k:'dag',tab:'Дагестан',img:'t11',title:'Дагестан',txt:'Гамсутль, Сулакский каньон и Дербент: аулы на скалах и бирюзовая вода каньона.'},
+ {k:'oset',tab:'Осетия',img:'t9',title:'Осетия, Чечня, Ингушетия',txt:'Дигорское ущелье, ледники, водопады и древние башенные комплексы.'},
+ {k:'kmv',tab:'Кавминводы',img:'t4',title:'Кавказские Минеральные Воды',txt:'Пятигорск, Кисловодск и Железноводск: курортные парки, нарзан и зелёные плато.'}
 ];
-let si=0,busy=false,auto=null;
-$('slides').innerHTML=SLIDES.map((d,i)=>`<div class="sl${i===0?' on':''}" style="background-image:url(img/${d.img}.jpg)"><img src="img/${d.img}.jpg" alt="${d.title}" style="object-position:${d.pos||'50% 50%'}"></div>`).join('');
-$('sDots').innerHTML=SLIDES.map((d,i)=>`<button type="button" aria-label="${d.title}" data-i="${i}"></button>`).join('');
-const vert=()=>innerWidth<=760;
-function seamPos(){const g=document.querySelector('.glass').getBoundingClientRect();return vert()?g.top:g.right}
-function layoutWord(){
-  const w=$('word'),hero=$('top').getBoundingClientRect(),txt=w.textContent||'',len=Math.max(4,txt.length);
-  let fs=Math.round(vert()?Math.min(innerWidth*.9/(len*.68),110):Math.min(innerHeight*.27,innerWidth*.74/(len*.68)));
-  w.style.fontSize=fs+'px';
-  const room=vert()?innerWidth-32:innerWidth*.8;if(w.offsetWidth>room)w.style.fontSize=(fs=Math.floor(fs*room/w.offsetWidth))+'px';
-  $('top').style.setProperty('--fs',fs+'px');
-  const ww=w.offsetWidth,seam=seamPos();
-  if(vert()){w.style.left=Math.max(16,(innerWidth-ww)/2)+'px';w.style.top=(seamPos()-hero.top-fs*.5)+'px'}
-  else{w.style.top='';w.style.left=Math.max(16,seam-ww*.42)+'px'}
-  const r=w.getBoundingClientRect(),sp=seamPos();
-  w.querySelectorAll('span').forEach(l=>{
-    if(vert()){/* нижняя часть буквы под стеклом — призрачная */
-      const top=r.top+l.offsetTop,h=l.offsetHeight;l.style.setProperty('--dir','0deg');l.style.setProperty('--cut',Math.min(h,Math.max(0,top+h-sp))+'px');}
-    else{l.style.setProperty('--dir','90deg');l.style.setProperty('--cut',Math.max(0,sp-(r.left+l.offsetLeft))+'px')}
-  });
-}
-function setWord(t,animate){
-  const w=$('word');
-  w.innerHTML=[...t].map((c,i)=>`<span style="--d:${i*45}ms">${c}</span>`).join('');
-  layoutWord();
-  if(animate&&!STILL){w.classList.add('pre');void w.offsetWidth;requestAnimationFrame(()=>w.classList.remove('pre'))}
-}
+let si=-1,auto=null,heroSeen=true;
+const rcnt=k=>T.filter(t=>t.rg.includes(k)).length,rtx=k=>{const n=rcnt(k);return n+' '+plural(n,'тур','тура','туров')};
+$('hxPh').innerHTML=SLIDES.map(d=>`<div><img src="img/${d.img}.jpg" alt="${d.title}" style="object-position:${d.pos||'50% 50%'}"></div>`).join('');
+$('hxTabs').innerHTML=SLIDES.map((d,i)=>`<button type="button" data-i="${i}"><small>${String(i+1).padStart(2,'0')}</small><b>${d.tab}</b><span>${rtx(d.k)}</span></button>`).join('');
 function show(n){
-  if(busy||n===si)return;busy=true;
-  n=(n+SLIDES.length)%SLIDES.length;const d=SLIDES[n],sl=document.querySelectorAll('.sl');
-  sl.forEach(e=>e.classList.remove('was'));sl[si].classList.replace('on','was');sl[n].classList.add('on');
-  $('word').classList.add('out');$('ptxt').classList.add('fade');
-  setTimeout(()=>{
-    $('word').classList.remove('out');setWord(d.word,true);
-    $('sTitle').textContent=d.title;$('sTxt').textContent=d.txt;$('sNum').textContent=String(n+1).padStart(2,'0');
-    $('ptxt').classList.remove('fade');
-  },STILL?0:420);
-  moveMarker(n);si=n;mark();setTimeout(()=>busy=false,STILL?0:550);
+  n=(n+SLIDES.length)%SLIDES.length;if(n===si)return;const d=SLIDES[n],first=si<0;
+  [...$('hxPh').children].forEach((e,i)=>e.classList.toggle('on',i===n));
+  [...$('hxTabs').children].forEach((b,i)=>{b.classList.toggle('on',i===n);b.setAttribute('aria-current',i===n)});
+  if(innerWidth<=760){const tb=$('hxTabs').children[n];$('hxTabs').scrollTo({left:tb.offsetLeft-parseFloat(getComputedStyle($('hxTabs')).paddingLeft),behavior:first?'auto':'smooth'})}
+  const box=$('hxIn');if(!first)box.classList.add('sw');
+  setTimeout(()=>{$('hxN').textContent=String(n+1).padStart(2,'0');$('hxT').textContent=d.title;$('hxS').textContent=d.txt;$('hxGo').textContent='Смотреть '+rtx(d.k)+' →';box.classList.remove('sw')},first||STILL?0:380);
+  si=n;restart();
 }
-function mark(){
-  $('sDots').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-current',i===si));
-  $('profile').querySelectorAll('.stop').forEach((g,i)=>{g.classList.toggle('on',i===si);g.querySelector('circle').setAttribute('r',i===si?7:4)});
-}
-function restart(){clearInterval(auto);if(!STILL)auto=setInterval(()=>{if(heroSeen&&!document.hidden)show(si+1)},7000)}
-$('next').onclick=()=>{show(si+1);restart()};$('prev').onclick=()=>{show(si-1);restart()};
-$('sDots').onclick=e=>{const b=e.target.closest('button');if(b){show(+b.dataset.i);restart()}};
-$('sGo').onclick=()=>{Object.assign(F,{type:'',month:0,diff:0,budget:0,reg:SLIDES[si].k});more=true;apply();$('tours').scrollIntoView()};
-function hSwipe(el,onEnd){let x0=null,y0=0,h=null;
-  el.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;h=null},{passive:true});
+function restart(){clearTimeout(auto);if(!STILL)auto=setTimeout(()=>{if(heroSeen&&!document.hidden)show(si+1);else restart()},7000)}
+$('hxTabs').onclick=e=>{const b=e.target.closest('[data-i]');if(b)show(+b.dataset.i)};
+$('hxGo').onclick=()=>{Object.assign(F,{type:'',month:0,diff:0,budget:0,reg:SLIDES[si].k});more=true;apply();$('tours').scrollIntoView()};
+function hSwipe(el,onEnd,skip){let x0=null,y0=0,h=null;
+  el.addEventListener('touchstart',e=>{if(skip&&e.target.closest(skip)){x0=null;return}const t=e.touches[0];x0=t.clientX;y0=t.clientY;h=null},{passive:true});
   el.addEventListener('touchmove',e=>{if(x0===null)return;const t=e.touches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(h===null&&(Math.abs(dx)>6||Math.abs(dy)>6))h=Math.abs(dx)>Math.abs(dy);if(h)e.preventDefault()},{passive:false});
   el.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;if(h&&onEnd)onEnd(dx);x0=null},{passive:true});}
-hSwipe($('top'),dx=>{if(Math.abs(dx)>40){busy=false;show(si+(dx<0?1:-1));restart()}});
+hSwipe($('top'),dx=>{if(Math.abs(dx)>40)show(si+(dx<0?1:-1))},'.hx-tabs');
 hSwipe($('stage'));
-let heroSeen=true;new IntersectionObserver(es=>{heroSeen=es[0].isIntersecting}).observe($('top'));
-
-/* горный профиль с точками-направлениями */
-let pfPath=null,pfLens=[],mLen=0,mAnim=null;
-function drawProfile(){
-  const svg=$('profile'),W=svg.clientWidth||innerWidth,H=svg.clientHeight||110,ns='http://www.w3.org/2000/svg';
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
-  const xs=SLIDES.map((d,i)=>W*(.1+i*.2)),ys=[.2,.5,.34,.58,.72].map(v=>v*H*.8+6);
-  let pts=[[0,H*.86]],seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
-  for(let i=0;i<xs.length;i++){
-    const x0=i?xs[i-1]:0,y0=i?ys[i-1]:H*.86;
-    for(let k=1;k<4;k++){const t=k/4;pts.push([x0+(xs[i]-x0)*t,Math.min(H*.9,y0+(ys[i]-y0)*t+(rnd()-.4)*H*.22)])}
-    pts.push([xs[i],ys[i]]);
-  }
-  for(let k=1;k<4;k++){const t=k/4;pts.push([xs[4]+(W-xs[4])*t,ys[4]+(H*.86-ys[4])*t+(rnd()-.5)*H*.14])}
-  pts.push([W,H*.86]);
-  const d='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
-  svg.innerHTML=`<defs><linearGradient id="pfFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
-    <path class="ar" d="${d} L${W} ${H} L0 ${H} Z"/><path class="ln" id="pfLine" d="${d}"/>`+
-    SLIDES.map((s,i)=>`<g class="stop" data-i="${i}" role="button" tabindex="0" aria-label="${s.title}"><circle cx="${xs[i]}" cy="${ys[i]}" r="4"/><circle class="hit" cx="${xs[i]}" cy="${ys[i]}" r="18"/><text x="${xs[i]}" y="${ys[i]-16}" text-anchor="middle">${String(i+1).padStart(2,'0')} ${s.word}</text></g>`).join('')+
-    `<circle class="me" id="pfMe" r="6"/>`;
-  pfPath=$('pfLine');const L=pfPath.getTotalLength();
-  pfLens=xs.map(x=>{let lo=0,hi=L;for(let j=0;j<24;j++){const m=(lo+hi)/2;pfPath.getPointAtLength(m).x<x?lo=m:hi=m}return lo});
-  mLen=pfLens[si];placeMe();mark();
-}
-function placeMe(){const p=pfPath.getPointAtLength(mLen);$('pfMe').setAttribute('cx',p.x);$('pfMe').setAttribute('cy',p.y)}
-function moveMarker(n){
-  if(!pfPath)return;cancelAnimationFrame(mAnim);const a=mLen,b=pfLens[(n+SLIDES.length)%SLIDES.length],t0=performance.now();
-  if(STILL){mLen=b;placeMe();return}
-  (function f(now){const p=Math.min(1,(now-t0)/1200),e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;mLen=a+(b-a)*e;placeMe();if(p<1)mAnim=requestAnimationFrame(f)})(t0);
-}
-$('profile').addEventListener('click',e=>{const g=e.target.closest('.stop');if(g){show(+g.dataset.i);restart()}});
-$('profile').addEventListener('keydown',e=>{const g=e.target.closest('.stop');if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();show(+g.dataset.i);restart()}});
-$('sTxt').textContent=SLIDES[0].txt;setWord(SLIDES[0].word,true);drawProfile();restart();
-if(document.fonts)document.fonts.ready.then(layoutWord);
+new IntersectionObserver(es=>{heroSeen=es[0].isIntersecting}).observe($('top'));
+function layoutWord(){}function drawProfile(){}
+show(0);
 
 /* ---------- календарь ---------- */
 (function(){
@@ -1520,7 +1484,6 @@ function makeClouds(canvas,host,cov){
   requestAnimationFrame(()=>canvas.classList.add('on'));
   CLOUDS.push(c);
 }
-makeClouds($('clouds'),$('top'),.6);
 document.querySelectorAll('.scene > canvas.cl').forEach(cv=>makeClouds(cv,cv.parentElement,+cv.dataset.cov||.55));
 
 /* ---------- живой фон: перетекает между состояниями по разделам ---------- */
