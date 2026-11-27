@@ -28,6 +28,19 @@ img{display:block;max-width:100%}
 .snd.on i{animation:eq 1s ease-in-out infinite}
 .snd.on i:nth-child(2){animation-delay:-.4s}.snd.on i:nth-child(3){animation-delay:-.7s}.snd.on i:nth-child(4){animation-delay:-.2s}
 @keyframes eq{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+/* экран входа (нужен один тап — тогда браузер разрешает музыку) */
+.gate{position:fixed;inset:0;z-index:100;background:#0f0f0f center/cover no-repeat;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;color:#fafaf8;text-align:center;padding:24px;transition:opacity .9s ease,visibility .9s}
+.gate:before{content:"";position:absolute;inset:0;background:rgba(10,10,10,.62)}
+.gate>*{position:relative}
+.gate .g-name{font-weight:200;font-size:clamp(44px,9vw,110px);letter-spacing:.14em;line-height:1}
+.gate .g-sub{font-size:11px;letter-spacing:.42em;text-transform:uppercase;opacity:.75}
+.gate button{margin-top:18px;width:132px;height:132px;border-radius:50%;border:1px solid rgba(250,250,248,.75);background:transparent;color:#fafaf8;font:500 12px/1 Montserrat,system-ui,sans-serif;letter-spacing:.36em;text-transform:uppercase;cursor:pointer;position:relative;padding-left:.36em}
+.gate button:after{content:"";position:absolute;inset:-1px;border-radius:50%;border:1px solid rgba(250,250,248,.6);animation:gring 2.2s ease-out infinite}
+@keyframes gring{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.6);opacity:0}}
+.gate .g-note{font-size:11px;letter-spacing:.2em;opacity:.55;text-transform:uppercase}
+.gate.off{opacity:0;visibility:hidden}
+.gate{background-image:url("alexey-blue-bg.jpg")}
+html.locked,html.locked body{overflow:hidden}
 /* header */
 header{position:fixed;top:0;left:0;right:0;z-index:30;padding:16px 0;color:var(--ink);background:#ececea;border-bottom:1px solid rgba(0,0,0,.06)}
 .nav{display:flex;justify-content:space-between;align-items:center}
@@ -202,6 +215,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 </style>
 </head>
 <body>
+<div class="gate" id="gate" role="dialog" aria-label="Вход на сайт">
+  <div class="g-sub">Локация Комфорта</div>
+  <div class="g-name">АЛЕКСЕЙ</div>
+  <button type="button" id="enter">Войти</button>
+  <div class="g-note">со звуком</div>
+</div>
+<script>document.documentElement.classList.add('locked')</script>
 <div class="backdrop" id="bd"></div>
 
 <header>
@@ -423,11 +443,10 @@ let running=false;function kick(){if(!running){running=true;requestAnimationFram
 addEventListener('scroll',kick,{passive:true});addEventListener('resize',kick);kick();
 
 /* первый экран: сначала фото в костюме, через 2 секунды — карточка */
-{const h=document.querySelector('.hero'),bg=document.getElementById('herobg');
- const start=()=>setTimeout(()=>h.classList.add('go'),2000);
- const ready=()=>document.readyState==='complete'?start():addEventListener('load',start,{once:true});
- if(bg.complete)ready();else bg.addEventListener('load',ready,{once:true});
- setTimeout(()=>h.classList.add('go'),9000);}
+{const h=document.querySelector('.hero');let done=false;
+ const start=()=>{if(done)return;done=true;setTimeout(()=>h.classList.add('go'),2000)};
+ addEventListener('site-enter',start,{once:true});
+ if(!document.getElementById('gate'))addEventListener('load',start,{once:true});}
 
 /* услуги: фото раскрывается по мере прокрутки */
 {const ms=[...document.querySelectorAll('.svc-media')];let t=false;
@@ -435,20 +454,22 @@ addEventListener('scroll',kick,{passive:true});addEventListener('resize',kick);k
   const c=Math.min(1,Math.max(0,(r.top-H*.25)/(H*.6)));m.style.setProperty('--c',c.toFixed(3))})};
  addEventListener('scroll',()=>{if(!t){t=true;requestAnimationFrame(upd)}},{passive:true});addEventListener('resize',upd);upd();}
 
-/* музыка: включается сразу, а если браузер не разрешает — с первого касания */
-{const a=document.getElementById('bgm'),b=document.getElementById('snd');a.volume=.3;let muted=false;
+/* музыка: стартует по кнопке «Войти» (тап = разрешение браузера) и играет постоянно; кнопка справа внизу выключает */
+{const a=document.getElementById('bgm'),b=document.getElementById('snd'),g=document.getElementById('gate');a.volume=.35;let muted=false,away=false;
  const set=on=>b.classList.toggle('on',on);
- const play=()=>{if(muted)return;const p=a.play();if(p)p.then(()=>set(true)).catch(()=>set(false))};
  a.addEventListener('pause',()=>set(false));a.addEventListener('play',()=>set(true));
- const first=e=>{if(e&&e.target&&e.target.closest&&e.target.closest('#snd'))return;play();['pointerdown','touchstart','keydown','click'].forEach(t=>removeEventListener(t,first,true))};
- ['pointerdown','touchstart','keydown','click'].forEach(t=>addEventListener(t,first,{capture:true,passive:true}));
+ const play=()=>{if(muted)return Promise.resolve();const p=a.play();return p&&p.then?p.then(()=>{set(true);off()}).catch(()=>{set(false)}):Promise.resolve()};
+ const ACT=['pointerup','touchend','click','keydown'];
+ const tryAgain=e=>{if(e.target&&e.target.closest&&e.target.closest('#snd'))return;if(a.paused&&!muted)play()};
+ const off=()=>ACT.forEach(t=>removeEventListener(t,tryAgain,true));
+ ACT.forEach(t=>addEventListener(t,tryAgain,{capture:true,passive:true}));
+ const enter=()=>{play();g.classList.add('off');document.documentElement.classList.remove('locked');scrollTo(0,0);dispatchEvent(new Event('site-enter'));setTimeout(()=>g.remove(),1000)};
+ document.getElementById('enter').addEventListener('click',enter);
  b.addEventListener('click',()=>{if(a.paused){muted=false;a.play().catch(()=>{})}else{muted=true;a.pause()}});
- /* ушёл с сайта (другая вкладка, свернул, закрыл) — музыка останавливается; вернулся — продолжает */
- let away=false;
- const leave=()=>{if(!a.paused){away=true;a.pause()}};
- document.addEventListener('visibilitychange',()=>{if(document.hidden)leave();else if(away&&!muted){away=false;a.play().catch(()=>{})}});
- addEventListener('pagehide',leave);addEventListener('blur',()=>{if(document.hidden)leave()});
- play();}
+ /* ушёл с сайта (другая вкладка, свернул, закрыл) — пауза; вернулся — играет дальше */
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(!a.paused){away=true;a.pause()}}else if(away&&!muted){away=false;a.play().catch(()=>{})}});
+ addEventListener('pagehide',()=>{if(!a.paused){away=true;a.pause()}});
+ addEventListener('pageshow',()=>{if(away&&!muted&&!document.hidden){away=false;a.play().catch(()=>{})}});}
 
 /* шаги: линия прорисовывается, точки загораются по очереди */
 {const st=document.querySelector('.steps');if(st){const li=[...st.children];let t=false;
