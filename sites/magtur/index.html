@@ -1260,10 +1260,10 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
   const N=217,FPS=14,ctx=cv.getContext('2d'),imgs=new Array(N);let loaded=0,ready=false;
   document.documentElement.classList.add('loading');
   const CAP=[[3.9,8.9,'Дагестан','Сулакский каньон'],[9.5,11.1,'Приэльбрусье','Канатка к Эльбрусу'],[12.6,15.6,'Карачаево-Черкесия','Домбай · лошади']];
-  const cap=$('filmCap'),bar=$('filmBar'),sec=$('start'),pre=$('pre'),hint=$('filmHint');let cur=-1,shown=0,drawn=-1,intro=0,introOn=false,lastMove=performance.now(),lastP=-1;const IF=22,SPD=17;
+  const cap=$('filmCap'),bar=$('filmBar'),sec=$('start'),pre=$('pre'),hint=$('filmHint');let cur=-1,shown=0,drawn=-1,intro=0,introOn=false,lastMove=performance.now(),lastP=-1;const IF=22,IF0=13,SPD=17;let driftT=0;
   const DG=[...document.querySelectorAll('#preN .dg > span')];
   function setNum(n){const t=String(n).padStart(3,'0');DG.forEach((c,i)=>{c.style.transform=`translateY(${-t[i]*10}%)`;c.parentNode.classList.toggle('hide',i===0&&n<100||i===1&&n<10)});$('preAlt').textContent='↑ '+Math.round(310+(5642-310)*n/100).toLocaleString('ru-RU')+' м'+(n>=100?' · вершина':'')}
-  function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1600);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0);setTimeout(()=>pre.remove(),1000)}
+  function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1300);intro=IF0*k;if(k<1)requestAnimationFrame(a);else{lastMove=performance.now();driftT=lastMove}})(t0);setTimeout(()=>pre.remove(),1000)}
   function done(){if(ready)return;ready=true;setNum(100);$('preRing').style.strokeDashoffset=0;drawn=-1;
     setTimeout(()=>{pre.classList.add('ready');$('preBtn').disabled=false;$('preSub').textContent='Всё готово — нажмите, чтобы начать';$('preBtn').onclick=go},300);}
   for(let i=0;i<N;i++){const im=new Image();im.decoding='async';im.onload=im.onerror=()=>{loaded++;const k=loaded/N;setNum(Math.floor(k*99));$('preRing').style.strokeDashoffset=1-k;if(loaded===N)done()};
@@ -1276,11 +1276,11 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
   function prog(){const r=sec.getBoundingClientRect(),h=sec.offsetHeight-innerHeight;return Math.min(1,Math.max(0,-r.top/Math.max(1,h)))}
   function tick(){
     const p=prog(),now=performance.now();if(Math.abs(p-lastP)>.0005){lastMove=now;lastP=p}
-    const target=Math.max(intro,IF*(introOn?Math.min(1,intro/IF):0)+p*(N-1-IF));const dt=Math.min(.1,(now-(tick.t||now))/1000);tick.t=now;
-    if(intro<IF&&p<.001){shown=intro}else{const mx=SPD*dt,df=target-shown;shown+=Math.max(-mx*1.6,Math.min(mx,df*.3>mx?mx:df*.3<-mx*1.6?-mx*1.6:df*.3));if(Math.abs(target-shown)<.05)shown=target}
+    const drift=driftT?IF0+5.5*(1-Math.cos((now-driftT)/1000*Math.PI/4.5)):intro;const target=p<.002?drift:IF+p*(N-1-IF);const dt=Math.min(.1,(now-(tick.t||now))/1000);tick.t=now;
+    if(!driftT&&p<.001){shown=intro}else if(p<.002&&Math.abs(shown-drift)<1.5){shown=drift}else{const mx=SPD*dt,df=target-shown;shown+=Math.max(-mx*1.6,Math.min(mx,df*.3>mx?mx:df*.3<-mx*1.6?-mx*1.6:df*.3));if(Math.abs(target-shown)<.05)shown=target}
     const fEnd=sec.offsetTop+sec.offsetHeight-innerHeight;if(ready&&!document.getElementById('pre')&&shown<N-1.5&&scrollY>fEnd+2)scrollTo(0,fEnd);
     const i=Math.round(shown);if(i!==drawn){draw(i);drawn=i}
-    const t=shown/FPS;bar.style.transform=`scaleX(${shown/(N-1)})`;sec.classList.toggle('ended',shown>N-8);hint.classList.toggle('on',ready&&intro>=IF&&p<.965&&now-lastMove>(p<.01?600:2200));
+    const t=shown/FPS;bar.style.transform=`scaleX(${shown/(N-1)})`;sec.classList.toggle('ended',shown>N-8);hint.classList.toggle('on',ready&&driftT>0&&shown<N-8&&now-lastMove>(p<.01?500:2200));
     let k=-1;CAP.forEach((c,j)=>{if(t>=c[0]&&t<c[1])k=j});
     if(k!==cur){cur=k;if(k<0)cap.classList.remove('on');else{cap.querySelector('small').textContent=CAP[k][2];cap.querySelector('b').textContent=CAP[k][3];cap.classList.add('on')}}
     requestAnimationFrame(tick)}
