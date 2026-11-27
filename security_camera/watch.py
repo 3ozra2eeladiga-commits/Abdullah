@@ -133,6 +133,7 @@ def main():
     ap.add_argument("--source", required=True, help="файл видео, номер веб-камеры или адрес rtsp://")
     ap.add_argument("--save", help="сохранить результат в файл mp4")
     ap.add_argument("--show", action="store_true", help="показывать окно на экране")
+    ap.add_argument("--record", action="store_true", help="записывать чистое видео в папку records (по 10 минут), для настройки")
     ap.add_argument("--fullscreen", action="store_true", help="окно на весь экран (для экрана покупателей)")
     ap.add_argument("--sound", action="store_true", help="включать голос из колонки")
     ap.add_argument("--model", default="yolo11s-pose.pt")
@@ -145,8 +146,21 @@ def main():
     model = YOLO(local if os.path.exists(local) else a.model)
     src = int(a.source) if a.source.isdigit() else a.source
     cap = cv2.VideoCapture(src)
+    if not cap.isOpened() and isinstance(src, int):   # нужной веб-камеры нет — пробуем другие
+        for other in (1, 0, 2, 3):
+            cap = cv2.VideoCapture(other)
+            if cap.isOpened():
+                print("Камера %d не найдена, взял камеру %d" % (src, other), flush=True)
+                src = other
+                break
     if not cap.isOpened():
         sys.exit("Не открывается источник видео: %s" % a.source)
+    if isinstance(src, int):   # веб-камера: просим 1280x720
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+    rec, rec_start = None, 0.0
+    live = not (isinstance(src, str) and not src.startswith("rtsp"))
+    ticks = []   # время обработанных кадров — настоящая скорость для записи живой камеры
     fps = cap.get(cv2.CAP_PROP_FPS) or 25
     out = None
     seen = {}          # номер человека -> сколько кадров его видели
@@ -201,6 +215,7 @@ def main():
                         hd.head = tuple(0.7 * o + 0.3 * v for o, v in zip(hd.head, (cx, cy, sz)))
                     people.append((box, sorted(counted).index(tid) + 1, hd.state, kp, hd))
 
+        raw = frame
         img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         d = ImageDraw.Draw(img, "RGBA")
         t = max(2, h // 300)
@@ -251,13 +266,24 @@ def main():
                 tw = d.textlength(cap_txt, font=f_small)
                 d.rectangle([px - bw, py + sz + bw, px + sz + bw, py + sz + bw + f_small.size + 14], fill=RED)
                 d.text((px + (sz - tw) / 2, py + sz + bw + 6), cap_txt, font=f_small, fill=WHITE)
-                rec = "● REC  ZOOM x%d" % max(2, round(min(w, h) * ZOOM_PART / max(1, fx2 - fx1)))
-                d.text((px + 10, py + 8), rec, font=f_small, fill=RED if blink else WHITE)
+                rec_txt = "● REC  ZOOM x%d" % max(2, round(min(w, h) * ZOOM_PART / max(1, fx2 - fx1)))
+                d.text((px + 10, py + 8), rec_txt, font=f_small, fill=RED if blink else WHITE)
         if now < alert_banner or now < banner_until:
             msg = "ВНИМАНИЕ! Оплатите товар на кассе" if now < alert_banner else "Вы под видеонаблюдением"
             tw = d.textlength(msg, font=f_big)
             d.rectangle([0, h - bar, w, h], fill=(200, 30, 30, 220))
             d.text(((w - tw) / 2, h - bar + 9), msg, font=f_big, fill=WHITE)
+        ticks = (ticks + [time.time()])[-30:]
+        if a.record and (not live or len(ticks) == 30):   # чистый кадр, без рамок — для настройки
+            if rec is None or time.time() - rec_start > 600:
+                rfps = (len(ticks) - 1) / max(0.1, ticks[-1] - ticks[0]) if live else fps / a.skip
+                if rec:
+                    rec.release()
+                os.makedirs(os.path.join(HERE, "records"), exist_ok=True)
+                name = os.path.join(HERE, "records", time.strftime("%Y%m%d_%H%M%S") + ".mp4")
+                rec = cv2.VideoWriter(name, cv2.VideoWriter_fourcc(*"mp4v"), rfps, (w, h))
+                rec_start = time.time()
+            rec.write(raw)
         frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
         if a.save:
@@ -274,6 +300,8 @@ def main():
                 break
 
     cap.release()
+    if rec:
+        rec.release()
     if out:
         out.release()
     print("Готово. Людей за всё время: %d, тревог: %d" % (len(counted), alerts))
