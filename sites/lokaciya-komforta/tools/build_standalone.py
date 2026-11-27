@@ -30,6 +30,16 @@ if '"music.mp3"' in html:
     with open(os.path.join(src_dir,'music.mp3'),'rb') as f:
         html = html.replace('"music.mp3"', '"'+data_uri(f.read(),'audio/mpeg')+'"')
 
+# подпапки img/ и fonts/
+import glob
+for f in sorted(glob.glob(os.path.join(src_dir,'img','*.jpg'))):
+    rel='img/'+os.path.basename(f)
+    if rel in html: html=html.replace('"'+rel+'"','"'+local(rel)+'"')
+for f in sorted(glob.glob(os.path.join(src_dir,'fonts','*.woff2'))):
+    rel='fonts/'+os.path.basename(f)
+    if rel in html:
+        with open(f,'rb') as fh: html=html.replace('url('+rel+')','url('+data_uri(fh.read(),'font/woff2')+')')
+
 def frames(d):
     fs = sorted(os.listdir(os.path.join(src_dir, d)))
     return [local(os.path.join(d, f)) for f in fs]
