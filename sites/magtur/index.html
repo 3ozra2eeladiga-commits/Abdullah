@@ -760,14 +760,14 @@ body.tp-on{overflow:hidden}
  .film .start-pin{left:20px;right:auto;bottom:26px}
  header.top:not(.solid){background:rgba(242,244,248,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
 
-.film{display:block;height:560vh;padding:0;min-height:0;overflow:visible}
+.film{display:block;height:100vh;height:100svh;padding:0;min-height:0;overflow:visible}
 .film-sticky{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:center;padding-top:70px;overflow:hidden}
 .film-more{color:rgba(255,255,255,.8);font:600 .9rem/1 var(--f-body)}
 .film-hint{position:absolute;right:14px;bottom:28%;z-index:4;display:flex;align-items:center;gap:8px;padding:10px 12px 10px 14px;border-radius:99px;background:rgba(255,255,255,.92);color:#16213A;font:700 .62rem/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;box-shadow:0 10px 30px -10px rgba(0,0,0,.45);opacity:0;transform:translateX(20px);transition:opacity .45s,transform .45s cubic-bezier(.2,.8,.2,1);pointer-events:none}
 .film-hint i{font-style:normal;font-size:.9rem;display:inline-block;animation:hintBob 1.2s ease-in-out infinite}
 .film-hint.on{opacity:1;transform:none}
 @keyframes hintBob{50%{transform:translateY(4px)}}
-html.loading,html.loading body{overflow:hidden}
+html.loading,html.loading body,html.filmlock,html.filmlock body{overflow:hidden;overscroll-behavior:none}
 .pre{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#F2F4F8;transition:opacity .8s,visibility .8s}
 .pre.out{opacity:0;visibility:hidden}
 .pre-in{display:grid;justify-items:center;gap:22px}
@@ -805,7 +805,7 @@ html.loading,html.loading body{overflow:hidden}
 @keyframes prePulse{0%{box-shadow:0 0 0 0 rgba(47,111,224,.45),0 30px 60px -30px rgba(22,33,58,.45)}70%{box-shadow:0 0 0 26px rgba(47,111,224,0),0 30px 60px -30px rgba(22,33,58,.45)}100%{box-shadow:0 0 0 0 rgba(47,111,224,0),0 30px 60px -30px rgba(22,33,58,.45)}}
 .pre small{font:600 .62rem/1.4 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:#6B7385;text-align:center}
 .film .start-pin{bottom:2%}
-@media(max-width:900px){.film{height:560vh}.film-sticky{padding-top:0;align-items:stretch}.film-hint{bottom:22%}}
+@media(max-width:900px){.film{height:100svh}.film-sticky{padding-top:0;align-items:stretch}.film-hint{bottom:22%}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -1263,7 +1263,7 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
   const cap=$('filmCap'),bar=$('filmBar'),sec=$('start'),pre=$('pre'),hint=$('filmHint');let cur=-1,shown=0,drawn=-1,intro=0,introOn=false,lastMove=performance.now(),lastP=-1;const IF=22,SPD=17;
   const DG=[...document.querySelectorAll('#preN .dg > span')];
   function setNum(n){const t=String(n).padStart(3,'0');DG.forEach((c,i)=>{c.style.transform=`translateY(${-t[i]*10}%)`;c.parentNode.classList.toggle('hide',i===0&&n<100||i===1&&n<10)});$('preAlt').textContent='↑ '+Math.round(310+(5642-310)*n/100).toLocaleString('ru-RU')+' м'+(n>=100?' · вершина':'')}
-  function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1600);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0);setTimeout(()=>pre.remove(),1000)}
+  function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');scrollTo(0,0);lock(true);introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1600);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0);setTimeout(()=>pre.remove(),1000)}
   function done(){if(ready)return;ready=true;setNum(100);$('preRing').style.strokeDashoffset=0;drawn=-1;
     setTimeout(()=>{pre.classList.add('ready');$('preBtn').disabled=false;$('preSub').textContent='Всё готово — нажмите, чтобы начать';$('preBtn').onclick=go},300);}
   for(let i=0;i<N;i++){const im=new Image();im.decoding='async';im.onload=im.onerror=()=>{loaded++;const k=loaded/N;setNum(Math.floor(k*99));$('preRing').style.strokeDashoffset=1-k;if(loaded===N)done()};
@@ -1273,14 +1273,25 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
   addEventListener('resize',size);size();
   function draw(i){let im=imgs[i];if(!im||!im.complete||!im.naturalWidth){for(let j=i;j>=0;j--){if(imgs[j]&&imgs[j].complete&&imgs[j].naturalWidth){im=imgs[j];break}}}if(!im)return;
     const W=cv.width,H=cv.height,s=Math.max(W/im.naturalWidth,H/im.naturalHeight),w=im.naturalWidth*s,h=im.naturalHeight*s;ctx.drawImage(im,(W-w)/2,(H-h)/2,w,h)}
-  function prog(){const r=sec.getBoundingClientRect(),h=sec.offsetHeight-innerHeight;return Math.min(1,Math.max(0,-r.top/Math.max(1,h)))}
+  let want=0,locked=false,ty=null;const K=.085;
+  const H=document.documentElement;function lock(v){locked=v;H.classList.toggle('filmlock',v)}
+  function push(dy){lastMove=performance.now();want=Math.max(IF,Math.min(N-1,want+dy*K))}
+  addEventListener('wheel',e=>{if(!introOn)return;
+    if(!locked&&scrollY<=1&&e.deltaY<0&&shown>IF+.5)lock(true);
+    if(locked){e.preventDefault();push(e.deltaY)}},{passive:false});
+  addEventListener('touchstart',e=>{ty=e.touches[0].clientY},{passive:true});
+  addEventListener('touchmove',e=>{if(!introOn||ty===null)return;const y=e.touches[0].clientY,dy=ty-y;ty=y;
+    if(!locked&&scrollY<=1&&dy<0&&shown>IF+.5)lock(true);
+    if(locked){if(e.cancelable)e.preventDefault();push(dy*1.4)}},{passive:false});
+  addEventListener('keydown',e=>{if(locked&&['ArrowDown','PageDown',' ','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();push(/Up/.test(e.key)?-180:180)}});
   function tick(){
-    const p=prog(),now=performance.now();if(Math.abs(p-lastP)>.0005){lastMove=now;lastP=p}
-    const target=Math.max(intro,IF*(introOn?Math.min(1,intro/IF):0)+p*(N-1-IF));const dt=Math.min(.1,(now-(tick.t||now))/1000);tick.t=now;
-    if(intro<IF&&p<.001){shown=intro}else{const mx=SPD*dt,df=target-shown;shown+=Math.max(-mx*1.6,Math.min(mx,df*.3>mx?mx:df*.3<-mx*1.6?-mx*1.6:df*.3));if(Math.abs(target-shown)<.05)shown=target}
-    const fEnd=sec.offsetTop+sec.offsetHeight-innerHeight;if(ready&&!document.getElementById('pre')&&shown<N-1.5&&scrollY>fEnd+2)scrollTo(0,fEnd);
+    const now=performance.now(),dt=Math.min(.1,(now-(tick.t||now))/1000);tick.t=now;
+    if(intro<IF){shown=intro;want=Math.max(want,intro)}
+    else{const mx=SPD*dt,df=want-shown;shown+=Math.max(-mx*1.6,Math.min(mx,df));
+      if(locked&&shown>=N-1.05&&want>=N-1.05)lock(false)}
     const i=Math.round(shown);if(i!==drawn){draw(i);drawn=i}
-    const t=shown/FPS;bar.style.transform=`scaleX(${shown/(N-1)})`;sec.classList.toggle('ended',shown>N-8);hint.classList.toggle('on',ready&&intro>=IF&&p<.965&&now-lastMove>(p<.01?600:2200));
+    const t=shown/FPS;bar.style.transform=`scaleX(${shown/(N-1)})`;sec.classList.toggle('ended',shown>N-8);
+    hint.classList.toggle('on',locked&&intro>=IF&&shown<N-8&&Math.abs(want-shown)<.5&&now-lastMove>(shown<IF+1?600:2200));
     let k=-1;CAP.forEach((c,j)=>{if(t>=c[0]&&t<c[1])k=j});
     if(k!==cur){cur=k;if(k<0)cap.classList.remove('on');else{cap.querySelector('small').textContent=CAP[k][2];cap.querySelector('b').textContent=CAP[k][3];cap.classList.add('on')}}
     requestAnimationFrame(tick)}
