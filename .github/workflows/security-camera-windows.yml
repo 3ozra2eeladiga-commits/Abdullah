@@ -28,7 +28,7 @@ jobs:
           Expand-Archive py.zip "$pkg/python"
           Set-Content "$pkg/python/python311._pth" "python311.zip`r`n.`r`nLib\site-packages`r`nimport site" -Encoding ascii
           python -m pip install --no-cache-dir --target "$pkg/python/Lib/site-packages" --extra-index-url https://download.pytorch.org/whl/cpu torch torchvision ultralytics opencv-python pillow lap
-          Copy-Item security_camera/watch.py, security_camera/make_voice.py $pkg
+          Copy-Item security_camera/watch.py, security_camera/make_voice.py, security_camera/connect.py $pkg
           Copy-Item security_camera/samples $pkg -Recurse
           Copy-Item security_camera/windows/* $pkg
           python -m pip install edge-tts

@@ -2,3 +2,4 @@
 __pycache__/
 alerts/
 records/
+camera_settings.json

@@ -12,9 +12,13 @@
 """
 import argparse
 import os
+import re
 import subprocess
 import sys
+import threading
 import time
+
+os.environ.setdefault("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;tcp")   # регистраторы надёжнее по TCP
 
 import cv2
 import numpy as np
@@ -109,6 +113,44 @@ def font(size):
     return ImageFont.load_default()
 
 
+class LiveReader:
+    """Читает живую камеру в отдельном потоке и отдаёт только самый свежий кадр (без отставания)."""
+
+    def __init__(self, cap):
+        self.cap, self.frame, self.ok, self.new = cap, None, True, False
+        self.lock = threading.Lock()
+        threading.Thread(target=self._run, daemon=True).start()
+
+    def _run(self):
+        fails = 0
+        while self.ok:
+            ok, f = self.cap.read()
+            if not ok:
+                fails += 1
+                if fails > 100:
+                    self.ok = False
+                time.sleep(0.05)
+                continue
+            fails = 0
+            with self.lock:
+                self.frame, self.new = f, True
+
+    def read(self):
+        for _ in range(200):   # ждём новый кадр до 10 секунд
+            with self.lock:
+                if self.new:
+                    self.new = False
+                    return True, self.frame
+            if not self.ok:
+                break
+            time.sleep(0.05)
+        return False, None
+
+
+def hide_password(text):
+    return re.sub(r"(rtsp://[^:/@]+:)[^@]*@", r"\1***@", str(text))
+
+
 WIN = "Smart camera"   # заголовок окна (латиницей — Windows иначе ломает буквы)
 
 
@@ -154,12 +196,13 @@ def main():
                 src = other
                 break
     if not cap.isOpened():
-        sys.exit("Не открывается источник видео: %s" % a.source)
+        sys.exit("Не открывается источник видео: %s" % hide_password(a.source))
     if isinstance(src, int):   # веб-камера: просим 1280x720
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     rec, rec_start = None, 0.0
     live = not (isinstance(src, str) and not src.startswith("rtsp"))
+    reader = LiveReader(cap) if live else cap
     ticks = []   # время обработанных кадров — настоящая скорость для записи живой камеры
     fps = cap.get(cv2.CAP_PROP_FPS) or 25
     out = None
@@ -174,8 +217,10 @@ def main():
     f_big, f_small = None, None
 
     while True:
-        ok, frame = cap.read()
+        ok, frame = reader.read()
         if not ok:
+            if live:
+                print("Камера перестала отвечать.", flush=True)
             break
         n += 1
         if n % a.skip:
@@ -299,6 +344,9 @@ def main():
             if cv2.waitKey(1) & 0xFF == 27:  # Esc — выход
                 break
 
+    if live:
+        reader.ok = False
+        time.sleep(0.2)
     cap.release()
     if rec:
         rec.release()
