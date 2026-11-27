@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="ru">
+<script>document.documentElement.classList.add("js")</script>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,17 +33,19 @@ header{position:fixed;top:0;left:0;right:0;z-index:30;padding:22px 0;mix-blend-m
 .tel{font-size:12px;letter-spacing:.18em;font-weight:500}
 
 /* hero */
-.hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:100px 28px 70px}
-.hero-card{position:relative;width:min(980px,100%,calc(62svh * 1.6));aspect-ratio:16/10;overflow:hidden;background:#d9d9d7;box-shadow:0 40px 90px -40px rgba(0,0,0,.35)}
-.hero-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05) brightness(1.05);transform:scale(1.08);animation:breathe 16s ease-in-out infinite alternate}
-@keyframes breathe{to{transform:scale(1)}}
-.hero-card:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.25),transparent 40%,transparent 60%,rgba(255,255,255,.25))}
-.hero-l,.hero-r{position:absolute;top:50%;transform:translateY(-50%);z-index:2;color:#fff;text-shadow:0 1px 18px rgba(0,0,0,.35)}
-.hero-l{left:7%}
-.hero-r{right:7%;max-width:260px}
-.hero-r p{font-size:11px;line-height:1.7;letter-spacing:.04em;margin-top:12px;opacity:.9;font-weight:400}
-.hero h1{position:relative;margin-top:-.42em;z-index:3;text-align:center;font-weight:200;font-size:clamp(46px,10.5vw,150px);letter-spacing:.06em;line-height:1;color:var(--ink);mix-blend-mode:multiply;pointer-events:none;white-space:nowrap}
-.scroll-hint{position:absolute;bottom:22px;right:28px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--mid)}
+.hero{min-height:100svh;display:grid;place-items:center;position:relative;padding:96px 28px 70px;overflow:hidden;background:#cfcfcd}
+.hero-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 22%;filter:grayscale(1) contrast(1.1) brightness(1.08);transform:scale(1.12);animation:breathe 18s ease-in-out infinite alternate}
+@keyframes breathe{to{transform:scale(1.02)}}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(240,240,238,.25),rgba(240,240,238,.05) 40%,rgba(240,240,238,.55));z-index:1}
+.hero-card{position:relative;z-index:2;width:min(860px,100%,calc(64svh * 1.42));aspect-ratio:1.42;overflow:hidden;background:#bdbdbb;box-shadow:0 50px 100px -40px rgba(0,0,0,.55)}
+.hero-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 12%;filter:grayscale(1) contrast(1.05) brightness(1.04)}
+.hero-card:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.28),transparent 32%,transparent 68%,rgba(0,0,0,.28))}
+.hero-l,.hero-r{position:absolute;top:50%;transform:translateY(-50%);z-index:3;color:#fff}
+.hero-l{left:6%}
+.hero-r{right:6%;max-width:230px}
+.hero-r p{font-size:10.5px;line-height:1.7;letter-spacing:.04em;margin-top:12px;opacity:.88;font-weight:400}
+.hero h1{position:absolute;z-index:3;left:0;right:0;bottom:22px;text-align:center;font-weight:300;font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--ink)}
+.scroll-hint{position:absolute;z-index:3;bottom:22px;right:28px;display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--mid)}
 .scroll-hint i{width:1px;height:46px;background:linear-gradient(var(--ink),transparent);animation:drop 2s infinite}
 @keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
@@ -117,8 +120,8 @@ blockquote{font-weight:200;font-size:clamp(22px,2.4vw,32px);line-height:1.45;let
 footer{padding:40px 0;border-top:1px solid var(--line);color:var(--mid)}
 footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
-.rv{opacity:0;transform:translateY(40px);transition:opacity 1.1s ease,transform 1.1s ease}
-.rv.in{opacity:1;transform:none}
+.js .rv{opacity:0;transform:translateY(40px);transition:opacity 1.1s ease,transform 1.1s ease}
+.js .rv.in{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}.hero-card img{animation:none}}
 
 @media (max-width:900px){
@@ -128,9 +131,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .svc p{grid-column:2}
   .svc .thumb{grid-column:2;width:100%}
   .steps{grid-template-columns:1fr}
-  .hero-card{aspect-ratio:3/4;width:min(100%,calc(58svh * .75))}
-  .hero-l{left:8%;top:12%;transform:none}
-  .hero-r{right:8%;left:8%;top:auto;bottom:16%;transform:none;max-width:none}
+  .hero-card{aspect-ratio:3/4;width:min(100%,calc(62svh * .75))}
+  .hero-card img{object-position:center 20%}
+  .hero-l{left:8%;top:7%;transform:none}
+  .hero-r{right:8%;left:8%;top:auto;bottom:6%;transform:none;max-width:none}
+  .hero-card:after{background:linear-gradient(180deg,rgba(0,0,0,.3),transparent 25%,transparent 60%,rgba(0,0,0,.55))}
+  .hero h1{bottom:18px;font-size:9.5px;letter-spacing:.3em}
+  .scroll-hint{display:none}
   section{padding:100px 0}
   .chap{right:calc(7vw + 18px);left:calc(7vw + 18px);text-align:left}
 }
@@ -154,13 +161,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   </div>
 </header>
 
-<section class="hero" data-bg="https://static.wixstatic.com/media/349326_279bd2bb5cb6429cbb93e659aa0d483b~mv2.png/v1/fill/w_1600,h_1000,q_70/a.jpg">
+<section class="hero" data-bg="alexey-blue.jpg">
+  <img class="hero-bg" src="alexey-blue.jpg" alt="">
   <div class="hero-card">
-    <img src="https://static.wixstatic.com/media/349326_279bd2bb5cb6429cbb93e659aa0d483b~mv2.png/v1/fill/w_1800,h_1125,q_85/a.jpg" alt="Готовый дом компании">
-    <div class="hero-l up">Лермонтов · КМВ</div>
-    <div class="hero-r"><div class="up">Строительная компания</div><p>Проектируем, строим и отделываем дома под ключ — от анализа участка до передачи ключей.</p></div>
+    <img src="alexey-black.jpg" alt="Алексей, строительная компания «Локация Комфорта»">
+    <div class="hero-l up">Локация Комфорта</div>
+    <div class="hero-r"><div class="up">Строим дома</div><p>От проекта и фундамента до ключей. Лермонтов и Кавказские Минеральные Воды.</p></div>
   </div>
-  <h1>КОМФОРТ</h1>
+  <h1>Строительная компания · Лермонтов</h1>
   <div class="scroll-hint"><span class="up">листайте</span><i></i></div>
 </section>
 
@@ -171,10 +179,10 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
     <div class="seq-veil"></div>
     <div class="seq-frame"></div>
     <div class="seq-count up" id="cnt">01 / 04</div>
-    <div class="chap" data-from="0" data-to=".25"><h3>Фундамент</h3><p>Анализ участка, армирование, заливка. Основа, на которой дом стоит десятилетия.</p></div>
-    <div class="chap" data-from=".25" data-to=".5"><h3>Стены</h3><p>Блок, кирпич, газобетон или каркас — подбираем технологию под ваш дом и бюджет.</p></div>
-    <div class="chap" data-from=".5" data-to=".75"><h3>Кровля</h3><p>Кровельные, фасадные и оконные работы. Дом закрыт от погоды.</p></div>
-    <div class="chap" data-from=".75" data-to="1.01"><h3>Ключи</h3><p>Отделка, инженерия, финальная проверка. Вы заезжаете в готовый дом.</p></div>
+    <div class="chap" data-from="0" data-to=".25"><h3>Расчёт</h3><p>Анализ участка и точная смета до начала работ. Никаких сюрпризов.</p></div>
+    <div class="chap" data-from=".25" data-to=".5"><h3>Материалы</h3><p>Только проверенные материалы: блок, кирпич, газобетон, бетон нужной марки.</p></div>
+    <div class="chap" data-from=".5" data-to=".75"><h3>Контроль</h3><p>Каждый этап фиксируем на фото и видео. Вы видите стройку, даже когда вас нет рядом.</p></div>
+    <div class="chap" data-from=".75" data-to="1.01"><h3>Фундамент</h3><p>Основа, на которой ваш дом простоит десятилетия. Сроки от 3 месяцев, гарантия.</p></div>
     <div class="seq-bar"><b id="bar"></b></div>
   </div>
 </div>
@@ -285,15 +293,18 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <footer><div class="wrap up"><span>© 2026 Локация Комфорта</span><span>lokaciakomforta@gmail.com</span></div></footer>
 
 <script>
+const FRAMES_H=61,FRAMES_V=61; /* число кадров видео в папках frames-h/ и frames-v/ */
 /* ===== Кадры для «стройки от прокрутки» =====
    Сейчас — фото их объектов (этапы). Когда будет видео, сюда подставляются кадры из него:
    FRAMES = {dir:'frames/', count:N, ext:'.jpg'} */
-const FRAMES=window.FRAMES||null;
+const FS=window.FRAMESETS||{h:{dir:'frames-h/',count:FRAMES_H},v:{dir:'frames-v/',count:FRAMES_V}};
+const vert=innerHeight>innerWidth, set=vert?FS.v:FS.h;
+const FRAMES=set&&(set.list||set.count)?set:null;
 const STAGES=['155469215bee4ff9b9afceac8cac2298~mv2.jpg','50e02bdcf0d14e948e94a01e017fb9ddf001.jpg','81669f211fc34e8db5fa0663cdcc2e5d~mv2.jpg',
  'e8feabac92ff403cbd8da045897bd963~mv2.jpg','6659f661dede443db3c148ba9a1d3d06~mv2.jpg','678b2c058e1a4f6994102c306826cb99~mv2.jpg',
  'b79fb0770a6144b8b7e5fbda68e76206~mv2.jpg','3e5b47ef491e4852951f257c1439cf53~mv2.jpg',
  '308df38e3ac7429a8e2002a771519ab7~mv2.jpg','279bd2bb5cb6429cbb93e659aa0d483b~mv2.png'];
-const srcs=FRAMES?Array.from({length:FRAMES.count},(_,i)=>FRAMES.dir+String(i+1).padStart(4,'0')+FRAMES.ext)
+const srcs=FRAMES?(FRAMES.list||Array.from({length:FRAMES.count},(_,i)=>FRAMES.dir+String(i+1).padStart(4,'0')+'.jpg'))
  :STAGES.map(id=>`https://static.wixstatic.com/media/349326_${id}/v1/fill/w_1600,h_1000,q_75/a.jpg`);
 const imgs=srcs.map(s=>{const i=new Image();i.decoding='async';i.src=s;return i});
 const cv=document.getElementById('cv'),cx=cv.getContext('2d');
