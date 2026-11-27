@@ -386,12 +386,12 @@ body::before{background:var(--pearl)}
 .btn-main:hover{background:#2A2E36;transform:translateY(-2px)}
 .btn-sky,.btn-ghost{background:rgba(255,255,255,.45);color:var(--ink);border-color:rgba(11,12,16,.55)}
 .btn-sky:hover,.btn-ghost:hover{background:var(--ink);color:#fff}
-.hero .btn-main,.intro .btn-main,.lens .btn-main,header.top:not(.solid) .btn-main{background:#fff;color:var(--ink)}
+.hero .btn-main,.intro .btn-main,.lens .btn-main,header.top:not(.solid) .btn-main{background:var(--ink);color:#fff}
 .hero .btn-sky,.lens .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.6)}
 .hero .btn-sky:hover,.lens .btn-ghost:hover{background:#fff;color:var(--ink)}
 .spaced i{background:linear-gradient(90deg,#0b0c10,#8a909c);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.08em}
 .intro .spaced i{background:none;color:rgba(255,255,255,.85)}
-header.top{--hd:#fff}
+header.top{--hd:var(--ink)}
 header.top.solid{background:rgba(255,255,255,.62);border-color:rgba(11,12,16,.1);--hd:#0B0C10}
 header .logo,header nav a,header .alt-pill{color:var(--hd)}
 header .alt-pill i{color:var(--hd)}
@@ -587,6 +587,38 @@ body.tp-on{overflow:hidden}
 .toon-skip{position:absolute;right:var(--gutr);bottom:34px;font:600 .72rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;background:rgba(255,255,255,.85);color:#14161C;border:2px solid #14161C;border-radius:99px;padding:.9em 1.2em;cursor:pointer;min-height:44px}
 .toon-bar{position:absolute;left:0;right:0;bottom:0;height:6px;background:rgba(20,22,28,.2)}
 .toon-bar i{display:block;height:100%;background:#FF6A3D;transform-origin:left;transform:scaleX(0)}
+
+/* ===== старт-карта и маршрут ===== */
+.start{position:relative;min-height:100vh;min-height:100svh;display:flex;align-items:center;padding-block:120px 80px;background:transparent}
+.start-in{display:grid;gap:24px;width:100%}
+.start .eyebrow b{color:#FF6A3D;-webkit-text-fill-color:#FF6A3D;background:none}
+.start-h{font-size:clamp(3.2rem,10vw,9.5rem);line-height:.88;max-width:10ch}
+.start-sub{max-width:46ch;font-size:1.1rem;color:var(--mist)}
+.start-cta{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.start-hint{font:600 .66rem/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+.start-pin{position:absolute;left:74%;top:72%;display:flex;align-items:center;gap:12px;z-index:7}
+.start-pin i{width:16px;height:16px;border-radius:50%;background:#FF6A3D;border:3px solid #14161C;box-shadow:0 0 0 8px rgba(255,106,61,.25);animation:pinPulse 2s infinite}
+@keyframes pinPulse{50%{box-shadow:0 0 0 16px rgba(255,106,61,0)}}
+.start-pin span,.rt-stop span{font:600 .62rem/1.2 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;background:#fff;color:#14161C;border:1.5px solid #14161C;border-radius:99px;padding:.55em .85em;white-space:nowrap}
+.start-pin b,.rt-stop b{font-weight:800}
+@media(max-width:700px){.start-pin{left:12%;top:auto;bottom:9%}}
+.route{position:absolute;left:0;top:0;width:100%;pointer-events:none;z-index:6}
+.rt-svg{position:absolute;left:0;top:0;overflow:visible}
+.rt-plan{fill:none;stroke:rgba(20,22,28,.35);stroke-width:2;stroke-dasharray:2 9;stroke-linecap:round}
+.rt-done{fill:none;stroke:#FF6A3D;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
+.rt-stop{position:absolute;display:flex;align-items:center;gap:10px;transform:translate(-9px,-9px)}
+.rt-stop.r{flex-direction:row-reverse;transform:translate(calc(-100% + 9px),-9px)}
+.rt-stop i{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid #14161C;flex:none;transition:background .4s,transform .4s}
+.rt-stop span{opacity:.0;transform:translateX(-6px);transition:opacity .5s,transform .5s}
+.rt-stop.r span{transform:translateX(6px)}
+.rt-stop.on i{background:#FF6A3D;transform:scale(1.15)}
+.rt-stop.on span{opacity:1;transform:none}
+.rt-bus{position:absolute;left:0;top:0;width:0;height:0;z-index:2}
+.rt-bus svg{position:absolute;width:56px;height:30px;left:-28px;top:-26px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25));transition:transform .3s}
+.rt-bus.flip svg{transform:scaleX(-1)}
+.rt-alt{position:absolute;left:34px;top:-24px;font:700 .62rem/1 var(--f-mono);letter-spacing:.1em;background:#14161C;color:#fff;padding:.45em .6em;border-radius:99px;white-space:nowrap}
+.rt-bus.rside .rt-alt{left:auto;right:34px}
+@media(max-width:700px){.rt-stop span{display:none}.rt-stop.on span{display:none}.rt-done{stroke-width:3}.rt-bus svg{width:30px;height:16px;left:-8px;top:-14px}.rt-bus.rside svg{left:-22px}.rt-alt{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -600,14 +632,16 @@ body.tp-on{overflow:hidden}
   <a class="btn btn-main" href="#book">Заявка</a>
 </div></header>
 
-<section class="toon" id="toon" aria-label="Мультфильм: как проходит поездка с МАГТУР">
-  <svg id="tsvg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Самолёт, автобус МАГТУР, поход к вершине, фото, обед и катер по Сулакскому каньону"></svg>
-  <p class="toon-cap" id="tCap"></p>
-  <div class="toon-end" id="tEnd"><p class="toon-logo">МАГТУР</p><p class="toon-sub">Кавказ, на который возвращаются</p>
-    <div class="toon-btns"><a class="btn btn-main" href="#tours">Выбрать тур</a><button class="btn btn-ghost toon-again" type="button" id="tAgain">↻ Ещё раз</button></div></div>
-  <button class="toon-skip" type="button" id="tSkip">Пропустить →</button>
-  <div class="toon-bar"><i id="tProg"></i></div>
+<section class="start" id="start" data-alt="310" data-place="Минеральные Воды">
+  <div class="wrap start-in">
+    <p class="eyebrow"><b>●</b> Маршрут МАГТУР · 9 остановок</p>
+    <h1 class="start-h">Кавказ, на который <i>возвращаются</i></h1>
+    <p class="start-sub">Листайте вниз — поедем по маршруту от Минеральных Вод до вершины Эльбруса. По дороге покажем туры, горы и людей, которые вас поведут.</p>
+    <div class="start-cta"><a class="btn btn-main" href="#tours">Сразу к турам</a><span class="start-hint">Листайте — автобус поедет ↓</span></div>
+  </div>
+  <div class="start-pin" id="startPin"><i></i><span><b>Минеральные Воды</b> 310 м · старт</span></div>
 </section>
+<div class="route" id="route" aria-hidden="true"></div>
 
 <section class="hero" id="top" data-alt="512" data-place="Пятигорск" aria-roledescription="карусель" aria-label="Направления МАГТУР">
   <div class="slides" id="slides"></div>
@@ -1355,7 +1389,7 @@ arm($('strips'));
 /* ---------- высотомер ---------- */
 
 const stations=[...document.querySelectorAll('[data-alt]')].map(el=>({el,alt:+el.dataset.alt,place:el.dataset.place}));
-const LO=512,HI=5642;
+const LO=310,HI=5642;
 function altitude(){
   const y=scrollY+innerHeight*.5*Math.min(1,scrollY/(innerHeight*.5)),tops=stations.map(s=>s.el.getBoundingClientRect().top+scrollY);
   let alt=LO,place=stations[0].place;
@@ -1413,7 +1447,7 @@ let fx=()=>{};
 (function(){
   const c=$('fx');if(!c)return;const gl=c.getContext('webgl',{antialias:false});if(!gl)return;
   // состояния: [вода, линии высот, сияние, снег] + оттенок
-  const ST={top:[1,0,0,0,'#E9ECF1'],intro:[1,0,0,0,'#E6EEF2'],tours:[.25,1,0,0,'#EEF0EA'],lens:[0,0,1,0,'#E8E4F2'],kv:[0,.2,1,0,'#E6EAF6'],
+  const ST={start:[0,1,0,0,'#ECEFE8'],top:[1,0,0,0,'#E9ECF1'],intro:[1,0,0,0,'#E6EEF2'],tours:[.25,1,0,0,'#EEF0EA'],lens:[0,0,1,0,'#E8E4F2'],kv:[0,.2,1,0,'#E6EAF6'],
     season:[1,.3,0,0,'#DDF1F0'],how:[0,1,0,0,'#F1EEE7'],guides:[0,0,.35,1,'#EEF1F6'],faq:[.6,0,.6,0,'#E7EEF6'],book:[0,.25,0,1,'#F6EEE6']};
   const SEC=Object.keys(ST).map(k=>({k,el:$(k)})).filter(o=>o.el);
   const fs=`precision highp float;uniform vec2 r;uniform float t;uniform vec2 m;uniform float s;uniform vec4 w;uniform vec3 tint;
@@ -1640,6 +1674,59 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
   const fit=()=>{const r=svg.getBoundingClientRect();svg.setAttribute('viewBox',r.width/r.height<1?'250 -300 1000 1650':'0 0 1600 900')};fit();addEventListener('resize',fit);
   if(STILL)t=TOTAL;
   requestAnimationFrame(loop);
+})();
+
+
+/* ---------- маршрут через всю страницу ---------- */
+(function(){
+  const box=document.getElementById('route');if(!box)return;
+  const NS='http://www.w3.org/2000/svg';
+  const STOPS=[['top','Пятигорск','512'],['tours','Архыз','1450'],['lens','Приэльбрусье','2350'],['kv','Домбай','1650'],['season','Чегет','3050'],['how','Гара-Баши','3847'],['guides','Скалы Пастухова','4700'],['faq','Седловина','5300'],['book','Вершина Эльбруса','5642']];
+  const svg=document.createElementNS(NS,'svg');svg.setAttribute('class','rt-svg');box.appendChild(svg);
+  const plan=document.createElementNS(NS,'path');plan.setAttribute('class','rt-plan');svg.appendChild(plan);
+  const done=document.createElementNS(NS,'path');done.setAttribute('class','rt-done');svg.appendChild(done);
+  const bus=document.createElement('div');bus.className='rt-bus';
+  bus.innerHTML='<svg viewBox="0 0 56 30" aria-hidden="true"><rect x="2" y="2" width="50" height="20" rx="5" fill="#FF6A3D" stroke="#14161C" stroke-width="2.2"/><rect x="7" y="6" width="9" height="7" rx="1.5" fill="#DDF1FB" stroke="#14161C" stroke-width="1.6"/><rect x="19" y="6" width="9" height="7" rx="1.5" fill="#DDF1FB" stroke="#14161C" stroke-width="1.6"/><rect x="31" y="6" width="9" height="7" rx="1.5" fill="#DDF1FB" stroke="#14161C" stroke-width="1.6"/><rect x="43" y="6" width="6" height="12" rx="1.5" fill="#DDF1FB" stroke="#14161C" stroke-width="1.6"/><circle cx="14" cy="23" r="4.5" fill="#14161C"/><circle cx="40" cy="23" r="4.5" fill="#14161C"/></svg><span class="rt-alt"></span>';
+  box.appendChild(bus);
+  let marks=[],L=0,W=0,H=0,pts=[];
+  function build(){
+    W=document.documentElement.clientWidth;H=document.documentElement.scrollHeight;
+    box.style.height=H+'px';svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('width',W);svg.setAttribute('height',H);
+    const g=W<700?7:Math.max(14,Math.min(70,(W-1240)/2*.55)),xs=[g,W-g];
+    const pin=document.getElementById('startPin');const pr=pin.getBoundingClientRect();
+    const sx=pr.left+8,sy=pr.top+scrollY+8;
+    let d=`M${sx} ${sy}`;let px=sx,py=sy;marks.forEach(m=>m.el.remove());marks=[];
+    STOPS.forEach(([id,name,alt],k)=>{
+      const el=document.getElementById(id);if(!el)return;
+      const y=el.getBoundingClientRect().top+scrollY,x=xs[k%2];
+      const yy=Math.max(py+80,y);
+      d+=` L${px} ${Math.max(py,yy-140)} C${px} ${yy-40}, ${x} ${yy-60}, ${x} ${yy+40}`;px=x;py=yy+40;
+      const m=document.createElement('div');m.className='rt-stop'+(k%2?' r':'');m.style.left=x+'px';m.style.top=py+'px';
+      m.innerHTML=`<i></i><span><b>${name}</b> ${alt} м</span>`;box.appendChild(m);marks.push({el:m,y:py});
+    });
+    const end=document.getElementById('book');const ey=end.getBoundingClientRect().top+scrollY+Math.min(end.offsetHeight*.35,320);
+    d+=` L${px} ${ey}`;
+    plan.setAttribute('d',d);done.setAttribute('d',d);L=done.getTotalLength();done.style.strokeDasharray=L;
+    pts=[];for(let s=0;s<=L;s+=12){const p=done.getPointAtLength(s);pts.push([s,p.x,p.y])}
+    upd();
+  }
+  function lenAtY(y){let lo=0,hi=pts.length-1;if(y<=pts[0][2])return 0;if(y>=pts[hi][2])return L;while(hi-lo>1){const m=(lo+hi)>>1;pts[m][2]<y?lo=m:hi=m}return pts[hi][0]}
+  let lastX=0;
+  function upd(){
+    if(!pts.length)return;
+    const y=scrollY+innerHeight*.55,l=lenAtY(y);
+    done.style.strokeDashoffset=L-l;
+    const p=done.getPointAtLength(l),q=done.getPointAtLength(Math.min(L,l+6));
+    const flip=q.x<p.x-.5||(Math.abs(q.x-p.x)<.5&&p.x>W/2);
+    bus.style.transform=`translate(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px)`;bus.classList.toggle('flip',flip);bus.classList.toggle('rside',p.x>W/2);
+    marks.forEach(m=>m.el.classList.toggle('on',m.y<=p.y+2));
+    const a=document.getElementById('altNum');bus.querySelector('.rt-alt').textContent=a?a.textContent:'';
+  }
+  let raf=0;addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;upd()})},{passive:true});
+  let bt=0;const rb=()=>{clearTimeout(bt);bt=setTimeout(build,120)};
+  addEventListener('resize',rb);addEventListener('load',rb);if(document.fonts)document.fonts.ready.then(rb);
+  if(window.ResizeObserver)new ResizeObserver(rb).observe(document.body);
+  build();
 })();
 
 </script>
