@@ -378,6 +378,9 @@ h1, h2, h3, p, dl, dd { margin: 0; }
   .rail { top: calc(76px + var(--st)); transform: none; left: calc(10px + var(--sl)); padding: 4px; }
   .rail.ui, .is-start .rail.ui { transform: none; }
   .rail button { min-width: 46px; height: 38px; font-size: 15px; }
+  /* вертикальный экран: этажи свёрнуты в маленькую кнопку, раскрываются по нажатию — дом не закрыт */
+  .rail:not(.is-open) button { display: none; } .rail:not(.is-open) button.is-on { display: block; }
+  .rail__cap { cursor: pointer; padding: 10px 8px; } .rail:not(.is-open) .rail__cap::after { content: ' ▾'; } .rail.is-open .rail__cap::after { content: ' ▴'; }
   .dock { left: 50%; bottom: calc(10px + var(--sb)); max-width: calc(100% - 20px); border-radius: 22px; }
   .dock__auto { flex-direction: column; justify-content: center; gap: 3px; height: 62px; padding: 0 10px; font-size: 11px; }
   .dock__auto i { width: 34px; height: 34px; } .dock__auto small { display: none; }
@@ -399,7 +402,7 @@ h1, h2, h3, p, dl, dd { margin: 0; }
   .caption__s { display: none; } .caption__n { font-size: 32px; } .caption__t { padding-left: 14px; } .caption__t b { font-size: 21px; } .caption__t span { font-size: 13.5px; }
   .cmp { padding: calc(18px + var(--st)) 16px calc(14px + var(--sb)); } .cmp__head h2 { font-size: 34px; }
   .start { align-items: flex-end; justify-content: center; }
-  .start__veil { background: linear-gradient(180deg, rgba(8, 10, 16, .46) 0, rgba(8, 10, 16, .06) 22%, rgba(8, 10, 16, .3) 44%, rgba(8, 10, 16, .92) 66%, rgba(8, 10, 16, .97) 100%); }
+  .start__veil { background: linear-gradient(180deg, rgba(8, 10, 16, .5) 0, rgba(8, 10, 16, .2) 12%, rgba(8, 10, 16, .78) 30%, rgba(8, 10, 16, .94) 48%, rgba(8, 10, 16, .97) 100%); }
   .start__in { width: 100%; min-width: 0; max-width: 720px; padding: 0 calc(28px + var(--sr)) calc(110px + var(--sb)) calc(28px + var(--sl)); }
   .start__eye { margin-top: 3vh; } .start__h br { display: none; } .start__h { font-size: clamp(52px, 11vw, 96px); }
   .start__meta { flex-wrap: wrap; } .start__cta { margin-top: 28px; }

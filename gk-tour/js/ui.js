@@ -188,6 +188,8 @@
     var add = function (key, label, txt) { var b = D.createElement('button'); b.type = 'button'; b.textContent = label; if (txt) b.className = 'is-txt'; b.setAttribute('data-key', key);
       b.addEventListener('click', function () { open(key); }); rail.appendChild(b); railBtns[key] = b; };
     var cap = D.createElement('div'); cap.className = 'rail__cap'; cap.textContent = 'Этаж'; rail.appendChild(cap);
+    cap.addEventListener('click', function () { rail.classList.toggle('is-open'); });
+    rail.addEventListener('click', function (e) { if (e.target.closest('button')) rail.classList.remove('is-open'); });
     add('roof', 'Крыша', true);
     for (var f = SC.floors; f >= 1; f--) add(f, String(f));
     add('parking', 'Паркинг', true);

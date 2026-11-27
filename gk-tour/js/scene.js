@@ -626,10 +626,11 @@ window.GKScene = (function () {
   canvas.addEventListener('pointerdown', function (e) { down = { x: e.clientX, y: e.clientY, t: performance.now() }; emit('act'); });
   canvas.addEventListener('pointerup', function (e) {
     if (!down) return; var d = Math.hypot(e.clientX - down.x, e.clientY - down.y), t = performance.now() - down.t; down = null;
-    if (d < 9 && t < 600) { var k = pick(e.clientX, e.clientY); if (k != null) emit('pick', k); }
+    if (d < 9 && t < 600) { if (ctx.tapHook && ctx.tapHook(e.clientX, e.clientY)) return; var k = pick(e.clientX, e.clientY); if (k != null) emit('pick', k); }   // tapHook — квартиры на фасаде (js/flats3d.js)
   });
   canvas.addEventListener('pointermove', function (e) {
     if (e.pointerType !== 'mouse' || e.buttons) return;
+    if (ctx.hoverHook && ctx.hoverHook(e.clientX, e.clientY)) { if (hovered) { hovered = null; dirty = true; emit('hover', { key: null }); } return; }
     var k = pick(e.clientX, e.clientY), z = k == null ? null : zoneByKey[k];
     if (z !== hovered) { hovered = z; canvas.style.cursor = z ? 'pointer' : 'grab'; dirty = true; emit('hover', { key: k, x: e.clientX, y: e.clientY }); }
     else if (z) emit('hover', { key: k, x: e.clientX, y: e.clientY });
