@@ -668,6 +668,19 @@ body.tp-on{overflow:hidden}
 @keyframes rtFlag{0%,100%{transform:skewY(0) scaleX(1)}50%{transform:skewY(-6deg) scaleX(.9)}}
 @keyframes rtSun{from{transform:translateY(6px)}to{transform:translateY(-3px)}}
 @media(max-width:700px){.rt-ic svg{width:64px;height:48px;border-radius:12px}}
+
+.only-m,.cal-m{display:none}
+@media(max-width:700px){.only-d,.cal-scroll{display:none!important}.only-m{display:inline}.cal-m{display:block}}
+.cm-months{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.cm-months button{font:700 .66rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;padding:12px 0;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.cm-months button.now{border-color:var(--ink)}
+.cm-months button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cm-head{margin:18px 0 10px;font:700 1.05rem/1.2 var(--f-body);color:var(--ink)}
+.cm-list{display:grid;gap:8px}
+.cm-list button{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px;cursor:pointer;font:inherit;color:var(--ink)}
+.cm-list img{width:52px;height:52px;flex:none;object-fit:cover;border-radius:8px}
+.cm-list span{display:grid;gap:3px;font:700 .92rem/1.2 var(--f-body)}
+.cm-list small{font:600 .56rem/1.3 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:#0F8B8D}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -779,10 +792,11 @@ body.tp-on{overflow:hidden}
     <div class="head">
       <p class="eyebrow" data-r="up"><b>3050 м</b> Чегет · сезоны</p>
       <h2 class="spaced" data-r="words">Весь год <i>на одной</i> карте</h2>
-      <p class="lead" data-r="up" style="--d:200ms">Полоса показывает месяцы, когда тур проводится. Нажмите на месяц, чтобы оставить в каталоге только его туры, или на название, чтобы открыть тур.</p>
+      <p class="lead" data-r="up" style="--d:200ms"><span class="only-d">Полоса показывает месяцы, когда тур проводится. Нажмите на месяц, чтобы оставить в каталоге только его туры, или на название, чтобы открыть тур.</span><span class="only-m">Выберите месяц — покажем, какие туры идут в это время.</span></p>
     </div>
     <div class="frost cal-panel" data-r="up" style="--d:300ms"><div class="cal-scroll"><div class="cal" id="cal"></div></div>
-    <p class="cal-note">Подсвеченный столбец — текущий месяц. Период «Кавказского калейдоскопа» уточняйте у менеджера.</p></div>
+    <div class="cal-m" id="calM"><div class="cm-months" id="cmMonths"></div><p class="cm-head" id="cmHead"></p><div class="cm-list" id="cmList"></div></div>
+    <p class="cal-note only-d">Подсвеченный столбец — текущий месяц. Период «Кавказского калейдоскопа» уточняйте у менеджера.</p></div>
   </div>
 </section>
 
@@ -1221,6 +1235,18 @@ if(document.fonts)document.fonts.ready.then(layoutWord);
     if(m){F.month=+m.dataset.m;more=true;apply();$('tours').scrollIntoView()}
     if(n)openTour(+n.dataset.id);
   };
+  const MS=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+  const MP=['январе','феврале','марте','апреле','мае','июне','июле','августе','сентябре','октябре','ноябре','декабре'];
+  let cm=NOW;
+  function cmShow(){
+    $('cmMonths').innerHTML=MS.map((m,i)=>`<button type="button" data-m="${i+1}" class="${i+1===NOW?'now':''}" aria-pressed="${i+1===cm}">${m}</button>`).join('');
+    const L=order.filter(t=>t.m&&t.m.includes(cm));
+    $('cmHead').textContent=`В ${MP[cm-1]} — ${L.length} ${plural(L.length,'тур','тура','туров')}`;
+    $('cmList').innerHTML=L.map(t=>`<button type="button" data-id="${t.id}"><img src="${t.img}" alt="" decoding="async"><span><small>${TYPES[t.type]} · ${period(t)}</small>${short(t.name)}</span></button>`).join('');
+  }
+  $('cmMonths').onclick=e=>{const b=e.target.closest('[data-m]');if(b){cm=+b.dataset.m;cmShow()}};
+  $('cmList').onclick=e=>{const b=e.target.closest('[data-id]');if(b)openTour(+b.dataset.id)};
+  cmShow();
 })();
 
 /* ---------- страница тура ---------- */
