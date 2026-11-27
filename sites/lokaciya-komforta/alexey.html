@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Алексей — Локация Комфорта</title>
+<meta name="description" content="Электронная визитка: Алексей, строительная компания «Локация Комфорта», Лермонтов. Дома под ключ, ремонт, дизайн интерьера.">
+<meta property="og:title" content="Алексей — Локация Комфорта">
+<meta property="og:description" content="Дома под ключ, ремонт и дизайн интерьера. Лермонтов и КМВ.">
+<meta property="og:image" content="https://static.wixstatic.com/media/349326_279bd2bb5cb6429cbb93e659aa0d483b~mv2.png/v1/fill/w_1200,h_630,q_85/og.jpg">
+<meta name="theme-color" content="#141a2e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#141a2e;--navy:#1d2c63;--sun:#e0892f;--sun2:#f2a654;--paper:#f6f2ec;--line:#e6ddd0;--muted:#5d6275}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Manrope,system-ui,sans-serif;background:var(--ink);color:var(--ink);min-height:100svh;display:flex;justify-content:center;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.card{width:100%;max-width:440px;background:var(--paper);min-height:100svh;position:relative;overflow:hidden}
+@media (min-width:480px){body{padding:32px 16px;align-items:flex-start}.card{min-height:auto;border-radius:28px;box-shadow:0 40px 80px -30px rgba(0,0,0,.7)}}
+.cover{height:210px;background:#1a2340 url("https://static.wixstatic.com/media/349326_279bd2bb5cb6429cbb93e659aa0d483b~mv2.png/v1/fill/w_900,h_440,q_80/c.jpg") center/cover;position:relative}
+.cover:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,20,42,.2),rgba(14,20,42,.75))}
+.logo{position:absolute;top:18px;left:20px;z-index:2;display:flex;gap:10px;align-items:center;color:#fff;font-weight:800;font-size:15px;line-height:1.1}
+.logo small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;font-weight:600}
+.logo svg{width:36px;height:36px}
+.share{position:absolute;top:16px;right:16px;z-index:2;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);color:#fff;display:grid;place-items:center;cursor:pointer}
+.share svg{width:20px;height:20px}
+.avatar{width:118px;height:118px;border-radius:50%;margin:-62px auto 0;position:relative;z-index:3;border:5px solid var(--paper);background:linear-gradient(135deg,var(--navy),#2f4596);display:grid;place-items:center;color:#fff;font-size:44px;font-weight:800;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.who{text-align:center;padding:14px 24px 0}
+.who h1{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.who .role{color:var(--sun);font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin-top:4px}
+.who p{color:var(--muted);font-size:15px;margin-top:10px;line-height:1.5}
+.who .serif{font-family:"Playfair Display",serif;font-style:italic;color:var(--navy)}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:22px 20px 6px}
+.quick a{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--ink)}
+.quick span{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;color:#fff;transition:transform .15s}
+.quick a:active span{transform:scale(.92)}
+.quick svg{width:24px;height:24px}
+.q-call{background:var(--sun)}.q-wa{background:#25d366}.q-tg{background:#2aabee}.q-mail{background:var(--navy)}
+.save{margin:18px 20px 0;display:flex;align-items:center;justify-content:center;gap:10px;padding:17px;border-radius:16px;background:var(--ink);color:#fff;font-weight:800;font-size:16px;border:0;width:calc(100% - 40px);cursor:pointer;font-family:inherit}
+.save svg{width:20px;height:20px}
+.list{margin:22px 20px 0;background:#fff;border-radius:20px;border:1px solid var(--line);overflow:hidden}
+.list a,.list div.it{display:flex;align-items:center;gap:14px;padding:15px 16px;border-bottom:1px solid var(--line)}
+.list>*:last-child{border-bottom:0}
+.list i{width:40px;height:40px;border-radius:12px;background:var(--paper);display:grid;place-items:center;flex:none;color:var(--navy)}
+.list i svg{width:19px;height:19px}
+.list b{display:block;font-size:15px}
+.list small{color:var(--muted);font-size:13px}
+.list .arr{margin-left:auto;color:#b9ae9f}
+h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:26px 24px 10px;font-weight:700}
+.svc{display:flex;gap:10px;overflow-x:auto;padding:0 20px 4px;scroll-snap-type:x mandatory;scroll-padding:0 20px;scrollbar-width:none}
+.svc::-webkit-scrollbar{display:none}
+.svc a{flex:0 0 150px;height:190px;border-radius:18px;overflow:hidden;position:relative;scroll-snap-align:start;color:#fff;display:flex;align-items:flex-end;padding:12px;font-weight:800;font-size:15px;line-height:1.2}
+.svc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.svc a:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,15,35,.85))}
+.svc span{position:relative;z-index:1}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 20px}
+.facts div{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
+.facts b{display:block;font-size:15px}
+.facts small{font-size:12.5px;color:var(--muted)}
+.qr{margin:26px 20px 0;background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;gap:18px;align-items:center}
+.qr #qrc{flex:none;width:112px;height:112px}
+.qr #qrc img,.qr #qrc canvas{width:112px!important;height:112px!important}
+.qr b{display:block;margin-bottom:4px}
+.qr small{color:var(--muted);font-size:13.5px;line-height:1.45;display:block}
+.foot{text-align:center;color:var(--muted);font-size:12px;padding:26px 20px 34px}
+.foot a{color:var(--navy);font-weight:700}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(120px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;font-size:14px;transition:transform .3s;z-index:9}
+.toast.on{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="cover">
+    <div class="logo"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="15" r="6" fill="#e0892f"/><path d="M3 38 17 20l7 8 7-10 14 20" stroke="#fff" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M15 38v-7l5-4 5 4v7" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/></svg><span>Локация Комфорта<small>строительная компания</small></span></div>
+    <button class="share" id="share" aria-label="Поделиться визиткой"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v14"/></svg></button>
+  </div>
+
+  <!-- ФОТО: замените букву на <img src="ссылка на фото Алексея" alt="Алексей"> -->
+  <div class="avatar">А</div>
+
+  <div class="who">
+    <h1>Алексей</h1>
+    <div class="role">Строительство и ремонт</div>
+    <p>Строим дома, в которых <span class="serif">хочется жить</span>. От проекта и фундамента до ключей — Лермонтов и вся КМВ.</p>
+  </div>
+
+  <nav class="quick" aria-label="Связаться">
+    <a href="tel:+79383416141"><span class="q-call"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span>Позвонить</a>
+    <a href="https://wa.me/79383416141" target="_blank" rel="noopener"><span class="q-wa"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1s-.5-.1-.7.1-.8 1-.9 1.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.9-1.6.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.4 3.4 0 0 0-1 2.5 5.9 5.9 0 0 0 1.2 3.1 13.4 13.4 0 0 0 5.2 4.6c1.9.8 2.7.9 3.6.8a3.1 3.1 0 0 0 2-1.4 2.5 2.5 0 0 0 .2-1.4c-.1-.1-.3-.2-.6-.3zM12 21.8a9.9 9.9 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.8 9.8 0 1 1 12 21.8zM12 0a12 12 0 0 0-10.3 18L0 24l6.2-1.6A12 12 0 1 0 12 0z"/></svg></span>WhatsApp</a>
+    <a href="https://t.me/+79383416141" target="_blank" rel="noopener"><span class="q-tg"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13 1.4 11.5c-1-.3-1-1 .2-1.5L20.6 2.7c.9-.3 1.6.2 1.3 1.6z"/></svg></span>Telegram</a>
+    <a href="mailto:lokaciakomforta@gmail.com"><span class="q-mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg></span>Почта</a>
+  </nav>
+
+  <button class="save" id="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Сохранить в контакты</button>
+
+  <div class="list">
+    <a href="tel:+79383416141"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></i><div><b>+7 938 341-61-41</b><small>Телефон</small></div><span class="arr">›</span></a>
+    <a href="mailto:lokaciakomforta@gmail.com"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg></i><div><b>lokaciakomforta@gmail.com</b><small>Почта</small></div><span class="arr">›</span></a>
+    <a href="index.html"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></i><div><b>Сайт компании</b><small>проекты, объекты, расчёт стоимости</small></div><span class="arr">›</span></a>
+    <div class="it"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-7.6 8-13a8 8 0 1 0-16 0c0 5.4 8 13 8 13z"/><circle cx="12" cy="9" r="3"/></svg></i><div><b>г. Лермонтов</b><small>Ставропольский край · работаем по КМВ</small></div></div>
+  </div>
+
+  <h2>Чем помогу</h2>
+  <div class="svc">
+    <a href="index.html#services"><img loading="lazy" src="https://static.wixstatic.com/media/349326_10e563f7e9a04fff922ee582f4f9076c~mv2.jpg/v1/fill/w_320,h_400,q_75/a.jpg" alt=""><span>Дома под ключ</span></a>
+    <a href="index.html#services"><img loading="lazy" src="https://static.wixstatic.com/media/349326_944161ed3e0b4211887b1e95396adf09~mv2.jpg/v1/fill/w_320,h_400,q_75/a.jpg" alt=""><span>Ремонт квартир</span></a>
+    <a href="index.html#services"><img loading="lazy" src="https://static.wixstatic.com/media/349326_a720c7015375490093907f6bf936af06~mv2.jpg/v1/fill/w_320,h_400,q_75/a.jpg" alt=""><span>Дизайн интерьера</span></a>
+    <a href="index.html#sale"><img loading="lazy" src="https://static.wixstatic.com/media/349326_05946b4c36804d448de98e6846a7332e~mv2.jpg/v1/fill/w_320,h_400,q_75/a.jpg" alt=""><span>Дома и участки в продаже</span></a>
+  </div>
+
+  <h2>Почему мы</h2>
+  <div class="facts">
+    <div><b>от 3 месяцев</b><small>срок строительства</small></div>
+    <div><b>Гарантия</b><small>на все работы</small></div>
+    <div><b>Фото и видео</b><small>каждого этапа</small></div>
+    <div><b>Ипотека</b><small>поможем оформить</small></div>
+  </div>
+
+  <div class="qr">
+    <div id="qrc"></div>
+    <div><b>Покажите QR-код</b><small>Наведите камеру телефона — визитка откроется сразу. Удобно на встрече и на объекте.</small></div>
+  </div>
+
+  <div class="foot">© 2026 «Локация Комфорта» · <a href="index.html">сайт компании</a></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ДАННЫЕ ДЛЯ КОНТАКТА — поменять здесь, когда будут точные данные Алексея
+const P={first:'Алексей',last:'',org:'Локация Комфорта',title:'Строительство и ремонт',
+  phone:'+79383416141',email:'lokaciakomforta@gmail.com',city:'Лермонтов',region:'Ставропольский край'};
+const url=location.href.split('#')[0];
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),2200)}
+document.getElementById('save').onclick=()=>{
+  const v=['BEGIN:VCARD','VERSION:3.0',`N:${P.last};${P.first};;;`,`FN:${(P.first+' '+P.last).trim()}`,`ORG:${P.org}`,`TITLE:${P.title}`,
+   `TEL;TYPE=CELL:${P.phone}`,`EMAIL;TYPE=WORK:${P.email}`,`ADR;TYPE=WORK:;;;${P.city};${P.region};;Россия`,
+   /^https?:/.test(url)?`URL:${url}`:'', 'END:VCARD'].filter(Boolean).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([v],{type:'text/vcard;charset=utf-8'}));
+  a.download='Алексей — Локация Комфорта.vcf';document.body.appendChild(a);a.click();a.remove();
+  toast('Контакт скачан — откройте файл, чтобы сохранить');
+};
+document.getElementById('share').onclick=async()=>{
+  const d={title:'Алексей — Локация Комфорта',text:'Строительство домов, ремонт и дизайн интерьера — Лермонтов, КМВ',url};
+  try{if(navigator.share)await navigator.share(d);else{await navigator.clipboard.writeText(url);toast('Ссылка скопирована')}}catch(e){}
+};
+try{new QRCode(document.getElementById('qrc'),{text:url,width:224,height:224,colorDark:'#141a2e',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M})}catch(e){document.querySelector('.qr').style.display='none'}
+</script>
+</body>
+</html>
