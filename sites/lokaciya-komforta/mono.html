@@ -41,6 +41,9 @@ img{display:block;max-width:100%}
 .gate.off{opacity:0;visibility:hidden}
 .gate{background-image:url("alexey-blue-bg.jpg")}
 html.locked,html.locked body{overflow:hidden}
+.snd-hint{position:fixed;right:72px;bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:41;display:none;align-items:center;height:38px;padding:0 16px;background:#151515;color:#fafaf8;border:0;font:500 11px/1 Montserrat,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;animation:hint 1.6s ease-in-out infinite}
+html.need-sound .snd-hint{display:inline-flex}
+@keyframes hint{0%,100%{transform:translateX(0)}50%{transform:translateX(-6px)}}
 /* header */
 header{position:fixed;top:0;left:0;right:0;z-index:30;padding:16px 0;color:var(--ink);background:#ececea;border-bottom:1px solid rgba(0,0,0,.06)}
 .nav{display:flex;justify-content:space-between;align-items:center}
@@ -414,6 +417,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 </section>
 
 <audio id="bgm" src="music.mp3" loop preload="auto"></audio>
+<button class="snd-hint" id="sndHint" type="button">Включить музыку</button>
 <button class="snd" id="snd" aria-label="Музыка: включить или выключить"><i></i><i></i><i></i><i></i></button>
 <footer><div class="wrap up"><span>© 2026 Локация Комфорта</span><span style="text-transform:none;letter-spacing:.04em">Музыка: Kevin MacLeod — «Reawakening» (incompetech.com), CC BY 4.0</span><span><a href="tel:+79383538440">Алексей: +7 938 353-84-40</a> · lokaciakomforta@gmail.com</span></div></footer>
 
@@ -456,16 +460,17 @@ addEventListener('scroll',kick,{passive:true});addEventListener('resize',kick);k
 
 /* музыка: стартует по кнопке «Войти» (тап = разрешение браузера) и играет постоянно; кнопка справа внизу выключает */
 {const a=document.getElementById('bgm'),b=document.getElementById('snd'),g=document.getElementById('gate');a.volume=.35;let muted=false,away=false;
- const set=on=>b.classList.toggle('on',on);
+ let entered=!g;const set=on=>{b.classList.toggle('on',on);document.documentElement.classList.toggle('need-sound',!on&&!muted&&entered)};
  a.addEventListener('pause',()=>set(false));a.addEventListener('play',()=>set(true));
  const play=()=>{if(muted)return Promise.resolve();const p=a.play();return p&&p.then?p.then(()=>{set(true);off()}).catch(()=>{set(false)}):Promise.resolve()};
  const ACT=['pointerup','touchend','click','keydown'];
  const tryAgain=e=>{if(e.target&&e.target.closest&&e.target.closest('#snd'))return;if(a.paused&&!muted)play()};
  const off=()=>ACT.forEach(t=>removeEventListener(t,tryAgain,true));
  ACT.forEach(t=>addEventListener(t,tryAgain,{capture:true,passive:true}));
- const enter=()=>{play();g.classList.add('off');document.documentElement.classList.remove('locked');scrollTo(0,0);dispatchEvent(new Event('site-enter'));setTimeout(()=>g.remove(),1000)};
+ const enter=()=>{entered=true;play();setTimeout(()=>set(!a.paused),1500);g.classList.add('off');document.documentElement.classList.remove('locked');scrollTo(0,0);dispatchEvent(new Event('site-enter'));setTimeout(()=>g.remove(),1000)};
  document.getElementById('enter').addEventListener('click',enter);
- b.addEventListener('click',()=>{if(a.paused){muted=false;a.play().catch(()=>{})}else{muted=true;a.pause()}});
+ b.addEventListener('click',()=>{if(a.paused){muted=false;a.play().catch(()=>{})}else{muted=true;a.pause();set(false)}});
+ document.getElementById('sndHint').addEventListener('click',()=>{muted=false;if(a.readyState===0)a.load();a.play().then(()=>set(true)).catch(()=>{})});
  /* ушёл с сайта (другая вкладка, свернул, закрыл) — пауза; вернулся — играет дальше */
  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(!a.paused){away=true;a.pause()}}else if(away&&!muted){away=false;a.play().catch(()=>{})}});
  addEventListener('pagehide',()=>{if(!a.paused){away=true;a.pause()}});
