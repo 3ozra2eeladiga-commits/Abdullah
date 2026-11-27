@@ -59,6 +59,15 @@ h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 .svc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
 .svc a:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,15,35,.85))}
 .svc span{position:relative;z-index:1}
+.about{margin:0 20px}
+.about .ph{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.about .ph img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:18px;cursor:zoom-in;background:#ddd}
+.about .ph img:first-child{object-position:center 30%}
+.about p{margin-top:14px;font-size:15.5px;line-height:1.55;color:var(--muted)}
+.about p b{color:var(--ink)}
+.zoom{position:fixed;inset:0;background:rgba(8,10,20,.95);z-index:20;display:none;align-items:center;justify-content:center;padding:16px}
+.zoom.on{display:flex}
+.zoom img{max-width:100%;max-height:92vh;border-radius:12px}
 .facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 20px}
 .facts div{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
 .facts b{display:block;font-size:15px}
@@ -104,6 +113,15 @@ h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
     <div class="it"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-7.6 8-13a8 8 0 1 0-16 0c0 5.4 8 13 8 13z"/><circle cx="12" cy="9" r="3"/></svg></i><div><b>г. Лермонтов</b><small>Ставропольский край · работаем по КМВ</small></div></div>
   </div>
 
+  <h2>Обо мне</h2>
+  <div class="about">
+    <div class="ph">
+      <img loading="lazy" src="alexey-blue.jpg" alt="Алексей в синем костюме в кабинете">
+      <img loading="lazy" src="alexey-black.jpg" alt="Алексей в чёрном свитере">
+    </div>
+    <p>Отвечаю за объект <b>от первой консультации до передачи ключей</b>. Прозрачная смета, договор с фиксированной ценой и сроками, фото- и видеоотчёт по каждому этапу — вы всегда знаете, что происходит на стройке.</p>
+  </div>
+
   <h2>Чем помогу</h2>
   <div class="svc">
     <a href="index.html#services"><img loading="lazy" src="https://static.wixstatic.com/media/349326_10e563f7e9a04fff922ee582f4f9076c~mv2.jpg/v1/fill/w_320,h_400,q_75/a.jpg" alt=""><span>Дома под ключ</span></a>
@@ -128,6 +146,7 @@ h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
   <div class="foot">© 2026 «Локация Комфорта» · <a href="index.html">сайт компании</a></div>
 </main>
 <div class="toast" id="toast"></div>
+<div class="zoom" id="zoom" onclick="this.classList.remove('on')"><img id="zimg" alt=""></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
@@ -148,6 +167,7 @@ document.getElementById('share').onclick=async()=>{
   const d={title:'Алексей — Локация Комфорта',text:'Строительство домов, ремонт и дизайн интерьера — Лермонтов, КМВ',url};
   try{if(navigator.share)await navigator.share(d);else{await navigator.clipboard.writeText(url);toast('Ссылка скопирована')}}catch(e){}
 };
+document.querySelectorAll('.about .ph img').forEach(i=>i.onclick=()=>{zimg.src=i.src;zimg.alt=i.alt;zoom.classList.add('on')});
 try{new QRCode(document.getElementById('qrc'),{text:url,width:224,height:224,colorDark:'#141a2e',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M})}catch(e){document.querySelector('.qr').style.display='none'}
 </script>
 </body>
