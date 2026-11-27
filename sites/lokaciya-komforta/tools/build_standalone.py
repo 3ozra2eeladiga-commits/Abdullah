@@ -48,6 +48,8 @@ def b64(name, mime):
     with open(os.path.join(src_dir, name), 'rb') as f:
         return data_uri(f.read(), mime)
 vids = {'v': b64('build-v.mp4', 'video/mp4'), 'h': b64('build-h.mp4', 'video/mp4')}
+for nm in ('p-chess.mp4','p-watch.mp4'):
+    if '"'+nm+'"' in html: html=html.replace('"'+nm+'"','"'+b64(nm,'video/mp4')+'"')
 inject = '<script>window.VIDEOS=' + json.dumps(vids) + '</script>\n'
 html = html.replace('<script>\n/* ===== Бетон от прокрутки', inject + '<script>\n/* ===== Бетон от прокрутки', 1)
 assert 'window.VIDEOS' in html
