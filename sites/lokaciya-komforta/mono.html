@@ -60,7 +60,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:30;padding:16px 0;color:var(-
 /* scroll-driven build sequence */
 .seq{height:520vh;position:relative}
 .seq-stick{position:sticky;top:0;height:100svh;overflow:hidden;display:grid;place-items:center}
-.seq canvas{position:absolute;inset:0;width:100%;height:100%}
+.seq video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111}
 .seq-frame{position:absolute;inset:9vh 7vw;border:1px solid rgba(255,255,255,.55);pointer-events:none;z-index:2}
 .seq-count{position:absolute;left:7vw;top:calc(9vh + 22px);z-index:3;color:#fff;margin-left:22px}
 .seq-bar{position:absolute;left:7vw;right:7vw;bottom:9vh;height:1px;background:rgba(255,255,255,.3);z-index:3}
@@ -253,7 +253,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <!-- SCROLL BUILD -->
 <div class="seq" id="build">
   <div class="seq-stick">
-    <canvas id="cv"></canvas>
+    <video id="sv" muted playsinline preload="auto" disablepictureinpicture aria-hidden="true"></video>
     <div class="seq-veil"></div>
     <div class="seq-frame"></div>
     <div class="seq-count up" id="cnt">01 / 04</div>
@@ -398,45 +398,29 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <footer><div class="wrap up"><span>© 2026 Локация Комфорта</span><span style="text-transform:none;letter-spacing:.04em">Музыка: Kevin MacLeod — «Dreamer» (incompetech.com), CC BY 4.0</span><span><a href="tel:+79383538440">Алексей: +7 938 353-84-40</a> · lokaciakomforta@gmail.com</span></div></footer>
 
 <script>
-const FRAMES_H=61,FRAMES_V=61; /* число кадров видео в папках frames-h/ и frames-v/ */
-/* ===== Кадры для «стройки от прокрутки» =====
-   Сейчас — фото их объектов (этапы). Когда будет видео, сюда подставляются кадры из него:
-   FRAMES = {dir:'frames/', count:N, ext:'.jpg'} */
-const FS=window.FRAMESETS||{h:{dir:'frames-h/',count:FRAMES_H},v:{dir:'frames-v/',count:FRAMES_V}};
-const vert=innerHeight>innerWidth, set=vert?FS.v:FS.h;
-const FRAMES=set&&(set.list||set.count)?set:null;
-const STAGES=['155469215bee4ff9b9afceac8cac2298~mv2.jpg','50e02bdcf0d14e948e94a01e017fb9ddf001.jpg','81669f211fc34e8db5fa0663cdcc2e5d~mv2.jpg',
- 'e8feabac92ff403cbd8da045897bd963~mv2.jpg','6659f661dede443db3c148ba9a1d3d06~mv2.jpg','678b2c058e1a4f6994102c306826cb99~mv2.jpg',
- 'b79fb0770a6144b8b7e5fbda68e76206~mv2.jpg','3e5b47ef491e4852951f257c1439cf53~mv2.jpg',
- '308df38e3ac7429a8e2002a771519ab7~mv2.jpg','279bd2bb5cb6429cbb93e659aa0d483b~mv2.png'];
-const srcs=FRAMES?(FRAMES.list||Array.from({length:FRAMES.count},(_,i)=>FRAMES.dir+String(i+1).padStart(4,'0')+'.jpg'))
- :STAGES.map(id=>`https://static.wixstatic.com/media/349326_${id}/v1/fill/w_1600,h_1000,q_75/a.jpg`);
-const imgs=srcs.map(s=>{const i=new Image();i.decoding='async';i.src=s;return i});
-const bmp=new Array(imgs.length);
-imgs.forEach((im,k)=>{const done=()=>{(window.createImageBitmap?createImageBitmap(im):Promise.resolve(im)).then(b=>{bmp[k]=b;need=true}).catch(()=>{bmp[k]=im;need=true})};
-  if(im.complete&&im.naturalWidth)done();else im.onload=done});
-const cv=document.getElementById('cv'),cx=cv.getContext('2d',{alpha:false});
-function size(){const r=Math.min(devicePixelRatio||1,1.5);cv.width=Math.round(innerWidth*r);cv.height=Math.round(innerHeight*r);need=true}
-function pick(k){for(let d=0;d<imgs.length;d++){if(bmp[k-d])return bmp[k-d];if(bmp[k+d])return bmp[k+d]}return null}
-function cover(img,alpha,zoom){
-  if(!img)return;const iw=img.width||img.naturalWidth,ih=img.height||img.naturalHeight;
-  const W=cv.width,H=cv.height,s=Math.max(W/iw,H/ih)*zoom,w=iw*s,h=ih*s;
-  cx.globalAlpha=alpha;cx.drawImage(img,(W-w)/2,(H-h)/2,w,h);cx.globalAlpha=1}
+/* ===== Бетон от прокрутки: настоящее видео, прокрутка двигает время =====
+   build-v.mp4 — телефон (вертикальное), build-h.mp4 — компьютер. */
+const vert=innerHeight>innerWidth;
+const v=document.getElementById('sv');
+function vsrc(){const V=window.VIDEOS;const s=V?(vert?V.v:V.h):(vert?'build-v.mp4':'build-h.mp4');
+  if(s.startsWith('data:')){try{const b=atob(s.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return URL.createObjectURL(new Blob([u],{type:'video/mp4'}))}catch(e){return s}}return s}
+v.src=vsrc();v.muted=true;
+let ready=false;const prime=()=>{const q=v.play();if(q&&q.then)q.then(()=>{v.pause();ready=true;kick()}).catch(()=>{ready=true;kick()});else{v.pause();ready=true}};
+v.addEventListener('loadedmetadata',()=>{ready=true;kick()});v.addEventListener('loadeddata',prime,{once:true});
+['touchstart','pointerdown'].forEach(t=>addEventListener(t,()=>{if(v.readyState<2)v.load();prime()},{once:true,passive:true}));
 const seq=document.getElementById('build'),bar=document.getElementById('bar'),cnt=document.getElementById('cnt'),chaps=[...document.querySelectorAll('.chap')];
-let target=0,cur=0,shown=-1,need=true,lastK=-1;
+let cur=0,lastK=-1,seeking=false;
+v.addEventListener('seeked',()=>{seeking=false});
 function prog(){const r=seq.getBoundingClientRect(),total=seq.offsetHeight-innerHeight;return Math.min(1,Math.max(0,-r.top/total))}
-function frame(){
-  target=prog();cur+=(target-cur)*.2;if(Math.abs(target-cur)<.0004)cur=target;
-  const n=imgs.length-1,f=cur*n;
-  if(FRAMES){const k=Math.round(f);if(k!==shown||need){const b=pick(k);if(b){cx.fillStyle='#111';cx.fillRect(0,0,cv.width,cv.height);cover(b,1,1);shown=k;need=false}}}
-  else if(need||Math.abs(f-shown)>.002){const i=Math.floor(f),t=f-i;cx.fillStyle='#111';cx.fillRect(0,0,cv.width,cv.height);cover(pick(i),1,1.12-t*.12);if(imgs[i+1]&&bmp[i+1])cover(bmp[i+1],t,1.12);shown=f;need=false}
+function seqFrame(){
+  const target=prog();cur+=(target-cur)*.22;if(Math.abs(target-cur)<.0005)cur=target;
+  const d=v.duration;if(ready&&d&&isFinite(d)&&!seeking){const t=Math.min(d-.05,cur*d);if(Math.abs(v.currentTime-t)>.03){seeking=true;v.currentTime=t;setTimeout(()=>{seeking=false},120)}}
   bar.style.transform='scaleX('+cur+')';
   const k=Math.min(3,Math.floor(cur*4));if(k!==lastK){lastK=k;cnt.textContent='0'+(k+1)+' / 04';chaps.forEach((c,j)=>c.classList.toggle('on',j===k))}
-  if(target!==cur||need)requestAnimationFrame(frame);else running=false;
+  if(target!==cur||seeking)requestAnimationFrame(seqFrame);else running=false;
 }
-let running=false;function kick(){if(!running){running=true;requestAnimationFrame(frame)}}
-size();addEventListener('resize',()=>{size();kick()});
-addEventListener('scroll',kick,{passive:true});setInterval(()=>{if(need)kick()},300);kick();
+let running=false;function kick(){if(!running){running=true;requestAnimationFrame(seqFrame)}}
+addEventListener('scroll',kick,{passive:true});addEventListener('resize',kick);kick();
 
 /* первый экран: сначала фото в костюме, через 2 секунды — карточка */
 {const h=document.querySelector('.hero'),bg=document.getElementById('herobg');
@@ -476,7 +460,7 @@ addEventListener('scroll',kick,{passive:true});setInterval(()=>{if(need)kick()},
  const draw=(el,k)=>{(el.tagName==='g'?[...el.children]:[el]).forEach((c,i,arr)=>{const n=arr.length,kk=seg(k,i/n,(i+1)/n);c.style.strokeDashoffset=1-kk})};
  const L=9500;let t0=null,run=false,vis=false;
  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
- function frame(t){const T=Math.min(1,((t-t0)%(L+1500))/L);
+ function toonFrame(t){const T=Math.min(1,((t-t0)%(L+1500))/L);
   draw($('t-ground'),seg(T,0,.07));draw($('t-found'),seg(T,.07,.18));draw($('t-walls'),seg(T,.18,.36));
   draw($('t-bricks'),seg(T,.36,.48));draw($('t-roof'),seg(T,.48,.6));draw($('t-chim'),seg(T,.58,.64));draw($('t-open'),seg(T,.64,.74));
   const work=T>.06&&T<.75,lift=seg(T,.76,.84);
@@ -484,9 +468,9 @@ addEventListener('scroll',kick,{passive:true});setInterval(()=>{if(need)kick()},
   $('t-hammer').style.opacity=T<.76?1:0;$('t-key').style.opacity=lift>0?1:0;
   const d=Math.max(1,Math.round(seg(T,.06,.74)*90));$('t-day').textContent=d;$('t-bar').setAttribute('x2',12+88*seg(T,.06,.74));
   const st=seg(T,.8,.86);const sp=$('t-stamp');sp.style.opacity=st>0?1:0;sp.setAttribute('transform',`translate(56 66) rotate(-14) scale(${1.6-.6*st})`);
-  if(vis)requestAnimationFrame(frame);else run=false}
+  if(vis)requestAnimationFrame(toonFrame);else run=false}
  if(reduce){draw($('t-ground'),1);['t-found','t-walls','t-bricks','t-roof','t-chim','t-open'].forEach(i=>draw($(i),1));$('t-day').textContent=90;$('t-bar').setAttribute('x2',100);$('t-stamp').style.opacity=1;$('t-hammer').style.opacity=0;$('t-key').style.opacity=1;$('t-arm').setAttribute('transform','rotate(-120 0 216)')}
- else new IntersectionObserver(es=>es.forEach(e=>{vis=e.isIntersecting;if(vis&&!run){run=true;t0=t0??performance.now();requestAnimationFrame(frame)}}),{threshold:.25}).observe(sv);
+ else new IntersectionObserver(es=>es.forEach(e=>{vis=e.isIntersecting;if(vis&&!run){run=true;t0=t0??performance.now();requestAnimationFrame(toonFrame)}}),{threshold:.25}).observe(sv);
 }}
 
 /* фон меняется по секциям */
