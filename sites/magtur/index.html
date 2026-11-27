@@ -620,20 +620,23 @@ body.tp-on{overflow:hidden}
 .rt-bus.rside .rt-alt{left:auto;right:34px}
 @media(max-width:700px){.rt-stop span{display:none}.rt-stop.on span{display:none}.rt-done{stroke-width:3}.rt-bus svg{width:30px;height:16px;left:-8px;top:-14px}.rt-bus.rside svg{left:-22px}.rt-alt{display:none}}
 
-.rt-card{position:absolute;top:22px;left:-6px;width:270px;background:#fff;color:#14161C;border:1.5px solid #14161C;border-radius:12px;padding:14px 16px;display:grid;gap:6px;box-shadow:0 18px 40px -18px rgba(0,0,0,.45);opacity:0;transform:translateY(8px) scale(.97);transform-origin:top left;transition:opacity .45s,transform .45s;pointer-events:none}
-.rt-stop.r .rt-card{left:auto;right:-6px;transform-origin:top right}
-.rt-card small,.rt-toast small{font:700 .58rem/1 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#FF6A3D}
-.rt-card b,.rt-toast b{font:800 1.15rem/1.1 var(--f-body);letter-spacing:-.01em}
-.rt-card p,.rt-toast p{font:500 .86rem/1.45 var(--f-body);color:#474D59;margin:0}
-.rt-stop.cur .rt-card{opacity:1;transform:none}
-.rt-stop.cur span{opacity:0!important}
-.rt-toast{display:none}
-@media(max-width:900px){.rt-card{display:none}
- .rt-toast{display:grid;gap:4px;position:fixed;z-index:30;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);background:#fff;border:1.5px solid #14161C;border-radius:14px;padding:12px 14px;box-shadow:0 18px 40px -18px rgba(0,0,0,.5);transform:translateY(130%);transition:transform .45s cubic-bezier(.2,.85,.2,1)}
- .rt-toast.on{transform:none}
- body.tp-on .rt-toast{display:none}}
+
 .start-h{font-family:var(--f-body);font-weight:800;letter-spacing:-.045em;line-height:.9;font-size:clamp(3rem,8.6vw,8.4rem);max-width:11ch}
 .start-h i{font-style:normal;color:#FF6A3D;background:none;-webkit-text-fill-color:#FF6A3D;padding:0}
+
+.rt-ic{position:absolute;bottom:26px;left:-14px;display:grid;justify-items:start;gap:6px;pointer-events:none}
+.rt-stop.r .rt-ic{left:auto;right:-14px;justify-items:end}
+.rt-ic svg{width:78px;height:78px;overflow:visible;animation:rtBob 4.5s ease-in-out infinite}
+.rt-ic svg .d{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.3s cubic-bezier(.5,0,.2,1)}
+.rt-ic svg .f{opacity:0;transition:opacity .6s .9s}
+.rt-ic em{font:700 .6rem/1 var(--f-mono);font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:#14161C;background:#FFD9CC;padding:.5em .7em;border-radius:6px;white-space:nowrap;opacity:0;transform:translateY(4px);transition:opacity .5s 1s,transform .5s 1s}
+.rt-stop.on .rt-ic svg .d{stroke-dashoffset:0}
+.rt-stop.on .rt-ic svg .f{opacity:1}
+.rt-stop.on .rt-ic em{opacity:1;transform:none}
+.rt-stop.cur .rt-ic svg{filter:drop-shadow(0 6px 10px rgba(255,106,61,.35))}
+@keyframes rtBob{50%{transform:translateY(-5px) rotate(-1.5deg)}}
+@media(max-width:700px){.rt-ic{bottom:16px;left:-6px}.rt-stop.r .rt-ic{right:-6px}.rt-ic svg{width:44px;height:44px;background:rgba(255,255,255,.9);border-radius:50%;padding:6px;box-sizing:content-box}.rt-ic em{display:none}
+ .rt-stop .rt-ic{opacity:0;transition:opacity .4s}.rt-stop.cur .rt-ic{opacity:1}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -657,7 +660,6 @@ body.tp-on{overflow:hidden}
   <div class="start-pin" id="startPin"><i></i><span><b>Минеральные Воды</b> 310 м · старт</span></div>
 </section>
 <div class="route" id="route" aria-hidden="true"></div>
-<div class="rt-toast" id="rtToast" aria-live="polite"></div>
 
 <section class="hero" id="top" data-alt="512" data-place="Пятигорск" aria-roledescription="карусель" aria-label="Направления МАГТУР">
   <div class="slides" id="slides"></div>
@@ -1721,13 +1723,14 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
     const pin=document.getElementById('startPin');const pr=pin.getBoundingClientRect();
     const sx=pr.left+8,sy=pr.top+scrollY+8;
     let d=`M${sx} ${sy}`;let px=sx,py=sy;marks.forEach(m=>m.el.remove());marks=[];
-    STOPS.forEach(([id,name,alt,txt],k)=>{
+    const RTIC=[[`Машук · вид на Эльбрус`, `<path class="f" d="M44 22 a7 7 0 1 0 .1 0" fill="none"/><circle class="f" cx="15" cy="16" r="6" fill="#FF6A3D"/><path d="M4 54 L22 28 L32 40 L44 24 L60 54 Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M44 24 V8 M40 14 H48" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" />`], [`Обсерватория и озёра`, `<path class="f" d="M8 54 Q32 46 56 54 Q32 62 8 54Z" fill="#8FD0EE"/><path d="M14 40 A15 15 0 0 1 44 40 Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M29 25 L37 13" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M10 40 H48 V47 H10Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M8 54 Q32 46 56 54 Q32 62 8 54Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" />`], [`Канатка к ледникам`, `<path class="f" d="M18 30 H46 V48 H18Z" fill="#FF6A3D"/><path d="M2 12 L62 24" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M32 18 V30" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M18 30 H46 V48 H18Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M23 35 H30 V41 H23Z M34 35 H41 V41 H34Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M6 60 L18 52 L26 58 L38 50 L58 60" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" />`], [`Водопады и озёра`, `<path class="f" d="M28 56 Q44 50 60 56 Q44 62 28 56Z" fill="#8FD0EE"/><path d="M6 58 V12 H28 V56" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M28 14 C38 14 36 32 40 54" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" style="stroke:#3BA3D6"/><path d="M28 22 C34 24 32 40 34 54" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" style="stroke:#3BA3D6"/><path d="M28 56 Q44 50 60 56 Q44 62 28 56Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" />`], [`Кофе с видом`, `<path class="f" d="M14 30 H42 V44 A10 10 0 0 1 32 54 H24 A10 10 0 0 1 14 44Z" fill="#FF6A3D"/><path d="M14 30 H42 V44 A10 10 0 0 1 32 54 H24 A10 10 0 0 1 14 44Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M42 34 A6 6 0 0 1 42 46" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M22 24 C18 18 26 16 22 10 M32 24 C28 18 36 16 32 10" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M44 22 L52 10 L60 22" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" />`], [`Приют альпинистов`, `<path class="f" d="M10 50 V36 A22 15 0 0 1 54 36 V50Z" fill="#FF6A3D"/><path d="M10 50 V36 A22 15 0 0 1 54 36 V50Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M28 50 V40 H36 V50" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M2 52 H62" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M16 14 L22 6 L28 14 M36 12 L44 2 L52 12" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" />`], [`Привал · акклиматизация`, `<path class="f" d="M38 54 L50 32 L62 54Z" fill="#FF6A3D"/><path d="M2 54 L14 34 L22 44 L30 28 L40 54" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M38 54 L50 32 L62 54Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M50 32 V54" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M2 56 H62" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" />`], [`Между двумя вершинами`, `<path d="M2 56 L20 16 L32 34 L44 12 L62 56" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M20 16 Q32 34 44 12" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" style="stroke:#FF6A3D;stroke-dasharray:.04 .04;stroke-dashoffset:0"/><circle class="f" cx="32" cy="27" r="3.5" fill="#FF6A3D"/>`], [`Высшая точка Европы`, `<path class="f" d="M32 4 L48 9 L32 14Z" fill="#FF6A3D"/><path d="M4 58 L32 18 L60 58Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M32 18 V3" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M32 4 L48 9 L32 14Z" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" /><path d="M22 34 L28 30 L32 34 L37 30 L42 34" stroke="#14161C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" pathLength="1" class="d" />`]];
+STOPS.forEach(([id,name,alt,txt],k)=>{
       const el=document.getElementById(id);if(!el)return;
       const y=el.getBoundingClientRect().top+scrollY,x=xs[k%2];
       const yy=Math.max(py+80,y);
       d+=` L${px} ${Math.max(py,yy-140)} C${px} ${yy-40}, ${x} ${yy-60}, ${x} ${yy+40}`;px=x;py=yy+40;
       const m=document.createElement('div');m.className='rt-stop'+(k%2?' r':'');m.style.left=x+'px';m.style.top=py+'px';
-      m.innerHTML=`<i></i><span><b>${name}</b> ${alt} м</span><div class="rt-card"><small>Остановка ${String(k+1).padStart(2,'0')} · ${alt} м</small><b>${name}</b><p>${txt}</p></div>`;box.appendChild(m);marks.push({el:m,y:py,k,name,alt,txt});
+      m.innerHTML=`<i></i><span><b>${name}</b> ${alt} м</span><div class="rt-ic"><svg viewBox="0 0 64 64" aria-hidden="true">${RTIC[k][1]}</svg><em>${RTIC[k][0]}</em></div>`;box.appendChild(m);marks.push({el:m,y:py,k,name,alt,txt});
     });
     const end=document.getElementById('book');const ey=end.getBoundingClientRect().top+scrollY+Math.min(end.offsetHeight*.35,320);
     d+=` L${px} ${ey}`;
@@ -1746,7 +1749,6 @@ apply();fillMonths();ticket();altitude();requestAnimationFrame(frame);
     bus.style.transform=`translate(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px)`;bus.classList.toggle('flip',flip);bus.classList.toggle('rside',p.x>W/2);
     let cur=null;marks.forEach(m=>{const on=m.y<=p.y+2;m.el.classList.toggle('on',on);if(on)cur=m});
     const near=cur&&(p.y-cur.y)<innerHeight*.9;marks.forEach(m=>m.el.classList.toggle('cur',m===cur&&near));
-    const tst=document.getElementById('rtToast');if(tst){if(cur&&near){if(tst.dataset.k!=String(cur.k)){tst.dataset.k=cur.k;tst.innerHTML=`<small>Остановка ${String(cur.k+1).padStart(2,'0')} · ${cur.alt} м</small><b>${cur.name}</b><p>${cur.txt}</p>`}tst.classList.add('on')}else tst.classList.remove('on')}
     const a=document.getElementById('altNum');bus.querySelector('.rt-alt').textContent=a?a.textContent:'';
   }
   let raf=0;addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;upd()})},{passive:true});
