@@ -1118,6 +1118,21 @@ html.onhero header.top .logo,html.onhero header.top nav a,html.onhero header.top
  .tl{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:0 -20px;padding:4px 20px 14px;scrollbar-width:none;overscroll-behavior-x:contain}
  .tl::-webkit-scrollbar{display:none}
  .tk{flex:0 0 78%;scroll-snap-align:start}}
+
+/* все кнопки видны сразу, без листания вбок */
+.tf-row{flex-wrap:wrap;overflow:visible}
+@media(max-width:760px){
+ .tf{gap:6px;padding:10px 20px;position:relative;top:auto}
+ .tf-row{gap:5px}
+ .tf-row button{padding:7px 10px;font-size:.8rem;gap:5px}
+ .tf-row button em{font-size:.56rem;padding:2px 5px}
+ .tl{display:grid;grid-template-columns:1fr;overflow:visible;margin:0;padding:0;gap:10px}
+ .tk{flex:none;grid-template-columns:96px 1fr;align-items:center;border-radius:14px}
+ .tk-ph{aspect-ratio:auto;height:100%;min-height:96px}
+ .tk-b{padding:12px 40px 12px 14px;gap:5px}
+ .tk b{font-size:1rem}
+ .tk-m{font-size:.78rem;gap:3px 10px}
+ .tk-go{top:50%;right:10px;transform:translateY(-50%);width:28px;height:28px;background:#f1f3f7;font-size:.9rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -1587,7 +1602,7 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
     const old=new Map([...tl.children].map(c=>[c.dataset.id,c.getBoundingClientRect()]));
     tl.innerHTML=L.map(t=>`<button type="button" class="tk" data-id="${t.id}"><span class="tk-ph"><img src="${t.img}" alt="" loading="lazy"></span><span class="tk-b"><small>${TYPES[t.type]} · ${REGSHORT[t.rg[0]]||t.reg}</small><b>${short(t.name)}</b><span class="tk-m"><span>${t.d} ${plural(t.d,'день','дня','дней')}</span><span>${per(t)}</span><span>от ${t.age} лет</span></span></span><span class="tk-go">→</span></button>`).join('');
     [...tl.children].forEach((c,i)=>{const o=old.get(c.dataset.id);if(o){const n=c.getBoundingClientRect();c.animate([{transform:`translate(${o.left-n.left}px,${o.top-n.top}px)`},{transform:'none'}],{duration:450,easing:'cubic-bezier(.2,.8,.2,1)'})}else c.animate([{opacity:0,transform:'scale(.94)'},{opacity:1,transform:'none'}],{duration:400,delay:i*30,easing:'ease-out',fill:'backwards'})});
-    tl.scrollTo({left:0,behavior:'smooth'});chips()}
+    chips()}
   $('tf').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
     if(b.dataset.t!==undefined)S.type=S.type===b.dataset.t&&b.dataset.t?'':b.dataset.t;
     else if(b.dataset.r!==undefined)S.reg=S.reg===b.dataset.r&&b.dataset.r?'':b.dataset.r;
