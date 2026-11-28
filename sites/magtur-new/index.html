@@ -44,6 +44,96 @@ html,body{margin:0;background:var(--bg);color:var(--fg);font-family:Onest,system
 .alt{position:absolute;right:48px;bottom:64px;z-index:3;text-align:right;font:600 .64rem/1.6 "JetBrains Mono",monospace;letter-spacing:.18em;color:var(--mist);opacity:0;animation:fade 1s 1.2s forwards}
 .alt b{display:block;font:800 1.6rem/1 Onest;letter-spacing:-.02em;color:#fff}
 @keyframes fade{to{opacity:1}}
+.wrap{width:min(1240px,calc(100% - 48px));margin:0 auto}
+.lbl{margin:0 0 14px;font:600 .66rem/1 "JetBrains Mono",monospace;letter-spacing:.26em;text-transform:uppercase;color:var(--mist)}
+.h2{margin:0 0 32px;font-weight:900;font-size:clamp(2rem,8.4vw,5rem);overflow-wrap:anywhere;line-height:.92;letter-spacing:-.045em;text-transform:uppercase}
+.mist{color:var(--mist)}
+.sec{padding:clamp(80px,10vw,140px) 0}
+/* directions */
+.dir{position:relative;height:100vh;height:100svh;min-height:600px;overflow:hidden}
+.dir-bg{position:absolute;inset:0}
+.dir-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1s,transform 6s ease-out;transform:scale(1.06)}
+.dir-bg img.on{opacity:1;transform:scale(1)}
+.dir-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,18,26,.82) 0%,rgba(7,18,26,.35) 50%,rgba(7,18,26,.2) 100%),linear-gradient(0deg,rgba(7,18,26,.7),transparent 40%)}
+.dir-in{position:relative;z-index:2;height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);align-items:center;gap:40px;padding:0 48px}
+.dir-txt{display:grid;gap:16px;max-width:520px}
+.dir-txt h2{margin:0;font-weight:900;font-size:clamp(3rem,7vw,6.4rem);line-height:.86;letter-spacing:-.045em;text-transform:uppercase}
+.dir-p{margin:0;font-size:1.08rem;line-height:1.5;color:var(--mist)}
+.dir-txt .btn{justify-self:start;cursor:pointer}
+.dir-txt.sw>*{animation:dirIn .7s cubic-bezier(.2,.8,.2,1) both}
+.dir-txt.sw>*:nth-child(2){animation-delay:.06s}.dir-txt.sw>*:nth-child(3){animation-delay:.12s}.dir-txt.sw>*:nth-child(4){animation-delay:.18s}
+@keyframes dirIn{from{opacity:0;transform:translateY(18px)}}
+.dir-cards{display:flex;gap:14px;align-self:end;margin-bottom:12vh;overflow-x:auto;padding:6px 2px 10px;scrollbar-width:none;overscroll-behavior-x:contain}
+.dir-cards::-webkit-scrollbar{display:none}
+.dcard{position:relative;flex:0 0 auto;width:clamp(150px,13vw,200px);aspect-ratio:3/4.3;border-radius:14px;overflow:hidden;border:0;padding:0;cursor:pointer;color:#fff;text-align:left;box-shadow:0 30px 50px -25px rgba(0,0,0,.8);transition:transform .35s}
+.dcard:hover{transform:translateY(-6px)}
+.dcard img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.dcard::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.75))}
+.dcard span{position:absolute;left:12px;right:12px;bottom:12px;z-index:1;font:800 1rem/1.05 Onest;text-transform:uppercase;letter-spacing:-.01em}
+.dcard small{display:block;font:600 .56rem/1 "JetBrains Mono",monospace;letter-spacing:.14em;opacity:.8;margin-bottom:6px}
+.dir-num{position:absolute;right:48px;bottom:40px;z-index:2;font:600 .7rem/1 "JetBrains Mono",monospace;color:var(--mist);letter-spacing:.14em}
+.dir-num b{font:900 2.4rem/1 Onest;color:#fff;letter-spacing:-.04em;margin-right:6px}
+.fly{position:absolute;z-index:3;border-radius:14px;overflow:hidden;transition:all .8s cubic-bezier(.7,0,.2,1);pointer-events:none}
+.fly img{width:100%;height:100%;object-fit:cover}
+/* tours */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.chips button{border:1.5px solid rgba(255,255,255,.25);background:none;color:#fff;font:600 .9rem/1 Onest;padding:11px 16px;border-radius:99px;cursor:pointer}
+.chips button[aria-pressed="true"]{background:#fff;color:#07121a;border-color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px}
+.tc{position:relative;border:0;padding:0;background:#0d1c27;color:#fff;text-align:left;border-radius:16px;overflow:hidden;cursor:pointer;display:grid;font:inherit;transition:transform .3s}
+.tc:hover{transform:translateY(-4px)}
+.tc .ph{aspect-ratio:4/3;overflow:hidden}
+.tc img{width:100%;height:100%;object-fit:cover;transition:transform 1s}
+.tc:hover img{transform:scale(1.05)}
+.tc .b{display:grid;gap:8px;padding:16px 18px 20px}
+.tc small{font:600 .6rem/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--mist)}
+.tc b{font:800 1.15rem/1.15 Onest;letter-spacing:-.01em}
+.tc .meta{display:flex;gap:14px;font-size:.88rem;color:var(--mist)}
+/* guides */
+.gd{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.g{display:grid;gap:12px}
+.g .ph{aspect-ratio:3/4;border-radius:16px;overflow:hidden;background:#0d1c27}
+.g img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05)}
+.g b{font:800 1.15rem/1.1 Onest}
+.g small{font:600 .6rem/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--mist)}
+.g .st{font:900 1.8rem/1 Onest;letter-spacing:-.03em}.g .st span{font:500 .82rem/1.3 Onest;color:var(--mist);display:block;margin-top:4px;letter-spacing:0}
+.g p{margin:0;font-size:.9rem;line-height:1.45;color:var(--mist)}
+/* book */
+.book{background:#0b1a24}
+.book-in{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,6vw,80px);align-items:start}
+.book-in>*{min-width:0}.form input,.form select{min-width:0;width:100%}
+.facts{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:10px}
+.facts li{color:var(--mist)}.facts b{color:#fff}
+.form{display:grid;gap:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:26px}
+.form label{display:grid;gap:8px;font:600 .62rem/1 "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--mist)}
+.form input,.form select{font:500 1rem Onest;color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:14px;outline:0}
+.form select option{color:#07121a}
+.btn.solid{background:#fff;color:#07121a;border-color:#fff;justify-content:center;cursor:pointer}
+.foot{padding:34px 0;border-top:1px solid rgba(255,255,255,.1)}
+.foot-in{display:flex;flex-wrap:wrap;gap:12px 30px;align-items:center;justify-content:space-between}
+.foot a{color:#fff}
+/* modal */
+.md{position:fixed;inset:0;z-index:20;background:rgba(3,8,12,.7);backdrop-filter:blur(6px);display:grid;place-items:center;padding:16px}
+.md[hidden]{display:none}
+.md-box{position:relative;width:min(560px,100%);max-height:90vh;overflow:auto;background:#0d1c27;border-radius:20px}
+.md-box img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}
+.md-b{padding:22px;display:grid;gap:14px}
+.md-b h3{margin:0;font:900 1.7rem/1.05 Onest;letter-spacing:-.03em}
+.md-f{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.md-f div{background:rgba(255,255,255,.05);border-radius:10px;padding:12px}
+.md-f small{display:block;font:600 .56rem/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);margin-bottom:6px}
+.md-a{display:flex;flex-wrap:wrap;gap:10px}
+.md-x{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:1.3rem;cursor:pointer;z-index:2}
+@media(max-width:900px){
+ .dir-in{grid-template-columns:1fr;align-content:end;gap:22px;padding:0 22px 30px}
+ .dir-txt{gap:12px}.dir-txt h2{font-size:clamp(2.6rem,13vw,4rem)}
+ .dir-cards{margin:0 -22px;padding:0 22px 6px}
+ .dcard{width:118px}
+ .dir-num{display:none}
+ .gd{grid-template-columns:1fr 1fr}
+ .book-in{grid-template-columns:1fr}
+ .wrap{width:calc(100% - 40px)}}
+
 @media(max-width:760px){
  .word{top:32.5%;font-size:21vw}
  .peak{-webkit-mask-image:linear-gradient(90deg,transparent 18%,#000 30%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 18%,#000 30%,#000 92%,transparent 100%)}
@@ -62,16 +152,148 @@ html,body{margin:0;background:var(--bg);color:var(--fg);font-family:Onest,system
   <div class="lay peak" id="lPk"><picture><source media="(max-width:760px)" srcset="img/hero_v_peak.webp"><img src="img/hero_h_peak.webp" alt=""></picture></div>
   <div class="shade"></div>
   <i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i>
-  <div class="top"><span class="logo">МАГТУР</span><nav class="nav"><a href="#">Направления</a><a href="#">Туры</a><a href="#">Гиды</a><a href="#">Контакты</a></nav></div>
+  <div class="top"><span class="logo">МАГТУР</span><nav class="nav"><a href="#dir">Направления</a><a href="#tours">Туры</a><a href="#guides">Гиды</a><a href="#book">Заявка</a></nav></div>
   <div class="info">
     <p>Авторские туры по Кавказу.<br>Впечатления на всю жизнь.</p>
-    <div class="cta"><a class="btn" href="#">Выбрать тур</a><a class="btn sq" href="#" aria-label="Написать в Telegram"><svg viewBox="0 0 24 24"><path d="M21.5 4.5 2.9 11.7c-1 .4-1 1.8.1 2.1l4.6 1.5 1.8 5.5c.3.8 1.3 1 1.9.4l2.6-2.5 4.7 3.4c.7.5 1.6.1 1.8-.7l3.2-15.2c.2-1-.8-1.8-1.7-1.4Zm-4.3 4-7.6 6.9-.3 3.2-1.4-4.3 8.9-5.6c.4-.2.7.2.4.5Z"/></svg></a></div>
+    <div class="cta"><a class="btn" href="#tours">Выбрать тур</a><a class="btn sq" href="https://t.me/MAGTOURsales" target="_blank" rel="noopener" aria-label="Написать в Telegram"><svg viewBox="0 0 24 24"><path d="M21.5 4.5 2.9 11.7c-1 .4-1 1.8.1 2.1l4.6 1.5 1.8 5.5c.3.8 1.3 1 1.9.4l2.6-2.5 4.7 3.4c.7.5 1.6.1 1.8-.7l3.2-15.2c.2-1-.8-1.8-1.7-1.4Zm-4.3 4-7.6 6.9-.3 3.2-1.4-4.3 8.9-5.6c.4-.2.7.2.4.5Z"/></svg></a></div>
   </div>
   <div class="dots"><i class="on"></i><i></i><i></i></div>
   <div class="alt">Эльбрус<b>5 642 м</b>высшая точка Европы</div>
-  <div class="soc"><a href="#">TELEGRAM</a><a href="#">VK</a><a href="#">YOUTUBE</a></div>
+  <div class="soc"><a href="https://t.me/MAGTOURsales" target="_blank" rel="noopener">TELEGRAM</a><a href="#dir">ЛИСТАЙТЕ ↓</a></div>
 </section>
+
+<section class="dir" id="dir">
+  <div class="dir-bg" id="dirBg"></div>
+  <div class="dir-shade"></div>
+  <div class="dir-in">
+    <div class="dir-txt" id="dirTxt">
+      <p class="lbl" id="dirLbl"></p>
+      <h2 id="dirT"></h2>
+      <p class="dir-p" id="dirP"></p>
+      <button class="btn" type="button" id="dirGo"></button>
+    </div>
+    <div class="dir-cards" id="dirCards"></div>
+  </div>
+  <div class="dir-num"><b id="dirN">01</b><span>/ 05</span></div>
+</section>
+
+<section class="sec" id="tours">
+  <div class="wrap">
+    <p class="lbl">Туры</p>
+    <h2 class="h2">Выберите маршрут</h2>
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<section class="sec" id="guides">
+  <div class="wrap">
+    <p class="lbl">Команда</p>
+    <h2 class="h2">Вас поведут</h2>
+    <div class="gd" id="gd"></div>
+  </div>
+</section>
+
+<section class="sec book" id="book">
+  <div class="wrap book-in">
+    <div>
+      <p class="lbl">Заявка</p>
+      <h2 class="h2">Осталось выбрать даты</h2>
+      <p class="mist">Оставьте контакты — менеджер ответит в Telegram, подтвердит места и пришлёт программу. Тур состоится даже если вы один.</p>
+      <ul class="facts"><li><b>30%</b> предоплата</li><li><b>72 часа</b> — перенос или возврат 100%</li><li><b>с 2013</b> года, 20 000+ туристов</li></ul>
+    </div>
+    <form class="form" id="form">
+      <label>Имя<input id="fName" required placeholder="Как к вам обращаться"></label>
+      <label>Телефон или Telegram<input id="fPhone" required placeholder="+7 … или @ник"></label>
+      <label>Тур<select id="fTour"></select></label>
+      <button class="btn solid" type="submit">Отправить в Telegram</button>
+      <small class="mist">Нажимая кнопку, вы откроете чат с менеджером МАГТУР — сообщение уже будет написано.</small>
+    </form>
+  </div>
+</section>
+
+<footer class="foot"><div class="wrap foot-in"><span class="logo">МАГТУР</span><span class="mist">Авторские туры по Кавказу с 2013 года</span><a href="https://t.me/MAGTOURsales" target="_blank" rel="noopener">Telegram @MAGTOURsales</a></div></footer>
+
+<div class="md" id="md" hidden><div class="md-box" role="dialog" aria-modal="true"><button class="md-x" type="button" id="mdX" aria-label="Закрыть">×</button><div id="mdIn"></div></div></div>
 <script>
+const ALL=[1,2,3,4,5,6,7,8,9,10,11,12],r=(a,b)=>{const o=[];for(let i=a;;i=i%12+1){o.push(i);if(i===b)break}return o};const U='https://akademiya-gornih-turov.ru/tour/';
+const T=[
+ [7,'hike','Хайкинг «Притяжение Эльбруса»','Кабардино-Балкария','kbr',8,7,r(6,10),12,3,'выше среднего',79200,99000,'t7','peshij-trekking-tur-prityazhenie-elbrusa-2027/'],
+ [5,'hike','Хайкинг «Горный Дагестан: тропой Императора»','Дагестан','dag',8,7,r(5,10),12,4,'средний',79999,99999,'t5','peshij-trekking-tur-gornyj-dagestan-tropoj-imperatora-2027/'],
+ [13,'bus','Экскурсионный тур «Курортный роман»','КЧР, КБР и Кавминводы','kchr kbr kmv',8,7,r(4,10),6,1,'выше среднего',79200,99000,'t13','ekskursionnyj-tur-kurortnyj-roman-2027/'],
+ [12,'bus','Экскурсионный тур «Звёздный путь»','Карачаево-Черкесия','kchr',6,5,r(4,10),8,1,'выше среднего',63200,79000,'t12','excursion-tour-star-trek-2027/'],
+ [10,'bus','Экскурсионный тур «Грани Кавказа»','Осетия, Чечня, Ингушетия','oset',8,7,r(4,10),8,1,'выше среднего',88000,110000,'t10','excursion-tour-edges-of-the-caucasus-2027/'],
+ [15,'horse','Конный тур «Кубанское кольцо»','Карачаево-Черкесия','kchr',8,7,r(6,9),12,4,'простой',79200,99000,'t15','konnyj-tur-kubanskoe-koltso-2027/'],
+ [9,'hike','Пеший тур «Горная Дигория: ледники, водопады и тайны Осетии»','Северная Осетия','oset',8,7,r(6,10),8,1,'выше среднего',79999,99999,'t9','mountain-digory-secrets-of-ossetia-2027/'],
+ [6,'hike','Хайкинг «Домбай и его окрестности»','Карачаево-Черкесия','kchr',8,7,r(6,10),6,2,'выше среднего',71111,88888,'t6','peshij-trekking-tur-dombaj-i-ego-okrestnosti-2027/'],
+ [11,'bus','Экскурсионный тур «Завораживающий Дагестан»','Дагестан','dag',8,7,r(4,10),8,1,'средний',79200,99000,'t11','ekskursionnyj-tur-zavorazhivayushhij-dagestan-2027/'],
+ [8,'hike','Хайкинг «Чарующий Архыз»','Карачаево-Черкесия','kchr',8,7,r(6,10),6,3,'выше среднего',79999,99999,'t8','peshij-trekking-tur-charuyushhij-arhyz-2027/'],
+ [14,'horse','Конный тур «Джигитовка для чайников»','Карачаево-Черкесия','kchr',8,7,r(3,11),12,1,'выше среднего',71111,88888,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-2027/'],
+ [4,'hike','Хайкинг «Архипелаг скалистых островов»','Кавказские Минеральные Воды','kmv',12,11,r(6,10),10,2,'выше среднего',71200,89000,'t4','peshij-trekking-tur-arhipelag-skalistyh-ostrovov-2027/'],
+ [16,'horse','Конный тур «Зимняя джигитовка для чайников»','Карачаево-Черкесия','kchr',6,5,r(11,3),12,1,'выше среднего',45000,0,'t14','konnyj-tur-dzhigitovka-dlya-chajnikov-winter-2026-2027/',1],
+ [17,'bus','«Кавказский калейдоскоп: от древних тайн до вершин Домбая»','Карачаево-Черкесия','kchr',6,5,null,6,1,'выше среднего',49000,0,'t6','caucasian-kaleidoscope-from-ancient-secrets-to-the-peaks-of-dombay/',1],
+ [18,'ski','Горнолыжный тур в Домбай на автобусе из Москвы','Карачаево-Черкесия','kchr',6,5,r(1,3),6,0,'',64990,0,'t18','gornolyzhnyj-tur-v-dombaj-na-avtobuse/'],
+ [19,'ski','Горнолыжный тур в Архыз на автобусе из Москвы','Карачаево-Черкесия','kchr',6,5,r(1,3),6,0,'',64990,0,'t19','gornolyzhnyj-tur-v-arhyz-iz-moskvy/'],
+ [3,'rest','Агротуризм премиум «Жизнь аула»','Карачаево-Черкесия','kchr',5,4,ALL,5,2,'простой',210000,0,'t3','agro-tourism-premium-life-aula/'],
+ [2,'rest','Digital detox-ретрит «Тишина гор»','Кабардино-Балкария','kbr',4,3,ALL,18,2,'простой',480000,0,'t2','digital-detox-silence-of-the-mountains/'],
+ [1,'rest','Wellness-программа «Кавказские минералы»','Пятигорск, Железноводск, Кисловодск','kmv',6,5,ALL,6,1,'высокий',530000,0,'t1','caucasian-minerals-wellness-program/'],
+].map(a=>({id:a[0],type:a[1],name:a[2],reg:a[3],rg:a[4].split(' '),d:a[5],n:a[6],m:a[7],age:a[8],diff:a[9],comfort:a[10],price:a[11],old:a[12],img:'img/'+a[13]+'.jpg',url:U+a[14],isNew:!!a[15]}));;
+const TYPES={hike:'Пешком',bus:'Экскурсии',horse:'Верхом',ski:'Горные лыжи',rest:'Ретрит и отдых'};
+const MS=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const DIFF=['','базовая','средняя','продвинутая','сложная'];
+const $=id=>document.getElementById(id);
+const plural=(n,a,b,c)=>{n=Math.abs(n)%100;const k=n%10;return n>10&&n<20?c:k>1&&k<5?b:k===1?a:c};
+const short=n=>{const m=n.match(/«(.+)»/);return m?m[1]:n};
+const period=t=>!t.m||t.m.length>=12?'круглый год':MS[t.m[0]-1]+'–'+MS[t.m[t.m.length-1]-1];
+const DIRS=[['kbr','Эльбрус','Кабардино-Балкария','Высшая точка Европы, канатка к ледникам, Чегет и поляна Азау.','img/v2/elbrus.jpg'],
+ ['kchr','Домбай и Архыз','Карачаево-Черкесия','Водопады, бирюзовые озёра, конные прогулки и горные лыжи.','img/t12.jpg'],
+ ['dag','Дагестан','Сулак · Гамсутль · Дербент','Один из глубочайших каньонов мира и аулы на скалах.','img/t11.jpg'],
+ ['oset','Осетия','Даргавс · Дигория','Город башен, ледники и древние ущелья.','img/t10.jpg'],
+ ['kmv','Кавминводы','Пятигорск · Кисловодск','Курортные парки, нарзан и плато Бермамыт.','img/t4.jpg']];
+const cnt=k=>T.filter(t=>t.rg.includes(k)).length;
+$('dirBg').innerHTML=DIRS.map((d,i)=>`<img src="${d[4]}" alt="${d[1]}" class="${i?'':'on'}">`).join('');
+let di=-1;
+function setDir(i,fromCard){const d=DIRS[i];const imgs=[...$('dirBg').children];
+  const apply=()=>{imgs.forEach((m,k)=>m.classList.toggle('on',k===i));const tx=$('dirTxt');tx.classList.remove('sw');void tx.offsetWidth;tx.classList.add('sw');
+   $('dirLbl').textContent=d[2];$('dirT').textContent=d[1];$('dirP').textContent=d[3];const n=cnt(d[0]);$('dirGo').textContent=`Смотреть ${n} ${plural(n,'тур','тура','туров')} →`;$('dirGo').dataset.k=d[0];
+   $('dirN').textContent=String(i+1).padStart(2,'0');
+   $('dirCards').innerHTML=DIRS.map((x,k)=>k===i?'':`<button type="button" class="dcard" data-i="${k}"><img src="${x[4]}" alt=""><span><small>${x[2]}</small>${x[1]}</span></button>`).join('')};
+  if(fromCard){const r=fromCard.getBoundingClientRect(),sr=$('dir').getBoundingClientRect();const f=document.createElement('div');f.className='fly';
+    f.style.cssText=`left:${r.left-sr.left}px;top:${r.top-sr.top}px;width:${r.width}px;height:${r.height}px`;f.innerHTML=`<img src="${d[4]}" alt="">`;$('dir').appendChild(f);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.cssText=`left:0;top:0;width:100%;height:100%;border-radius:0`}));
+    setTimeout(()=>{apply();setTimeout(()=>f.remove(),350)},800)}else apply();
+  di=i}
+$('dirCards').addEventListener('click',e=>{const c=e.target.closest('.dcard');if(c){clearInterval(dAuto);setDir(+c.dataset.i,c)}});
+$('dirGo').onclick=()=>{filter($('dirGo').dataset.k);$('tours').scrollIntoView({behavior:'smooth'})};
+setDir(0);let dAuto=setInterval(()=>{const c=[...$('dirCards').children][0];if(c&&document.visibilityState==='visible'&&$('dir').getBoundingClientRect().top<innerHeight*.5&&$('dir').getBoundingClientRect().bottom>innerHeight*.5)setDir(+c.dataset.i,c)},6500);
+/* tours */
+const CH=[['','Все'],['kbr','Эльбрус'],['kchr','Домбай и Архыз'],['dag','Дагестан'],['oset','Осетия'],['kmv','Кавминводы']];
+let cur='';
+$('chips').innerHTML=CH.map(c=>`<button type="button" data-k="${c[0]}">${c[1]}</button>`).join('');
+$('chips').onclick=e=>{const b=e.target.closest('button');if(b)filter(b.dataset.k)};
+function filter(k){cur=k;[...$('chips').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));
+  const L=T.filter(t=>!k||t.rg.includes(k));
+  $('grid').innerHTML=L.map(t=>`<button type="button" class="tc" data-id="${t.id}"><div class="ph"><img src="${t.img}" alt="" loading="lazy"></div><div class="b"><small>${TYPES[t.type]} · ${t.reg}</small><b>${short(t.name)}</b><div class="meta"><span>${t.d} ${plural(t.d,'день','дня','дней')}</span><span>${period(t)}</span></div></div></button>`).join('')}
+filter('');
+$('grid').onclick=e=>{const c=e.target.closest('.tc');if(!c)return;const t=T.find(x=>x.id==c.dataset.id);
+  $('mdIn').innerHTML=`<img src="${t.img}" alt=""><div class="md-b"><small class="lbl" style="margin:0">${TYPES[t.type]} · ${t.reg}</small><h3>${t.name}</h3>
+  <div class="md-f"><div><small>Длительность</small>${t.d} дн. / ${t.n} ноч.</div><div><small>Сезон</small>${period(t)}</div><div><small>Возраст</small>от ${t.age} лет</div><div><small>Нагрузка</small>${DIFF[t.diff]||'—'}</div></div>
+  <p class="mist" style="margin:0">Встречаем в Минеральных Водах и везём по маршруту на своём транспорте. Тур состоится при любом составе группы.</p>
+  <div class="md-a"><button class="btn solid" type="button" id="mdBook">Хочу этот тур</button><a class="btn" href="${t.url}" target="_blank" rel="noopener">Программа ↗</a></div></div>`;
+  $('md').hidden=false;$('mdBook').onclick=()=>{$('fTour').value=t.id;$('md').hidden=true;$('book').scrollIntoView({behavior:'smooth'})}};
+$('mdX').onclick=()=>$('md').hidden=true;$('md').onclick=e=>{if(e.target===$('md'))$('md').hidden=true};
+/* guides */
+const G=[['g_greb_new','Александр Гребенюк','Эксперт по маршрутам','≈200','восхождений за 30 лет','Руководит Региональным научно-спортивным центром СКФО. Проверяет каждый маршрут на безопасность.'],
+ ['g_umar_new','Умар Айдинов','Основатель МАГТУР','20+','лет в туризме','Собрал команду в 2013 году и сам придумывает маршруты.'],
+ ['g_ush_new2','Мария Ушакова','Эксперт по маршрутам','20+','восхождений','Альпинистка и скалолаз. Следит, чтобы маршрут был по силам группе.'],
+ ['g_hub_new','Абдуррахман Хубиев','Гид-инструктор','5642','метра — его Эльбрус','Инструктор по горному туризму и лыжам, сам стоял на вершине Эльбруса.']];
+$('gd').innerHTML=G.map(g=>`<div class="g"><div class="ph"><img src="img/${g[0]}.jpg" alt="${g[1]}" loading="lazy"></div><small>${g[2]}</small><b>${g[1]}</b><div class="st">${g[3]}<span>${g[4]}</span></div><p>${g[5]}</p></div>`).join('');
+/* form */
+$('fTour').innerHTML='<option value="">Пока не знаю — помогите выбрать</option>'+T.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+$('form').onsubmit=e=>{e.preventDefault();const t=T.find(x=>x.id==$('fTour').value);
+  const text=`Здравствуйте! Хочу в тур${t?' «'+short(t.name)+'»':''}.\nИмя: ${$('fName').value}\nКонтакт: ${$('fPhone').value}`;
+  window.open('https://t.me/MAGTOURsales?text='+encodeURIComponent(text),'_blank')};
+
 const bg=document.getElementById('lBg'),pk=document.getElementById('lPk'),wd=document.getElementById('word');
 let tx=0,ty=0,cx=0,cy=0;
 addEventListener('pointermove',e=>{tx=e.clientX/innerWidth-.5;ty=e.clientY/innerHeight-.5});
