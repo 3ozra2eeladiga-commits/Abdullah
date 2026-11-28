@@ -1544,10 +1544,10 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
   function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');scrollTo(0,0);lock(true);introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1300);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0);setTimeout(()=>pre.remove(),1000)}
   function done(){if(ready)return;ready=true;setNum(100);$('preRing').style.strokeDashoffset=0;drawn=-1;
     setTimeout(()=>{pre.classList.add('ready');$('preBtn').disabled=false;$('preSub').textContent='Всё готово — с наступающим! Нажмите «Поехали»';$('preBtn').onclick=go},300);}
-  const ORD=[],seenF=new Set();const pushF=i=>{if(!seenF.has(i)&&i<N){seenF.add(i);ORD.push(i)}};for(let i=0;i<34;i++)pushF(i);for(let i=34;i<N;i+=8)pushF(i);pushF(N-1);const FIRST=ORD.length;for(let i=34;i<N;i+=2)pushF(i);for(let i=0;i<N;i++)pushF(i);
+  const ORD=[];for(let i=0;i<N;i+=2)ORD.push(i);const FIRST=ORD.length;for(let i=1;i<N;i+=2)ORD.push(i);
   let q=0;function next(){if(q>=N)return;const i=ORD[q++];const im=new Image();im.decoding='async';im.onload=im.onerror=()=>{loaded++;if(loaded<=FIRST){const k=loaded/FIRST;setNum(Math.floor(k*99));$('preRing').style.strokeDashoffset=1-k;if(loaded===FIRST)done()}next()};
     im.src='video/f/'+String(i+1).padStart(3,'0')+'.webp';imgs[i]=im}
-  for(let c=0;c<10;c++)next();
+  for(let c=0;c<8;c++)next();
   setTimeout(done,25000);
   function size(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);drawn=-1}
   addEventListener('resize',size);size();
@@ -1977,7 +1977,7 @@ let fx=()=>{};
   let mx=.5,my=.5,tx=.5,ty=.5;addEventListener('pointermove',e=>{tx=e.clientX/innerWidth;ty=1-e.clientY/innerHeight});
   const hx=hh=>[1,3,5].map(i=>parseInt(hh.substr(i,2),16)/255);
   const cur=[1,0,0,0,...hx('#E9ECF1')];
-  let fxSkip=0;fx=now=>{if(innerWidth<800&&(fxSkip++&1))return;
+  fx=now=>{
     const mid=innerHeight*.5;let tgt=ST.top;
     for(const o of SEC){const b=o.el.getBoundingClientRect();if(b.top<=mid&&b.bottom>mid){tgt=ST[o.k];break}}
     const goal=[...tgt.slice(0,4),...hx(tgt[4])],k=STILL?1:.035;for(let i=0;i<7;i++)cur[i]+=(goal[i]-cur[i])*k;
