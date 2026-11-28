@@ -967,6 +967,53 @@ html.loading,html.loading body,html.filmlock,html.filmlock body{overflow:hidden;
 @keyframes barRun{to{width:100%}}
 .mc-x{z-index:3}
 @media(max-width:760px){.mc-ph{height:170px}}
+
+.climb .wrap{position:relative;z-index:7}
+.cl-head{display:grid;gap:12px;max-width:720px;margin-bottom:clamp(18px,3vw,30px)}
+.climb .eyebrow b{color:#2F6FE0;-webkit-text-fill-color:#2F6FE0;background:none}
+.cl-h{margin:0;font:800 clamp(2.2rem,5vw,4.2rem)/.95 var(--f-body);letter-spacing:-.04em;color:var(--ink)}
+.cl-h i{font-style:normal;color:#2F6FE0}
+.cl-lead{margin:0;color:var(--mist);font-size:1.02rem}
+.cl-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:clamp(18px,3vw,40px);align-items:center}
+.cl-mnt{border-radius:22px;background:linear-gradient(180deg,#f7f9fc,#eaf0f7);box-shadow:0 30px 70px -45px rgba(22,33,58,.45),0 0 0 1px rgba(22,33,58,.06);overflow:hidden}
+.cl-mnt svg{display:block;width:100%;height:auto}
+.cl-m2{fill:#E9EEF5}
+.cl-m1{stroke:rgba(22,33,58,.12);stroke-width:1.5}
+.cl-snow{fill:#fff}
+.cl-trail-bg{fill:none;stroke:rgba(22,33,58,.22);stroke-width:2.5;stroke-dasharray:3 7;stroke-linecap:round}
+.cl-trail{fill:none;stroke:#2F6FE0;stroke-width:4;stroke-linecap:round}
+.cl-pt{cursor:pointer}
+.pt-hit{fill:transparent}
+.pt-c{fill:#fff;stroke:rgba(22,33,58,.35);stroke-width:2.5;transition:fill .3s,stroke .3s}
+.cl-pt text{font:800 10px var(--f-body);text-anchor:middle;fill:#16213A;pointer-events:none;transition:fill .3s}
+.cl-pt.done .pt-c{fill:#2F6FE0;stroke:#fff}
+.cl-pt.done text{fill:#fff}
+.cl-pt.on .pt-c{fill:#16213A;stroke:#fff}
+.cl-flag path{stroke:#16213A;stroke-width:2.5}
+.cl-flag .f{fill:#2F6FE0;stroke:none;transform-origin:0 -27px;animation:clFlag 1.6s ease-in-out infinite}
+@keyframes clFlag{50%{transform:skewY(-8deg) scaleX(.9)}}
+.h-dot{fill:#16213A;stroke:#fff;stroke-width:3}
+.h-ring{fill:rgba(47,111,224,.25);animation:clRing 1.6s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes clRing{from{transform:scale(.6);opacity:1}to{transform:scale(1.8);opacity:0}}
+.cl-card{background:#fff;border-radius:22px;padding:clamp(22px,3vw,34px);box-shadow:0 30px 70px -45px rgba(22,33,58,.45),0 0 0 1px rgba(22,33,58,.06);display:grid;gap:10px;min-height:230px;align-content:start}
+.cl-num{display:flex;align-items:baseline;gap:8px}
+.cl-num b{font:800 3.2rem/1 var(--f-body);letter-spacing:-.05em;color:#2F6FE0}
+.cl-num span{font:700 .7rem/1 var(--f-mono);letter-spacing:.16em;color:var(--dim)}
+.cl-card h3{margin:0;font:800 clamp(1.5rem,2.4vw,2rem)/1.05 var(--f-body);letter-spacing:-.03em;color:var(--ink)}
+.cl-card p{margin:0;color:var(--mist);font-size:1.02rem;line-height:1.5}
+.cl-card.in h3,.cl-card.in p,.cl-card.in .cl-num{animation:clIn .45s cubic-bezier(.2,.8,.2,1) both}
+.cl-card.in p{animation-delay:.06s}
+@keyframes clIn{from{opacity:0;transform:translateY(10px)}}
+.cl-bars{display:flex;gap:5px;margin-top:10px}
+.cl-bars i{all:unset;display:block;flex:1;height:3px;border-radius:3px;background:rgba(22,33,58,.1);overflow:hidden}
+.cl-bars b{display:block;height:100%;width:0;background:#2F6FE0}
+.cl-bars i.cbd b{width:100%}
+.cl-bars i.cbr b{animation:barRun 3s linear forwards}
+.cl-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.cl-facts div{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.75);border-radius:14px;padding:14px 16px;box-shadow:0 0 0 1px rgba(22,33,58,.06)}
+.cl-facts b{font:800 1.35rem/1 var(--f-body);letter-spacing:-.03em;color:var(--ink);white-space:nowrap}
+.cl-facts span{font-size:.84rem;line-height:1.35;color:var(--mist)}
+@media(max-width:820px){.cl-grid{grid-template-columns:1fr;gap:12px}.cl-card{min-height:0;padding:20px}.cl-num b{font-size:2.4rem}.cl-facts{grid-template-columns:1fr;gap:8px}.cl-facts div{padding:11px 14px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -1099,24 +1146,38 @@ html.loading,html.loading body,html.filmlock,html.filmlock body{overflow:hidden;
 </section>
 
 
-<section class="plain" id="how" data-alt="3847" data-place="Гара-Баши">
+<section class="plain climb" id="how" data-alt="3847" data-place="Гара-Баши">
   <div class="wrap">
-    <div class="head">
-      <p class="eyebrow" data-r="up"><b>3847 м</b> Гара-Баши · как всё устроено</p>
-      <h2 class="spaced" data-r="words">Пять шагов <i>до гор</i></h2>
-      <p class="lead" data-r="up" style="--d:200ms">И одно правило: тур состоится при любом составе группы. Поедем, даже если вы один.</p>
+    <div class="cl-head">
+      <p class="eyebrow"><b>3847 м</b> Гара-Баши · как всё устроено</p>
+      <h2 class="cl-h">Пять шагов <i>до гор</i></h2>
+      <p class="cl-lead">Тур состоится при любом составе группы — поедем, даже если вы один.</p>
     </div>
-    <ol class="steps">
-      <li class="frost" data-r="up" style="--d:0ms"><h3>Заявка</h3><p>Вы пишете, какой тур и когда. Менеджер проверяет места и подтверждает.</p></li>
-      <li class="frost" data-r="up" style="--d:120ms"><h3>Анкета</h3><p>Присылаем форму: данные участников для договора, здоровье и питание для гида.</p></li>
-      <li class="frost" data-r="up" style="--d:240ms"><h3>Договор и оплата</h3><p>Ссылка или QR-код на оплату картой, частями через «Долями» или перевод на счёт.</p></li>
-      <li class="frost" data-r="up" style="--d:360ms"><h3>Билеты</h3><p>Дорога до Кавказа в цену не входит. Можем купить билеты за вас за небольшую комиссию.</p></li>
-      <li class="frost" data-r="up" style="--d:480ms"><h3>Встреча</h3><p>Забираем в аэропорту или на вокзале Минеральных Вод, дальше всё по программе.</p></li>
-    </ol>
-    <div class="pay">
-      <div class="frost" data-r="up"><b data-count="30" data-suf="%">30%</b><span>предоплата при бронировании, остаток до начала тура</span></div>
-      <div class="frost" data-r="up" style="--d:120ms"><b data-count="72" data-suf=" часа">72 часа</b><span>до старта можно перенести тур с той же ценой или вернуть 100%</span></div>
-      <div class="frost" data-r="up" style="--d:240ms"><b data-pre="до " data-count="10" data-suf="%">до 10%</b><span>скидка постоянным клиентам; 5% пенсионерам, именинникам, многодетным, детям до 7 лет</span></div>
+    <div class="cl-grid">
+      <div class="cl-mnt">
+        <svg viewBox="0 0 600 360" id="clSvg" aria-hidden="true">
+          <defs><linearGradient id="clG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#E6ECF4"/><stop offset="1" stop-color="#D3DCE8"/></linearGradient></defs>
+          <path class="cl-m2" d="M0 360 L120 200 L190 250 L300 120 L360 170 L430 90 L520 190 L600 150 L600 360Z"/>
+          <path class="cl-m1" d="M0 360 L70 300 L150 230 L230 250 L330 140 L400 175 L470 60 L560 200 L600 230 L600 360Z" fill="url(#clG)"/>
+          <path class="cl-snow" d="M470 60 L445 101 L458 96 L470 108 L482 95 L497 103Z"/>
+          <path class="cl-trail-bg" id="clTrailBg" d="M60 340 C140 330 170 300 150 280 C120 255 210 250 250 262 C300 276 330 240 300 214 C270 190 340 180 380 186 C430 194 450 160 420 140 C395 122 440 108 468 66"/>
+          <path class="cl-trail" id="clTrail" d="M60 340 C140 330 170 300 150 280 C120 255 210 250 250 262 C300 276 330 240 300 214 C270 190 340 180 380 186 C430 194 450 160 420 140 C395 122 440 108 468 66"/>
+          <g id="clPts"></g>
+          <g class="cl-flag" transform="translate(468 66)"><path d="M0 0 V-34" /><path class="f" d="M0 -34 L22 -27 L0 -20Z"/></g>
+          <g id="clHiker" class="cl-hiker"><circle r="11" class="h-ring"/><circle r="6.5" class="h-dot"/></g>
+        </svg>
+      </div>
+      <div class="cl-card" id="clCard" aria-live="polite">
+        <div class="cl-num"><b id="clN">01</b><span>/ 05</span></div>
+        <h3 id="clT"></h3>
+        <p id="clP"></p>
+        <div class="cl-bars" id="clBars"></div>
+      </div>
+    </div>
+    <div class="cl-facts">
+      <div><b>30%</b><span>предоплата, остаток до начала тура</span></div>
+      <div><b>72 часа</b><span>до старта — перенос или возврат 100%</span></div>
+      <div><b>до 10%</b><span>скидка постоянным; 5% детям до 7 лет и многодетным</span></div>
     </div>
   </div>
 </section>
@@ -1494,6 +1555,25 @@ function layoutWord(){}function drawProfile(){}
   card.onclick=e=>{if(e.target.closest('.mc-ph')){story(si+1);return}if(e.target.closest('.mc-x')){card.classList.remove('in');pins.forEach(b=>b.classList.remove('on'));user=true;clearInterval(auto)}
     const g=e.target.closest('.mc-go');if(g){Object.assign(F,{type:'',month:0,diff:0,reg:g.dataset.k});apply();$('tours').scrollIntoView()}};
   let seen=false;new IntersectionObserver(es=>{if(es[0].isIntersecting&&!seen){seen=true;show(3);auto=setInterval(()=>{if(!user)show((cur+1)%P.length,false)},4200)}},{threshold:.4}).observe($('map'));
+})();
+/* ---------- пять шагов: восхождение ---------- */
+(function(){
+  const tr=document.getElementById('clTrail');if(!tr)return;
+  const S=[['Заявка','Пишете, какой тур и когда. Менеджер проверяет места и подтверждает.'],['Анкета','Присылаем короткую форму: данные для договора, здоровье и питание для гида.'],['Договор и оплата','Ссылка или QR-код: картой, частями через «Долями» или переводом.'],['Билеты','Дорога до Кавказа отдельно — можем купить билеты за вас.'],['Встреча — вы в горах','Забираем в аэропорту или на вокзале Минвод. Дальше всё по программе.']];
+  const L=tr.getTotalLength(),F=[0,.27,.52,.76,1],NS='http://www.w3.org/2000/svg';
+  tr.style.strokeDasharray=L;tr.style.strokeDashoffset=L;
+  const g=$('clPts');F.forEach((f,i)=>{const p=tr.getPointAtLength(f*L);const c=document.createElementNS(NS,'g');c.setAttribute('class','cl-pt');c.setAttribute('transform',`translate(${p.x} ${p.y})`);c.dataset.i=i;
+    c.innerHTML=`<circle r="15" class="pt-hit"/><circle r="9" class="pt-c"/><text y="4">${i+1}</text>`;g.appendChild(c)});
+  $('clBars').innerHTML=S.map(()=>'<i><b></b></i>').join('');
+  const pts=[...g.children],bars=[...$('clBars').children],hk=$('clHiker');let cur=-1,len=0,goal=0,timer=null,seen=false,user=false;
+  function set(i,u){if(u){user=true}cur=i;goal=F[i]*L;$('clN').textContent=String(i+1).padStart(2,'0');
+    const c=$('clCard');c.classList.remove('in');void c.offsetWidth;$('clT').textContent=S[i][0];$('clP').textContent=S[i][1];c.classList.add('in');
+    pts.forEach((p,k)=>{p.classList.toggle('done',k<=i);p.classList.toggle('on',k===i)});
+    bars.forEach((b,k)=>{b.className=k<i?'cbd':k===i?'cbr':'';});
+    clearTimeout(timer);timer=setTimeout(()=>set((i+1)%S.length),i===S.length-1?4200:3000)}
+  g.addEventListener('click',e=>{const p=e.target.closest('.cl-pt');if(p)set(+p.dataset.i,true)});
+  (function loop(){len+=(goal-len)*.06;if(Math.abs(goal-len)<.5)len=goal;tr.style.strokeDashoffset=L-len;const p=tr.getPointAtLength(Math.max(0,len));hk.setAttribute('transform',`translate(${p.x} ${p.y})`);requestAnimationFrame(loop)})();
+  new IntersectionObserver(es=>{if(es[0].isIntersecting&&!seen){seen=true;set(0)}},{threshold:.35}).observe($('clSvg'));
 })();
 /* ---------- календарь ---------- */
 (function(){
