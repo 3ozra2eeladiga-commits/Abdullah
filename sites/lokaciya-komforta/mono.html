@@ -41,8 +41,8 @@ img{display:block;max-width:100%}
 @keyframes gring{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.6);opacity:0}}
 .gate .g-note{font-size:11px;letter-spacing:.2em;opacity:.55;text-transform:uppercase}
 .gate.off{opacity:0;visibility:hidden}
-.flash{position:fixed;z-index:101;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,1) 0%,rgba(255,255,255,.85) 35%,rgba(255,255,255,0) 70%);transform:scale(0);opacity:1;animation:flash 1.1s cubic-bezier(.2,.7,.2,1) forwards}
-@keyframes flash{0%{transform:scale(0);opacity:1}45%{opacity:.95}100%{transform:scale(var(--fs,80));opacity:0}}
+.gate button{transition:background .25s,color .25s,box-shadow .6s,transform .15s}
+.gate button.lit{background:#fafaf8;color:#111;box-shadow:0 0 0 1px rgba(255,255,255,.9),0 0 28px 6px rgba(255,255,255,.55),0 0 80px 18px rgba(255,255,255,.25)}
 .gate button:active{transform:scale(.96)}
 .hap{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;left:-9999px}
 .gate{background-image:url("alexey-blue-bg.jpg")}
@@ -562,12 +562,11 @@ const FX=(()=>{let ac=null;
    [1318.5,1975.5,2637].forEach((f,i)=>{const s=c.createOscillator();s.type='sine';s.frequency.value=f;const sg=c.createGain();sg.gain.value=[.5,.3,.18][i];s.connect(sg);sg.connect(g2);s.start(t+.01);s.stop(t+1.45)})}
  function tick(vol){const c=ctx();if(!c)return;const t=c.currentTime,g=c.createGain();g.connect(c.destination);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+.12);
    const o=c.createOscillator();o.type='triangle';o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(420,t+.1);o.connect(g);o.start(t);o.stop(t+.13)}
- function flash(el){const r=el.getBoundingClientRect(),f=document.createElement('div');f.className='flash';f.style.left=(r.left+r.width/2)+'px';f.style.top=(r.top+r.height/2)+'px';
-   f.style.setProperty('--fs',(Math.hypot(innerWidth,innerHeight)/20).toFixed(1));document.body.appendChild(f);setTimeout(()=>f.remove(),1200)}
+ function flash(el){el.classList.add('lit')}
  return {enter(el){haptic([18,40,28]);boom(.32);flash(el)},small(){haptic(12);tick(.12)}};})();
 
 /* музыка: стартует по кнопке «Войти» (тап = разрешение браузера) и играет постоянно; кнопка справа внизу выключает */
-{const a=document.getElementById('bgm'),b=document.getElementById('snd'),g=document.getElementById('gate');a.volume=.35;let muted=false,away=false;
+{const a=document.getElementById('bgm'),b=document.getElementById('snd'),g=document.getElementById('gate');a.volume=1;let muted=false,away=false;
  let entered=!g;const set=on=>{b.classList.toggle('on',on);document.documentElement.classList.toggle('need-sound',!on&&!muted&&entered)};
  a.addEventListener('pause',()=>set(false));a.addEventListener('play',()=>set(true));
  const play=()=>{if(muted)return Promise.resolve();const p=a.play();return p&&p.then?p.then(()=>{set(true);off()}).catch(()=>{set(false)}):Promise.resolve()};
