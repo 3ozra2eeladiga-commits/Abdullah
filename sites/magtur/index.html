@@ -935,6 +935,14 @@ html.loading,html.loading body,html.filmlock,html.filmlock body{overflow:hidden;
  .map-card img{height:130px}
  .map-swipe{display:block;position:sticky;left:0;text-align:center;font:700 .58rem/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:#7c8aa0;padding:10px 0}
  .trust{gap:8px 16px;font-size:.85rem}.trust span+span::before{margin-right:10px}}
+
+.film-end{opacity:1!important;background:rgba(8,12,26,calc(var(--fo,0) * .66))!important;transition:none!important;pointer-events:none}
+.film-end>*{opacity:clamp(0,calc((var(--fo,0) - .45) * 2.2),1);transform:translateY(calc((1 - clamp(0,calc((var(--fo,0) - .45) * 2.2),1)) * 18px))}
+.film-end>*:nth-child(2){opacity:clamp(0,calc((var(--fo,0) - .55) * 2.4),1)}
+.film-end>*:nth-child(3),.film-end>*:nth-child(4){opacity:clamp(0,calc((var(--fo,0) - .68) * 3.2),1)}
+.film.ended .film-end{pointer-events:auto}
+.film-cap.on{opacity:clamp(0,calc(1 - var(--fo,0) * 4),1)}
+.film-frame canvas{filter:saturate(calc(1 - var(--fo,0) * .35))}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -1394,12 +1402,12 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
   const N=217,FPS=14,ctx=cv.getContext('2d'),imgs=new Array(N);let loaded=0,ready=false;
   document.documentElement.classList.add('loading');
   const CAP=[[3.9,8.9,'Дагестан','Сулакский каньон'],[9.5,11.1,'Приэльбрусье','Канатка к Эльбрусу'],[12.6,15.6,'Карачаево-Черкесия','Домбай · лошади']];
-  const cap=$('filmCap'),bar=$('filmBar'),sec=$('start'),pre=$('pre'),hint=$('filmHint');let cur=-1,shown=0,drawn=-1,intro=0,introOn=false,lastMove=performance.now(),lastP=-1;const IF=22,SPD=17;
+  const cap=$('filmCap'),bar=$('filmBar'),sec=$('start'),pre=$('pre'),hint=$('filmHint');let cur=-1,shown=0,drawn=-1,intro=0,introOn=false,lastMove=performance.now(),lastP=-1;const IF=22,SPD=21;
   (function(){const c=$('preSnow');if(!c)return;const x=c.getContext('2d');let W,H,F=[];function rs(){W=c.width=innerWidth;H=c.height=innerHeight;F=Array.from({length:Math.round(W*H/9000)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2.4+.6,v:Math.random()*.7+.35,o:Math.random()*Math.PI*2}))}rs();addEventListener('resize',rs);
     (function f(t){if(!document.getElementById('pre'))return;x.clearRect(0,0,W,H);x.fillStyle='rgba(150,175,205,.75)';F.forEach(p=>{p.y+=p.v;p.x+=Math.sin(t/1600+p.o)*.35;if(p.y>H+4){p.y=-4;p.x=Math.random()*W}x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill()});requestAnimationFrame(f)})(0)})();
   const DG=[...document.querySelectorAll('#preN .dg > span')];
   function setNum(n){const t=String(n).padStart(3,'0');DG.forEach((c,i)=>{c.style.transform=`translateY(${-t[i]*10}%)`;c.parentNode.classList.toggle('hide',i===0&&n<100||i===1&&n<10)});$('preAlt').textContent='↑ '+Math.round(310+(5642-310)*n/100).toLocaleString('ru-RU')+' м'+(n>=100?' · вершина':'')}
-  function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');scrollTo(0,0);lock(true);introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1600);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0);setTimeout(()=>pre.remove(),1000)}
+  function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');scrollTo(0,0);lock(true);introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1300);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0);setTimeout(()=>pre.remove(),1000)}
   function done(){if(ready)return;ready=true;setNum(100);$('preRing').style.strokeDashoffset=0;drawn=-1;
     setTimeout(()=>{pre.classList.add('ready');$('preBtn').disabled=false;$('preSub').textContent='Всё готово — с наступающим! Нажмите «Поехали»';$('preBtn').onclick=go},300);}
   const ORD=[];for(let i=0;i<N;i+=2)ORD.push(i);const FIRST=ORD.length;for(let i=1;i<N;i+=2)ORD.push(i);
@@ -1428,7 +1436,7 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
     else{const mx=SPD*dt,df=want-shown;shown+=Math.max(-mx*1.6,Math.min(mx,df));
       if(locked&&shown>=N-1.05&&want>=N-1.05)lock(false)}
     const i=Math.round(shown);if(i!==drawn){draw(i);drawn=i}
-    const t=shown/FPS;bar.style.transform=`scaleX(${shown/(N-1)})`;sec.classList.toggle('ended',shown>N-8);
+    const t=shown/FPS;bar.style.transform=`scaleX(${shown/(N-1)})`;const FO=55,fo=Math.min(1,Math.max(0,(shown-(N-1-FO))/FO));sec.style.setProperty('--fo',fo.toFixed(3));sec.classList.toggle('ended',fo>.75);
     hint.classList.toggle('on',locked&&intro>=IF&&shown<N-8&&Math.abs(want-shown)<.5&&now-lastMove>(shown<IF+1?600:2200));
     let k=-1;CAP.forEach((c,j)=>{if(t>=c[0]&&t<c[1])k=j});
     if(k!==cur){cur=k;if(k<0)cap.classList.remove('on');else{cap.querySelector('small').textContent=CAP[k][2];cap.querySelector('b').textContent=CAP[k][3];cap.classList.add('on')}}
