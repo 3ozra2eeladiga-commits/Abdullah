@@ -1056,6 +1056,11 @@ html.filmlock .film .start-pin{opacity:0;transition:opacity .4s}
 .film-hint.idle{animation:hintPulse 1.4s ease-in-out infinite}
 @keyframes hintPulse{50%{box-shadow:0 0 0 8px rgba(255,255,255,.25),0 10px 30px -10px rgba(0,0,0,.45)}}
 @media(max-width:900px){.film-hint{bottom:calc(env(safe-area-inset-bottom,0px) + 26px)!important}}
+
+.map,.stage,.cl-mnt,#guidesGrid{overscroll-behavior-x:contain}
+html,body{overscroll-behavior-x:none}
+@media(max-width:900px){.frost,.glass,header.top.solid,header.top:not(.solid),.dv-info,.rt-toast{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+ .frost{background:rgba(255,255,255,.88)!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -1539,10 +1544,10 @@ addEventListener('resize',()=>{if(cards.length){const w=cards[0].offsetWidth,slo
   function go(){pre.classList.add('out');document.documentElement.classList.remove('loading');scrollTo(0,0);lock(true);introOn=true;const t0=performance.now();(function a(n){const k=Math.min(1,(n-t0)/1300);intro=IF*k;if(k<1)requestAnimationFrame(a);else lastMove=performance.now()})(t0);setTimeout(()=>pre.remove(),1000)}
   function done(){if(ready)return;ready=true;setNum(100);$('preRing').style.strokeDashoffset=0;drawn=-1;
     setTimeout(()=>{pre.classList.add('ready');$('preBtn').disabled=false;$('preSub').textContent='Всё готово — с наступающим! Нажмите «Поехали»';$('preBtn').onclick=go},300);}
-  const ORD=[];for(let i=0;i<N;i+=2)ORD.push(i);const FIRST=ORD.length;for(let i=1;i<N;i+=2)ORD.push(i);
+  const ORD=[],seenF=new Set();const pushF=i=>{if(!seenF.has(i)&&i<N){seenF.add(i);ORD.push(i)}};for(let i=0;i<34;i++)pushF(i);for(let i=34;i<N;i+=8)pushF(i);pushF(N-1);const FIRST=ORD.length;for(let i=34;i<N;i+=2)pushF(i);for(let i=0;i<N;i++)pushF(i);
   let q=0;function next(){if(q>=N)return;const i=ORD[q++];const im=new Image();im.decoding='async';im.onload=im.onerror=()=>{loaded++;if(loaded<=FIRST){const k=loaded/FIRST;setNum(Math.floor(k*99));$('preRing').style.strokeDashoffset=1-k;if(loaded===FIRST)done()}next()};
     im.src='video/f/'+String(i+1).padStart(3,'0')+'.webp';imgs[i]=im}
-  for(let c=0;c<8;c++)next();
+  for(let c=0;c<10;c++)next();
   setTimeout(done,25000);
   function size(){const r=cv.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);drawn=-1}
   addEventListener('resize',size);size();
@@ -1757,9 +1762,6 @@ $('guidesGrid').innerHTML=[
  ['g_umar','Умар Айдинов','Основатель МАГТУР','20+','лет в туризме','Собрал команду в 2013 году и сам придумывает маршруты. Возглавляет Региональный союз туриндустрии СКФО.'],
  ['g_ush','Мария Ушакова','Эксперт по маршрутам','20+','восхождений','Альпинистка и спортивный скалолаз. Отвечает за то, чтобы маршрут был по силам вашей группе.'],
  ['g_hub','Абдуррахман Хубиев','Гид-инструктор','5642','метра — его Эльбрус','В команде с первого дня. Инструктор по горному туризму и горным лыжам, сам стоял на вершине Эльбруса.'],
- ['g_chek','Эдуард Чеккуев','Гид-историк','2006','год первой экспедиции','Археолог: с 2006 года участвует в раскопках. На экскурсии рассказывает о том, что сам держал в руках.'],
- ['g_mag','Абдула Магомедов','Гид по Дагестану','2016','водит группы с этого года','Знает Дагестан изнутри: аулы, каньоны и дороги, по которым ездят местные.'],
- ['g_ilis','Абдула Илистубегов','Гид по Дагестану','Дагестан','его родные горы','Ведёт группы по горному Дагестану: к Сулакскому каньону, Гамсутлю и древним крепостям. С ним не бывает скучно.']
 ].map((g,i)=>`<div class="guide" style="--d:${(i%4)*120}ms"><div class="im" data-n="${String(i+1).padStart(2,'0')}"><img src="img/${NEWP[g[0]]||g[0]+'_pro'}.jpg" alt="${g[1]}" loading="lazy">${annSVG(g[0])}</div><small>${g[2]}</small><h3>${g[1]}</h3><p class="gst"><b>${g[3]}</b><span>${g[4]}</span></p><p>${g[5]}</p></div>`).join('');
 $('guidesGrid').querySelectorAll('.guide').forEach(arm);
 {const ao=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const g=e.target;setTimeout(()=>g.classList.add('drawn'),STILL?0:700);ao.unobserve(g)}}),{threshold:.45});
@@ -1975,7 +1977,7 @@ let fx=()=>{};
   let mx=.5,my=.5,tx=.5,ty=.5;addEventListener('pointermove',e=>{tx=e.clientX/innerWidth;ty=1-e.clientY/innerHeight});
   const hx=hh=>[1,3,5].map(i=>parseInt(hh.substr(i,2),16)/255);
   const cur=[1,0,0,0,...hx('#E9ECF1')];
-  fx=now=>{
+  let fxSkip=0;fx=now=>{if(innerWidth<800&&(fxSkip++&1))return;
     const mid=innerHeight*.5;let tgt=ST.top;
     for(const o of SEC){const b=o.el.getBoundingClientRect();if(b.top<=mid&&b.bottom>mid){tgt=ST[o.k];break}}
     const goal=[...tgt.slice(0,4),...hx(tgt[4])],k=STILL?1:.035;for(let i=0;i<7;i++)cur[i]+=(goal[i]-cur[i])*k;
