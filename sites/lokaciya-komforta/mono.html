@@ -70,6 +70,16 @@ html.need-sound .snd-hint{display:inline-flex}
 .pr .idx{position:absolute;z-index:2;left:7vw;top:7vh;font-size:11px;letter-spacing:.32em;color:rgba(250,250,248,.6)}
 .pr.right .idx{left:auto;right:7vw}
 @media (max-width:900px){.pr{height:86svh}.pr:after,.pr.right:after{background:linear-gradient(0deg,rgba(8,8,8,.85),rgba(8,8,8,.2) 65%,rgba(8,8,8,.1))}.pr{align-items:flex-end;padding-bottom:12vh}.pr.right .pt{text-align:left;margin-left:0}.pr.right .pt .ln{margin-left:0}.pr.right .idx{right:auto;left:7vw}}
+/* переключатель языка */
+.lang{display:inline-flex;gap:2px;align-items:center;font:500 11px/1 Montserrat,system-ui,sans-serif;letter-spacing:.18em}
+.lang button{background:none;border:0;color:inherit;font:inherit;letter-spacing:inherit;padding:6px 6px;cursor:pointer;opacity:.45}
+.lang button.on{opacity:1;text-decoration:underline;text-underline-offset:5px}
+.nav-r{display:flex;align-items:center;gap:18px}
+.gate .lang{position:absolute;top:calc(22px + env(safe-area-inset-top,0px));right:22px;color:#fafaf8}
+.gate .lang button{width:auto;height:auto;margin:0;border:0;border-radius:0;padding:8px 8px;font-size:12px;letter-spacing:.2em}
+.gate .lang button:after{display:none}
+.logo,.tel{white-space:nowrap}
+@media (max-width:560px){.logo{font-size:10px;letter-spacing:.16em}.tel{font-size:10.5px;letter-spacing:.06em}.nav-r{gap:8px}.lang button{padding:6px 4px;font-size:10px}}
 /* header */
 header{position:fixed;top:0;left:0;right:0;z-index:30;padding:16px 0;color:var(--ink);background:#ececea;border-bottom:1px solid rgba(0,0,0,.06)}
 .nav{display:flex;justify-content:space-between;align-items:center}
@@ -293,6 +303,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   <button type="button" id="enter">Войти</button>
   <label class="hap" aria-hidden="true"><input type="checkbox" switch tabindex="-1" id="hapSw"></label>
   <div class="g-note">со звуком</div>
+  <div class="lang" role="group" aria-label="Language"><button type="button" data-l="ru">RU</button><button type="button" data-l="en">EN</button></div>
 </div>
 <script>document.documentElement.classList.add('locked')</script>
 <canvas id="silk" aria-hidden="true"></canvas>
@@ -302,7 +313,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   <div class="wrap nav">
     <a class="logo" href="#">Локация Комфорта</a>
     <nav class="menu"><a href="#me">Алексей</a><a href="#build">Процесс</a><a href="#contact">Контакты</a></nav>
-    <a class="tel" href="tel:+79383416141">+7 938 341-61-41</a>
+    <div class="nav-r"><div class="lang" role="group" aria-label="Language"><button type="button" data-l="ru">RU</button><button type="button" data-l="en">EN</button></div><a class="tel" href="tel:+79383416141">+7 938 341-61-41</a></div>
   </div>
 </header>
 
@@ -551,20 +562,39 @@ addEventListener('scroll',kick,{passive:true});addEventListener('resize',kick);k
   const c=Math.min(1,Math.max(0,(r.top-H*.25)/(H*.6)));m.style.setProperty('--c',c.toFixed(3))})};
  addEventListener('scroll',()=>{if(!t){t=true;requestAnimationFrame(upd)}},{passive:true});addEventListener('resize',upd);upd();}
 
+/* ===== RU / EN ===== */
+const I18N={"Локация Комфорта": "Lokatsiya Komforta", "АЛЕКСЕЙ": "ALEXEY", "Войти": "Enter", "со звуком": "with sound", "Алексей": "Alexey", "Процесс": "Process", "Контакты": "Contacts", "От проекта и фундамента до ключей. Лермонтов и Кавказские Минеральные Воды.": "From design and foundation to the keys. Lermontov and the Caucasian Mineral Waters.", "Строительная компания · Лермонтов": "Construction company · Lermontov", "листайте": "scroll", "Визитка": "Business card", "Строительная компания «Локация Комфорта»": "Lokatsiya Komforta construction company", "Строим дома под ключ в Лермонтове и по всем Кавказским Минеральным Водам: от проекта и фундамента до передачи ключей.": "We build turnkey houses in Lermontov and across the Caucasian Mineral Waters — from design and foundation to handing over the keys.", "Телефон": "Phone", "Почта": "Email", "Город": "City", "Лермонтов · КМВ": "Lermontov · Caucasus", "Позвонить": "Call", "от 3 мес.": "from 3 mo.", "срок строительства": "build time", "Договор": "Contract", "фиксированная цена и сроки": "fixed price and deadlines", "Фото и видео": "Photo & video", "отчёт по каждому этапу": "report on every stage", "Гарантия": "Warranty", "на все работы": "on all work", "Расчёт": "Estimate", "Анализ участка и точная смета до начала работ. Никаких сюрпризов.": "Site analysis and an exact estimate before work begins. No surprises.", "Материалы": "Materials", "Только проверенные материалы: блок, кирпич, газобетон, бетон нужной марки.": "Only proven materials: block, brick, aerated concrete, the right grade of concrete.", "Контроль": "Control", "Каждый этап фиксируем на фото и видео. Вы видите стройку, даже когда вас нет рядом.": "Every stage is captured on photo and video. You see the build even when you are away.", "Фундамент": "Foundation", "Основа, на которой ваш дом простоит десятилетия. Сроки от 3 месяцев, гарантия.": "The base your home will stand on for decades. From 3 months, with a warranty.", "Листайте дальше": "Keep scrolling", "Лично": "Personally", "Дом — это больше, чем стены": "A home is more than walls", "«Отвечаем за объект от первой консультации до передачи ключей. Вы всегда знаете, что происходит на стройке».": "“We answer for the project from the first consultation to the handover of the keys. You always know what is happening on site.”", "Архитекторы, инженеры, дизайнеры и строители — одна команда. Проверенные материалы, прозрачная смета, никаких сюрпризов.": "Architects, engineers, designers and builders — one team. Proven materials, a transparent estimate, no surprises.", "С командой на объекте": "With the team on site", "Принцип I": "Principle I", "Стратегия": "Strategy", "Каждый объект — партия, просчитанная до последнего хода.": "Every project is a game calculated to the very last move.", "Смета, сроки и материалы — до единого кирпича": "Estimate, timeline and materials — down to the last brick", "Принцип II": "Principle II", "Время": "Time", "Ваше время — самый дорогой материал.": "Your time is the most valuable material.", "Поэтому срок фиксируем в договоре": "That is why the deadline is fixed in the contract", "Как мы работаем": "How we work", "Четыре шага": "Four steps", "Встреча": "Meeting", "Выезд на участок, смета и сроки.": "Site visit, estimate and timeline.", "Фиксированная цена и сроки.": "Fixed price and deadlines.", "Стройка": "Construction", "Фото- и видеоотчёт каждого этапа.": "Photo and video report on every stage.", "Ключи": "Keys", "Проверка, сдача, гарантия.": "Inspection, handover, warranty.", "Наше правило": "Our rule", "В срок.": "On time.", "Под ключ.": "Turnkey.", "Срок строительства фиксируем в договоре и сдаём дом вовремя — сразу с ключами. От 3 месяцев от фундамента до новоселья.": "We fix the build time in the contract and hand over the house on schedule — keys included. From 3 months, foundation to housewarming.", "ДЕНЬ": "DAY", "ИЗ 90 ПО ДОГОВОРУ": "OF 90 PER CONTRACT", "В СРОК": "ON TIME", "Ваш дом": "Your home", "ближе, чем кажется": "is closer than you think", "Ставропольский край · г. Лермонтов": "Stavropol Krai · Lermontov", "Включить музыку": "Turn on music", "© 2026 Локация Комфорта": "© 2026 Lokatsiya Komforta", "Музыка: Kevin MacLeod — «Reawakening» (incompetech.com), CC BY 4.0": "Music: Kevin MacLeod — “Reawakening” (incompetech.com), CC BY 4.0", "Тел.: +7 938 341-61-41": "Tel.: +7 938 341-61-41", "← Сделано в": "← Made by", "← Сделано в VIZKOD": "← Made by VIZKOD", "· © 2026 Локация Комфорта": "· © 2026 Lokatsiya Komforta", "Вход на сайт": "Enter the site", "Алексей, строительная компания «Локация Комфорта»": "Alexey, Lokatsiya Komforta construction company", "Алексей в кабинете": "Alexey in his office", "Команда на объекте": "The team on site", "Строитель возводит дом, календарь отсчитывает дни, дом сдан в срок": "A builder raises a house, the calendar counts the days, the house is delivered on time", "Музыка: включить или выключить": "Music: on or off"};
+const LANG=(()=>{const RU=new Map(),nodes=[];let cur='ru';
+ const titles={ru:document.title,en:'Alexey · Lokatsiya Komforta — turnkey houses, Lermontov'};
+ function collect(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:n=>{const p=n.parentElement;if(!p||p.closest('script,style,.sign'))return NodeFilter.FILTER_REJECT;return I18N[n.nodeValue.trim()]?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP}});
+   let n;while(n=w.nextNode()){if(!RU.has(n)){RU.set(n,n.nodeValue);nodes.push(n)}}}
+ function attrs(l){document.querySelectorAll('[alt],[aria-label]').forEach(el=>['alt','aria-label'].forEach(a=>{if(!el.hasAttribute(a))return;const k='data-ru-'+a;if(!el.hasAttribute(k)){if(!I18N[el.getAttribute(a)])return;el.setAttribute(k,el.getAttribute(a))}el.setAttribute(a,l==='en'?I18N[el.getAttribute(k)]:el.getAttribute(k))}))}
+ function set(l,save){collect();cur=l;nodes.forEach(n=>{const ru=RU.get(n),t=ru.trim();n.nodeValue=l==='en'?ru.replace(t,I18N[t]):ru});attrs(l);
+   document.documentElement.lang=l;document.title=titles[l];document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
+   if(save){try{localStorage.setItem('lang',l)}catch(e){}}}
+ let l0='ru';try{l0=localStorage.getItem('lang')||((navigator.language||'ru').toLowerCase().startsWith('ru')?'ru':'en')}catch(e){}
+ document.querySelectorAll('.lang button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(window.FX)FX.small();set(b.dataset.l,true)}));
+ set(l0,false);return {set,get:()=>cur};})();
+
 /* отклик кнопок: вибрация (Android), тактильный щелчок (iPhone iOS 18+ через системный переключатель), звук, вспышка */
-const FX=(()=>{let ac=null;
+window.FX=null;const FX=(()=>{let ac=null;
  const ctx=()=>{try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();return ac}catch(e){return null}};
  function haptic(ms){try{if(navigator.vibrate)navigator.vibrate(ms)}catch(e){}try{const l=document.querySelector('label.hap');if(l)l.click()}catch(e){}}
- function boom(vol){const c=ctx();if(!c)return;const t=c.currentTime,g=c.createGain();g.connect(c.destination);
-   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+.9);
-   const o=c.createOscillator();o.type='sine';o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(42,t+.6);o.connect(g);o.start(t);o.stop(t+.95);
-   const g2=c.createGain();g2.connect(c.destination);g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(vol*.35,t+.02);g2.gain.exponentialRampToValueAtTime(.0001,t+1.4);
-   [1318.5,1975.5,2637].forEach((f,i)=>{const s=c.createOscillator();s.type='sine';s.frequency.value=f;const sg=c.createGain();sg.gain.value=[.5,.3,.18][i];s.connect(sg);sg.connect(g2);s.start(t+.01);s.stop(t+1.45)})}
- function tick(vol){const c=ctx();if(!c)return;const t=c.currentTime,g=c.createGain();g.connect(c.destination);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+.12);
-   const o=c.createOscillator();o.type='triangle';o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(420,t+.1);o.connect(g);o.start(t);o.stop(t+.13)}
+ /* фортепиано: каждая нота — набор обертонов с быстрой атакой и долгим затуханием, низ звучит дольше */
+ function note(c,f,t,vol,len){const g=c.createGain();g.connect(c.destination);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(vol*.35,t+.18);g.gain.exponentialRampToValueAtTime(.0001,t+len);
+   const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(Math.min(9000,f*14),t);lp.frequency.exponentialRampToValueAtTime(Math.max(300,f*3),t+len*.6);lp.connect(g);
+   [[1,1],[2,.5],[3,.28],[4,.16],[5,.1],[6,.06],[8,.03]].forEach(([h,a])=>{const o=c.createOscillator();o.type='sine';o.frequency.value=f*h*(1+.0006*h*h);const og=c.createGain();og.gain.value=a;o.connect(og);og.connect(lp);o.start(t);o.stop(t+len+.05)});
+   const n=c.createBufferSource(),buf=c.createBuffer(1,c.sampleRate*.03,c.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);n.buffer=buf;const ng=c.createGain();ng.gain.value=vol*.25;n.connect(ng);ng.connect(lp);n.start(t)}
+ const NOTE=m=>440*Math.pow(2,(m-69)/12);
+ function boom(vol){const c=ctx();if(!c)return;const t=c.currentTime+.01;
+   [[36,1],[43,.8],[48,.75],[52,.6],[55,.5],[60,.4]].forEach(([m,a],i)=>note(c,NOTE(m),t+i*.012,vol*a,m<45?3.2:2.4))}
+ function up(vol){const c=ctx();if(!c)return;const t=c.currentTime+.01;note(c,NOTE(55),t,vol,1.4);note(c,NOTE(60),t+.12,vol,1.8)}
+ function down(vol){const c=ctx();if(!c)return;const t=c.currentTime+.01;note(c,NOTE(60),t,vol,1.4);note(c,NOTE(48),t+.14,vol*1.1,2.2)}
+ function tick(vol){const c=ctx();if(!c)return;note(c,NOTE(72),c.currentTime+.005,vol,.6)}
  function flash(el){el.classList.add('lit')}
- return {enter(el){haptic([18,40,28]);boom(.32);flash(el)},small(){haptic(12);tick(.12)}};})();
+ return {enter(el){haptic([18,40,28]);boom(.55);flash(el)},small(){haptic(12);tick(.22)},on(){haptic(14);up(.4)},off(){haptic([10,30,10]);down(.4)}};})();
 
+window.FX=FX;
 /* музыка: стартует по кнопке «Войти» (тап = разрешение браузера) и играет постоянно; кнопка справа внизу выключает */
 {const a=document.getElementById('bgm'),b=document.getElementById('snd'),g=document.getElementById('gate');a.volume=1;let muted=false,away=false;
  let entered=!g;const set=on=>{b.classList.toggle('on',on);document.documentElement.classList.toggle('need-sound',!on&&!muted&&entered)};
@@ -576,7 +606,7 @@ const FX=(()=>{let ac=null;
  ACT.forEach(t=>addEventListener(t,tryAgain,{capture:true,passive:true}));
  const enter=()=>{FX.enter(document.getElementById('enter'));entered=true;play();setTimeout(()=>set(!a.paused),1500);g.classList.add('off');document.documentElement.classList.remove('locked');scrollTo(0,0);dispatchEvent(new Event('site-enter'));setTimeout(()=>g.remove(),1000)};
  document.getElementById('enter').addEventListener('click',enter);
- b.addEventListener('click',()=>{FX.small();if(a.paused){muted=false;a.play().catch(()=>{})}else{muted=true;a.pause();set(false)}});
+ b.addEventListener('click',()=>{a.paused?FX.on():FX.off();if(a.paused){muted=false;a.play().catch(()=>{})}else{muted=true;a.pause();set(false)}});
  document.getElementById('sndHint').addEventListener('click',()=>{muted=false;if(a.readyState===0)a.load();a.play().then(()=>set(true)).catch(()=>{})});
  /* ушёл с сайта (другая вкладка, свернул, закрыл) — пауза; вернулся — играет дальше */
  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(!a.paused){away=true;a.pause()}}else if(away&&!muted){away=false;a.play().catch(()=>{})}});
