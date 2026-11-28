@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>МАГТУР Тоннель</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@500;700;800&family=JetBrains+Mono:wght@600&display=swap">
+<style>
+:root{--ink:#0b1020;--blue:#2F6FE0;--glow:#8fb4ff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#0b1020}}
+:root[data-theme="dark"]{--ink:#0b1020}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:#fff;font-family:Onest,system-ui,sans-serif;overflow-x:hidden}
+.spacer{height:1100vh}
+.vp{position:fixed;inset:0;perspective:650px;perspective-origin:50% 50%;overflow:hidden}
+.world{position:absolute;left:50%;top:50%;transform-style:preserve-3d;will-change:transform}
+.it{position:absolute;left:0;top:0;transform-style:preserve-3d;will-change:opacity}
+.frame{width:88vw;height:84vh;margin:-42vh 0 0 -44vw;border:1.5px solid rgba(143,180,255,.55);border-radius:28px;box-shadow:0 0 18px rgba(47,111,224,.35),inset 0 0 18px rgba(47,111,224,.25)}
+.frame.w{border-color:rgba(255,255,255,.35)}
+.ph{width:min(38vw,300px);aspect-ratio:4/3;border-radius:16px;overflow:hidden;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.12)}
+.ph img{display:block;width:100%;height:100%;object-fit:cover}
+.ph small{position:absolute;left:10px;bottom:10px;font:600 .6rem/1 "JetBrains Mono",monospace;letter-spacing:.16em;text-transform:uppercase;background:rgba(11,16,32,.75);padding:.5em .7em;border-radius:6px}
+.st{width:min(86vw,640px);margin-left:calc(min(86vw,640px) / -2);text-align:center;display:grid;gap:14px;justify-items:center}
+.st .ey{font:600 .66rem/1 "JetBrains Mono",monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--glow)}
+.st h2{margin:0;font-weight:800;font-size:clamp(2.2rem,8vw,4.6rem);line-height:.95;letter-spacing:-.045em;text-shadow:0 0 40px rgba(47,111,224,.5)}
+.st h2 i{font-style:normal;color:var(--glow)}
+.st p{margin:0;max-width:44ch;color:rgba(255,255,255,.78);font-size:1.02rem;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chips span{border:1px solid rgba(143,180,255,.5);border-radius:99px;padding:9px 14px;font-weight:700;font-size:.9rem;background:rgba(47,111,224,.12)}
+.btn{display:inline-block;border-radius:99px;background:#fff;color:#0b1020;font-weight:800;padding:16px 26px;text-decoration:none;box-shadow:0 0 50px rgba(255,255,255,.55)}
+.light{width:120vw;height:120vh;margin:-60vh 0 0 -60vw;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.95),rgba(143,180,255,.35) 22%,transparent 55%)}
+.hud{position:fixed;left:0;right:0;bottom:18px;text-align:center;font:600 .62rem/1 "JetBrains Mono",monospace;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.6);transition:opacity .4s;pointer-events:none}
+.bar{position:fixed;left:16px;right:16px;top:14px;height:3px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--glow);transform-origin:left;transform:scaleX(0)}
+.logo{position:fixed;left:16px;top:28px;font:500 1rem/1 Georgia,serif;letter-spacing:.3em;color:#fff;opacity:.9}
+.depth{position:fixed;right:16px;top:28px;font:600 .62rem/1 "JetBrains Mono",monospace;letter-spacing:.14em;color:var(--glow)}
+</style>
+</head>
+<body>
+<div class="vp"><div class="world" id="world"></div></div>
+<div class="bar"><i id="bar"></i></div>
+<div class="logo">МАГТУР</div>
+<div class="depth" id="depth">0 м</div>
+<div class="hud" id="hud">Листайте — летим внутрь ↓</div>
+<div class="spacer"></div>
+<script>
+const W=document.getElementById('world'),items=[];
+function add(html,x,y,z,cls,ry){const e=document.createElement('div');e.className='it '+(cls||'');e.innerHTML=html;e.style.transform=`translate3d(${x},${y},${z}px)`+(ry?` rotateY(${ry}deg)`:'');W.appendChild(e);items.push({e,z});return e}
+const STEP=320,FR=46;
+for(let i=0;i<FR;i++)add('<div class="frame'+(i%3===0?' w':'')+'"></div>','0','0',-i*STEP);
+const PH=[['v2/elbrus','Эльбрус'],['t11','Сулакский каньон'],['t10','Даргавс'],['t12','Домбай'],['v2/cable','Канатка'],['t15','Лошади'],['t9','Пики Домбая'],['t5','Гамсутль'],['v2/lake','Озёра'],['v2/jump','Лыжи'],['v2/tower','Башни'],['t4','Бермамыт']];
+PH.forEach((p,i)=>{const L=i%2===0;add(`<div class="ph" style="margin:-80px 0 0 ${L?'-100%':'0'}"><img src="img/${p[0]}.jpg" alt=""><small>${p[1]}</small></div>`,L?'-26vw':'26vw',(i%4<2?'-14vh':'16vh'),-900-i*780,'',L?28:-28)});
+const ST=[
+ [-500,'<p class="ey">Вход</p><h2>Добро пожаловать <i>внутрь</i> Кавказа</h2><p>Листайте — и полетим по тоннелю. Всё, что есть у МАГТУРа, — внутри.</p>'],
+ [-3300,'<p class="ey">Станция 1 · Куда</p><h2>Пять республик</h2><div class="chips"><span>Приэльбрусье</span><span>Домбай и Архыз</span><span>Дагестан</span><span>Осетия</span><span>Кавминводы</span></div>'],
+ [-6300,'<p class="ey">Станция 2 · Туры</p><h2><i>19</i> маршрутов</h2><p>Пешком, верхом, на лыжах и в комфорте. Тур состоится даже если вы один.</p>'],
+ [-9300,'<p class="ey">Станция 3 · Как</p><h2>Заявка → анкета → оплата → встреча</h2><p>Мы берём на себя трансфер, жильё и гида.</p>'],
+ [-12600,'<p class="ey">Свет в конце тоннеля</p><h2>Осталось выбрать даты</h2><a class="btn" href="#">Оставить заявку</a>']];
+ST.forEach(s=>add(`<div class="st" style="transform:translateY(-50%)">${s[1]}</div>`,'0','0',s[0]));
+add('<div class="light"></div>','0','0',-13600);
+const END=12250;let cam=0,goal=0;
+addEventListener('scroll',()=>{goal=scrollY/(document.documentElement.scrollHeight-innerHeight)*END},{passive:true});
+(function loop(){cam+=(goal-cam)*.09;W.style.transform=`translateZ(${cam}px)`;
+ items.forEach(o=>{const d=o.z+cam;let a=d>220?Math.max(0,1-(d-220)/380):Math.min(1,(d+5200)/2600);o.e.style.opacity=a.toFixed(3);o.e.style.visibility=a<.01?'hidden':'visible'});
+ const k=cam/END;document.getElementById('bar').style.transform=`scaleX(${k})`;document.getElementById('depth').textContent=Math.round(k*5642)+' м';document.getElementById('hud').style.opacity=k>.02?0:1;
+ requestAnimationFrame(loop)})();
+</script>
+</body>
+</html>
