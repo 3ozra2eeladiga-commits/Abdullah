@@ -44,6 +44,12 @@ def frames(d):
     fs = sorted(os.listdir(os.path.join(src_dir, d)))
     return [local(os.path.join(d, f)) for f in fs]
 
+# иконки сайта
+for nm,mime in (('favicon.ico','image/x-icon'),('favicon.svg','image/svg+xml'),('icon-192.png','image/png'),('apple-touch-icon.png','image/png')):
+    rel='icons/'+nm
+    if '"'+rel+'"' in html:
+        with open(os.path.join(src_dir,rel),'rb') as fh: html=html.replace('"'+rel+'"','"'+data_uri(fh.read(),mime)+'"')
+
 def b64(name, mime):
     with open(os.path.join(src_dir, name), 'rb') as f:
         return data_uri(f.read(), mime)
