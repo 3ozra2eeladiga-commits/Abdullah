@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>МАГТУР Живой мир</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@500;700;800&family=JetBrains+Mono:wght@600&display=swap">
+<style>
+:root{--ink:#16213A;--sky:#e4edf6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#16213A}}
+:root[data-theme="dark"]{--ink:#16213A}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--sky);color:var(--ink);font-family:Onest,system-ui,sans-serif;overflow-x:hidden}
+.spacer{height:1300vh}
+.vp{position:fixed;inset:0;perspective:700px;overflow:hidden;background:linear-gradient(180deg,#dbe7f3 0%,#eef2f5 55%,#f4f1ec 100%)}
+.world{position:absolute;left:50%;top:50%;transform-style:preserve-3d;will-change:transform}
+.it{position:absolute;left:0;top:0;will-change:opacity}
+.pl{width:260vmax;height:260vmax;margin:-130vmax 0 0 -130vmax;background-size:cover;background-position:center;
+ -webkit-mask-image:radial-gradient(ellipse 22vmax 30vmax at 50% 50%,transparent 93%,#000 100%);mask-image:radial-gradient(ellipse 22vmax 30vmax at 50% 50%,transparent 93%,#000 100%)}
+.pl.last{-webkit-mask-image:none;mask-image:none}
+.ring{width:44vmax;height:60vmax;margin:-30vmax 0 0 -22vmax;border-radius:50%;box-shadow:0 0 0 1.5px rgba(255,255,255,.8),0 0 40px 4px rgba(255,255,255,.35)}
+.fog{width:260vmax;height:260vmax;margin:-130vmax 0 0 -130vmax;background:radial-gradient(circle,rgba(244,246,248,0) 0%,rgba(244,246,248,.18) 60%,rgba(244,246,248,.35) 100%)}
+.cap{width:min(88vw,560px);margin-left:calc(min(88vw,560px) / -2);text-align:center;display:grid;gap:10px;justify-items:center;transform:translateY(calc(-50% + 34vmax))}
+.cap small{font:600 .64rem/1 "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;background:rgba(255,255,255,.92);padding:.6em .9em;border-radius:99px;color:#2F6FE0}
+.cap b{font-weight:800;font-size:clamp(2rem,7vw,3.8rem);line-height:.95;letter-spacing:-.045em;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.45)}
+.cap p{margin:0;color:#fff;font-size:1rem;line-height:1.45;text-shadow:0 2px 16px rgba(0,0,0,.55);max-width:40ch}
+.fact{font-weight:800;font-size:clamp(1.4rem,4.5vw,2.4rem);letter-spacing:-.03em;color:#fff;background:rgba(22,33,58,.35);backdrop-filter:blur(6px);padding:.4em .7em;border-radius:14px;white-space:nowrap;transform:translate(-50%,-50%)}
+.fact span{font-size:.5em;font-weight:600;opacity:.85;margin-left:.3em}
+.end{width:min(88vw,520px);margin-left:calc(min(88vw,520px) / -2);transform:translateY(-50%);text-align:center;display:grid;gap:16px;justify-items:center;background:rgba(255,255,255,.92);border-radius:24px;padding:30px 22px;box-shadow:0 40px 80px -30px rgba(22,33,58,.45)}
+.end small{font:600 .64rem/1 "JetBrains Mono",monospace;letter-spacing:.22em;text-transform:uppercase;color:#2F6FE0}
+.end b{font-weight:800;font-size:clamp(2rem,7vw,3.2rem);line-height:.95;letter-spacing:-.045em}
+.end input{width:100%;border:1px solid rgba(22,33,58,.15);border-radius:12px;padding:14px;font:500 1rem Onest,sans-serif}
+.end button{width:100%;border:0;border-radius:99px;background:#16213A;color:#fff;font:800 1rem Onest,sans-serif;padding:16px}
+canvas#snow{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .8s}
+.top{position:fixed;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.logo{font:500 1rem/1 Georgia,serif;letter-spacing:.3em;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.4)}
+.alt{font:600 .64rem/1 "JetBrains Mono",monospace;letter-spacing:.12em;color:#fff;background:rgba(22,33,58,.45);padding:.6em .8em;border-radius:99px}
+.hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:rgba(255,255,255,.95);border-radius:99px;padding:10px 16px;font:600 .62rem/1 "JetBrains Mono",monospace;letter-spacing:.18em;text-transform:uppercase;transition:opacity .4s;box-shadow:0 10px 30px -10px rgba(0,0,0,.4)}
+</style>
+</head>
+<body>
+<div class="vp"><div class="world" id="world"></div></div>
+<canvas id="snow"></canvas>
+<div class="top"><span class="logo">МАГТУР</span><span class="alt" id="alt">310 м</span></div>
+<div class="hint" id="hint">Листайте — шагните в окно ↓</div>
+<div class="spacer"></div>
+<script>
+const W=document.getElementById('world'),items=[];
+function add(html,z,x='0',y='0'){const e=document.createElement('div');e.className='it';e.innerHTML=html;e.style.transform=`translate3d(${x},${y},${z}px)`;W.appendChild(e);items.push({e,z});return e}
+const D=1100;
+const SC=[
+ ['v2/group','Это наши туристы','Не реклама — настоящая группа МАГТУР на перевале.',[['20 000+','туристов','-20vw','-24vh'],['с 2013','года','20vw','22vh']]],
+ ['t11','Сулакский каньон','Дагестан · катер по бирюзовой воде между скал.',[['1920 м','глубина каньона','18vw','-26vh']]],
+ ['t10','Даргавс','Осетия · город башен в горном ущелье.',[]],
+ ['v2/cable','Канатка к ледникам','Приэльбрусье · подъём на 3847 м.',[]],
+ ['v2/elbrus','Эльбрус','Высшая точка Европы · 5642 м.',[['5642 м','вершина','-18vw','-24vh']]],
+ ['t12','Домбай','Карачаево-Черкесия · водопады и осенний лес.',[]],
+ ['t15','Лошади на закате','Конные прогулки по горным лугам.',[['от 1','человека — тур состоится','18vw','24vh']]],
+ ['v2/fire','Вечер у костра','Гиды, которые знают каждый камень.',[['20+','гидов','-18vw','24vh']]]];
+SC.forEach((s,i)=>{const z=-i*D;add(`<div class="pl${i===SC.length-1?' last':''}" style="background-image:url(img/${s[0]}.jpg)"></div>`,z);
+ if(i<SC.length-1)add('<div class="ring"></div>',z+2);
+ add(`<div class="cap"><small>${String(i+1).padStart(2,'0')} · ${s[0]==='v2/group'?'Вход':'Место'}</small><b>${s[1]}</b><p>${s[2]}</p></div>`,z+520);
+ s[3].forEach(f=>add(`<div class="fact">${f[0]}<span>${f[1]}</span></div>`,z+900,f[2],f[3]));
+ add('<div class="fog"></div>',z-D*.5)});
+const ZEND=-(SC.length-1)*D;
+add(`<div class="end"><small>Свет в конце пути</small><b>Осталось выбрать даты</b><input placeholder="Ваше имя"><input placeholder="Телефон или Telegram"><button type="button">Поехали</button></div>`,ZEND+600);
+const CAM_END=-ZEND-900;let cam=0,goal=0;
+addEventListener('scroll',()=>{goal=scrollY/(document.documentElement.scrollHeight-innerHeight)*CAM_END},{passive:true});
+const sc=document.getElementById('snow'),sx=sc.getContext('2d');let F=[];function rs(){sc.width=innerWidth;sc.height=innerHeight;F=Array.from({length:120},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*2.2+.6,v:Math.random()*.8+.4}))}rs();addEventListener('resize',rs);
+(function loop(t){cam+=(goal-cam)*.08;W.style.transform=`translateZ(${cam}px)`;
+ items.forEach(o=>{const d=o.z+cam;let a=d>300?Math.max(0,1-(d-300)/300):Math.min(1,(d+D*2.2)/(D*.8));o.e.style.opacity=a.toFixed(3);o.e.style.visibility=a<.01?'hidden':'visible'});
+ const k=cam/CAM_END;document.getElementById('alt').textContent=Math.round(310+k*(5642-310)).toLocaleString('ru-RU')+' м';document.getElementById('hint').style.opacity=k>.02?0:1;
+ const sceneI=Math.round(cam/D);sc.style.opacity=(sceneI===3||sceneI===4)?1:0;
+ sx.clearRect(0,0,sc.width,sc.height);sx.fillStyle='rgba(255,255,255,.9)';F.forEach(p=>{p.y+=p.v;p.x+=Math.sin(t/1500+p.r)*.3;if(p.y>sc.height)p.y=-4;sx.beginPath();sx.arc(p.x,p.y,p.r,0,7);sx.fill()});
+ requestAnimationFrame(loop)})(0);
+</script>
+</body>
+</html>
