@@ -943,6 +943,30 @@ html.loading,html.loading body,html.filmlock,html.filmlock body{overflow:hidden;
 .film.ended .film-end{pointer-events:auto}
 .film-cap.on{opacity:clamp(0,calc(1 - var(--fo,0) * 4),1)}
 .film-frame canvas{filter:saturate(calc(1 - var(--fo,0) * .35))}
+
+.map-lead b{color:var(--ink)}
+.map-routes{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.map-routes path{fill:none;stroke:#2F6FE0;stroke-width:2.2;stroke-linecap:round;stroke-dasharray:6 10;opacity:.55;animation:routeMove 3s linear infinite}
+@keyframes routeMove{to{stroke-dashoffset:-32}}
+.dot{position:absolute;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;border:2px solid #fff;background:#2F6FE0;padding:0;cursor:pointer;box-shadow:0 1px 4px rgba(22,33,58,.35);animation:dotTw 3s ease-in-out infinite;z-index:1}
+.dot::before{content:"";position:absolute;inset:-8px}
+@keyframes dotTw{0%,100%{opacity:.95;transform:scale(1)}50%{opacity:.55;transform:scale(.8)}}
+.dot span{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%) translateY(4px);font:700 .56rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;background:#16213A;color:#fff;padding:.5em .7em;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.dot:hover span,.dot.tip span{opacity:1;transform:translateX(-50%)}
+.dot:hover,.dot.tip{z-index:4;animation:none;transform:scale(1.4)}
+.mc-ph{position:relative;height:190px;overflow:hidden;background:#dfe5ec;cursor:pointer}
+.mc-ph img{position:absolute;inset:0;width:100%;height:100%!important;object-fit:cover;opacity:0;transform:scale(1.02);transition:opacity .7s}
+.mc-ph img.on{opacity:1;animation:kb 3.2s ease-out forwards}
+@keyframes kb{from{transform:scale(1.02)}to{transform:scale(1.14)}}
+.mc-ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),transparent 30%)}
+.mc-bars{position:absolute;left:10px;right:48px;top:10px;z-index:2;display:flex;gap:4px}
+.mc-bars i{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.4);overflow:hidden}
+.mc-bars b{display:block;height:100%;width:0;background:#fff}
+.mc-bars i.done b{width:100%}
+.mc-bars i.run b{animation:barRun 2.6s linear forwards}
+@keyframes barRun{to{width:100%}}
+.mc-x{z-index:3}
+@media(max-width:760px){.mc-ph{height:170px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -999,7 +1023,7 @@ html.loading,html.loading body,html.filmlock,html.filmlock body{overflow:hidden;
     <div class="map-head">
       <p class="eyebrow"><b>●</b> Живая карта</p>
       <h2 class="map-h">Где уже побывали <i>20&nbsp;000+</i> человек</h2>
-      <p class="map-lead">Нажмите на точку — покажем, что там и какие туры туда едут.</p>
+      <p class="map-lead"><b>50+ мест</b> в 7 республиках. Нажмите на большую точку — покажем, что там и какие туры туда едут.</p>
     </div>
     <div class="map" id="map">
       <div class="map-in" id="mapIn">
@@ -1007,7 +1031,7 @@ html.loading,html.loading body,html.filmlock,html.filmlock body{overflow:hidden;
         <span class="map-lbl sea" style="left:1.3200000000000003%;top:40.83%">Чёрное<br>море</span>
         <span class="map-lbl sea" style="left:94.9%;top:25.55%">Каспийское<br>море</span>
         <span class="map-lbl ridge" style="left:35.9%;top:69.91%">Главный Кавказский хребет</span>
-        <div id="mapPins"></div>
+        <svg class="map-routes" viewBox="0 0 2000 967" preserveAspectRatio="none" aria-hidden="true"><path d="M617 99 Q608 95 600 156" style="animation-delay:0.0s"/><path d="M617 99 Q391 97 166 319" style="animation-delay:0.6s"/><path d="M617 99 Q433 158 249 409" style="animation-delay:1.2s"/><path d="M617 99 Q533 184 449 389" style="animation-delay:1.8s"/><path d="M617 99 Q711 269 805 566" style="animation-delay:2.4s"/><path d="M617 99 Q1068 107 1520 499" style="animation-delay:3.0s"/><path d="M617 99 Q1085 215 1554 728" style="animation-delay:3.6s"/></svg><div id="mapDots"></div><div id="mapPins"></div>
       </div>
       <div class="map-card" id="mapCard" aria-live="polite"></div>
       <span class="map-swipe">← листайте карту →</span>
@@ -1453,18 +1477,21 @@ function layoutWord(){}function drawProfile(){}
 /* ---------- живая карта ---------- */
 (function(){
   const box=$('mapPins');if(!box)return;
-  const P=[{"k": "kmv", "n": "Пятигорск · КМВ", "x": 30.0, "y": 16.18, "img": "t4", "r": "Кавминводы", "t": "Курортные парки, нарзан и гора Машук. Отсюда стартуют почти все маршруты."}, {"k": "kchr", "n": "Архыз", "x": 8.29, "y": 32.94, "img": "t13", "r": "Карачаево-Черкесия", "t": "Бирюзовые озёра, древние храмы и самая большая обсерватория России."}, {"k": "kchr", "n": "Домбай", "x": 12.44, "y": 42.3, "img": "t12", "r": "Карачаево-Черкесия", "t": "Водопады, горные озёра и конные прогулки по Тебердинскому заповеднику."}, {"k": "kbr", "n": "Эльбрус", "x": 22.44, "y": 40.22, "img": "v2/elbrus", "r": "Кабардино-Балкария", "t": "Высшая точка Европы. Канатка к ледникам, Чегет и поляна Азау."}, {"k": "oset", "n": "Дигория", "x": 35.98, "y": 57.47, "img": "t9", "r": "Осетия", "t": "Ледники, водопады и древние башни в Дигорском ущелье."}, {"k": "dag", "n": "Гамсутль", "x": 77.68, "y": 75.27, "img": "t11", "r": "Дагестан", "t": "Аул-призрак на скале, куда ведёт горная тропа."}, {"k": "dag", "n": "Сулакский каньон", "x": 75.98, "y": 51.63, "img": "t11", "r": "Дагестан", "t": "Один из самых глубоких каньонов мира и бирюзовая вода на катере."}, {"k": "dag", "n": "Дербент", "x": 93.78, "y": 84.45, "img": "t11", "r": "Дагестан", "t": "Древнейший город России, крепость Нарын-Кала у Каспия."}];
+  const P=[{"k": "kmv", "n": "Пятигорск · КМВ", "x": 30.0, "y": 16.18, "img": ["t4", "v2/plateau", "t6", "t1"], "r": "Кавминводы", "t": "Курортные парки, нарзан, плато Бермамыт и Медовые водопады. Отсюда стартуют почти все маршруты."}, {"k": "kchr", "n": "Архыз", "x": 8.29, "y": 32.94, "img": ["v2/church", "t13", "v2/ibex"], "r": "Карачаево-Черкесия", "t": "Бирюзовые озёра, древние аланские храмы и самая большая обсерватория России."}, {"k": "kchr", "n": "Домбай", "x": 12.44, "y": 42.3, "img": ["t12", "t9", "v2/lake", "v2/pines"], "r": "Карачаево-Черкесия", "t": "Водопады, горные озёра и конные прогулки по Тебердинскому заповеднику."}, {"k": "kbr", "n": "Эльбрус", "x": 22.44, "y": 40.22, "img": ["v2/elbrus", "v2/cable", "t18", "v2/jump"], "r": "Кабардино-Балкария", "t": "Высшая точка Европы. Канатка к ледникам, Чегет, лыжи и поляна Азау."}, {"k": "oset", "n": "Дигория и Даргавс", "x": 40.24, "y": 58.51, "img": ["t10", "v2/tower", "v2/massif", "v2/rocks"], "r": "Осетия", "t": "Город мёртвых в Даргавсе, ледники, водопады и древние башни."}, {"k": "dag", "n": "Сулакский каньон", "x": 75.98, "y": 51.63, "img": ["t11", "v2/raft", "v2/canyon"], "r": "Дагестан", "t": "Один из самых глубоких каньонов мира и бирюзовая вода на катере."}, {"k": "dag", "n": "Гамсутль", "x": 77.68, "y": 75.27, "img": ["t5", "v2/road"], "r": "Дагестан", "t": "Аул-призрак на скале, куда ведёт горная тропа."}];const D=[{"n": "Кисловодск", "x": 25.85, "y": 21.08}, {"n": "Ессентуки", "x": 27.56, "y": 16.18}, {"n": "Железноводск", "x": 29.51, "y": 12.68}, {"n": "Минеральные Воды", "x": 30.85, "y": 10.22}, {"n": "Плато Бермамыт", "x": 21.1, "y": 27.02}, {"n": "Медовые водопады", "x": 24.15, "y": 23.53}, {"n": "Шаджатмаз", "x": 25.12, "y": 26.67}, {"n": "Теберда", "x": 13.9, "y": 37.1}, {"n": "Нижний Архыз", "x": 10.24, "y": 29.81}, {"n": "Зеленчукская", "x": 12.07, "y": 22.48}, {"n": "Хурзук", "x": 19.88, "y": 37.45}, {"n": "Учкулан", "x": 18.17, "y": 36.76}, {"n": "Перевал Гум-Баши", "x": 20.12, "y": 29.46}, {"n": "Нальчик", "x": 36.71, "y": 35.37}, {"n": "Чегемские водопады", "x": 32.68, "y": 37.8}, {"n": "Безенги", "x": 31.95, "y": 45.07}, {"n": "Верхняя Балкария", "x": 35.0, "y": 47.83}, {"n": "Голубые озёра", "x": 36.46, "y": 44.03}, {"n": "Терскол", "x": 23.17, "y": 43.34}, {"n": "Чегет", "x": 23.54, "y": 44.38}, {"n": "Тырныауз", "x": 28.29, "y": 38.84}, {"n": "Эльтюбю", "x": 31.34, "y": 42.3}, {"n": "Джилы-Су", "x": 23.54, "y": 33.28}, {"n": "Владикавказ", "x": 49.76, "y": 51.63}, {"n": "Кармадон", "x": 47.56, "y": 58.16}, {"n": "Фиагдон", "x": 45.12, "y": 57.13}, {"n": "Цей", "x": 40.85, "y": 59.88}, {"n": "Куртатинское ущелье", "x": 45.85, "y": 55.07}, {"n": "Мидаграбин", "x": 47.32, "y": 60.91}, {"n": "Задалеск", "x": 37.2, "y": 58.16}, {"n": "Эрзи", "x": 51.95, "y": 57.82}, {"n": "Вовнушки", "x": 53.17, "y": 59.88}, {"n": "Таргим", "x": 53.66, "y": 59.19}, {"n": "Джейрах", "x": 52.8, "y": 58.85}, {"n": "Грозный", "x": 62.07, "y": 41.26}, {"n": "Кезеной-Ам", "x": 67.68, "y": 60.22}, {"n": "Аргунское ущелье", "x": 60.12, "y": 55.07}, {"n": "Итум-Кали", "x": 60.73, "y": 61.59}, {"n": "Шатой", "x": 62.07, "y": 56.79}, {"n": "Махачкала", "x": 84.15, "y": 53.0}, {"n": "Бархан Сарыкум", "x": 80.85, "y": 51.97}, {"n": "Чиркейское водохранилище", "x": 76.22, "y": 54.72}, {"n": "Гуниб", "x": 77.56, "y": 73.22}, {"n": "Чох", "x": 77.07, "y": 74.25}, {"n": "Хунзах", "x": 74.39, "y": 68.1}, {"n": "Водопад Тобот", "x": 74.63, "y": 68.78}, {"n": "Карадахская теснина", "x": 76.71, "y": 70.49}, {"n": "Салтинский водопад", "x": 78.9, "y": 73.56}, {"n": "Кубачи", "x": 85.37, "y": 83.43}, {"n": "Дербент", "x": 93.78, "y": 84.45}, {"n": "Дубки", "x": 77.07, "y": 54.04}, {"n": "Хучни", "x": 89.63, "y": 84.79}];
   const cnt=k=>T.filter(t=>t.rg.includes(k)).length;
+  $('mapDots').innerHTML=D.map((d,i)=>`<button type="button" class="dot" style="left:${d.x}%;top:${d.y}%;animation-delay:${(i*.37)%3}s" aria-label="${d.n}"><span>${d.n}</span></button>`).join('');
+  $('mapDots').onclick=e=>{const b=e.target.closest('.dot');if(!b)return;document.querySelectorAll('.dot.tip').forEach(x=>x!==b&&x.classList.remove('tip'));b.classList.toggle('tip')};
   box.innerHTML=P.map((p,i)=>`<button type="button" class="pin" data-i="${i}" style="left:${p.x}%;top:${p.y}%" aria-label="${p.n}"><i></i><span>${p.n}</span></button>`).join('');
   const card=$('mapCard'),pins=[...box.children];let cur=-1,auto=null,user=false;
   function show(i,fromUser){if(fromUser){user=true;clearInterval(auto)}cur=i;const p=P[i],n=cnt(p.k);
     pins.forEach((b,j)=>b.classList.toggle('on',j===i));
     card.classList.remove('in');void card.offsetWidth;
-    card.innerHTML=`<button type="button" class="mc-x" aria-label="Закрыть">×</button><img src="img/${p.img}.jpg" alt=""><div class="mc-b"><small>${p.r}</small><b>${p.n}</b><p>${p.t}</p><button type="button" class="mc-go" data-k="${p.k}">${n} ${plural(n,'тур','тура','туров')} сюда →</button></div>`;
+    card.innerHTML=`<button type="button" class="mc-x" aria-label="Закрыть">×</button><div class="mc-ph">${p.img.map((m,j)=>`<img src="img/${m}.jpg" alt="" class="${j?'':'on'}">`).join('')}<div class="mc-bars">${p.img.map((m,j)=>`<i class="${j?'':'run'}"><b></b></i>`).join('')}</div></div><div class="mc-b"><small>${p.r}</small><b>${p.n}</b><p>${p.t}</p><button type="button" class="mc-go" data-k="${p.k}">${n} ${plural(n,'тур','тура','туров')} сюда →</button></div>`;
     const wide=innerWidth>760;if(wide){const L=p.x>60;card.style.left=L?'auto':`calc(${p.x}% + 26px)`;card.style.right=L?`calc(${100-p.x}% + 26px)`:'auto';card.style.top=`clamp(10px,calc(${p.y}% - 120px),calc(100% - 330px))`}else{card.style.left=card.style.right=card.style.top='';const m=$('map');const px=$('mapIn').offsetWidth*p.x/100-m.clientWidth/2;m.scrollTo({left:px,behavior:fromUser===undefined?'auto':'smooth'})}
-    card.classList.add('in')}
+    card.classList.add('in');story(0)}
+  let st=null,si=0;function story(j){clearTimeout(st);const ims=[...card.querySelectorAll('.mc-ph img')],bs=[...card.querySelectorAll('.mc-bars i')];if(!ims.length)return;si=(j+ims.length)%ims.length;ims.forEach((m,k)=>m.classList.toggle('on',k===si));bs.forEach((b,k)=>{b.classList.toggle('done',k<si);b.classList.remove('run');if(k===si){void b.offsetWidth;b.classList.add('run')}});st=setTimeout(()=>story(si+1),2600)}
   box.onclick=e=>{const b=e.target.closest('.pin');if(b)show(+b.dataset.i,true)};
-  card.onclick=e=>{if(e.target.closest('.mc-x')){card.classList.remove('in');pins.forEach(b=>b.classList.remove('on'));user=true;clearInterval(auto)}
+  card.onclick=e=>{if(e.target.closest('.mc-ph')){story(si+1);return}if(e.target.closest('.mc-x')){card.classList.remove('in');pins.forEach(b=>b.classList.remove('on'));user=true;clearInterval(auto)}
     const g=e.target.closest('.mc-go');if(g){Object.assign(F,{type:'',month:0,diff:0,reg:g.dataset.k});apply();$('tours').scrollIntoView()}};
   let seen=false;new IntersectionObserver(es=>{if(es[0].isIntersecting&&!seen){seen=true;show(3);auto=setInterval(()=>{if(!user)show((cur+1)%P.length,false)},4200)}},{threshold:.4}).observe($('map'));
 })();
